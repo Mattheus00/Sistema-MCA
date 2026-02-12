@@ -1,0 +1,14 @@
+# Backend - build e arquivos sensíveis
+Backend/target/
+Backend/src/main/resources/application-local.properties
+Backend/data/*.db
+!Backend/data/.gitkeep
+
+# IDE
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+*.swp
+*~
