@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -76,7 +77,7 @@ public class PagamentoService {
                 .dividaId(divida.getDividaId())
                 .protocoloDivida(divida.getProtocolo())
                 .nomeCliente(divida.getCliente().getNome())
-                .valorPago(p.getValorPago())
+                .valorPago(centavosParaReais(p.getValorPago()))
                 .dataPagamento(p.getDataPagamento())
                 .metodoPagamento(p.getMetodoPagamento())
                 .dataHoraRegistro(p.getCriadoEm())
@@ -90,7 +91,7 @@ public class PagamentoService {
                         .pagamentoId(p.getPagamentoId())
                         .dividaId(p.getDivida().getDividaId())
                         .protocoloDivida(p.getDivida().getProtocolo())
-                        .valorPago(p.getValorPago())
+                        .valorPago(centavosParaReais(p.getValorPago()))
                         .dataPagamento(p.getDataPagamento())
                         .metodoPagamento(p.getMetodoPagamento())
                         .comprovante(p.getComprovante())
@@ -107,12 +108,18 @@ public class PagamentoService {
                 .pagamentoId(p.getPagamentoId())
                 .dividaId(p.getDivida().getDividaId())
                 .protocoloDivida(p.getDivida().getProtocolo())
-                .valorPago(p.getValorPago())
+                .valorPago(centavosParaReais(p.getValorPago()))
                 .dataPagamento(p.getDataPagamento())
                 .metodoPagamento(p.getMetodoPagamento())
                 .comprovante(p.getComprovante())
                 .criadoEm(p.getCriadoEm())
                 .build();
+    }
+
+    private static BigDecimal centavosParaReais(BigDecimal centavos) {
+        return centavos == null || centavos.compareTo(BigDecimal.ZERO) == 0
+                ? BigDecimal.ZERO
+                : centavos.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
     }
 
     @Transactional(readOnly = true)

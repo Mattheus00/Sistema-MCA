@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
 
 /**
  * Repositório JPA para a entidade Usuario.
@@ -17,4 +18,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, UUID> {
     Optional<Usuario> findByTelefone(String telefone);
 
     Optional<Usuario> findByTelefoneAndStatusUsuario(String telefone, StatusUsuario status);
+
+    List<Usuario> findByStatusUsuarioOrderByCriadoEmAsc(StatusUsuario status);
+
+    List<Usuario> findByStatusUsuarioOrderByNomeAsc(StatusUsuario status);
 }

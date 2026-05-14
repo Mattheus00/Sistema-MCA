@@ -1,5 +1,7 @@
 package com.pucminas.sgi.service;
 
+import com.pucminas.sgi.dto.response.AgingReportDTO;
+import com.pucminas.sgi.dto.response.EfetividadeCobrancaDTO;
 import com.pucminas.sgi.dto.response.RankingDevedoresDTO;
 import com.pucminas.sgi.dto.response.RelatorioInadimplentesDTO;
 import com.pucminas.sgi.dto.response.ResumoFinanceiroDTO;
@@ -23,11 +25,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.time.temporal.ChronoUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -42,15 +47,24 @@ public class RelatorioService {
     private final DividaRepository dividaRepository;
     private final PagamentoRepository pagamentoRepository;
     private final NotificacaoEmailRepository notificacaoEmailRepository;
+    private final DividaService dividaService;
 
     public RelatorioService(ClienteRepository clienteRepository,
                             DividaRepository dividaRepository,
                             PagamentoRepository pagamentoRepository,
-                            NotificacaoEmailRepository notificacaoEmailRepository) {
+                            NotificacaoEmailRepository notificacaoEmailRepository,
+                            DividaService dividaService) {
         this.clienteRepository = clienteRepository;
         this.dividaRepository = dividaRepository;
         this.pagamentoRepository = pagamentoRepository;
         this.notificacaoEmailRepository = notificacaoEmailRepository;
+        this.dividaService = dividaService;
+    }
+
+    private static BigDecimal centavosParaReais(BigDecimal centavos) {
+        return centavos == null || centavos.compareTo(BigDecimal.ZERO) == 0
+                ? BigDecimal.ZERO
+                : centavos.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
     }
 
     @Transactional(readOnly = true)
@@ -72,7 +86,7 @@ public class RelatorioService {
                     .nomeCliente(c.getNome())
                     .cpfCnpj(c.getCpfCnpj())
                     .quantidadeDividas(1)
-                    .saldoDevedor(d.getValorDevedor())
+                    .saldoDevedor(centavosParaReais(d.getValorDevedor()))
                     .dataVencimentoMaisAntiga(d.getVencimento())
                     .build();
             itens.add(item);
@@ -82,7 +96,7 @@ public class RelatorioService {
                 .periodoInicio(inicio)
                 .periodoFim(fim)
                 .totalClientesInadimplentes(itens.size())
-                .valorTotalInadimplente(valorTotal)
+                .valorTotalInadimplente(centavosParaReais(valorTotal))
                 .itens(itens)
                 .build();
     }
@@ -101,7 +115,7 @@ public class RelatorioService {
                     .clienteId(c.getClienteId())
                     .nomeCliente(c.getNome())
                     .cpfCnpj(c.getCpfCnpj())
-                    .saldoDevedor(c.getSaldoDevedor())
+                    .saldoDevedor(centavosParaReais(c.getSaldoDevedor()))
                     .posicao(pos++)
                     .build());
         }
@@ -111,28 +125,140 @@ public class RelatorioService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
+    public AgingReportDTO gerarAgingReport() {
+        LocalDate hoje = LocalDate.now();
+        List<Divida> dividas = dividaRepository.findByStatusDividaIn(
+                List.of(StatusDivida.EM_ABERTO, StatusDivida.PARCIAL, StatusDivida.VENCIDA)
+        ).stream()
+                .filter(d -> d.getValorDevedor() != null && d.getValorDevedor().compareTo(BigDecimal.ZERO) > 0)
+                .filter(d -> !d.getVencimento().isAfter(hoje))
+                .toList();
+
+        BigDecimal valor0a30 = BigDecimal.ZERO;
+        BigDecimal valor31a60 = BigDecimal.ZERO;
+        BigDecimal valor61a90 = BigDecimal.ZERO;
+        BigDecimal valorMais90 = BigDecimal.ZERO;
+        int qtd0a30 = 0;
+        int qtd31a60 = 0;
+        int qtd61a90 = 0;
+        int qtdMais90 = 0;
+
+        for (Divida d : dividas) {
+            int diasAtraso = (int) ChronoUnit.DAYS.between(d.getVencimento(), hoje);
+            if (diasAtraso <= 30) {
+                qtd0a30++;
+                valor0a30 = valor0a30.add(d.getValorDevedor());
+            } else if (diasAtraso <= 60) {
+                qtd31a60++;
+                valor31a60 = valor31a60.add(d.getValorDevedor());
+            } else if (diasAtraso <= 90) {
+                qtd61a90++;
+                valor61a90 = valor61a90.add(d.getValorDevedor());
+            } else {
+                qtdMais90++;
+                valorMais90 = valorMais90.add(d.getValorDevedor());
+            }
+        }
+
+        List<AgingReportDTO.FaixaAgingDTO> faixas = List.of(
+                AgingReportDTO.FaixaAgingDTO.builder()
+                        .faixa("0-30")
+                        .quantidade(qtd0a30)
+                        .valor(centavosParaReais(valor0a30))
+                        .build(),
+                AgingReportDTO.FaixaAgingDTO.builder()
+                        .faixa("31-60")
+                        .quantidade(qtd31a60)
+                        .valor(centavosParaReais(valor31a60))
+                        .build(),
+                AgingReportDTO.FaixaAgingDTO.builder()
+                        .faixa("61-90")
+                        .quantidade(qtd61a90)
+                        .valor(centavosParaReais(valor61a90))
+                        .build(),
+                AgingReportDTO.FaixaAgingDTO.builder()
+                        .faixa("+90")
+                        .quantidade(qtdMais90)
+                        .valor(centavosParaReais(valorMais90))
+                        .build()
+        );
+
+        BigDecimal valorTotal = valor0a30.add(valor31a60).add(valor61a90).add(valorMais90);
+        return AgingReportDTO.builder()
+                .totalDividas(dividas.size())
+                .valorTotal(centavosParaReais(valorTotal))
+                .faixas(faixas)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public EfetividadeCobrancaDTO gerarEfetividadeCobranca(Integer ano, Integer mes) {
+        LocalDate referencia = LocalDate.now();
+        int anoRef = (ano != null && ano > 2000) ? ano : referencia.getYear();
+        int mesRef = (mes != null && mes >= 1 && mes <= 12) ? mes : referencia.getMonthValue();
+
+        LocalDate inicioData = LocalDate.of(anoRef, mesRef, 1);
+        LocalDate fimData = inicioData.withDayOfMonth(inicioData.lengthOfMonth());
+        LocalDateTime inicio = inicioData.atStartOfDay();
+        LocalDateTime fim = fimData.plusDays(1).atStartOfDay();
+
+        List<NotificacaoEmail> cobrancas = notificacaoEmailRepository.findByCriadoEmBetween(inicio, fim).stream()
+                .filter(n -> n.getTipo() == com.pucminas.sgi.enums.TipoNotificacao.COBRANCA)
+                .toList();
+
+        int totalCobrancas = cobrancas.size();
+        int enviadas = (int) cobrancas.stream().filter(n -> n.getStatusEnvio() == com.pucminas.sgi.enums.StatusEnvio.ENVIADO).count();
+        int falhas = (int) cobrancas.stream().filter(n -> n.getStatusEnvio() == com.pucminas.sgi.enums.StatusEnvio.FALHOU).count();
+
+        List<Pagamento> pagamentos = pagamentoRepository.findByDataPagamentoBetween(inicioData, fimData);
+        int pagamentosRecebidos = pagamentos.size();
+        BigDecimal valorRecebidoCentavos = pagamentos.stream()
+                .map(Pagamento::getValorPago)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal taxaEfetividade = totalCobrancas == 0
+                ? BigDecimal.ZERO
+                : BigDecimal.valueOf(enviadas)
+                .multiply(BigDecimal.valueOf(100))
+                .divide(BigDecimal.valueOf(totalCobrancas), 2, RoundingMode.HALF_UP);
+
+        return EfetividadeCobrancaDTO.builder()
+                .ano(anoRef)
+                .mes(mesRef)
+                .totalCobrancas(totalCobrancas)
+                .cobrancasEnviadas(enviadas)
+                .cobrancasComFalha(falhas)
+                .pagamentosRecebidos(pagamentosRecebidos)
+                .valorRecebidoTotal(centavosParaReais(valorRecebidoCentavos))
+                .taxaEfetividade(taxaEfetividade)
+                .build();
+    }
+
     /** Resumo para dashboard (contrato frontend: totalClientes, totalDividas, totalEmAberto, totalPago). */
     @Transactional(readOnly = true)
     public ResumoRelatorioDTO gerarResumo(Integer dias) {
         int totalClientes = (int) clienteRepository.count();
         List<Divida> todasDividas = dividaRepository.findAll();
         LocalDate limite = (dias != null && dias > 0) ? LocalDate.now().minusDays(dias) : null;
-        BigDecimal totalEmAberto = BigDecimal.ZERO;
+        BigDecimal totalEmAbertoReais = BigDecimal.ZERO;
         int dividasNoPeriodo = 0;
         for (Divida d : todasDividas) {
             if (d.getStatusDivida() == StatusDivida.QUITADA || d.getStatusDivida() == StatusDivida.CANCELADA) continue;
             if (limite != null && d.getVencimento().isBefore(limite)) continue;
-            totalEmAberto = totalEmAberto.add(d.getValorDevedor());
+            BigDecimal[] valorEJuros = dividaService.getValorEJurosReais(d);
+            totalEmAbertoReais = totalEmAbertoReais.add(valorEJuros[0]);
             dividasNoPeriodo++;
         }
         BigDecimal totalPago = pagamentoRepository.findAll().stream()
                 .map(Pagamento::getValorPago)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalPagoReais = centavosParaReais(totalPago);
         return ResumoRelatorioDTO.builder()
                 .totalClientes(totalClientes)
                 .totalDividas(dividasNoPeriodo)
-                .totalEmAberto(totalEmAberto)
-                .totalPago(totalPago)
+                .totalEmAberto(totalEmAbertoReais)
+                .totalPago(totalPagoReais)
                 .build();
     }
 
@@ -143,15 +269,18 @@ public class RelatorioService {
         List<Pagamento> pagamentos = pagamentoRepository.findByDataPagamentoBetween(periodoInicio, periodoFim);
         BigDecimal totalRecebido = pagamentos.stream().map(Pagamento::getValorPago).reduce(BigDecimal.ZERO, BigDecimal::add);
         List<Divida> emAberto = dividaRepository.findByStatusDividaIn(List.of(StatusDivida.EM_ABERTO, StatusDivida.PARCIAL, StatusDivida.VENCIDA));
-        BigDecimal totalEmAberto = emAberto.stream().map(Divida::getValorDevedor).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalEmAbertoReais = BigDecimal.ZERO;
+        for (Divida d : emAberto) {
+            totalEmAbertoReais = totalEmAbertoReais.add(dividaService.getValorEJurosReais(d)[0]);
+        }
         long quitadas = dividaRepository.findByStatusDividaIn(List.of(StatusDivida.QUITADA)).size();
         long clientesInadimplentes = clienteRepository.findTop10ByOrderBySaldoDevedorDesc().stream()
                 .filter(c -> c.getSaldoDevedor().compareTo(BigDecimal.ZERO) > 0).count();
         return ResumoFinanceiroDTO.builder()
                 .periodoInicio(periodoInicio)
                 .periodoFim(periodoFim)
-                .totalRecebido(totalRecebido)
-                .totalEmAberto(totalEmAberto)
+                .totalRecebido(centavosParaReais(totalRecebido))
+                .totalEmAberto(totalEmAbertoReais)
                 .quantidadeDividasQuitadas((int) quitadas)
                 .quantidadeDividasEmAberto(emAberto.size())
                 .quantidadeClientesInadimplentes((int) clientesInadimplentes)
@@ -174,8 +303,8 @@ public class RelatorioService {
                     .protocolo(d.getProtocolo())
                     .descricao(d.getDescricao() != null ? d.getDescricao() : "")
                     .vencimento(d.getVencimento().format(DateTimeFormatter.ISO_LOCAL_DATE))
-                    .valorOriginal(d.getValorOriginal())
-                    .valorDevido(d.getValorDevedor())
+                    .valorOriginal(centavosParaReais(d.getValorOriginal()))
+                    .valorDevido(centavosParaReais(d.getValorDevedor()))
                     .status(d.getStatusDivida().name())
                     .diasAtraso(diasAtraso)
                     .build());
@@ -190,9 +319,9 @@ public class RelatorioService {
             historico.add(ExtratoClienteDTO.ExtratoPagamentoItem.builder()
                     .data(p.getDataPagamento().format(DateTimeFormatter.ISO_LOCAL_DATE))
                     .protocolo(p.getDivida().getProtocolo())
-                    .valorPago(p.getValorPago())
+                    .valorPago(centavosParaReais(p.getValorPago()))
                     .metodo(p.getMetodoPagamento() != null ? p.getMetodoPagamento() : "")
-                    .saldoApos(p.getDivida().getValorDevedor())
+                    .saldoApos(centavosParaReais(p.getDivida().getValorDevedor()))
                     .build());
         }
         List<NotificacaoEmail> notifs = notificacaoEmailRepository.findByClienteIdOrderByDataEnvioDesc(clienteId);
@@ -209,9 +338,10 @@ public class RelatorioService {
                         .nome(c.getNome())
                         .cpfCnpj(c.getCpfCnpj())
                         .telefone(c.getTelefone())
+                        .celular(c.getCelular())
                         .email(c.getEmail())
                         .status(c.getStatusCliente().name())
-                        .saldoDevedorTotal(c.getSaldoDevedor())
+                        .saldoDevedorTotal(centavosParaReais(c.getSaldoDevedor()))
                         .build())
                 .dividasAtivas(dividasAtivas)
                 .historicoPagamentos(historico)

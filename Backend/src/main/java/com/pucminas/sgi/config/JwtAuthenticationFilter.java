@@ -1,5 +1,8 @@
 package com.pucminas.sgi.config;
 
+import com.pucminas.sgi.entity.Usuario;
+import com.pucminas.sgi.enums.StatusUsuario;
+import com.pucminas.sgi.repository.UsuarioRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,9 +29,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final UsuarioRepository usuarioRepository;
 
-    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider) {
+    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, UsuarioRepository usuarioRepository) {
         this.jwtTokenProvider = jwtTokenProvider;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @Override
@@ -40,6 +45,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (StringUtils.hasText(token)) {
                 JwtTokenProvider.JwtClaims claims = jwtTokenProvider.getClaims(token);
                 if (claims != null) {
+                    Usuario usuario = usuarioRepository.findById(claims.usuarioId()).orElse(null);
+                    if (usuario == null || usuario.getStatusUsuario() != StatusUsuario.ATIVO) {
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        return;
+                    }
                     String role = "ROLE_" + claims.perfil().name();
                     UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                             claims.usuarioId(),

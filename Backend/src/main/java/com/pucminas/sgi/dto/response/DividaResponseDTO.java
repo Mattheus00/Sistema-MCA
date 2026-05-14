@@ -26,6 +26,8 @@ public class DividaResponseDTO {
     private String nomeCliente;
     private BigDecimal valorOriginal;
     private BigDecimal valorDevedor;
+    /** Juros + multa em reais (valorDevedor - valorOriginal). Para exibir na coluna "Juros". */
+    private BigDecimal juros;
     private LocalDate vencimento;
     private String descricao;
     private StatusDivida statusDivida;
@@ -34,4 +36,6 @@ public class DividaResponseDTO {
     private LocalDateTime atualizadoEm;
     /** Serviços prestados com valor por item (para e-mail de cobrança). */
     private List<ItemServicoResponseDTO> itensServicos;
+    /** Histórico de pagamentos (parciais e totais) desta dívida. */
+    private List<PagamentoResponseDTO> pagamentos;
 }

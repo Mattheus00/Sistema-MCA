@@ -4,9 +4,11 @@ import com.pucminas.sgi.dto.request.DividaDTO;
 import com.pucminas.sgi.dto.request.ItemServicoDTO;
 import com.pucminas.sgi.dto.response.DividaResponseDTO;
 import com.pucminas.sgi.dto.response.ItemServicoResponseDTO;
+import com.pucminas.sgi.dto.response.PagamentoResponseDTO;
 import com.pucminas.sgi.entity.Cliente;
 import com.pucminas.sgi.entity.Divida;
 import com.pucminas.sgi.entity.DividaServico;
+import com.pucminas.sgi.entity.Pagamento;
 import com.pucminas.sgi.entity.Servico;
 import com.pucminas.sgi.enums.StatusDivida;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
@@ -26,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -218,15 +221,24 @@ public class DividaService {
                 .map(item -> ItemServicoResponseDTO.builder()
                         .servicoId(item.getServico().getServicoId())
                         .nomeServico(item.getServico().getNome())
-                        .valor(item.getValor())
+                        .valor(centavosParaReais(item.getValor()))
                         .build())
+                .collect(Collectors.toList());
+        BigDecimal[] valorEJuros = computarValorEJurosEmTempoReal(d);
+        BigDecimal vOrig = centavosParaReais(d.getValorOriginal());
+        BigDecimal vDev = valorEJuros[0];
+        BigDecimal juros = valorEJuros[1];
+        List<PagamentoResponseDTO> pagamentosDto = pagamentoRepository.findByDivida_DividaIdOrderByDataPagamentoDesc(d.getDividaId())
+                .stream()
+                .map(this::pagamentoParaDto)
                 .collect(Collectors.toList());
         return DividaResponseDTO.builder()
                 .dividaId(d.getDividaId())
                 .clienteId(c.getClienteId())
                 .nomeCliente(c.getNome())
-                .valorOriginal(d.getValorOriginal())
-                .valorDevedor(d.getValorDevedor())
+                .valorOriginal(vOrig)
+                .valorDevedor(vDev)
+                .juros(juros)
                 .vencimento(d.getVencimento())
                 .descricao(d.getDescricao())
                 .statusDivida(d.getStatusDivida())
@@ -234,6 +246,66 @@ public class DividaService {
                 .criadoEm(d.getCriadoEm())
                 .atualizadoEm(d.getAtualizadoEm())
                 .itensServicos(itensDto)
+                .pagamentos(pagamentosDto)
                 .build();
+    }
+
+    private PagamentoResponseDTO pagamentoParaDto(Pagamento p) {
+        return PagamentoResponseDTO.builder()
+                .pagamentoId(p.getPagamentoId())
+                .dividaId(p.getDivida().getDividaId())
+                .protocoloDivida(p.getDivida().getProtocolo())
+                .valorPago(centavosParaReais(p.getValorPago()))
+                .dataPagamento(p.getDataPagamento())
+                .metodoPagamento(p.getMetodoPagamento())
+                .comprovante(p.getComprovante())
+                .criadoEm(p.getCriadoEm())
+                .build();
+    }
+
+    /**
+     * Calcula valor devedor e juros em tempo real. Para dívidas vencidas (EM_ABERTO, VENCIDA, PARCIAL)
+     * usa MultaJurosUtil; caso contrário usa o valor armazenado.
+     * Retorna [valorDevedorReais, jurosReais].
+     */
+    private BigDecimal[] computarValorEJurosEmTempoReal(Divida d) {
+        LocalDate hoje = LocalDate.now();
+        boolean vencida = hoje.isAfter(d.getVencimento());
+        boolean statusAberto = List.of(StatusDivida.EM_ABERTO, StatusDivida.VENCIDA, StatusDivida.PARCIAL)
+                .contains(d.getStatusDivida());
+        if (!vencida || !statusAberto) {
+            BigDecimal vOrig = centavosParaReais(d.getValorOriginal());
+            BigDecimal vDev = centavosParaReais(d.getValorDevedor());
+            BigDecimal juros = vDev.subtract(vOrig).max(BigDecimal.ZERO);
+            return new BigDecimal[]{vDev, juros};
+        }
+        BigDecimal totalPago = pagamentoRepository.sumValorPagoByDividaId(d.getDividaId());
+        if (totalPago == null) totalPago = BigDecimal.ZERO;
+        BigDecimal principal = d.getValorOriginal().subtract(totalPago);
+        if (principal.compareTo(BigDecimal.ZERO) <= 0) {
+            return new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO};
+        }
+        BigDecimal valorAtualizadoCentavos = MultaJurosUtil.valorTotalComMultaEJuros(principal, d.getVencimento(), hoje);
+        BigDecimal jurosCentavos = valorAtualizadoCentavos.subtract(principal);
+        return new BigDecimal[]{
+                centavosParaReais(valorAtualizadoCentavos),
+                centavosParaReais(jurosCentavos)
+        };
+    }
+
+    private static BigDecimal centavosParaReais(BigDecimal centavos) {
+        return centavos == null || centavos.compareTo(BigDecimal.ZERO) == 0
+                ? BigDecimal.ZERO
+                : centavos.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+    }
+
+    /** Exposto para ClienteService e InadimplenciaService. */
+    public DividaResponseDTO toResponseDTO(Divida d) {
+        return toResponse(d);
+    }
+
+    /** Retorna [valorDevedorReais, jurosReais] calculados em tempo real. Para InadimplenciaService. */
+    public BigDecimal[] getValorEJurosReais(Divida d) {
+        return computarValorEJurosEmTempoReal(d);
     }
 }

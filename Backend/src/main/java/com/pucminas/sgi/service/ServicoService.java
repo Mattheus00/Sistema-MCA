@@ -8,6 +8,8 @@ import com.pucminas.sgi.repository.ServicoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -71,8 +73,14 @@ public class ServicoService {
                 .servicoId(s.getServicoId())
                 .nome(s.getNome())
                 .descricao(s.getDescricao())
-                .valorPadrao(s.getValorPadrao())
+                .valorPadrao(centavosParaReais(s.getValorPadrao()))
                 .ativo(s.getAtivo())
                 .build();
+    }
+
+    private static BigDecimal centavosParaReais(BigDecimal centavos) {
+        return centavos == null || centavos.compareTo(BigDecimal.ZERO) == 0
+                ? null
+                : centavos.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
     }
 }

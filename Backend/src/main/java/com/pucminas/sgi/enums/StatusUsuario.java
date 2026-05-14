@@ -5,5 +5,6 @@ package com.pucminas.sgi.enums;
  */
 public enum StatusUsuario {
     ATIVO,
-    INATIVO
+    INATIVO,
+    PENDENTE_APROVACAO
 }

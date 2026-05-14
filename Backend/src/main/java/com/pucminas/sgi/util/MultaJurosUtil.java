@@ -13,16 +13,31 @@ import java.time.temporal.ChronoUnit;
  */
 public final class MultaJurosUtil {
 
-    /** 0,33% ao dia */
-    private static final BigDecimal TAXA_MULTA_DIARIA = new BigDecimal("0.0033");
-    /** Máximo 9,99% para multa */
-    private static final BigDecimal CAP_MULTA_PERCENTUAL = new BigDecimal("0.0999");
-    /** 2% ao mês */
-    private static final BigDecimal TAXA_JUROS_MENSAL = new BigDecimal("0.02");
+    /** 0,33% ao dia (pode ser alterado via configuração). */
+    private static BigDecimal TAXA_MULTA_DIARIA = new BigDecimal("0.0033");
+    /** Máximo 9,99% para multa (pode ser alterado via configuração). */
+    private static BigDecimal CAP_MULTA_PERCENTUAL = new BigDecimal("0.0999");
+    /** 2% ao mês (pode ser alterado via configuração). */
+    private static BigDecimal TAXA_JUROS_MENSAL = new BigDecimal("0.02");
     /** Máximo de dias para aplicação da multa */
     private static final int MAX_DIAS_MULTA = 30;
 
     private MultaJurosUtil() {}
+
+    /**
+     * Atualiza as taxas usadas nos cálculos a partir da configuração persistida.
+     */
+    public static void configurar(BigDecimal multaDiaria, BigDecimal capMultaPercentual, BigDecimal jurosMensal) {
+        if (multaDiaria != null) {
+            TAXA_MULTA_DIARIA = multaDiaria;
+        }
+        if (capMultaPercentual != null) {
+            CAP_MULTA_PERCENTUAL = capMultaPercentual;
+        }
+        if (jurosMensal != null) {
+            TAXA_JUROS_MENSAL = jurosMensal;
+        }
+    }
 
     /**
      * Calcula multa: 0,33% ao dia sobre o valor principal, limitada a 30 dias (máx. 9,99%).

@@ -4,29 +4,45 @@ import com.pucminas.sgi.dto.request.CalcularTributoRequestDTO;
 import com.pucminas.sgi.dto.request.ConsultaGeminiRequestDTO;
 import com.pucminas.sgi.dto.request.CreditoTributoRequestDTO;
 import com.pucminas.sgi.dto.request.NotaFiscalTributoRequestDTO;
-import com.pucminas.sgi.dto.response.*;
+import com.pucminas.sgi.dto.response.AliquotasResponseDTO;
+import com.pucminas.sgi.dto.response.CalcularTributoResponseDTO;
+import com.pucminas.sgi.dto.response.ConsultaGeminiResponseDTO;
+import com.pucminas.sgi.dto.response.CreditoTributoResponseDTO;
+import com.pucminas.sgi.dto.response.NotaFiscalTributoResponseDTO;
+import com.pucminas.sgi.dto.response.RegimeCnpjResponseDTO;
+import com.pucminas.sgi.service.CnpjConsultaService;
 import com.pucminas.sgi.service.GeminiService;
 import com.pucminas.sgi.service.TributoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Cálculos da Reforma Tributária (CBS/IBS) e consulta à IA (Gemini).
+ * Calculos da Reforma Tributaria (CBS/IBS) e consulta a IA (Gemini).
  */
 @RestController
 @RequestMapping("/api/tributos")
-@Tag(name = "Tributos (Reforma Tributária)", description = "Cálculos CBS/IBS e consulta IA")
+@Tag(name = "Tributos (Reforma Tributaria)", description = "Calculos CBS/IBS e consulta IA")
 public class TributoController {
 
     private final TributoService tributoService;
     private final GeminiService geminiService;
+    private final CnpjConsultaService cnpjConsultaService;
 
-    public TributoController(TributoService tributoService, GeminiService geminiService) {
+    public TributoController(TributoService tributoService,
+                             GeminiService geminiService,
+                             CnpjConsultaService cnpjConsultaService) {
         this.tributoService = tributoService;
         this.geminiService = geminiService;
+        this.cnpjConsultaService = cnpjConsultaService;
     }
 
     @PostMapping("/calcular")
@@ -36,21 +52,21 @@ public class TributoController {
     }
 
     @GetMapping("/aliquotas/{categoria}")
-    @Operation(summary = "Obter alíquotas por categoria", description = "categoria: PLENO, REDUZIDO ou ZERO")
+    @Operation(summary = "Obter aliquotas por categoria", description = "categoria: PLENO, REDUZIDO ou ZERO")
     public ResponseEntity<AliquotasResponseDTO> getAliquotas(@PathVariable String categoria) {
         return ResponseEntity.ok(tributoService.getAliquotas(categoria));
     }
 
     @PostMapping("/creditos/validar")
-    @Operation(summary = "Calcular crédito tributário (não-cumulatividade)")
+    @Operation(summary = "Calcular credito tributario (nao-cumulatividade)")
     public ResponseEntity<CreditoTributoResponseDTO> validarCredito(@Valid @RequestBody CreditoTributoRequestDTO request) {
         return ResponseEntity.ok(tributoService.calcularComCredito(request));
     }
 
     @GetMapping("/regime/{cnpj}")
-    @Operation(summary = "Regime tributário (simulado)", description = "Retorna regime padrão PLENO; em produção integrar com base oficial.")
-    public ResponseEntity<AliquotasResponseDTO> getRegime(@PathVariable String cnpj) {
-        return ResponseEntity.ok(tributoService.getAliquotas("PLENO"));
+    @Operation(summary = "Consultar CNPJ e identificar regime", description = "Integra com API oficial de consulta CNPJ e retorna nome da empresa e regime tributario.")
+    public ResponseEntity<RegimeCnpjResponseDTO> getRegime(@PathVariable String cnpj) {
+        return ResponseEntity.ok(cnpjConsultaService.consultarRegime(cnpj));
     }
 
     @PostMapping("/nota-fiscal/gerar")
@@ -60,7 +76,7 @@ public class TributoController {
     }
 
     @PostMapping("/consulta-ia")
-    @Operation(summary = "Consultar IA (Gemini) sobre reforma tributária. Requer POST com body JSON: { pergunta, contexto? }.")
+    @Operation(summary = "Consultar IA (Gemini) sobre reforma tributaria. Requer POST com body JSON: { pergunta, contexto? }.")
     public ResponseEntity<ConsultaGeminiResponseDTO> consultaGemini(@Valid @RequestBody ConsultaGeminiRequestDTO request) {
         try {
             String pergunta = request != null && request.getPergunta() != null ? request.getPergunta() : "";
@@ -80,7 +96,7 @@ public class TributoController {
     }
 
     @GetMapping("/cashback")
-    @Operation(summary = "Calcular cashback CBS (devolução para baixa renda)")
+    @Operation(summary = "Calcular cashback CBS (devolucao para baixa renda)")
     public ResponseEntity<java.util.Map<String, java.math.BigDecimal>> cashback(
             @RequestParam java.math.BigDecimal valorCompra,
             @RequestParam(required = false, defaultValue = "1.0") java.math.BigDecimal percentualDevolucao) {

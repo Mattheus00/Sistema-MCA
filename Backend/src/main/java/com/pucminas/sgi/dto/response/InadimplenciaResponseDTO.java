@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -25,7 +26,11 @@ public class InadimplenciaResponseDTO {
     private UUID dividaId;
     private UUID clienteId;
     private String clienteNome;
-    /** Valor em REAIS (ex.: 1000.00 = R$ 1.000,00). Exibir direto no front. */
+    /** Valor original em REAIS (ex.: 1000.00 = R$ 1.000,00). */
+    private BigDecimal valorOriginal;
+    /** Juros + multa em REAIS (acréscimos por atraso). Ex.: 121.00 = R$ 121,00. */
+    private BigDecimal juros;
+    /** Valor total em REAIS (valorOriginal + juros). Exibir como "Valor total". */
     private BigDecimal valor;
     private LocalDate vencimento;
     private String descricao;
@@ -35,4 +40,6 @@ public class InadimplenciaResponseDTO {
     private LocalDateTime criadoEm;
     @JsonProperty("updatedAt")
     private LocalDateTime atualizadoEm;
+    /** Pagamentos registrados nesta dívida (parciais e totais). */
+    private List<PagamentoResponseDTO> pagamentos;
 }

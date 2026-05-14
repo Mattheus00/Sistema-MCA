@@ -54,14 +54,16 @@ public class InadimplenciaController {
     }
 
     @PatchMapping("/{id}")
-    @Operation(summary = "Confirmar pagamento (status: Pago)")
+    @Operation(summary = "Confirmar pagamento (status: Pago) ou retornar inadimplência")
     public ResponseEntity<InadimplenciaResponseDTO> atualizarStatus(@PathVariable UUID id,
                                                                      @RequestBody(required = false) InadimplenciaStatusDTO body) {
         if (body != null && "Pago".equalsIgnoreCase(body.getStatus())) {
-            InadimplenciaResponseDTO response = inadimplenciaService.confirmarPagamento(id);
+            InadimplenciaResponseDTO response = inadimplenciaService.confirmarPagamento(id, body);
             return ResponseEntity.ok(response);
         }
-        return ResponseEntity.badRequest().build();
+        // Se o corpo não indicar "Pago", apenas retorna o registro atual sem erro 400.
+        InadimplenciaResponseDTO atual = inadimplenciaService.consultar(id);
+        return ResponseEntity.ok(atual);
     }
 
     @DeleteMapping("/{id}")
