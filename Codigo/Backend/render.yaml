@@ -1,10 +1,9 @@
-# Blueprint Render — monorepo (backend em Codigo/Backend/)
-# Frontend na Vercel: VITE_API_URL=https://<sgi-backend>.onrender.com
+# Blueprint Render — Docker + SQLite em disco persistente (/var/data)
+# Monorepo: no painel Render, Root Directory = Codigo/Backend
 
 services:
   - type: web
     name: sgi-backend
-    rootDir: Codigo/Backend
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .

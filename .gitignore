@@ -1,8 +1,11 @@
 # Backend - build e arquivos sensíveis
-Backend/target/
-Backend/src/main/resources/application-local.properties
-Backend/data/*.db
-!Backend/data/.gitkeep
+Codigo/Backend/target/
+Codigo/Backend/src/main/resources/application-local.properties
+Codigo/Backend/data/*.db
+!Codigo/Backend/data/.gitkeep
+
+# Arquivos temporários
+Backend.zip
 
 # IDE
 .idea/
