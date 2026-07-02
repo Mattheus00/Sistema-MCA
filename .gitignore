@@ -7,7 +7,21 @@ Codigo/Backend/data/*.db
 # Arquivos temporários
 Backend.zip
 
-# IDE
+# Frontend
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# IDE / editor
 .idea/
 *.iml
 .classpath
@@ -15,3 +29,11 @@ Backend.zip
 .settings/
 *.swp
 *~
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
