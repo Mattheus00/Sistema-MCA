@@ -19,7 +19,7 @@ export function gerarHtmlRelatorioServicos(servicos: ServicoRelatorio[]): string
     const nome = escapeHtml(s.titulo);
     const valor =
       s.valorPadrao != null && s.valorPadrao > 0
-        ? (s.valorPadrao / 100).toLocaleString("pt-BR", {
+        ? s.valorPadrao.toLocaleString("pt-BR", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           })

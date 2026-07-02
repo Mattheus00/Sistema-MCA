@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { api, getApiErrorMessage, isMockEnabled, normalizeListResponse } from "@/lib/api";
-import { formatarCentavosParaInput, parseValorReais } from "@/lib/valorBrasil";
+import { formatarReaisParaInput, parseValorReais } from "@/lib/valorBrasil";
 import { gerarHtmlRelatorioServicos } from "@/lib/relatorioServicos";
 
 type Servico = {
@@ -169,7 +169,7 @@ export default function WebServicos() {
     setEditando(servico);
     setTitulo(servico.titulo);
     setDescricao(servico.descricao ?? "");
-    setValor(formatarCentavosParaInput(servico.valorPadrao));
+    setValor(formatarReaisParaInput(servico.valorPadrao));
     setErro(null);
     setModalAberto(true);
   }
@@ -186,13 +186,15 @@ export default function WebServicos() {
       return;
     }
     const valorReais = parseValorReais(valor);
-    const valorCentavos = valorReais > 0 ? Math.round(valorReais * 100) : null;
+    /** Mock usa reais; API real espera valorPadrao em centavos no POST/PUT */
+    const valorParaMock = valorReais > 0 ? valorReais : null;
+    const valorParaApi = valorReais > 0 ? Math.round(valorReais * 100) : null;
     if (isMockEnabled()) {
       if (editando) {
         setServicos((lista) =>
           lista.map((s) =>
             s.id === editando.id
-              ? { ...s, titulo: titulo.trim(), descricao: descricao.trim() || undefined, valorPadrao: valorCentavos }
+              ? { ...s, titulo: titulo.trim(), descricao: descricao.trim() || undefined, valorPadrao: valorParaMock }
               : s
           )
         );
@@ -202,7 +204,7 @@ export default function WebServicos() {
           titulo: titulo.trim(),
           descricao: descricao.trim() || undefined,
           ativo: true,
-          valorPadrao: valorCentavos,
+          valorPadrao: valorParaMock,
         };
         setServicos((lista) => [...lista, novo]);
       }
@@ -216,7 +218,7 @@ export default function WebServicos() {
         nome: titulo.trim(),
         descricao: descricao.trim() || undefined,
         ativo: true,
-        ...(valorCentavos != null && { valorPadrao: valorCentavos }),
+        ...(valorParaApi != null && { valorPadrao: valorParaApi }),
       };
       if (editando) {
         await api.put(`/api/servicos/${editando.id}`, body);
@@ -263,14 +265,26 @@ export default function WebServicos() {
           <h1 className="page-servicos__title">Serviços do Escritório</h1>
           <p className="page-servicos__subtitle">Cadastre, edite e exclua os serviços oferecidos pelo escritório.</p>
         </div>
-        <button
-          type="button"
-          className="btn btn--primary"
-          onClick={abrirNovo}
-          title="Cadastrar novo serviço no catálogo do escritório"
-        >
-          + Novo Serviço
-        </button>
+        <div className="page-servicos__header-acoes">
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={() => imprimirRelatorioServicos(servicosExibidos)}
+            disabled={servicosExibidos.length === 0}
+          >
+            <DownloadIcon />
+            Gerar relatório
+          </button>
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={abrirNovo}
+            title="Cadastrar novo serviço no catálogo do escritório"
+          >
+            <PlusIcon />
+            Novo Serviço
+          </button>
+        </div>
       </div>
 
       {erroLista && <p className="page-servicos__erro">{erroLista}</p>}
@@ -299,28 +313,32 @@ export default function WebServicos() {
                       {s.titulo}
                     </span>
                   </td>
-                  <td title={s.valorPadrao != null ? `Valor padrão: R$ ${(s.valorPadrao / 100).toFixed(2)}` : undefined}>
+                  <td title={s.valorPadrao != null ? `Valor padrão: R$ ${s.valorPadrao.toFixed(2)}` : undefined}>
                     {s.valorPadrao != null
-                      ? (s.valorPadrao / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+                      ? s.valorPadrao.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
                       : "—"}
                   </td>
-                  <td className="page-servicos__acoes">
-                    <button
-                      type="button"
-                      className="page-servicos__acao page-servicos__acao--editar"
-                      onClick={() => abrirEditar(s)}
-                      title="Editar este serviço"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      className="page-servicos__acao page-servicos__acao--excluir"
-                      onClick={() => abrirConfirmarExclusao(s)}
-                      title="Excluir este serviço (desativar)"
-                    >
-                      Excluir
-                    </button>
+                  <td>
+                    <div className="page-servicos__acoes">
+                      <button
+                        type="button"
+                        className="page-servicos__acao page-servicos__acao--editar"
+                        onClick={() => abrirEditar(s)}
+                        title="Editar este serviço"
+                        aria-label="Editar este serviço"
+                      >
+                        <EditIcon />
+                      </button>
+                      <button
+                        type="button"
+                        className="page-servicos__acao page-servicos__acao--excluir"
+                        onClick={() => abrirConfirmarExclusao(s)}
+                        title="Excluir este serviço (desativar)"
+                        aria-label="Excluir este serviço"
+                      >
+                        <TrashIcon />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -352,17 +370,6 @@ export default function WebServicos() {
           </button>
         </div>
       )}
-
-      <div className="page-servicos__relatorio">
-        <button
-          type="button"
-          className="btn btn--secondary"
-          onClick={() => imprimirRelatorioServicos(servicosExibidos)}
-          disabled={servicosExibidos.length === 0}
-        >
-          Gerar relatório
-        </button>
-      </div>
 
       {servicoParaExcluir &&
         createPortal(
@@ -432,5 +439,44 @@ export default function WebServicos() {
         </div>
       )}
     </div>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  );
+}
+
+function DownloadIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  );
+}
+
+function EditIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
+    </svg>
   );
 }

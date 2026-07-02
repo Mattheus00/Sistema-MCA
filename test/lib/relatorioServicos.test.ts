@@ -18,7 +18,7 @@ describe("escapeHtml", () => {
 describe("gerarHtmlRelatorioServicos", () => {
   it("retorna tabela com uma linha por serviço (nome + traço + valor)", () => {
     const servicos = [
-      { titulo: "BAIXA MEI", valorPadrao: 20000 },
+      { titulo: "BAIXA MEI", valorPadrao: 200 },
       { titulo: "DAS MEI", valorPadrao: 500 },
     ];
     const html = gerarHtmlRelatorioServicos(servicos);
@@ -27,15 +27,22 @@ describe("gerarHtmlRelatorioServicos", () => {
     expect(html).toContain("BAIXA MEI");
     expect(html).toContain("200,00");
     expect(html).toContain("DAS MEI");
-    expect(html).toContain("5,00");
+    expect(html).toContain("500,00");
     expect(html).toContain("</tbody></table>");
   });
 
   it("exibe — quando valorPadrao é null, undefined ou zero", () => {
-    const servicos = [{ titulo: "Serviço sem valor", valorPadrao: null }];
+    const servicos = [
+      { titulo: "Sem null", valorPadrao: null as number | null },
+      { titulo: "Sem undefined" },
+      { titulo: "Zero", valorPadrao: 0 },
+    ];
     const html = gerarHtmlRelatorioServicos(servicos);
-    expect(html).toContain("Serviço sem valor");
-    expect(html).toContain("—");
+    expect(html).toContain("Sem null");
+    expect(html).toContain("Sem undefined");
+    expect(html).toContain("Zero");
+    const emDashCount = (html.match(/—/g) ?? []).length;
+    expect(emDashCount).toBe(3);
   });
 
   it("escapa HTML no nome do serviço", () => {

@@ -2,20 +2,141 @@ import type {
   Cliente,
   Inadimplencia,
   ResumoRelatorio,
+  ResumoFinanceiro,
   RankingDevedorItem,
   ExtratoCliente,
   InadimplenciaPeriodoRelatorio,
   PagamentosRecebidosRelatorio,
   AgingRelatorio,
   EfetividadeCobrancaRelatorio,
+  PerfilUsuario,
+  UsuarioAtivo,
+  UsuarioPendente,
 } from "@/types/api";
 
 const store = {
   clientes: [] as Cliente[],
   inadimplentes: [] as Inadimplencia[],
+  usuarios: [
+    {
+      usuarioId: "u-proprietaria",
+      login: "proprietaria",
+      nome: "Usuária Proprietária",
+      telefone: "(11) 99999-0001",
+      perfil: "PROPRIETARIA" as PerfilUsuario,
+      statusUsuario: "ATIVO",
+      ultimoAcesso: null as string | null,
+      criadoEm: "2026-01-01T09:00:00",
+      senha: "123456",
+    },
+    {
+      usuarioId: "u-financeiro",
+      login: "financeiro",
+      nome: "Responsável Financeiro",
+      telefone: "(11) 98888-0002",
+      perfil: "RESPONSAVEL_FINANCEIRO" as PerfilUsuario,
+      statusUsuario: "ATIVO",
+      ultimoAcesso: null as string | null,
+      criadoEm: "2026-01-02T09:00:00",
+      senha: "123456",
+    },
+  ],
 };
 
 let nextId = 1;
+
+function seedScreenshotDemoData() {
+  if (import.meta.env.MODE !== "screenshots") return;
+  if (store.clientes.length > 0) return;
+
+  nextId = 10;
+  store.clientes.push(
+    {
+      id: "1",
+      nome: "Comércio Silva Ltda",
+      email: "contato@silvasupermercado.com.br",
+      cpf: "12.345.678/0001-90",
+      telefone: "(31) 3333-1000",
+      celular: "(31) 98888-1234",
+      situacao: "Inadimplente",
+    },
+    {
+      id: "2",
+      nome: "Ana Paula Ferreira",
+      email: "ana.ferreira@email.com",
+      cpf: "123.456.789-00",
+      celular: "(31) 97777-5566",
+      situacao: "Ativo",
+    },
+    {
+      id: "3",
+      nome: "Tech Solutions ME",
+      email: "financeiro@techsolutions.com",
+      cpf: "98.765.432/0001-10",
+      celular: "(31) 96666-7788",
+      situacao: "Inadimplente",
+    }
+  );
+
+  const venc1 = "2025-11-15";
+  const venc2 = "2025-12-01";
+  const venc3 = "2026-01-10";
+  store.inadimplentes.push(
+    {
+      id: "101",
+      clienteId: "1",
+      valor: 2850,
+      valorOriginal: 2500,
+      juros: 350,
+      vencimento: venc1,
+      descricao: "Honorários contábeis — out/2025",
+      status: "EmAberto",
+    },
+    {
+      id: "102",
+      clienteId: "1",
+      valor: 1200,
+      valorOriginal: 1200,
+      vencimento: venc2,
+      descricao: "Declaração de IRPJ",
+      status: "EmAberto",
+    },
+    {
+      id: "103",
+      clienteId: "3",
+      valor: 980,
+      valorOriginal: 800,
+      juros: 180,
+      vencimento: venc3,
+      descricao: "Consultoria tributária",
+      status: "EmAberto",
+    },
+    {
+      id: "104",
+      clienteId: "2",
+      valor: 450,
+      valorOriginal: 450,
+      vencimento: "2025-10-05",
+      descricao: "Honorários mensais",
+      status: "Pago",
+      updatedAt: "2025-10-08T14:00:00",
+    }
+  );
+
+  store.usuarios.push({
+    usuarioId: "u-pendente",
+    login: "novo.usuario",
+    nome: "Carlos Mendes",
+    telefone: "(31) 95555-4433",
+    perfil: "RESPONSAVEL_FINANCEIRO",
+    statusUsuario: "PENDENTE_APROVACAO",
+    ultimoAcesso: null,
+    criadoEm: "2026-02-20T10:00:00",
+    senha: "123456",
+  });
+}
+
+seedScreenshotDemoData();
 
 function nextIdCliente(): string {
   return String(nextId++);
@@ -46,6 +167,14 @@ function protocolo(id: string | number, vencimento: string): string {
   return `DIV-${d}-${String(id).padStart(4, "0")}`;
 }
 
+function getCurrentUserByToken() {
+  if (typeof localStorage === "undefined") return null;
+  const token = localStorage.getItem("sgi_token");
+  if (!token) return null;
+  const userId = token.replace("mock-token-", "");
+  return store.usuarios.find((u) => u.usuarioId === userId) ?? null;
+}
+
 export function createMockClient() {
   return {
     get<T = unknown>(url: string) {
@@ -63,6 +192,8 @@ export function createMockClient() {
       if (url.startsWith("/api/relatorios/resumo")) {
         const urlObj = new URL(url, "http://x");
         const diasParam = urlObj.searchParams.get("dias");
+        const periodoInicio = urlObj.searchParams.get("periodoInicio");
+        const periodoFim = urlObj.searchParams.get("periodoFim");
         const dias = diasParam ? Number(diasParam) : null;
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
@@ -78,10 +209,26 @@ export function createMockClient() {
         if (dias != null && !Number.isNaN(dias)) {
           base = base.filter((i) => filtrarPorDias(i.vencimento));
         }
+        if (periodoInicio || periodoFim) {
+          const inicio = periodoInicio ? new Date(periodoInicio) : new Date(0);
+          const fim = periodoFim ? new Date(periodoFim) : new Date();
+          base = base.filter((i) => {
+            const dt = new Date((i.updatedAt ?? i.createdAt ?? i.vencimento).split("T")[0]);
+            return dt >= inicio && dt <= fim;
+          });
+        }
         const emAberto = base.filter((i) => (i.status ?? "EmAberto") === "EmAberto");
-        // Recebido: soma de TODOS os itens pagos (não só do período), para o gráfico atualizar ao confirmar pagamento
-        const todosPagos = store.inadimplentes.filter((i) => i.status === "Pago");
+        const todosPagos = base.filter((i) => i.status === "Pago");
         const totalPago = todosPagos.reduce((s, i) => s + (i.valor ?? 0), 0);
+        if (url.startsWith("/api/relatorios/resumo-financeiro")) {
+          const resumoFinanceiro: ResumoFinanceiro = {
+            totalEmAberto: emAberto.reduce((s, i) => s + (i.valor ?? 0), 0),
+            totalRecebido: totalPago,
+            periodoInicio: periodoInicio ?? undefined,
+            periodoFim: periodoFim ?? undefined,
+          };
+          return Promise.resolve({ data: resumoFinanceiro } as { data: T });
+        }
         const resumo: ResumoRelatorio = {
           totalClientes: store.clientes.length,
           totalDividas: base.length,
@@ -139,9 +286,9 @@ export function createMockClient() {
         return Promise.resolve({ data: items } as { data: T });
       }
 
-      const matchExtrato = url.match(/^\/api\/relatorios\/extrato-cliente\/(\d+)$/);
+      const matchExtrato = url.match(/^\/api\/relatorios\/extrato-cliente\/([\w-]+)$/);
       if (matchExtrato) {
-        const clienteId = Number(matchExtrato[1]);
+        const clienteId = String(matchExtrato[1]);
         const c = getCliente(clienteId);
         if (!c) return Promise.reject(new Error(`Mock: cliente ${clienteId} não encontrado`));
         const dividasCliente = store.inadimplentes.filter(
@@ -199,7 +346,7 @@ export function createMockClient() {
           return v >= inicio && v <= fim;
         });
         const porCliente = new Map<
-          number,
+          string,
           { qtd: number; valor: number; statusPior: InadimplenciaPeriodoRelatorio["detalhamento"][0]["statusPior"] }
         >();
         const statusOrd = (s: InadimplenciaPeriodoRelatorio["detalhamento"][0]["statusPior"]) =>
@@ -330,15 +477,67 @@ export function createMockClient() {
         };
         return Promise.resolve({ data: res } as { data: T });
       }
+      if (url === "/api/usuarios/pendentes") {
+        const pendentes: UsuarioPendente[] = store.usuarios
+          .filter((u) => u.statusUsuario === "PENDENTE_APROVACAO")
+          .map(({ senha: _s, telefone: _t, ...u }) => u);
+        return Promise.resolve({ data: pendentes } as { data: T });
+      }
+      if (url === "/api/usuarios/ativos") {
+        const ativos: UsuarioAtivo[] = store.usuarios
+          .filter((u) => u.statusUsuario === "ATIVO")
+          .map(({ senha: _s, ...u }) => u as UsuarioAtivo);
+        return Promise.resolve({ data: ativos } as { data: T });
+      }
 
       return Promise.reject(new Error(`Mock: rota não encontrada: ${url}`));
     },
 
     post<T = unknown>(url: string, body: unknown) {
       if (url === "/api/auth/login") {
+        const payload = (body ?? {}) as { login?: string; senha?: string };
+        const login = String(payload.login ?? "").trim();
+        const senha = String(payload.senha ?? "");
+        const user = store.usuarios.find((u) => u.login === login);
+        if (!user || user.senha !== senha) return Promise.reject(new Error("Credenciais inválidas."));
+        if (user.statusUsuario === "PENDENTE_APROVACAO") {
+          return Promise.reject(new Error("Cadastro pendente de aprovação da proprietária."));
+        }
         return Promise.resolve({
-          data: { token: "mock-jwt-token" },
+          data: {
+            token: `mock-token-${user.usuarioId}`,
+            perfil: user.perfil,
+            usuario: {
+              nome: user.nome,
+              login: user.login,
+              perfil: user.perfil,
+            },
+          },
         } as { data: T });
+      }
+      if (url === "/api/auth/register") {
+        const payload = (body ?? {}) as { nome?: string; login?: string; senha?: string };
+        const nome = String(payload.nome ?? "").trim();
+        const login = String(payload.login ?? "").trim();
+        const senha = String(payload.senha ?? "");
+        if (!nome || !login || !senha) {
+          return Promise.reject(new Error("Nome, login e senha são obrigatórios."));
+        }
+        const loginExiste = store.usuarios.some((u) => u.login.toLowerCase() === login.toLowerCase());
+        if (loginExiste) return Promise.reject(new Error("Login já cadastrado."));
+        const novoId = `u-${Date.now()}`;
+        store.usuarios.push({
+          usuarioId: novoId,
+          login,
+          nome,
+          telefone: "",
+          perfil: "RESPONSAVEL_FINANCEIRO",
+          statusUsuario: "PENDENTE_APROVACAO",
+          ultimoAcesso: null,
+          criadoEm: new Date().toISOString(),
+          senha,
+        });
+        return Promise.resolve({ data: { ok: true } } as { data: T });
       }
       if (url === "/api/clientes") {
         const payload = body as Cliente;
@@ -365,6 +564,48 @@ export function createMockClient() {
     },
 
     patch<T = unknown>(url: string, body: unknown) {
+      const matchAprovarUsuario = url.match(/^\/api\/usuarios\/([\w-]+)\/aprovar$/);
+      if (matchAprovarUsuario) {
+        const usuarioId = matchAprovarUsuario[1];
+        const userAtual = getCurrentUserByToken();
+        const perfilStorage =
+          typeof localStorage !== "undefined" ? (localStorage.getItem("sgi_user_profile") as PerfilUsuario | null) : null;
+        const perfilAtual = userAtual?.perfil ?? perfilStorage;
+        if (perfilAtual !== "PROPRIETARIA") {
+          return Promise.reject(new Error("Apenas a proprietária pode aprovar cadastros."));
+        }
+        const idx = store.usuarios.findIndex((u) => u.usuarioId === usuarioId);
+        if (idx === -1) return Promise.reject(new Error("Usuário não encontrado."));
+        const atual = store.usuarios[idx];
+        const aprovado = { ...atual, statusUsuario: "ATIVO" as const };
+        store.usuarios[idx] = aprovado;
+        const { senha: _senha, ...ret } = aprovado;
+        return Promise.resolve({ data: ret } as { data: T });
+      }
+      const matchRevogar = url.match(/^\/api\/usuarios\/([\w-]+)\/revogar$/);
+      if (matchRevogar) {
+        const usuarioId = matchRevogar[1];
+        const userAtual = getCurrentUserByToken();
+        const perfilStorage =
+          typeof localStorage !== "undefined" ? (localStorage.getItem("sgi_user_profile") as PerfilUsuario | null) : null;
+        const perfilAtual = userAtual?.perfil ?? perfilStorage;
+        if (perfilAtual !== "PROPRIETARIA") {
+          return Promise.reject(new Error("Apenas a proprietária pode revogar acessos."));
+        }
+        if (userAtual?.usuarioId === usuarioId) {
+          return Promise.reject(new Error("Não é possível revogar o próprio acesso."));
+        }
+        const idx = store.usuarios.findIndex((u) => u.usuarioId === usuarioId);
+        if (idx === -1) return Promise.reject(new Error("Usuário não encontrado."));
+        const alvo = store.usuarios[idx];
+        if (alvo.perfil === "PROPRIETARIA") {
+          return Promise.reject(new Error("Não é possível revogar o acesso de outra proprietária."));
+        }
+        const revogado = { ...alvo, statusUsuario: "INATIVO" as const };
+        store.usuarios[idx] = revogado;
+        const { senha: _senha, ...ret } = revogado;
+        return Promise.resolve({ data: ret } as { data: T });
+      }
       const matchInad = url.match(/^\/api\/inadimplentes\/([\w-]+)$/);
       if (matchInad) {
         const id = matchInad[1];

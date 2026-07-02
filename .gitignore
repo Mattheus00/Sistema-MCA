@@ -19,7 +19,12 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+screenshots
 *.local
+.env
+.env.production
+.env.screenshots
+.env.local
 
 # IDE / editor
 .idea/

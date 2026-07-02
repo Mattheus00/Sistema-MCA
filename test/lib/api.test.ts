@@ -42,6 +42,11 @@ describe("getApiErrorMessage", () => {
     expect(getApiErrorMessage(err, "Fallback")).toContain("Tempo esgotado");
   });
 
+  it("retorna mensagem de timeout quando message inclui 'timeout'", () => {
+    const err = { message: "timeout of 20000ms exceeded" } as AxiosError<ApiErrorBody>;
+    expect(getApiErrorMessage(err, "Fallback")).toContain("Tempo esgotado");
+  });
+
   it("retorna mensagem de rede quando Network Error", () => {
     const err = { message: "Network Error" } as AxiosError<ApiErrorBody>;
     expect(getApiErrorMessage(err, "Fallback")).toContain("conexão");

@@ -6,6 +6,7 @@ import {
   normalizeInadimplenciaToApi,
   normalizeRankingFromApi,
   normalizeInadimplenciaPeriodoFromApi,
+  normalizeResumoRelatorioFromApi,
 } from "@/lib/apiNormalizers";
 
 describe("normalizeClienteFromApi", () => {
@@ -36,6 +37,13 @@ describe("normalizeClienteFromApi", () => {
     const c = normalizeClienteFromApi(raw);
     expect(c.cpf).toBe("12345678900");
   });
+
+  it("mapeia telefone fixo e celular", () => {
+    const raw = { nome: "Z", telefone: "1133334444", celular: "11999998888" };
+    const c = normalizeClienteFromApi(raw);
+    expect(c.telefone).toBe("1133334444");
+    expect(c.celular).toBe("11999998888");
+  });
 });
 
 describe("normalizeClienteToApi", () => {
@@ -48,11 +56,21 @@ describe("normalizeClienteToApi", () => {
     const payload = normalizeClienteToApi({ nome: "B", cpf: "123.456.789-00" });
     expect(payload.cpfCnpj).toBe("12345678900");
   });
+
+  it("envia telefone e celular só com dígitos", () => {
+    const payload = normalizeClienteToApi({
+      nome: "C",
+      telefone: "(11) 3333-4444",
+      celular: "(11) 99999-8888",
+    });
+    expect(payload.telefone).toBe("1133334444");
+    expect(payload.celular).toBe("11999998888");
+  });
 });
 
 describe("normalizeInadimplenciaFromApi", () => {
-  it("converte valor de centavos para reais", () => {
-    const raw = { clienteId: "c1", valor: 15050, vencimento: "2026-01-10" };
+  it("mantém valor em reais (sem conversão de centavos)", () => {
+    const raw = { clienteId: "c1", valor: 150.5, vencimento: "2026-01-10" };
     const i = normalizeInadimplenciaFromApi(raw);
     expect(i.valor).toBe(150.5);
   });
@@ -62,7 +80,7 @@ describe("normalizeInadimplenciaFromApi", () => {
       id: "d1",
       clienteId: "c1",
       clienteNome: "Cliente X",
-      valor: 10000,
+      valor: 100,
       vencimento: "2026-02-01",
       descricao: "Mensalidade",
       status: "EmAberto",
@@ -77,13 +95,13 @@ describe("normalizeInadimplenciaFromApi", () => {
 });
 
 describe("normalizeInadimplenciaToApi", () => {
-  it("converte valor de reais para centavos", () => {
+  it("envia valor em reais (sem multiplicar por 100)", () => {
     const payload = normalizeInadimplenciaToApi({
       clienteId: "c1",
       valor: 199.9,
       vencimento: "2026-03-15",
     });
-    expect(payload.valor).toBe(19990);
+    expect(payload.valor).toBe(199.9);
   });
 
   it("inclui descricao quando informada", () => {
@@ -140,5 +158,36 @@ describe("normalizeInadimplenciaPeriodoFromApi", () => {
     expect(r!.dataFim).toBe("2025-01-31");
     expect(r!.totalClientes).toBe(10);
     expect(r!.valorTotal).toBe(50000);
+  });
+});
+
+describe("normalizeResumoRelatorioFromApi", () => {
+  it("retorna null quando data inválido", () => {
+    expect(normalizeResumoRelatorioFromApi(null)).toBeNull();
+  });
+
+  it("mantém valores monetários em reais (sem dividir por 100)", () => {
+    const r = normalizeResumoRelatorioFromApi({
+      totalClientes: 195,
+      totalDividas: 1,
+      totalEmAberto: 2500,
+      totalPago: 16.6,
+    });
+    expect(r).toEqual({
+      totalClientes: 195,
+      totalDividas: 1,
+      totalEmAberto: 2500,
+      totalPago: 16.6,
+    });
+  });
+
+  it("aceita totalRecebido como alias de totalPago", () => {
+    const r = normalizeResumoRelatorioFromApi({
+      totalClientes: 1,
+      totalDividas: 1,
+      totalEmAberto: 100,
+      totalRecebido: 50,
+    });
+    expect(r?.totalPago).toBe(50);
   });
 });

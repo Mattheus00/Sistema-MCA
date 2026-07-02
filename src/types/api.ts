@@ -10,10 +10,25 @@ export type Cliente = {
   email?: string;
   cpf?: string;
   telefone?: string;
+  celular?: string;
   endereco?: string;
   situacao?: "Ativo" | "Inadimplente" | "Inativo";
+   /** Dívida total do cliente (somatório das inadimplências em aberto). */
+   saldoDevedorTotal?: number;
   createdAt?: string;
   updatedAt?: string;
+};
+
+/** Pagamento vinculado à dívida (resposta da API; valores em reais para exibição) */
+export type PagamentoInadimplencia = {
+  pagamentoId?: string;
+  dividaId?: string;
+  protocoloDivida?: string;
+  valorPago: number;
+  dataPagamento: string;
+  metodoPagamento?: string;
+  comprovante?: string;
+  criadoEm?: string;
 };
 
 export type Inadimplencia = {
@@ -21,14 +36,27 @@ export type Inadimplencia = {
   id?: string;
   clienteId: string;
   clienteNome?: string;
+  /** Valor total devido (original + juros). Pode vir como valor ou valorDevedor. */
   valor: number;
-  /** Valor original da dívida (sem juros). Se omitido, considera-se igual a valor e juros = 0. */
+  /** Valor original da dívida (sem juros). */
   valorOriginal?: number;
+  /** Juros retornados pela API. */
+  juros?: number;
+  /** Valor total devido (alias de valor, quando API retorna valorDevedor). */
+  valorDevedor?: number;
+  /** Texto descritivo opcional sobre como os juros foram calculados. */
+  detalhesJuros?: string;
+  /** Multa diária em percentual (% ao dia), quando enviado pelo backend. */
+  multaDiaPercent?: number;
+  /** Juros ao mês em percentual (% ao mês), quando enviado pelo backend. */
+  jurosMesPercent?: number;
   vencimento: string; // ISO 8601 (yyyy-MM-dd ou yyyy-MM-ddTHH:mm:ss)
   descricao?: string;
-  status?: "EmAberto" | "Pago" | "Acordo";
+  status?: "EmAberto" | "Pago" | "Acordo" | "PARCIAL";
   createdAt?: string;
   updatedAt?: string;
+  /** Histórico de pagamentos (parciais e totais) retornado pelo backend na listagem/detalhe */
+  pagamentos?: PagamentoInadimplencia[];
 };
 
 export type ResumoRelatorio = {
@@ -36,6 +64,14 @@ export type ResumoRelatorio = {
   totalDividas: number;
   totalEmAberto: number;
   totalPago: number;
+};
+
+/** Resposta do endpoint /api/relatorios/resumo-financeiro (por período) */
+export type ResumoFinanceiro = {
+  totalEmAberto: number;
+  totalRecebido: number;
+  periodoInicio?: string;
+  periodoFim?: string;
 };
 
 export type TopDevedor = {
@@ -210,6 +246,37 @@ export type LoginPayload = {
 export type LoginResponse = {
   token?: string;
   accessToken?: string;
+  perfil?: PerfilUsuario;
+  role?: PerfilUsuario;
+  usuario?: {
+    perfil?: PerfilUsuario;
+    role?: PerfilUsuario;
+    nome?: string;
+    login?: string;
+  };
+};
+
+export type PerfilUsuario = "PROPRIETARIA" | "RESPONSAVEL_FINANCEIRO";
+
+export type UsuarioPendente = {
+  usuarioId: string;
+  login: string;
+  nome: string;
+  perfil: PerfilUsuario | string;
+  statusUsuario: "PENDENTE_APROVACAO" | "ATIVO" | string;
+  ultimoAcesso: string | null;
+  criadoEm: string;
+};
+
+/** Resposta de GET /api/usuarios/ativos (contas com status ATIVO) */
+export type UsuarioAtivo = {
+  usuarioId: string;
+  login: string;
+  nome: string;
+  telefone?: string | null;
+  perfil: PerfilUsuario | string;
+  statusUsuario: string;
+  criadoEm: string;
 };
 
 /** Formato de erro da API (ajuste conforme o backend) */
