@@ -19,6 +19,7 @@ export function normalizeClienteFromApi(raw: Record<string, unknown>): Cliente {
   const situacao = raw.situacao ?? mapStatusClienteToSituacao(String(raw.statusCliente ?? ""));
   return {
     id: id != null ? String(id) : undefined,
+    codigo: raw.codigo != null ? String(raw.codigo) : undefined,
     nome: String(raw.nome ?? ""),
     email: raw.email != null ? String(raw.email) : undefined,
     cpf: raw.cpf != null ? String(raw.cpf) : raw.cpfCnpj != null ? String(raw.cpfCnpj) : undefined,
@@ -26,6 +27,12 @@ export function normalizeClienteFromApi(raw: Record<string, unknown>): Cliente {
     celular: raw.celular != null ? String(raw.celular) : undefined,
     endereco: raw.endereco != null ? String(raw.endereco) : undefined,
     situacao: situacao as Cliente["situacao"],
+    saldoDevedorTotal:
+      raw.saldoDevedorTotal != null
+        ? Number(raw.saldoDevedorTotal)
+        : raw.saldoDevedor != null
+          ? Number(raw.saldoDevedor)
+          : undefined,
     createdAt: raw.createdAt != null ? String(raw.createdAt) : raw.criadoEm != null ? String(raw.criadoEm) : undefined,
     updatedAt: raw.updatedAt != null ? String(raw.updatedAt) : raw.atualizadoEm != null ? String(raw.atualizadoEm) : undefined,
   };
@@ -43,15 +50,20 @@ function mapStatusClienteToSituacao(status: string): string {
 export function normalizeClienteToApi(c: Partial<Cliente>): Record<string, unknown> {
   const situacao = c.situacao ?? "Ativo";
   const statusCliente = situacao === "Ativo" ? "ATIVO" : situacao === "Inadimplente" ? "INADIMPLENTE" : "INATIVO";
+  const cpfRaw = c.cpf?.trim();
+  const cpfDigits = cpfRaw?.replace(/\D/g, "") ?? "";
+  const cpfCnpj =
+    cpfRaw && /[a-zA-Z]/.test(cpfRaw) ? cpfRaw.replace(/\s/g, "") : cpfDigits || undefined;
   const payload: Record<string, unknown> = {
     nome: c.nome,
     email: c.email,
-    cpfCnpj: c.cpf?.replace(/\D/g, "") || undefined,
+    cpfCnpj,
     telefone: c.telefone?.replace(/\D/g, "") || undefined,
     celular: c.celular?.replace(/\D/g, "") || undefined,
     endereco: c.endereco,
     statusCliente,
   };
+  if (c.codigo?.trim()) payload.codigo = c.codigo.trim().toUpperCase();
   if (c.id != null) payload.id = c.id;
   return payload;
 }

@@ -14,14 +14,6 @@ function formatCpfExport(cpf: string | undefined): string {
   return cpf;
 }
 
-function formatTelefoneFixoExport(tel: string | undefined): string {
-  if (!tel?.trim()) return "";
-  const n = tel.replace(/\D/g, "");
-  const local = n.length > 8 ? n.slice(-8) : n;
-  if (local.length >= 5) return `${local.slice(0, 4)}-${local.slice(4)}`;
-  return local || tel;
-}
-
 function formatCelularExport(tel: string | undefined): string {
   if (!tel?.trim()) return "";
   const n = tel.replace(/\D/g, "").slice(0, 11);
@@ -39,9 +31,9 @@ export function exportarRelatorioClientesExcel(
   filtros?: FiltrosRelatorioClientes
 ): void {
   const cabecalhos = [
+    "Código",
     "Nome",
     "CPF/CNPJ",
-    "Telefone fixo",
     "Celular",
     "E-mail",
     "Endereço",
@@ -49,9 +41,9 @@ export function exportarRelatorioClientesExcel(
   ];
 
   const linhas = clientes.map((c) => [
+    c.codigo?.trim() ?? "",
     c.nome,
     formatCpfExport(c.cpf),
-    formatTelefoneFixoExport(c.telefone),
     formatCelularExport(c.celular),
     c.email?.trim() ?? "",
     c.endereco?.trim() ?? "",

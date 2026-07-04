@@ -2649,9 +2649,26 @@ select.modal__select {
 .page-inadimplentes__acao-topo {
   margin-bottom: 20px;
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+}
+
+.page-inadimplentes__acao-topo .btn {
+  justify-content: center;
+  align-items: center;
+  min-height: 38px;
+  padding: 10px 20px;
+  white-space: nowrap;
+  box-sizing: border-box;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.page-inadimplentes__acao-topo .btn svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 .page-inadimplentes__acao-topo .btn--primary {
@@ -2664,6 +2681,11 @@ select.modal__select {
 .page-inadimplentes__acao-topo .btn--primary:hover {
   background: var(--cor-principal-hover);
   box-shadow: 0 6px 20px var(--shadow-accent);
+}
+
+.page-inadimplentes__acao-topo .btn--ajustar-juros {
+  gap: 10px;
+  padding: 10px 22px;
 }
 
 .page-inadimplentes__acao-topo .btn--secondary {

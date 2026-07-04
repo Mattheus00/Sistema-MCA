@@ -53,6 +53,7 @@ function seedScreenshotDemoData() {
   store.clientes.push(
     {
       id: "1",
+      codigo: "12",
       nome: "Comércio Silva Ltda",
       email: "contato@silvasupermercado.com.br",
       cpf: "12.345.678/0001-90",
@@ -62,6 +63,7 @@ function seedScreenshotDemoData() {
     },
     {
       id: "2",
+      codigo: "28",
       nome: "Ana Paula Ferreira",
       email: "ana.ferreira@email.com",
       cpf: "123.456.789-00",
@@ -70,6 +72,7 @@ function seedScreenshotDemoData() {
     },
     {
       id: "3",
+      codigo: "35",
       nome: "Tech Solutions ME",
       email: "financeiro@techsolutions.com",
       cpf: "98.765.432/0001-10",
@@ -175,11 +178,51 @@ function getCurrentUserByToken() {
   return store.usuarios.find((u) => u.usuarioId === userId) ?? null;
 }
 
+function mapSituacaoToStatusCliente(situacao: Cliente["situacao"]): string {
+  if (situacao === "Inativo") return "INATIVO";
+  if (situacao === "Inadimplente") return "INADIMPLENTE";
+  return "ATIVO";
+}
+
+function filtrarClientesMock(params: URLSearchParams): Cliente[] {
+  const busca = (params.get("busca") ?? params.get("nome") ?? "").trim().toLowerCase();
+  const status = params.get("statusCliente")?.toUpperCase();
+
+  return store.clientes.filter((c) => {
+    const statusCliente = mapSituacaoToStatusCliente(c.situacao ?? "Ativo");
+    if (status && statusCliente !== status) return false;
+    if (!busca) return true;
+    const codigo = (c.codigo ?? "").toLowerCase();
+    const nome = c.nome.toLowerCase();
+    const doc = (c.cpf ?? "").replace(/\D/g, "");
+    const buscaDoc = busca.replace(/\D/g, "");
+    return (
+      codigo === busca ||
+      codigo.startsWith(busca) ||
+      codigo.includes(busca) ||
+      nome.includes(busca) ||
+      (buscaDoc.length > 0 && doc.includes(buscaDoc)) ||
+      (c.cpf ?? "").toLowerCase().includes(busca)
+    );
+  });
+}
+
 export function createMockClient() {
   return {
-    get<T = unknown>(url: string) {
-      if (url === "/api/clientes") {
-        const list = store.clientes.map((c) => ({ ...c, id: String(c.id) }));
+    get<T = unknown>(url: string, config?: { params?: Record<string, unknown> }) {
+      if (url.startsWith("/api/clientes")) {
+        const urlObj = new URL(url, "http://mock.local");
+        const params = config?.params ?? {};
+        for (const [key, value] of Object.entries(params)) {
+          if (value != null && value !== "") urlObj.searchParams.set(key, String(value));
+        }
+        const list = filtrarClientesMock(urlObj.searchParams).map((c) => ({
+          ...c,
+          id: String(c.id),
+          clienteId: String(c.id),
+          cpfCnpj: c.cpf,
+          statusCliente: mapSituacaoToStatusCliente(c.situacao ?? "Ativo"),
+        }));
         return Promise.resolve({ data: list } as { data: T });
       }
       if (url === "/api/inadimplentes") {

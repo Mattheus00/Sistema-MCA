@@ -13,7 +13,6 @@ function formatCpf(cpf: string | undefined): string {
   return cpf;
 }
 
-/** Aplica máscara de CPF (11 dígitos) ou CNPJ (14 dígitos) enquanto digita */
 function maskCpfCnpj(value: string): string {
   const n = value.replace(/\D/g, "").slice(0, 14);
   if (n.length <= 11) {
@@ -35,35 +34,59 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
-function formatTelefoneFixo(tel: string | undefined): string {
-  if (!tel) return "—";
-  const n = tel.replace(/\D/g, "");
-  const local = n.length > 8 ? n.slice(-8) : n;
-  if (local.length >= 5) return `${local.slice(0, 4)}-${local.slice(4)}`;
-  return local || tel;
+function compareCodigo(a: string | undefined, b: string | undefined, mul: number): number {
+  const ca = (a ?? "").trim();
+  const cb = (b ?? "").trim();
+  const na = /^\d+$/.test(ca) ? Number(ca) : NaN;
+  const nb = /^\d+$/.test(cb) ? Number(cb) : NaN;
+  if (!Number.isNaN(na) && !Number.isNaN(nb)) return mul * (na - nb);
+  return mul * ca.localeCompare(cb, "pt-BR", { numeric: true });
+}
+
+const FORM_VAZIO: Cliente = {
+  codigo: "",
+  nome: "",
+  email: "",
+  cpf: "",
+  celular: "",
+  endereco: "",
+  situacao: "Ativo",
+};
+
+/** Filtro local apenas para modo mock (API real já filtra com `busca`). */
+function filtrarClientesPorTermoMock(lista: Cliente[], termo?: string): Cliente[] {
+  const t = termo?.trim();
+  if (!t) return lista;
+  const tl = t.toLowerCase();
+  const td = t.replace(/\D/g, "");
+  return lista.filter((c) => {
+    const codigo = (c.codigo ?? "").trim().toLowerCase();
+    const nome = c.nome.toLowerCase();
+    const cpf = (c.cpf ?? "").toLowerCase();
+    const cpfDigitos = (c.cpf ?? "").replace(/\D/g, "");
+    return (
+      codigo === tl ||
+      codigo.includes(tl) ||
+      nome.includes(tl) ||
+      cpf.includes(tl) ||
+      (td.length > 0 && cpfDigitos.includes(td))
+    );
+  });
 }
 
 function formatCelular(tel: string | undefined): string {
   if (!tel) return "—";
   const n = tel.replace(/\D/g, "").slice(0, 11);
   if (n.length <= 2) return n ? `(${n}` : tel;
-  if (n.length <= 7) return `(${n.slice(0, 2)}) (${n.slice(2)}`;
-  return `(${n.slice(0, 2)}) (${n.slice(2, 7)}-${n.slice(7)})`;
+  if (n.length <= 7) return `(${n.slice(0, 2)}) ${n.slice(2)}`;
+  return `(${n.slice(0, 2)}) ${n.slice(2, 7)}-${n.slice(7)}`;
 }
 
-/** Máscara xxxx-xxxx (8 dígitos) */
-function maskTelefoneFixo(value: string): string {
-  const n = value.replace(/\D/g, "").slice(0, 8);
-  if (n.length <= 4) return n;
-  return `${n.slice(0, 4)}-${n.slice(4)}`;
-}
-
-/** Máscara (xx) (xxxxx-xxxx) */
 function maskCelular(value: string): string {
   const n = value.replace(/\D/g, "").slice(0, 11);
   if (n.length <= 2) return n ? `(${n}` : n;
-  if (n.length <= 7) return `(${n.slice(0, 2)}) (${n.slice(2)}`;
-  return `(${n.slice(0, 2)}) (${n.slice(2, 7)}-${n.slice(7)})`;
+  if (n.length <= 7) return `(${n.slice(0, 2)}) ${n.slice(2)}`;
+  return `(${n.slice(0, 2)}) ${n.slice(2, 7)}-${n.slice(7)}`;
 }
 
 export default function WebClientes() {
@@ -72,27 +95,48 @@ export default function WebClientes() {
   const [erro, setErro] = useState<string | null>(null);
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
-  const [filtroSituacao, setFiltroSituacao] = useState<"todos" | "ativo" | "inativo">("todos");
   const [modalAberto, setModalAberto] = useState(false);
   const [clienteEmEdicao, setClienteEmEdicao] = useState<Cliente | null>(null);
   const [clienteParaExcluir, setClienteParaExcluir] = useState<Cliente | null>(null);
-  const [ordenarPor, setOrdenarPor] = useState<"nome" | "cpf" | null>(null);
+  const [ordenarPor, setOrdenarPor] = useState<"codigo" | "nome" | "cpf" | null>(null);
   const [ordemAsc, setOrdemAsc] = useState(true);
   const [pagina, setPagina] = useState(1);
   const itensPorPagina = 10;
   const buscaDebounceRef = useRef(false);
 
-  const [form, setForm] = useState<Cliente>({
-    nome: "",
-    email: "",
-    cpf: "",
-    telefone: "",
-    celular: "",
-    endereco: "",
-    situacao: "Ativo",
-  });
+  const [form, setForm] = useState<Cliente>({ ...FORM_VAZIO });
 
-  /* Trava o scroll da página enquanto um modal estiver aberto */
+  function buildListParams(termoBusca?: string) {
+    const params: Record<string, string | number> = {
+      page: 0,
+      size: 100,
+      statusCliente: "ATIVO",
+    };
+    const termo = termoBusca?.trim();
+    if (termo) params.busca = termo;
+    return params;
+  }
+
+  async function listar(termoBusca?: string) {
+    try {
+      setLoading(true);
+      setErro(null);
+      const termo = termoBusca?.trim();
+      const r = await api.get("/api/clientes", { params: buildListParams(termo) });
+      let list = normalizeListResponse<Record<string, unknown>>(r.data).map((c) =>
+        normalizeClienteFromApi(c)
+      );
+      if (isMockEnabled() && termo) {
+        list = filtrarClientesPorTermoMock(list, termo);
+      }
+      setClientes(list);
+    } catch (e: unknown) {
+      setErro(getApiErrorMessage(e, "Falha ao buscar clientes"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
     if (modalAberto || clienteParaExcluir) {
       document.body.style.overflow = "hidden";
@@ -110,39 +154,28 @@ export default function WebClientes() {
     return () => clearTimeout(t);
   }, [mensagemSucesso]);
 
-  async function listar(termoBusca?: string) {
-    try {
-      setLoading(true);
-      setErro(null);
-      const params: { page: number; size: number; nome?: string } = { page: 0, size: 100 };
-      const termo = termoBusca?.trim();
-      if (termo) params.nome = termo;
-      const r = await api.get("/api/clientes", { params });
-      const list = normalizeListResponse<Record<string, unknown>>(r.data);
-      setClientes(list.map((c) => normalizeClienteFromApi(c)));
-    } catch (e: unknown) {
-      setErro(getApiErrorMessage(e, "Falha ao buscar clientes"));
-    } finally {
-      setLoading(false);
-    }
-  }
-
   async function criar() {
     if (!form.nome?.trim()) return setErro("Nome é obrigatório");
     if (!isValidEmail(form.email ?? "")) return setErro("E-mail inválido.");
     setErro(null);
     try {
       const payload = isMockEnabled()
-        ? { ...form, cpf: form.cpf?.replace(/\D/g, "") || undefined, telefone: form.telefone?.replace(/\D/g, "") || undefined, celular: form.celular?.replace(/\D/g, "") || undefined }
+        ? {
+            ...form,
+            codigo: form.codigo?.trim().toUpperCase() || undefined,
+            cpf: form.cpf?.trim() || undefined,
+            celular: form.celular?.replace(/\D/g, "") || undefined,
+          }
         : normalizeClienteToApi(form);
       const r = await api.post("/api/clientes", payload);
       const raw = r?.data && typeof r.data === "object" ? r.data : {};
       const novoCliente = normalizeClienteFromApi(raw as Record<string, unknown>);
       setClientes((prev) => [novoCliente, ...prev.filter((c) => c.id !== novoCliente.id)]);
-      setForm({ nome: "", email: "", cpf: "", telefone: "", celular: "", endereco: "", situacao: "Ativo" });
+      setForm({ ...FORM_VAZIO });
       setModalAberto(false);
       setClienteEmEdicao(null);
       setMensagemSucesso("Cliente cadastrado com sucesso.");
+      await listar(busca.trim() || undefined);
     } catch (e: unknown) {
       setErro(getApiErrorMessage(e, "Falha ao criar cliente"));
     }
@@ -150,7 +183,7 @@ export default function WebClientes() {
 
   function abrirModalNovo() {
     setClienteEmEdicao(null);
-    setForm({ nome: "", email: "", cpf: "", telefone: "", celular: "", endereco: "", situacao: "Ativo" });
+    setForm({ ...FORM_VAZIO });
     setModalAberto(true);
   }
 
@@ -158,10 +191,10 @@ export default function WebClientes() {
     setClienteEmEdicao(c);
     setForm({
       ...c,
+      codigo: c.codigo ?? "",
       nome: c.nome,
       email: c.email ?? "",
       cpf: formatCpf(c.cpf) === "—" ? "" : formatCpf(c.cpf),
-      telefone: formatTelefoneFixo(c.telefone) === "—" ? "" : formatTelefoneFixo(c.telefone),
       celular: formatCelular(c.celular) === "—" ? "" : formatCelular(c.celular),
       endereco: c.endereco ?? "",
       situacao: c.situacao ?? "Ativo",
@@ -176,14 +209,20 @@ export default function WebClientes() {
     setErro(null);
     try {
       const payload = isMockEnabled()
-        ? { ...form, id: clienteEmEdicao.id, cpf: form.cpf?.replace(/\D/g, "") || undefined, telefone: form.telefone?.replace(/\D/g, "") || undefined, celular: form.celular?.replace(/\D/g, "") || undefined }
+        ? {
+            ...form,
+            id: clienteEmEdicao.id,
+            codigo: form.codigo?.trim().toUpperCase() || undefined,
+            cpf: form.cpf?.trim() || undefined,
+            celular: form.celular?.replace(/\D/g, "") || undefined,
+          }
         : normalizeClienteToApi({ ...form, id: clienteEmEdicao.id });
       await api.patch(`/api/clientes/${clienteEmEdicao.id}`, payload);
-      setForm({ nome: "", email: "", cpf: "", telefone: "", celular: "", endereco: "", situacao: "Ativo" });
+      setForm({ ...FORM_VAZIO });
       setModalAberto(false);
       setClienteEmEdicao(null);
       setMensagemSucesso("Cliente atualizado com sucesso.");
-      await listar();
+      await listar(busca.trim() || undefined);
     } catch (e: unknown) {
       setErro(getApiErrorMessage(e, "Falha ao atualizar cliente"));
     }
@@ -195,8 +234,9 @@ export default function WebClientes() {
       setErro(null);
       await api.delete(`/api/clientes/${c.id}`);
       setClienteParaExcluir(null);
+      setClientes((prev) => prev.filter((item) => item.id !== c.id));
       setMensagemSucesso("Cliente excluído com sucesso.");
-      await listar();
+      await listar(busca.trim() || undefined);
     } catch (e: unknown) {
       setErro(getApiErrorMessage(e, "Falha ao excluir cliente"));
     }
@@ -206,7 +246,6 @@ export default function WebClientes() {
     listar();
   }, []);
 
-  /* Busca por nome: envia termo ao backend após parar de digitar (debounce 400ms) */
   useEffect(() => {
     if (!buscaDebounceRef.current) {
       buscaDebounceRef.current = true;
@@ -216,26 +255,14 @@ export default function WebClientes() {
     const t = setTimeout(() => {
       listar(termo || undefined);
       setPagina(1);
-    }, 400);
+    }, 300);
     return () => clearTimeout(t);
   }, [busca]);
 
-  const filtrados = clientes.filter((c) => {
-    const matchBusca =
-      !busca.trim() ||
-      c.nome.toLowerCase().includes(busca.toLowerCase()) ||
-      (c.cpf && c.cpf.replace(/\D/g, "").includes(busca.replace(/\D/g, "")));
-    const situacao = c.situacao ?? "Ativo";
-    const matchSituacao =
-      filtroSituacao === "todos" ||
-      (filtroSituacao === "ativo" && situacao !== "Inativo") ||
-      (filtroSituacao === "inativo" && situacao === "Inativo");
-    return matchBusca && matchSituacao;
-  });
-
-  const ordenados = [...filtrados].sort((a, b) => {
+  const ordenados = [...clientes].sort((a, b) => {
     if (!ordenarPor) return 0;
     const mul = ordemAsc ? 1 : -1;
+    if (ordenarPor === "codigo") return compareCodigo(a.codigo, b.codigo, mul);
     if (ordenarPor === "nome") return mul * (a.nome.localeCompare(b.nome) || 0);
     if (ordenarPor === "cpf") return mul * ((a.cpf || "").localeCompare(b.cpf || ""));
     return 0;
@@ -249,11 +276,7 @@ export default function WebClientes() {
     if (pagina > totalPaginas && totalPaginas >= 1) setPagina(1);
   }, [ordenados.length, totalPaginas, pagina]);
 
-  useEffect(() => {
-    setPagina(1);
-  }, [filtroSituacao]);
-
-  function toggleOrdenacao(campo: "nome" | "cpf") {
+  function toggleOrdenacao(campo: "codigo" | "nome" | "cpf") {
     if (ordenarPor === campo) setOrdemAsc((x) => !x);
     else {
       setOrdenarPor(campo);
@@ -267,7 +290,7 @@ export default function WebClientes() {
       return;
     }
     setErro(null);
-    exportarRelatorioClientesExcel(ordenados, { busca, situacao: filtroSituacao });
+    exportarRelatorioClientesExcel(ordenados, { busca, situacao: "ativo" });
     setMensagemSucesso("Relatório exportado. Abra o arquivo no Excel.");
   }
 
@@ -301,28 +324,23 @@ export default function WebClientes() {
           <SearchIcon />
           <input
             type="text"
-            placeholder="Buscar clientes..."
+            placeholder="Buscar por código, nome ou CPF/CNPJ..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             className="page-clientes__input"
           />
         </div>
-        <select
-          className="page-clientes__filtro-situacao"
-          value={filtroSituacao}
-          onChange={(e) => setFiltroSituacao(e.target.value as "todos" | "ativo" | "inativo")}
-          aria-label="Filtrar por situação"
-        >
-          <option value="todos">Todos</option>
-          <option value="ativo">Ativos</option>
-          <option value="inativo">Inativos</option>
-        </select>
       </div>
 
       <div className="page-clientes__tabela-wrap">
         <table className="page-clientes__tabela">
           <thead>
             <tr>
+              <th>
+                <button type="button" className="page-clientes__th" onClick={() => toggleOrdenacao("codigo")}>
+                  Código <SortIcon />
+                </button>
+              </th>
               <th>
                 <button type="button" className="page-clientes__th" onClick={() => toggleOrdenacao("nome")}>
                   Nome <SortIcon />
@@ -333,7 +351,6 @@ export default function WebClientes() {
                   CPF/CNPJ <SortIcon />
                 </button>
               </th>
-              <th>Telefone fixo</th>
               <th>Celular</th>
               <th>E-mail</th>
               <th className="page-clientes__th-acao">Ação</th>
@@ -348,40 +365,42 @@ export default function WebClientes() {
               </tr>
             ) : ordenados.length === 0 ? (
               <tr>
-                <td colSpan={6} className="page-clientes__vazio">Nenhum cliente encontrado.</td>
+                <td colSpan={6} className="page-clientes__vazio">
+                  Nenhum cliente encontrado.
+                </td>
               </tr>
             ) : (
               itensPagina.map((c) => (
-                  <tr key={c.id ?? `${c.nome}-${c.cpf ?? ""}`}>
-                    <td>{c.nome}</td>
-                    <td>{formatCpf(c.cpf)}</td>
-                    <td>{formatTelefoneFixo(c.telefone)}</td>
-                    <td>{formatCelular(c.celular)}</td>
-                    <td>{c.email?.trim() ? c.email : "—"}</td>
-                    <td>
-                      <div className="page-clientes__acoes">
-                        <button
-                          type="button"
-                          className="page-clientes__acao page-clientes__acao--editar"
-                          onClick={() => abrirModalEditar(c)}
-                          title="Editar cliente"
-                          aria-label="Editar cliente"
-                        >
-                          <EditIcon />
-                        </button>
-                        <button
-                          type="button"
-                          className="page-clientes__acao page-clientes__acao--excluir"
-                          onClick={() => setClienteParaExcluir(c)}
-                          title="Excluir cliente"
-                          aria-label="Excluir cliente"
-                        >
-                          <TrashIcon />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                <tr key={c.id ?? `${c.codigo ?? ""}-${c.nome}-${c.cpf ?? ""}`}>
+                  <td>{c.codigo?.trim() ? c.codigo : "—"}</td>
+                  <td>{c.nome}</td>
+                  <td>{formatCpf(c.cpf)}</td>
+                  <td>{formatCelular(c.celular)}</td>
+                  <td>{c.email?.trim() ? c.email : "—"}</td>
+                  <td>
+                    <div className="page-clientes__acoes">
+                      <button
+                        type="button"
+                        className="page-clientes__acao page-clientes__acao--editar"
+                        onClick={() => abrirModalEditar(c)}
+                        title="Editar cliente"
+                        aria-label="Editar cliente"
+                      >
+                        <EditIcon />
+                      </button>
+                      <button
+                        type="button"
+                        className="page-clientes__acao page-clientes__acao--excluir"
+                        onClick={() => setClienteParaExcluir(c)}
+                        title="Excluir cliente"
+                        aria-label="Excluir cliente"
+                      >
+                        <TrashIcon />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
@@ -398,7 +417,8 @@ export default function WebClientes() {
             Anterior
           </button>
           <span className="page-clientes__paginacao-info">
-            Página {paginaAtual} de {totalPaginas} ({ordenados.length} cliente{ordenados.length !== 1 ? "s" : ""})
+            Página {paginaAtual} de {totalPaginas} ({ordenados.length} cliente
+            {ordenados.length !== 1 ? "s" : ""})
           </span>
           <button
             type="button"
@@ -417,17 +437,18 @@ export default function WebClientes() {
             <div className="modal modal--confirmar-exclusao" onClick={(e) => e.stopPropagation()}>
               <h2 className="modal__titulo">Excluir cliente?</h2>
               <p className="modal__texto-confirmacao">
-                Tem certeza que deseja excluir o cliente <strong>{clienteParaExcluir.nome}</strong>? Esta ação não pode ser desfeita.
+                Tem certeza que deseja excluir o cliente{" "}
+                <strong>
+                  {clienteParaExcluir.codigo ? `${clienteParaExcluir.codigo} — ` : ""}
+                  {clienteParaExcluir.nome}
+                </strong>
+                ? Esta ação não pode ser desfeita.
               </p>
               <div className="modal__botoes">
                 <button type="button" className="btn btn--secondary" onClick={() => setClienteParaExcluir(null)}>
                   Cancelar
                 </button>
-                <button
-                  type="button"
-                  className="btn btn--danger"
-                  onClick={() => excluir(clienteParaExcluir)}
-                >
+                <button type="button" className="btn btn--danger" onClick={() => excluir(clienteParaExcluir)}>
                   Excluir
                 </button>
               </div>
@@ -438,10 +459,25 @@ export default function WebClientes() {
 
       {modalAberto &&
         createPortal(
-          <div className="modal-overlay" onClick={() => { setModalAberto(false); setClienteEmEdicao(null); }}>
+          <div
+            className="modal-overlay"
+            onClick={() => {
+              setModalAberto(false);
+              setClienteEmEdicao(null);
+            }}
+          >
             <div className="modal modal--cadastro" onClick={(e) => e.stopPropagation()}>
               <h2 className="modal__titulo">{clienteEmEdicao ? "Editar Cliente" : "Cadastro de Cliente"}</h2>
               <div className="modal__grid">
+                <label className="modal__label">Código</label>
+                <input
+                  placeholder="Ex.: 35 ou MCA"
+                  value={form.codigo ?? ""}
+                  onChange={(e) => setForm({ ...form, codigo: e.target.value.toUpperCase().slice(0, 20) })}
+                  className="modal__input"
+                  maxLength={20}
+                  autoComplete="off"
+                />
                 <label className="modal__label modal__label--required">Nome</label>
                 <input
                   placeholder="Digite o nome completo"
@@ -452,12 +488,18 @@ export default function WebClientes() {
                 />
                 <label className="modal__label modal__label--required">CPF/CNPJ</label>
                 <input
-                  placeholder="000.000.000-00"
+                  placeholder="000.000.000-00 ou IMP35"
                   value={form.cpf ?? ""}
-                  onChange={(e) => setForm({ ...form, cpf: maskCpfCnpj(e.target.value) })}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (/[a-zA-Z]/.test(v)) {
+                      setForm({ ...form, cpf: v.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 18) });
+                    } else {
+                      setForm({ ...form, cpf: maskCpfCnpj(v) });
+                    }
+                  }}
                   className="modal__input"
                   maxLength={18}
-                  inputMode="numeric"
                   autoComplete="off"
                 />
                 <label className="modal__label">Endereço</label>
@@ -467,24 +509,14 @@ export default function WebClientes() {
                   onChange={(e) => setForm({ ...form, endereco: e.target.value })}
                   className="modal__input"
                 />
-                <label className="modal__label">Telefone fixo</label>
-                <input
-                  type="tel"
-                  placeholder="0000-0000"
-                  value={form.telefone ?? ""}
-                  onChange={(e) => setForm({ ...form, telefone: maskTelefoneFixo(e.target.value) })}
-                  className="modal__input"
-                  maxLength={9}
-                  inputMode="numeric"
-                />
                 <label className="modal__label">Celular</label>
                 <input
                   type="tel"
-                  placeholder="(00) (00000-0000)"
+                  placeholder="(00) 00000-0000"
                   value={form.celular ?? ""}
                   onChange={(e) => setForm({ ...form, celular: maskCelular(e.target.value) })}
                   className="modal__input"
-                  maxLength={17}
+                  maxLength={15}
                   inputMode="numeric"
                 />
                 <label className="modal__label">E-mail</label>
@@ -528,7 +560,14 @@ export default function WebClientes() {
                 )}
               </div>
               <div className="modal__botoes">
-                <button type="button" className="btn btn--secondary" onClick={() => { setModalAberto(false); setClienteEmEdicao(null); }}>
+                <button
+                  type="button"
+                  className="btn btn--secondary"
+                  onClick={() => {
+                    setModalAberto(false);
+                    setClienteEmEdicao(null);
+                  }}
+                >
                   Cancelar
                 </button>
                 <button type="button" className="btn btn--primary" onClick={clienteEmEdicao ? atualizar : criar}>

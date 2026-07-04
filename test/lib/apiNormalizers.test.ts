@@ -38,6 +38,21 @@ describe("normalizeClienteFromApi", () => {
     expect(c.cpf).toBe("12345678900");
   });
 
+  it("mapeia codigo e saldoDevedor", () => {
+    const raw = {
+      clienteId: "c3",
+      codigo: "35",
+      nome: "MCA SERVICOS",
+      cpfCnpj: "IMP35",
+      statusCliente: "ATIVO",
+      saldoDevedor: 1200,
+    };
+    const c = normalizeClienteFromApi(raw);
+    expect(c.codigo).toBe("35");
+    expect(c.cpf).toBe("IMP35");
+    expect(c.saldoDevedorTotal).toBe(1200);
+  });
+
   it("mapeia telefone fixo e celular", () => {
     const raw = { nome: "Z", telefone: "1133334444", celular: "11999998888" };
     const c = normalizeClienteFromApi(raw);
@@ -55,6 +70,16 @@ describe("normalizeClienteToApi", () => {
   it("envia cpfCnpj só com dígitos", () => {
     const payload = normalizeClienteToApi({ nome: "B", cpf: "123.456.789-00" });
     expect(payload.cpfCnpj).toBe("12345678900");
+  });
+
+  it("envia codigo em maiúsculas quando informado", () => {
+    const payload = normalizeClienteToApi({ nome: "D", codigo: "mca" });
+    expect(payload.codigo).toBe("MCA");
+  });
+
+  it("envia cpfCnpj alfanumérico quando não há só dígitos", () => {
+    const payload = normalizeClienteToApi({ nome: "E", cpf: "IMP35" });
+    expect(payload.cpfCnpj).toBe("IMP35");
   });
 
   it("envia telefone e celular só com dígitos", () => {
