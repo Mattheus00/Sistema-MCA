@@ -58,17 +58,18 @@ export default function WebClientes() {
   const [modalAberto, setModalAberto] = useState(false);
   const [clienteEmEdicao, setClienteEmEdicao] = useState<Cliente | null>(null);
   const [clienteParaExcluir, setClienteParaExcluir] = useState<Cliente | null>(null);
-  const [ordenarPor, setOrdenarPor] = useState<"nome" | "cpf" | "situacao" | null>(null);
+  const [ordenarPor, setOrdenarPor] = useState<"codigo" | "nome" | "cpf" | "situacao" | null>(null);
   const [ordemAsc, setOrdemAsc] = useState(true);
   const [pagina, setPagina] = useState(1);
   const itensPorPagina = 10;
   const buscaDebounceRef = useRef(false);
 
   const [form, setForm] = useState<Cliente>({
+    codigo: "",
     nome: "",
     email: "",
     cpf: "",
-    telefone: "",
+    celular: "",
     endereco: "",
     situacao: "Ativo",
   });
@@ -95,9 +96,13 @@ export default function WebClientes() {
     try {
       setLoading(true);
       setErro(null);
-      const params: { page: number; size: number; nome?: string } = { page: 0, size: 100 };
+      const params: { page: number; size: number; busca?: string; statusCliente?: string } = {
+        page: 0,
+        size: 100,
+        statusCliente: "ATIVO",
+      };
       const termo = termoBusca?.trim();
-      if (termo) params.nome = termo;
+      if (termo) params.busca = termo;
       const r = await api.get("/api/clientes", { params });
       const list = normalizeListResponse<Record<string, unknown>>(r.data);
       setClientes(list.map((c) => normalizeClienteFromApi(c)));
@@ -114,13 +119,13 @@ export default function WebClientes() {
     setErro(null);
     try {
       const payload = isMockEnabled()
-        ? { ...form, cpf: form.cpf?.replace(/\D/g, "") || undefined, telefone: form.telefone?.replace(/\D/g, "") || undefined }
+        ? { ...form, cpf: form.cpf?.replace(/\D/g, "") || undefined, celular: form.celular?.replace(/\D/g, "") || undefined }
         : normalizeClienteToApi(form);
       const r = await api.post("/api/clientes", payload);
       const raw = r?.data && typeof r.data === "object" ? r.data : {};
       const novoCliente = normalizeClienteFromApi(raw as Record<string, unknown>);
       setClientes((prev) => [novoCliente, ...prev.filter((c) => c.id !== novoCliente.id)]);
-      setForm({ nome: "", email: "", cpf: "", telefone: "", endereco: "", situacao: "Ativo" });
+      setForm({ codigo: "", nome: "", email: "", cpf: "", celular: "", endereco: "", situacao: "Ativo" });
       setModalAberto(false);
       setClienteEmEdicao(null);
       setMensagemSucesso("Cliente cadastrado com sucesso.");
@@ -131,7 +136,7 @@ export default function WebClientes() {
 
   function abrirModalNovo() {
     setClienteEmEdicao(null);
-    setForm({ nome: "", email: "", cpf: "", telefone: "", endereco: "", situacao: "Ativo" });
+    setForm({ codigo: "", nome: "", email: "", cpf: "", celular: "", endereco: "", situacao: "Ativo" });
     setModalAberto(true);
   }
 
@@ -139,10 +144,11 @@ export default function WebClientes() {
     setClienteEmEdicao(c);
     setForm({
       ...c,
+      codigo: c.codigo ?? "",
       nome: c.nome,
       email: c.email ?? "",
       cpf: formatCpf(c.cpf) === "—" ? "" : formatCpf(c.cpf),
-      telefone: formatTelefone(c.telefone) === "—" ? "" : formatTelefone(c.telefone),
+      celular: formatTelefone(c.celular) === "—" ? "" : formatTelefone(c.celular),
       endereco: c.endereco ?? "",
       situacao: c.situacao ?? "Ativo",
     });
@@ -156,10 +162,10 @@ export default function WebClientes() {
     setErro(null);
     try {
       const payload = isMockEnabled()
-        ? { ...form, id: clienteEmEdicao.id, cpf: form.cpf?.replace(/\D/g, "") || undefined, telefone: form.telefone?.replace(/\D/g, "") || undefined }
+        ? { ...form, id: clienteEmEdicao.id, cpf: form.cpf?.replace(/\D/g, "") || undefined, celular: form.celular?.replace(/\D/g, "") || undefined }
         : normalizeClienteToApi({ ...form, id: clienteEmEdicao.id });
       await api.patch(`/api/clientes/${clienteEmEdicao.id}`, payload);
-      setForm({ nome: "", email: "", cpf: "", telefone: "", endereco: "", situacao: "Ativo" });
+      setForm({ codigo: "", nome: "", email: "", cpf: "", celular: "", endereco: "", situacao: "Ativo" });
       setModalAberto(false);
       setClienteEmEdicao(null);
       setMensagemSucesso("Cliente atualizado com sucesso.");
@@ -175,23 +181,10 @@ export default function WebClientes() {
       setErro(null);
       await api.delete(`/api/clientes/${c.id}`);
       setClienteParaExcluir(null);
+      setClientes((prev) => prev.filter((item) => item.id !== c.id));
       setMensagemSucesso("Cliente excluído com sucesso.");
-      await listar();
     } catch (e: unknown) {
       setErro(getApiErrorMessage(e, "Falha ao excluir cliente"));
-    }
-  }
-
-  async function alterarSituacao(cliente: Cliente, novaSituacao: "Ativo" | "Inativo") {
-    const id = cliente.id;
-    if (id == null || id === "") return;
-    try {
-      setErro(null);
-      const body = isMockEnabled() ? { ...cliente, situacao: novaSituacao } : normalizeClienteToApi({ ...cliente, situacao: novaSituacao });
-      await api.patch(`/api/clientes/${id}`, body);
-      setClientes((old) => old.map((c) => (c.id === id ? { ...c, situacao: novaSituacao } : c)));
-    } catch (e: unknown) {
-      setErro(getApiErrorMessage(e, "Falha ao alterar situação do cliente"));
     }
   }
 
@@ -217,12 +210,14 @@ export default function WebClientes() {
     (c) =>
       !busca.trim() ||
       c.nome.toLowerCase().includes(busca.toLowerCase()) ||
+      (c.codigo && c.codigo.toLowerCase().includes(busca.toLowerCase())) ||
       (c.cpf && c.cpf.replace(/\D/g, "").includes(busca.replace(/\D/g, "")))
   );
 
   const ordenados = [...filtrados].sort((a, b) => {
     if (!ordenarPor) return 0;
     const mul = ordemAsc ? 1 : -1;
+    if (ordenarPor === "codigo") return mul * ((a.codigo || "").localeCompare(b.codigo || ""));
     if (ordenarPor === "nome") return mul * (a.nome.localeCompare(b.nome) || 0);
     if (ordenarPor === "cpf") return mul * ((a.cpf || "").localeCompare(b.cpf || ""));
     if (ordenarPor === "situacao") return mul * ((a.situacao || "Ativo").localeCompare(b.situacao || "Ativo"));
@@ -237,7 +232,7 @@ export default function WebClientes() {
     if (pagina > totalPaginas && totalPaginas >= 1) setPagina(1);
   }, [ordenados.length, totalPaginas, pagina]);
 
-  function toggleOrdenacao(campo: "nome" | "cpf" | "situacao") {
+  function toggleOrdenacao(campo: "codigo" | "nome" | "cpf" | "situacao") {
     if (ordenarPor === campo) setOrdemAsc((x) => !x);
     else {
       setOrdenarPor(campo);
@@ -262,7 +257,7 @@ export default function WebClientes() {
         <SearchIcon />
         <input
           type="text"
-          placeholder="Buscar clientes..."
+          placeholder="Buscar por código, nome ou CPF/CNPJ..."
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
           className="page-clientes__input"
@@ -274,8 +269,8 @@ export default function WebClientes() {
           <thead>
             <tr>
               <th>
-                <button type="button" className="page-clientes__th" onClick={() => toggleOrdenacao("situacao")}>
-                  Situação <SortIcon />
+                <button type="button" className="page-clientes__th" onClick={() => toggleOrdenacao("codigo")}>
+                  Código <SortIcon />
                 </button>
               </th>
               <th>
@@ -288,7 +283,7 @@ export default function WebClientes() {
                   CPF/CNPJ <SortIcon />
                 </button>
               </th>
-              <th>Telefone</th>
+              <th>Celular</th>
               <th>E-mail</th>
               <th className="page-clientes__th-acao">Ação</th>
             </tr>
@@ -305,28 +300,12 @@ export default function WebClientes() {
                 <td colSpan={6} className="page-clientes__vazio">Nenhum cliente encontrado.</td>
               </tr>
             ) : (
-              itensPagina.map((c) => {
-                const estaAtivo = (c.situacao ?? "Ativo") !== "Inativo";
-                return (
+              itensPagina.map((c) => (
                   <tr key={c.id ?? `${c.nome}-${c.cpf ?? ""}`}>
-                    <td>
-                      <div className="page-clientes__toggle-wrap">
-                        <span className="page-clientes__toggle-label">{estaAtivo ? "Ativo" : "Inativo"}</span>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={estaAtivo}
-                          aria-label={estaAtivo ? "Ativo - clicar para desativar" : "Inativo - clicar para ativar"}
-                          className={`page-clientes__toggle ${estaAtivo ? "page-clientes__toggle--on" : ""}`}
-                          onClick={() => alterarSituacao(c, estaAtivo ? "Inativo" : "Ativo")}
-                        >
-                          <span className="page-clientes__toggle-thumb" />
-                        </button>
-                      </div>
-                    </td>
+                    <td>{c.codigo ?? "—"}</td>
                     <td>{c.nome}</td>
                     <td>{formatCpf(c.cpf)}</td>
-                    <td>{formatTelefone(c.telefone)}</td>
+                    <td>{formatTelefone(c.celular)}</td>
                     <td>{c.email ?? "—"}</td>
                     <td>
                       <div className="page-clientes__acoes">
@@ -351,8 +330,7 @@ export default function WebClientes() {
                       </div>
                     </td>
                   </tr>
-                );
-              })
+                ))
             )}
           </tbody>
         </table>
@@ -419,6 +397,15 @@ export default function WebClientes() {
             <div className="modal modal--cadastro" onClick={(e) => e.stopPropagation()}>
               <h2 className="modal__titulo">{clienteEmEdicao ? "Editar Cliente" : "Cadastro de Cliente"}</h2>
               <div className="modal__grid">
+                <label className="modal__label">Código</label>
+                <input
+                  placeholder="Ex.: 00123"
+                  value={form.codigo ?? ""}
+                  onChange={(e) => setForm({ ...form, codigo: e.target.value.toUpperCase() })}
+                  className="modal__input"
+                  maxLength={50}
+                  autoComplete="off"
+                />
                 <label className="modal__label modal__label--required">Nome</label>
                 <input
                   placeholder="Digite o nome completo"
@@ -444,13 +431,12 @@ export default function WebClientes() {
                   onChange={(e) => setForm({ ...form, endereco: e.target.value })}
                   className="modal__input"
                 />
-                <label className="modal__label modal__label--required">Telefone</label>
+                <label className="modal__label">Celular</label>
                 <input
                   type="tel"
                   placeholder="(00) 00000-0000"
-                  required
-                  value={form.telefone ?? ""}
-                  onChange={(e) => setForm({ ...form, telefone: maskTelefone(e.target.value) })}
+                  value={form.celular ?? ""}
+                  onChange={(e) => setForm({ ...form, celular: maskTelefone(e.target.value) })}
                   className="modal__input"
                   maxLength={15}
                 />

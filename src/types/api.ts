@@ -6,10 +6,11 @@
 export type Cliente = {
   /** UUID (string) no backend; mock pode usar string numérica */
   id?: string;
+  codigo?: string;
   nome: string;
   email?: string;
   cpf?: string;
-  telefone?: string;
+  celular?: string;
   endereco?: string;
   situacao?: "Ativo" | "Inadimplente" | "Inativo";
   createdAt?: string;
