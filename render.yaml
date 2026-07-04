@@ -1,5 +1,5 @@
 # Blueprint Render — monorepo (backend em backend/)
-# Frontend na Vercel: VITE_API_URL=https://<sgi-backend>.onrender.com
+# Frontend na Vercel (Root Directory = frontend): VITE_API_URL=https://<sgi-backend>.onrender.com
 
 services:
   - type: web

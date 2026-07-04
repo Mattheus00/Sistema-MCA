@@ -1,7 +1,7 @@
 {
   "folders": [
     {
-      "path": ".",
+      "path": "frontend",
       "name": "SGI Frontend (React)"
     }
   ],
@@ -9,12 +9,14 @@
     "files.exclude": {
       "Backend": true,
       "Codigo": true,
+      "backend": true,
       "node_modules": true,
       "dist": true
     },
     "search.exclude": {
       "Backend": true,
       "Codigo": true,
+      "backend": true,
       "node_modules": true,
       "dist": true
     }
