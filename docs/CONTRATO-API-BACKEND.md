@@ -57,13 +57,13 @@ Este documento descreve **todos os endpoints, payloads e tipos** que o frontend 
 ```ts
 {
   clienteId: string;    // UUID
-  valor: number;        // em centavos (frontend envia já convertido)
+  valor: number;        // em reais (ex.: 1000 = R$ 1.000,00)
   vencimento: string;   // ISO 8601: yyyy-MM-dd ou yyyy-MM-ddTHH:mm:ss
   descricao?: string;
 }
 ```
 
-**Valor:** o frontend envia `valor` em **centavos** e espera receber em centavos; internamente converte para reais na exibição. O backend pode aceitar em reais ou centavos — o contrato atual do front é centavos.
+**Valor:** o frontend envia e espera receber **valores monetários em reais** (ex.: 1000 = R$ 1.000,00). Não usar centavos.
 
 **Banco (DELETE / cancelar inadimplência):** o front chama `DELETE /api/inadimplentes/:id` para “cancelar” a inadimplência daquele mês. O backend pode: **(1)** dar delete físico no registro da tabela de inadimplências, ou **(2)** manter o registro e apenas alterar um campo (ex.: `status = 'Cancelado'` ou `cancelado_em = now()`). Em ambos os casos, o `GET /api/inadimplentes` deve **não** retornar esse item na lista de “em aberto” (filtrar por status diferente de Cancelado ou por registros não excluídos). Nenhuma alteração de modelo é obrigatória se já existir um status ou flag de cancelamento; caso contrário, basta um status adicional (ex.: `Cancelado`) ou uma coluna `cancelado_em` (timestamp nullable).
 
@@ -141,7 +141,7 @@ type Inadimplencia = {
   id?: string;            // UUID no backend
   clienteId: string;
   clienteNome?: string;   // preenchido pelo backend ou frontend
-  valor: number;          // em reais na leitura (front converte de centavos se backend enviar em centavos)
+  valor: number;          // em reais (ex.: 1000 = R$ 1.000,00)
   vencimento: string;     // ISO 8601
   descricao?: string;
   status?: "EmAberto" | "Pago" | "Acordo";
@@ -161,7 +161,7 @@ type ResumoRelatorio = {
 ```
 - **GET sem `dias`:** totais gerais.
 - **GET com `dias`:** `totalEmAberto` e `totalDividas` consideram apenas inadimplências com vencimento no último N dias; o frontend espera que **totalPago** seja a soma de **todos** os itens com status "Pago" (não filtrado por período).
-- **Unidade:** `totalEmAberto` e `totalPago` devem ser enviados em **centavos** (mesmo padrão de `Inadimplencia.valor`). O frontend converte para reais na exibição (÷ 100).
+- **Unidade:** `totalEmAberto` e `totalPago` devem ser enviados em **reais** (ex.: 1000 = R$ 1.000,00). O frontend exibe diretamente sem conversão.
 
 ### RankingDevedorItem
 O backend pode retornar um objeto com `ranking: RankingDevedorItem[]`; o frontend normaliza e aceita também `nomeCliente` → `clienteNome`, `saldoDevedor` → `valorDevido`.

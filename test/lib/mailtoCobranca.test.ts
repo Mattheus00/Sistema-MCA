@@ -1,5 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
-import { buildMailtoCobrancaUrl, buildGmailComposeUrl, openMailto, openGmailCompose } from "@/lib/mailtoCobranca";
+import {
+  buildMailtoCobrancaUrl,
+  buildGmailComposeUrl,
+  buildCobrancaEmailHtml,
+  buildCobrancaMensagemTexto,
+  buildWhatsAppCobrancaUrl,
+  normalizeTelefoneParaWhatsApp,
+  openMailto,
+  openGmailCompose,
+} from "@/lib/mailtoCobranca";
 import type { Inadimplencia } from "@/types/api";
 
 describe("buildMailtoCobrancaUrl", () => {
@@ -100,6 +109,33 @@ describe("buildGmailComposeUrl", () => {
   });
 });
 
+describe("buildCobrancaEmailHtml", () => {
+  it("inclui seção de pagamento online quando link Stripe é https", () => {
+    const item: Inadimplencia = {
+      id: "1",
+      clienteId: "c1",
+      valor: 100,
+      vencimento: "2026-01-15",
+    };
+    const html = buildCobrancaEmailHtml(item, "Cliente", "https://pay.stripe.com/test_link");
+    expect(html).toContain("Pagamento online");
+    expect(html).toContain("Pagar com Boleto ou Pix");
+    expect(html).toContain("https://pay.stripe.com/test_link");
+  });
+
+  it("não inclui seção de pagamento online quando link é inválido", () => {
+    const item: Inadimplencia = {
+      id: "1",
+      clienteId: "c1",
+      valor: 100,
+      vencimento: "2026-01-15",
+    };
+    const html = buildCobrancaEmailHtml(item, "Cliente", "http://inseguro.com");
+    expect(html).not.toContain("Pagamento online");
+    expect(html).not.toContain("Pagar com Boleto ou Pix");
+  });
+});
+
 describe("openMailto", () => {
   it("cria âncora com href mailto e dispara clique", () => {
     const createSpy = vi.spyOn(document, "createElement");
@@ -125,5 +161,53 @@ describe("openGmailCompose", () => {
     openGmailCompose(url);
     expect(openSpy).toHaveBeenCalledWith(url, "_blank", "noopener,noreferrer");
     openSpy.mockRestore();
+  });
+});
+
+describe("normalizeTelefoneParaWhatsApp", () => {
+  it("adiciona DDI 55 para celular com 11 dígitos", () => {
+    expect(normalizeTelefoneParaWhatsApp("(31) 99999-8888")).toBe("5531999998888");
+  });
+
+  it("mantém número que já tem DDI 55", () => {
+    expect(normalizeTelefoneParaWhatsApp("+55 31 99821-1343")).toBe("5531998211343");
+  });
+});
+
+describe("buildWhatsAppCobrancaUrl", () => {
+  const item: Inadimplencia = {
+    id: "7",
+    clienteId: "c1",
+    valor: 1500,
+    juros: 199.35,
+    vencimento: "2026-03-31",
+  };
+
+  it("inclui telefone e texto na URL wa.me", () => {
+    const url = buildWhatsAppCobrancaUrl(item, "Maria", "31999998888");
+    expect(url).toMatch(/^https:\/\/wa\.me\/5531999998888\?text=/);
+    const text = decodeURIComponent(url.split("?text=")[1]);
+    expect(text).toContain("Maria");
+    expect(text).toContain("DIV-20260331-0007");
+    expect(text).toMatch(/R\$\s*1\.500,00/);
+  });
+
+  it("usa api.whatsapp.com quando telefone ausente", () => {
+    const url = buildWhatsAppCobrancaUrl(item, "João", "");
+    expect(url).toMatch(/^https:\/\/api\.whatsapp\.com\/send\?text=/);
+  });
+});
+
+describe("buildCobrancaMensagemTexto", () => {
+  it("inclui link de pagamento quando informado", () => {
+    const item: Inadimplencia = {
+      id: "1",
+      clienteId: "c1",
+      valor: 100,
+      vencimento: "2026-01-15",
+    };
+    const msg = buildCobrancaMensagemTexto(item, "Cliente", "https://pay.stripe.com/test");
+    expect(msg).toContain("https://pay.stripe.com/test");
+    expect(msg).toContain("Pix Copia e Cola");
   });
 });

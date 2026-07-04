@@ -57,23 +57,25 @@ Se **`VITE_API_URL`** estiver vazio, o Vite usa o proxy definido em `vite.config
 | Atualizar cliente | PATCH | `/api/clientes/{id}` | Atualização parcial |
 | Excluir cliente | DELETE | `/api/clientes/{id}` | Exclusão lógica (inativo) |
 | Listar inadimplências | GET | `/api/inadimplentes?paginado=false` | Array de dívidas |
-| Registrar inadimplência | POST | `/api/inadimplentes` | Body: clienteId, valor (centavos), vencimento?, descricao? |
+| Registrar inadimplência | POST | `/api/inadimplentes` | Body: clienteId, valor (reais), vencimento?, descricao? |
 | Confirmar pagamento | PATCH | `/api/inadimplentes/{id}` | Body: `{ "status": "Pago" }` |
 | Resumo (dashboard) | GET | `/api/relatorios/resumo?dias=30` | totalClientes, totalDividas, totalEmAberto, totalPago |
 | Ranking devedores | GET | `/api/relatorios/ranking-devedores` | Query: limit, periodo, etc. |
 | Extrato cliente | GET | `/api/relatorios/extrato-cliente/{id}` | Dados do cliente e dívidas |
 | Inadimplência período | GET | `/api/relatorios/inadimplencia-periodo?dataInicio=&dataFim=` | Relatório por período |
 
-## 5. Valores em centavos
+## 5. Valores monetários
 
-O backend envia e recebe **valores em centavos** (ex.: R$ 100,00 = `10000`). O frontend:
+### Geral (inadimplências, resumo, relatórios)
+Valores em **reais** (ex.: R$ 1.000,00 = `1000`). Configurado em `src/lib/apiNormalizers.ts` (VALOR_CENTAVOS = false).
 
-- **Exibe** valores em reais (divide por 100).
-- **Envia** em POST/PATCH em centavos (multiplica por 100 antes de enviar).
+### Serviços (GET /api/servicos, GET /api/servicos/todos)
+- **Respostas:** `valorPadrao` em **reais** (ex.: 150 = R$ 150,00). O frontend exibe diretamente.
+- **Envios (POST/PUT):** `valorPadrao` em **centavos** (ex.: 15000 para R$ 150,00). O frontend converte antes de enviar.
 
-Isso é feito em `src/lib/apiNormalizers.ts` (normalizeInadimplenciaFromApi / normalizeInadimplenciaToApi e uso nas telas de inadimplentes).
-
-Se o endpoint **resumo** (`/api/relatorios/resumo`) retornar `totalEmAberto` e `totalPago` em centavos, será necessário dividir por 100 no Dashboard antes de passar para o gráfico.
+### Dívidas com itensServicos (GET /api/dividas, POST /api/dividas)
+- **Respostas:** `valor` de cada item em **reais**.
+- **Envios (POST):** `valor` de cada item em **centavos**.
 
 ## 6. Como rodar e testar
 

@@ -1,10 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import { api, getApiErrorMessage, isMockEnabled, normalizeListResponse } from "@/lib/api";
 import { parseValorReais } from "@/lib/valorBrasil";
-import { normalizeClienteFromApi, normalizeInadimplenciaFromApi, normalizeInadimplenciaToApi } from "@/lib/apiNormalizers";
+import {
+  normalizeClienteFromApi,
+  normalizeInadimplenciaFromApi,
+  normalizeInadimplenciaToApi,
+} from "@/lib/apiNormalizers";
 import { invalidateDashboard } from "@/lib/dashboardRefresh";
-import { buildGmailComposeUrl, copyCobrancaEmailToClipboard, openGmailCompose } from "@/lib/mailtoCobranca";
+import {
+  diasEmAtraso,
+  formatCpfCnpj,
+  isInadimplenciaEmAberto,
+} from "@/lib/inadimplentesUtils";
 import type { Cliente, Inadimplencia } from "@/types/api";
 
 type ServicoResumo = {
@@ -15,51 +24,17 @@ type ServicoResumo = {
   ativo?: boolean | null;
 };
 
-function formatarData(iso: string): string {
-  if (!iso) return "—";
-  const [y, m, d] = iso.split("T")[0].split("-");
-  return `${d}/${m}/${y}`;
-}
-
-/** Formata ISO como mês/ano (ex.: 2019-02-28 → 02/2019) */
-function formatarMesAno(iso: string): string {
-  if (!iso) return "—";
-  const [y, m] = iso.split("T")[0].split("-");
-  return `${m}/${y}`;
-}
-
-function diasEmAtraso(vencimento: string): number {
-  const v = new Date(vencimento.split("T")[0]);
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  v.setHours(0, 0, 0, 0);
-  const diff = Math.floor((hoje.getTime() - v.getTime()) / (1000 * 60 * 60 * 24));
-  return diff > 0 ? diff : 0;
-}
-
-/** Formata CPF (11 dígitos) ou CNPJ (14 dígitos) com máscara padrão */
-function formatCpfCnpj(cpf: string | undefined): string {
-  if (!cpf) return "";
-  const n = cpf.replace(/\D/g, "");
-  if (n.length === 11) return n.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-  if (n.length === 14) return n.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
-  return cpf;
-}
-
-
 export default function WebInadimplentes() {
+  const navigate = useNavigate();
   const [itens, setItens] = useState<Inadimplencia[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
-  const [toastEmailFormatado, setToastEmailFormatado] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [ordenarPor, setOrdenarPor] = useState<"cliente" | "valor" | "vencimento" | "dias" | null>(null);
+  const [ordenarPor, setOrdenarPor] = useState<"cliente" | "valor" | "dias" | null>(null);
   const [ordemAsc, setOrdemAsc] = useState(true);
   const [pagina, setPagina] = useState(1);
   const itensPorPagina = 10;
   const [modalRegistroAberto, setModalRegistroAberto] = useState(false);
-  const [detalheClienteId, setDetalheClienteId] = useState<string | null>(null);
-  const [inadimplenciaParaCancelar, setInadimplenciaParaCancelar] = useState<{ item: Inadimplencia; nomeCliente: string } | null>(null);
   const [clientes, setClientes] = useState<Pick<Cliente, "id" | "nome" | "cpf" | "email">[]>([]);
   const [clienteBusca, setClienteBusca] = useState("");
   const [clienteDropdownAberto, setClienteDropdownAberto] = useState(false);
@@ -69,6 +44,10 @@ export default function WebInadimplentes() {
   const [modalServicosValorRowIndex, setModalServicosValorRowIndex] = useState<number | null>(null);
   /** IDs dos serviços selecionados no modal "Adicionar por serviços" (para somar ao valor) */
   const [servicosSelecionadosParaValor, setServicosSelecionadosParaValor] = useState<string[]>([]);
+  const [servicosBuscaValor, setServicosBuscaValor] = useState("");
+  const [modalAjustarJurosAberto, setModalAjustarJurosAberto] = useState(false);
+  const [jurosGlobal, setJurosGlobal] = useState<{ multa: string; juros: string }>({ multa: "0,33", juros: "2" });
+  const [loadingJurosGlobal, setLoadingJurosGlobal] = useState(false);
   const clienteInputRef = useRef<HTMLInputElement>(null);
   const nextRowIdRef = useRef(1);
   type MensalidadeRow = { rowId: number; mes: string; ano: string; valorDigitado: string };
@@ -204,12 +183,13 @@ export default function WebInadimplentes() {
   function abrirModalServicosParaValor(rowIndex: number) {
     setModalServicosValorRowIndex(rowIndex);
     setServicosSelecionadosParaValor([]);
+    setServicosBuscaValor("");
   }
 
-  /** Soma em reais dos serviços selecionados no modal (valorPadrao da API vem em centavos). */
+  /** Soma em reais dos serviços selecionados no modal (valorPadrao da API vem em reais). */
   const somaServicosModalReais = servicos
     .filter((s) => servicosSelecionadosParaValor.includes(s.servicoId))
-    .reduce((acc, s) => acc + ((s.valorPadrao ?? 0) / 100), 0);
+    .reduce((acc, s) => acc + (s.valorPadrao ?? 0), 0);
 
   function aplicarServicosAoValor() {
     if (modalServicosValorRowIndex === null) return;
@@ -271,7 +251,8 @@ export default function WebInadimplentes() {
     return () => clearTimeout(t);
   }, [mensagemSucesso]);
 
-  const emAberto = itens.filter((i) => (i.status ?? "EmAberto") === "EmAberto");
+  /** Inclui EmAberto, PARCIAL, Acordo e equivalentes — exclui só Pago/Quitada e Cancelado/Cancelada */
+  const emAberto = itens.filter(isInadimplenciaEmAberto);
 
   /** Agrupa por cliente: soma valor, vencimento mais antigo, maior dias em atraso */
   const agrupadosPorCliente = (() => {
@@ -279,7 +260,7 @@ export default function WebInadimplentes() {
     for (const i of emAberto) {
       const id = i.clienteId;
       const nome = i.clienteNome ?? `Cliente #${id}`;
-      const valor = i.valor ?? 0;
+      const valor = i.valor ?? i.valorDevedor ?? 0;
       const dias = diasEmAtraso(i.vencimento);
       const atual = map.get(id);
       if (!atual) {
@@ -309,7 +290,6 @@ export default function WebInadimplentes() {
     if (ordenarPor === "cliente")
       return mul * (a.clienteNome.localeCompare(b.clienteNome));
     if (ordenarPor === "valor") return mul * (a.valor - b.valor);
-    if (ordenarPor === "vencimento") return mul * (a.vencimento.localeCompare(b.vencimento));
     if (ordenarPor === "dias") return mul * (a.diasEmAtraso - b.diasEmAtraso);
     return 0;
   });
@@ -322,7 +302,7 @@ export default function WebInadimplentes() {
     if (pagina > totalPaginasInad && totalPaginasInad >= 1) setPagina(1);
   }, [ordenados.length, totalPaginasInad, pagina]);
 
-  function toggleOrdenacao(campo: "cliente" | "valor" | "vencimento" | "dias") {
+  function toggleOrdenacao(campo: "cliente" | "valor" | "dias") {
     if (ordenarPor === campo) setOrdemAsc((x) => !x);
     else {
       setOrdenarPor(campo);
@@ -330,50 +310,65 @@ export default function WebInadimplentes() {
     }
   }
 
-  async function confirmarPagamento(id: string) {
+  function parsePct(s: string): number {
+    const norm = s.replace(/\./g, "").replace(",", ".");
+    const v = Number(norm);
+    return Number.isFinite(v) ? v : 0;
+  }
+
+  async function abrirModalAjustarJuros() {
+    setModalAjustarJurosAberto(true);
     try {
-      setErro(null);
-      await api.patch(`/api/inadimplentes/${id}`, { status: "Pago" });
-      setMensagemSucesso("Pagamento confirmado com sucesso.");
-      invalidateDashboard();
+      setLoadingJurosGlobal(true);
+      const res = await api.get("/api/config/juros");
+      const cfg = res.data ?? {};
+      setJurosGlobal({
+        multa: (Number(cfg.multaDiaria ?? 0.0033) * 100).toString().replace(".", ","),
+        juros: (Number(cfg.jurosMensal ?? 0.02) * 100).toString().replace(".", ","),
+      });
+    } catch {
+      setJurosGlobal({ multa: "0,33", juros: "2" });
+    } finally {
+      setLoadingJurosGlobal(false);
+    }
+  }
+
+  async function salvarJurosGlobal() {
+    try {
+      setLoadingJurosGlobal(true);
+      const multa = parsePct(jurosGlobal.multa);
+      const jurosMes = parsePct(jurosGlobal.juros);
+      await api.put("/api/config/juros", {
+        multaDiaria: multa / 100,
+        capMultaPercentual: 0.0999,
+        jurosMensal: jurosMes / 100,
+      });
+      setMensagemSucesso("Configuração de juros salva globalmente.");
+      setModalAjustarJurosAberto(false);
       await listar();
     } catch (e: unknown) {
-      setErro(getApiErrorMessage(e, "Falha ao confirmar pagamento"));
+      setErro(getApiErrorMessage(e, "Falha ao salvar configuração de juros."));
+    } finally {
+      setLoadingJurosGlobal(false);
     }
   }
 
-  function abrirModalCancelarInadimplencia(item: Inadimplencia, nomeCliente: string) {
-    setInadimplenciaParaCancelar({ item, nomeCliente });
-  }
-
-  async function executarCancelamento() {
-    if (!inadimplenciaParaCancelar || inadimplenciaParaCancelar.item.id == null) return;
-    const id = inadimplenciaParaCancelar.item.id;
-    setInadimplenciaParaCancelar(null);
+  async function desativarJurosGlobal() {
     try {
-      setErro(null);
-      const res = await api.delete(`/api/inadimplentes/${id}`);
-      // 204 No Content ou 2xx = sucesso: atualiza a lista na hora
-      if (res?.status === 204 || (res?.status >= 200 && res?.status < 300)) {
-        setItens((prev) => prev.filter((i) => i.id !== id));
-      }
-      setMensagemSucesso("Inadimplência cancelada.");
-      invalidateDashboard();
+      setLoadingJurosGlobal(true);
+      await api.put("/api/config/juros", {
+        multaDiaria: 0,
+        capMultaPercentual: 0,
+        jurosMensal: 0,
+      });
+      setMensagemSucesso("Juros desativados globalmente.");
+      setModalAjustarJurosAberto(false);
       await listar();
     } catch (e: unknown) {
-      setErro(getApiErrorMessage(e, "Falha ao cancelar inadimplência"));
+      setErro(getApiErrorMessage(e, "Falha ao desativar juros."));
+    } finally {
+      setLoadingJurosGlobal(false);
     }
-  }
-
-  /** Copia o e-mail formatado (HTML) e abre o Gmail; usuário cola (Ctrl+V) no corpo. */
-  async function enviarEmailCobranca(item: Inadimplencia, nomeCliente: string, emailCliente?: string) {
-    const copiou = await copyCobrancaEmailToClipboard(item, nomeCliente);
-    if (copiou) {
-      setToastEmailFormatado(true);
-      setTimeout(() => setToastEmailFormatado(false), 5000);
-    }
-    const gmailUrl = buildGmailComposeUrl(item, nomeCliente, emailCliente, true);
-    openGmailCompose(gmailUrl);
   }
 
   return (
@@ -383,17 +378,16 @@ export default function WebInadimplentes() {
       <p className="page-inadimplentes__subtitle">Clientes com pagamentos em atraso</p>
 
       {mensagemSucesso && <p className="toast toast--sucesso">{mensagemSucesso}</p>}
-      {toastEmailFormatado && (
-        <p className="toast toast--sucesso">
-          E-mail formatado copiado. Cole no corpo da mensagem no Gmail (Ctrl+V) para usar o layout.
-        </p>
-      )}
       {erro && <p className="page-inadimplentes__erro">{erro}</p>}
 
       <div className="page-inadimplentes__acao-topo">
         <button type="button" className="btn btn--primary" onClick={abrirModalRegistro}>
           <PlusIcon />
           Registrar inadimplência
+        </button>
+        <button type="button" className="btn btn--primary" onClick={abrirModalAjustarJuros}>
+          <SlidersIcon />
+          Ajustar juros
         </button>
       </div>
 
@@ -438,11 +432,6 @@ export default function WebInadimplentes() {
                   </button>
                 </th>
                 <th>
-                  <button type="button" className="page-inadimplentes__th" onClick={() => toggleOrdenacao("vencimento")}>
-                    Vencimento <SortIcon />
-                  </button>
-                </th>
-                <th>
                   <button type="button" className="page-inadimplentes__th" onClick={() => toggleOrdenacao("dias")}>
                     Dias em atraso <SortIcon />
                   </button>
@@ -453,24 +442,23 @@ export default function WebInadimplentes() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="page-inadimplentes__loading">Carregando...</td>
+                  <td colSpan={4} className="page-inadimplentes__loading">Carregando...</td>
                 </tr>
               ) : ordenados.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="page-inadimplentes__vazio">Nenhum inadimplente em aberto.</td>
+                  <td colSpan={4} className="page-inadimplentes__vazio">Nenhum inadimplente em aberto.</td>
                 </tr>
               ) : (
                 itensPaginaInad.map((d) => (
                   <tr key={d.clienteId}>
                     <td>{d.clienteNome}</td>
                     <td>{d.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
-                    <td>{formatarData(d.vencimento)}</td>
                     <td>{d.diasEmAtraso} dias</td>
                     <td>
                       <button
                         type="button"
                         className="btn btn--secondary btn--small page-inadimplentes__btn-meses"
-                        onClick={() => setDetalheClienteId(d.clienteId)}
+                        onClick={() => navigate(`/inadimplentes/${d.clienteId}/honorarios`)}
                       >
                         <EyeIcon /> Ver honorários
                       </button>
@@ -506,126 +494,61 @@ export default function WebInadimplentes() {
       )}
       </section>
 
-      {detalheClienteId !== null && (() => {
-        const mensalidadesCliente = emAberto
-          .filter((i) => i.clienteId === detalheClienteId)
-          .sort((a, b) => a.vencimento.localeCompare(b.vencimento));
-        const nomeCliente = agrupadosPorCliente.find((c) => c.clienteId === detalheClienteId)?.clienteNome ?? `Cliente #${detalheClienteId}`;
-        const emailCliente = clientes.find((c) => c.id === detalheClienteId)?.email ?? "";
-        const totalDetalhe = mensalidadesCliente.reduce((s, i) => s + (i.valor ?? 0), 0);
-        return (
-          <div className="modal-overlay" onClick={() => setDetalheClienteId(null)}>
-            <div className="modal modal--detalhe-meses" onClick={(e) => e.stopPropagation()}>
-              <div className="modal__cabecalho">
-                <h2 className="modal__titulo">Meses em aberto — {nomeCliente}</h2>
-                <button type="button" className="modal__fechar" onClick={() => setDetalheClienteId(null)} aria-label="Fechar">
-                  <CloseIcon />
-                </button>
-              </div>
-              <div className="modal__detalhe-meses">
-                <table className="page-inadimplentes__tabela page-inadimplentes__tabela--detalhe">
-                  <thead>
-                    <tr>
-                      <th>Mês/Ano</th>
-                      <th>Vencimento</th>
-                      <th className="page-inadimplentes__cell-num">Valor original</th>
-                      <th className="page-inadimplentes__cell-num">Juros</th>
-                      <th className="page-inadimplentes__cell-num">Valor total</th>
-                      <th className="page-inadimplentes__th-acao">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {mensalidadesCliente.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="page-inadimplentes__vazio">
-                          Nenhum mês em aberto para este cliente.
-                        </td>
-                      </tr>
-                    ) : (
-                      mensalidadesCliente.map((i) => {
-                        const valorTotal = i.valor ?? 0;
-                        const valorOriginal = i.valorOriginal ?? valorTotal;
-                        const juros = Math.max(0, valorTotal - valorOriginal);
-                        return (
-                          <tr key={i.id ?? `${i.vencimento}-${i.valor}`}>
-                            <td>{formatarMesAno(i.vencimento)}</td>
-                            <td>{formatarData(i.vencimento)}</td>
-                            <td className="page-inadimplentes__cell-num">{valorOriginal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
-                            <td className="page-inadimplentes__cell-num">{juros.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
-                            <td className="page-inadimplentes__cell-num">{valorTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
-                            <td>
-                              <div className="page-inadimplentes__acoes-detalhe">
-                                <button
-                                  type="button"
-                                  className="page-inadimplentes__btn-icone page-inadimplentes__btn-icone--confirmar"
-                                  onClick={() => i.id != null && confirmarPagamento(i.id)}
-                                  disabled={i.id == null}
-                                  title="Confirmar pagamento"
-                                  aria-label="Confirmar pagamento"
-                                >
-                                  <CheckIcon />
-                                </button>
-                                <button
-                                  type="button"
-                                  className="page-inadimplentes__btn-icone page-inadimplentes__btn-icone--email"
-                                  onClick={() => enviarEmailCobranca(i, nomeCliente, emailCliente)}
-                                  title="Enviar e-mail de cobrança deste mês (abre cliente de e-mail)"
-                                  aria-label="Enviar e-mail de cobrança"
-                                >
-                                  <EmailSendIcon />
-                                </button>
-                                <button
-                                  type="button"
-                                  className="page-inadimplentes__btn-icone page-inadimplentes__btn-icone--cancelar"
-                                  onClick={() => abrirModalCancelarInadimplencia(i, nomeCliente)}
-                                  disabled={i.id == null}
-                                  title="Cancelar inadimplência deste mês"
-                                  aria-label="Cancelar inadimplência"
-                                >
-                                  <CancelIcon />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-                <p className="modal__total-label">
-                  Total: <strong>{totalDetalhe.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong>
-                </p>
-              </div>
-              <div className="modal__botoes">
-                <button type="button" className="btn btn--primary" onClick={() => setDetalheClienteId(null)}>
-                  Fechar
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
 
-      {inadimplenciaParaCancelar && (
-        <div className="modal-overlay" onClick={() => setInadimplenciaParaCancelar(null)}>
-          <div className="modal modal--confirmar-exclusao" onClick={(e) => e.stopPropagation()}>
-            <h2 className="modal__titulo">Apagar inadimplência?</h2>
-            <p className="modal__texto-confirmacao">
-              Tem certeza que deseja apagar a inadimplência do mês{" "}
-              <strong>{formatarMesAno(inadimplenciaParaCancelar.item.vencimento)}</strong> do cliente{" "}
-              <strong>{inadimplenciaParaCancelar.nomeCliente}</strong>? Esta ação não pode ser desfeita.
-            </p>
-            <div className="modal__botoes">
-              <button type="button" className="btn btn--secondary" onClick={() => setInadimplenciaParaCancelar(null)}>
+
+      {modalAjustarJurosAberto && (
+        <div className="modal-overlay" onClick={() => !loadingJurosGlobal && setModalAjustarJurosAberto(false)}>
+          <div className="modal modal--cadastro modal--pagamento" onClick={(e) => e.stopPropagation()}>
+            <p className="modal__eyebrow">AJUSTAR JUROS</p>
+            <h2 className="modal__titulo">Configuração global</h2>
+            <div className="modal__grid">
+              <label className="modal__label modal__label--full">Multa diária (% ao dia)</label>
+              <input
+                type="text"
+                className="modal__input modal__input--full"
+                value={jurosGlobal.multa}
+                onChange={(e) => setJurosGlobal((prev) => ({ ...prev, multa: e.target.value }))}
+                disabled={loadingJurosGlobal}
+              />
+              <label className="modal__label modal__label--full">Juros ao mês (%)</label>
+              <input
+                type="text"
+                className="modal__input modal__input--full"
+                value={jurosGlobal.juros}
+                onChange={(e) => setJurosGlobal((prev) => ({ ...prev, juros: e.target.value }))}
+                disabled={loadingJurosGlobal}
+              />
+            </div>
+            <div className="modal__botoes modal__botoes--duplo">
+              <button
+                type="button"
+                className="btn btn--secondary"
+                onClick={desativarJurosGlobal}
+                disabled={loadingJurosGlobal}
+              >
+                Desativar juros
+              </button>
+              <button
+                type="button"
+                className="btn btn--secondary"
+                onClick={() => setModalAjustarJurosAberto(false)}
+                disabled={loadingJurosGlobal}
+              >
                 Cancelar
               </button>
-              <button type="button" className="btn btn--danger" onClick={executarCancelamento}>
-                Apagar
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={salvarJurosGlobal}
+                disabled={loadingJurosGlobal}
+              >
+                {loadingJurosGlobal ? "Salvando..." : "Salvar juros"}
               </button>
             </div>
           </div>
         </div>
       )}
+
 
       {modalRegistroAberto && (
         <div className="modal-overlay" onClick={() => setModalRegistroAberto(false)}>
@@ -804,11 +727,27 @@ export default function WebInadimplentes() {
               {loadingServicos ? (
                 <p className="modal__servicos-status">Carregando serviços...</p>
               ) : (
+              <>
+              <input
+                type="text"
+                className="modal__input modal__input--full"
+                placeholder="Pesquisar serviço..."
+                value={servicosBuscaValor}
+                onChange={(e) => setServicosBuscaValor(e.target.value)}
+                aria-label="Pesquisar serviço"
+              />
               <div className="modal__servicos-list modal__servicos-list--valor">
                 {servicos
                   .filter((s) => s.ativo ?? true)
+                  .filter((s) => {
+                    const termo = servicosBuscaValor.trim().toLowerCase();
+                    if (!termo) return true;
+                    const nome = (s.nome ?? "").toLowerCase();
+                    const descricao = (s.descricao ?? "").toLowerCase();
+                    return nome.includes(termo) || descricao.includes(termo);
+                  })
                   .map((s) => {
-                    const valorReais = (s.valorPadrao ?? 0) / 100;
+                    const valorReais = s.valorPadrao ?? 0;
                     const checked = servicosSelecionadosParaValor.includes(s.servicoId);
                     return (
                       <label key={s.servicoId || s.nome} className="modal__servico-item modal__servico-item--valor">
@@ -826,7 +765,19 @@ export default function WebInadimplentes() {
                       </label>
                     );
                   })}
+                {servicos
+                  .filter((s) => s.ativo ?? true)
+                  .filter((s) => {
+                    const termo = servicosBuscaValor.trim().toLowerCase();
+                    if (!termo) return true;
+                    const nome = (s.nome ?? "").toLowerCase();
+                    const descricao = (s.descricao ?? "").toLowerCase();
+                    return nome.includes(termo) || descricao.includes(termo);
+                  }).length === 0 && (
+                    <p className="modal__servicos-status">Nenhum serviço encontrado para a busca informada.</p>
+                  )}
               </div>
+              </>
               )}
               <p className="modal__total-label modal__total-label--servicos">
                 Total: <strong>{somaServicosModalReais.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong>
@@ -860,6 +811,22 @@ function PlusIcon() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  );
+}
+
+function SlidersIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="4" y1="21" x2="4" y2="14" />
+      <line x1="4" y1="10" x2="4" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12" y2="3" />
+      <line x1="20" y1="21" x2="20" y2="16" />
+      <line x1="20" y1="12" x2="20" y2="3" />
+      <line x1="1" y1="14" x2="7" y2="14" />
+      <line x1="9" y1="8" x2="15" y2="8" />
+      <line x1="17" y1="16" x2="23" y2="16" />
     </svg>
   );
 }
@@ -908,35 +875,6 @@ function EyeIcon() {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
       <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
-}
-
-function EmailSendIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="4" width="20" height="16" rx="2" />
-      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-      <path d="M16 14h6" />
-      <path d="m19 11 3 3-3 3" />
-    </svg>
-  );
-}
-
-function CancelIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" />
-      <line x1="15" y1="9" x2="9" y2="15" />
-      <line x1="9" y1="9" x2="15" y2="15" />
     </svg>
   );
 }

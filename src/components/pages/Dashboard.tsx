@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { api, isMockEnabled, normalizeListResponse } from '@/lib/api'
-import { normalizeInadimplenciaFromApi } from '@/lib/apiNormalizers'
+import { normalizeInadimplenciaFromApi, normalizeResumoRelatorioFromApi } from '@/lib/apiNormalizers'
 import { DASHBOARD_INVALIDATE_EVENT } from '@/lib/dashboardRefresh'
 import type { Inadimplencia, ResumoRelatorio } from '@/types/api'
 import { DonutChart } from '@/components/DonutChart'
@@ -33,8 +33,8 @@ export default function Dashboard() {
     setLoading(true)
     setLoadingChart(true)
     setLoadingAtividades(true)
-    api.get<ResumoRelatorio>(`/api/relatorios/resumo?${cacheBust()}`).then((r) => setResumo(r.data)).catch(() => setResumo(null)).finally(() => setLoading(false))
-    api.get<ResumoRelatorio>(`/api/relatorios/resumo?dias=${diasChart}&${cacheBust()}`).then((r) => setResumoChart(r.data)).catch(() => setResumoChart(null)).finally(() => setLoadingChart(false))
+    api.get<ResumoRelatorio>(`/api/relatorios/resumo?${cacheBust()}`).then((r) => setResumo(normalizeResumoRelatorioFromApi(r.data))).catch(() => setResumo(null)).finally(() => setLoading(false))
+    api.get<ResumoRelatorio>(`/api/relatorios/resumo?dias=${diasChart}&${cacheBust()}`).then((r) => setResumoChart(normalizeResumoRelatorioFromApi(r.data))).catch(() => setResumoChart(null)).finally(() => setLoadingChart(false))
     api.get(`/api/inadimplentes?${cacheBust()}`, { params: { paginado: false } })
       .then((r) => {
         const raw = normalizeListResponse<Record<string, unknown>>(r.data)
@@ -51,13 +51,13 @@ export default function Dashboard() {
 
   /** Recarrega todos os dados ao abrir/voltar para o dashboard (sem usar cache antigo) */
   useEffect(() => {
-    if (location.pathname !== '/') return
+    if (location.pathname !== '/dashboard') return
     const t = cacheBust()
     setLoading(true)
     setLoadingChart(true)
     setLoadingAtividades(true)
-    api.get<ResumoRelatorio>(`/api/relatorios/resumo?${t}`).then((r) => setResumo(r.data)).catch(() => setResumo(null)).finally(() => setLoading(false))
-    api.get<ResumoRelatorio>(`/api/relatorios/resumo?dias=${periodoChart}&${t}`).then((r) => setResumoChart(r.data)).catch(() => setResumoChart(null)).finally(() => setLoadingChart(false))
+    api.get<ResumoRelatorio>(`/api/relatorios/resumo?${t}`).then((r) => setResumo(normalizeResumoRelatorioFromApi(r.data))).catch(() => setResumo(null)).finally(() => setLoading(false))
+    api.get<ResumoRelatorio>(`/api/relatorios/resumo?dias=${periodoChart}&${t}`).then((r) => setResumoChart(normalizeResumoRelatorioFromApi(r.data))).catch(() => setResumoChart(null)).finally(() => setLoadingChart(false))
     api.get(`/api/inadimplentes?${t}`, { params: { paginado: false } })
       .then((r) => {
         const raw = normalizeListResponse<Record<string, unknown>>(r.data)
@@ -77,7 +77,7 @@ export default function Dashboard() {
 
   /** Ao receber evento de invalidação (criar/cancelar/confirmar inadimplência), refaz as requisições */
   useEffect(() => {
-    if (location.pathname !== '/') return
+    if (location.pathname !== '/dashboard') return
     const handler = () => refetchDashboard(periodoChart)
     window.addEventListener(DASHBOARD_INVALIDATE_EVENT, handler)
     return () => window.removeEventListener(DASHBOARD_INVALIDATE_EVENT, handler)
@@ -85,7 +85,7 @@ export default function Dashboard() {
 
   /** Ao voltar para a aba (ex.: fez ação em outra aba), refaz o fetch para não exibir dados antigos */
   useEffect(() => {
-    if (location.pathname !== '/') return
+    if (location.pathname !== '/dashboard') return
     const onVisibility = () => {
       if (document.visibilityState === 'visible') refetchDashboard(periodoChart)
     }
@@ -95,8 +95,7 @@ export default function Dashboard() {
 
   const totalClientes = resumo?.totalClientes ?? 0
   const totalInadimplentes = resumo?.totalDividas ?? 0
-  /** API retorna totalEmAberto em centavos; convertemos para reais na exibição */
-  const valorEmAberto = ((resumo?.totalEmAberto ?? 0) / 100)
+  const valorEmAberto = resumo?.totalEmAberto ?? 0
 
   return (
     <div className="dashboard">
@@ -184,8 +183,8 @@ export default function Dashboard() {
           ) : (
             <div className="dashboard-chart__donut">
               <DonutChart
-                totalEmAberto={((resumoChart?.totalEmAberto ?? 0) / 100)}
-                totalPago={((resumoChart?.totalPago ?? 0) / 100)}
+                totalEmAberto={resumoChart?.totalEmAberto ?? 0}
+                totalPago={resumoChart?.totalPago ?? 0}
               />
             </div>
           )}

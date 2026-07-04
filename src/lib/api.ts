@@ -28,6 +28,10 @@ export const AUTH_TOKEN_KEY = "sgi_token";
 
 /** Chave onde o login/nome do usuário é guardado para exibir na sidebar */
 export const USER_DISPLAY_KEY = "sgi_user_display";
+/** Login do usuário autenticado (para comparação com a API, ex.: revogar) */
+export const USER_LOGIN_KEY = "sgi_user_login";
+/** Chave onde o perfil do usuário autenticado é guardado */
+export const USER_PROFILE_KEY = "sgi_user_profile";
 
 if (!isMockEnabled()) {
   axiosInstance.interceptors.request.use((config) => {
@@ -43,6 +47,9 @@ if (!isMockEnabled()) {
     (error: AxiosError<ApiErrorBody>) => {
       if (error.response?.status === 401) {
         localStorage.removeItem(AUTH_TOKEN_KEY);
+        localStorage.removeItem(USER_DISPLAY_KEY);
+        localStorage.removeItem(USER_LOGIN_KEY);
+        localStorage.removeItem(USER_PROFILE_KEY);
       }
       return Promise.reject(error);
     }

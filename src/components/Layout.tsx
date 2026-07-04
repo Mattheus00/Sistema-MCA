@@ -1,14 +1,6 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { AUTH_TOKEN_KEY, isMockEnabled, USER_DISPLAY_KEY } from '@/lib/api'
-
-const navItems = [
-  { to: '/', label: 'Dashboard', icon: GridIcon },
-  { to: '/clientes', label: 'Clientes', icon: PeopleIcon },
-  { to: '/inadimplentes', label: 'Inadimplentes', icon: AlertIcon },
-  { to: '/servicos', label: 'Serviços', icon: ServicesIcon },
-  { to: '/reforma-tributaria', label: 'Cálculo', icon: CalculatorIcon },
-  { to: '/relatorios', label: 'Relatórios', icon: ChartIcon },
-]
+import { useEffect, useState } from 'react'
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { AUTH_TOKEN_KEY, isMockEnabled, USER_DISPLAY_KEY, USER_LOGIN_KEY, USER_PROFILE_KEY } from '@/lib/api'
 
 function GridIcon() {
   return (
@@ -90,19 +82,66 @@ function UserIcon() {
 
 export default function Layout() {
   const navigate = useNavigate()
+  const SIDEBAR_HIDDEN_KEY = 'sgi_sidebar_hidden'
   const showSair = !isMockEnabled() && typeof localStorage !== 'undefined' && localStorage.getItem(AUTH_TOKEN_KEY)
   const userDisplay = typeof localStorage !== 'undefined' ? (localStorage.getItem(USER_DISPLAY_KEY) || 'Usuário') : 'Usuário'
+  const userProfile = typeof localStorage !== 'undefined' ? localStorage.getItem(USER_PROFILE_KEY) : null
+  const [sidebarHidden, setSidebarHidden] = useState(false)
+  const isProprietaria = userProfile === 'PROPRIETARIA'
+  const navItems = [
+    { to: '/dashboard', label: 'Dashboard', icon: GridIcon },
+    { to: '/clientes', label: 'Clientes', icon: PeopleIcon },
+    { to: '/inadimplentes', label: 'Inadimplentes', icon: AlertIcon },
+    { to: '/servicos', label: 'Serviços', icon: ServicesIcon },
+    { to: '/reforma-tributaria', label: 'Simulador', icon: CalculatorIcon },
+    { to: '/relatorios', label: 'Relatórios', icon: ChartIcon },
+    ...(isProprietaria ? [{ to: '/usuarios', label: 'Usuários', icon: UserIcon }] : []),
+  ]
 
   function handleSair() {
     localStorage.removeItem(AUTH_TOKEN_KEY)
     localStorage.removeItem(USER_DISPLAY_KEY)
+    localStorage.removeItem(USER_LOGIN_KEY)
+    localStorage.removeItem(USER_PROFILE_KEY)
     navigate('/login', { replace: true })
   }
 
+  useEffect(() => {
+    if (typeof localStorage === 'undefined') return
+    setSidebarHidden(localStorage.getItem(SIDEBAR_HIDDEN_KEY) === '1')
+  }, [])
+
+  useEffect(() => {
+    if (typeof localStorage === 'undefined') return
+    localStorage.setItem(SIDEBAR_HIDDEN_KEY, sidebarHidden ? '1' : '0')
+  }, [sidebarHidden])
+
   return (
-    <div className="app-layout">
+    <div className={`app-layout ${sidebarHidden ? 'app-layout--sidebar-hidden' : ''}`}>
+      {sidebarHidden && (
+        <button
+          type="button"
+          className="sidebar-handle sidebar-handle--floating"
+          onClick={() => setSidebarHidden(false)}
+          aria-label="Mostrar barra lateral"
+          title="Mostrar menu"
+        >
+          <ChevronIcon direction="right" />
+        </button>
+      )}
+      {!sidebarHidden && (
+        <button
+          type="button"
+          className="sidebar-handle sidebar-handle--edge"
+          onClick={() => setSidebarHidden(true)}
+          aria-label="Esconder barra lateral"
+          title="Esconder menu"
+        >
+          <ChevronIcon direction="left" />
+        </button>
+      )}
       <aside className="sidebar">
-        <div className="sidebar-brand">
+        <Link to="/" className="sidebar-brand" aria-label="Ir para a página institucional">
           <div className="sidebar-brand__logo">
             <LogoIcon />
           </div>
@@ -110,7 +149,7 @@ export default function Layout() {
             <span className="sidebar-brand__titulo">Contabilidade Sao Judas Tadeu</span>
             <span className="sidebar-brand__subtitulo">Sistema de Gerenciamento de Inadimplentes</span>
           </div>
-        </div>
+        </Link>
         <div className="sidebar-user" aria-label="Usuário logado">
           <span className="sidebar-user__icon" aria-hidden="true">
             <UserIcon />
@@ -124,7 +163,7 @@ export default function Layout() {
             <NavLink
               key={to}
               to={to}
-              end={to === '/'}
+              end={to === '/dashboard'}
               className={({ isActive }) => `sidebar-link ${isActive ? 'sidebar-link--active' : ''}`}
             >
               <Icon />
@@ -146,6 +185,15 @@ export default function Layout() {
         </main>
       </div>
     </div>
+  )
+}
+
+function ChevronIcon({ direction }: { direction: 'left' | 'right' }) {
+  const d = direction === 'left' ? 'M14 6l-6 6 6 6' : 'M10 6l6 6-6 6'
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={d} />
+    </svg>
   )
 }
 

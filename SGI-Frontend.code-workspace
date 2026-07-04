@@ -1,0 +1,22 @@
+{
+  "folders": [
+    {
+      "path": ".",
+      "name": "SGI Frontend (React)"
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "Backend": true,
+      "Codigo": true,
+      "node_modules": true,
+      "dist": true
+    },
+    "search.exclude": {
+      "Backend": true,
+      "Codigo": true,
+      "node_modules": true,
+      "dist": true
+    }
+  }
+}

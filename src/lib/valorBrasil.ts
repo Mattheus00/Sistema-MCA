@@ -28,3 +28,12 @@ export function formatarCentavosParaInput(centavos: number | null | undefined): 
     maximumFractionDigits: 2,
   });
 }
+
+/** Formata valor em reais para exibição no input (ex.: 200 → "200,00"). API retorna valores em reais. */
+export function formatarReaisParaInput(valor: number | null | undefined): string {
+  if (valor == null || valor === 0) return "";
+  return valor.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
