@@ -76,14 +76,13 @@ export default function WebClientes() {
   const [modalAberto, setModalAberto] = useState(false);
   const [clienteEmEdicao, setClienteEmEdicao] = useState<Cliente | null>(null);
   const [clienteParaExcluir, setClienteParaExcluir] = useState<Cliente | null>(null);
-  const [ordenarPor, setOrdenarPor] = useState<"codigo" | "nome" | "cpf" | null>(null);
+  const [ordenarPor, setOrdenarPor] = useState<"nome" | "cpf" | null>(null);
   const [ordemAsc, setOrdemAsc] = useState(true);
   const [pagina, setPagina] = useState(1);
   const itensPorPagina = 10;
   const buscaDebounceRef = useRef(false);
 
   const [form, setForm] = useState<Cliente>({
-    codigo: "",
     nome: "",
     email: "",
     cpf: "",
@@ -115,14 +114,9 @@ export default function WebClientes() {
     try {
       setLoading(true);
       setErro(null);
-      const params: { page: number; size: number; busca?: string; statusCliente?: string } = {
-        page: 0,
-        size: 100,
-      };
-      if (filtroSituacao === "ativo") params.statusCliente = "ATIVO";
-      else if (filtroSituacao === "inativo") params.statusCliente = "INATIVO";
+      const params: { page: number; size: number; nome?: string } = { page: 0, size: 100 };
       const termo = termoBusca?.trim();
-      if (termo) params.busca = termo;
+      if (termo) params.nome = termo;
       const r = await api.get("/api/clientes", { params });
       const list = normalizeListResponse<Record<string, unknown>>(r.data);
       setClientes(list.map((c) => normalizeClienteFromApi(c)));
@@ -145,7 +139,7 @@ export default function WebClientes() {
       const raw = r?.data && typeof r.data === "object" ? r.data : {};
       const novoCliente = normalizeClienteFromApi(raw as Record<string, unknown>);
       setClientes((prev) => [novoCliente, ...prev.filter((c) => c.id !== novoCliente.id)]);
-      setForm({ codigo: "", nome: "", email: "", cpf: "", telefone: "", celular: "", endereco: "", situacao: "Ativo" });
+      setForm({ nome: "", email: "", cpf: "", telefone: "", celular: "", endereco: "", situacao: "Ativo" });
       setModalAberto(false);
       setClienteEmEdicao(null);
       setMensagemSucesso("Cliente cadastrado com sucesso.");
@@ -156,7 +150,7 @@ export default function WebClientes() {
 
   function abrirModalNovo() {
     setClienteEmEdicao(null);
-    setForm({ codigo: "", nome: "", email: "", cpf: "", telefone: "", celular: "", endereco: "", situacao: "Ativo" });
+    setForm({ nome: "", email: "", cpf: "", telefone: "", celular: "", endereco: "", situacao: "Ativo" });
     setModalAberto(true);
   }
 
@@ -164,7 +158,6 @@ export default function WebClientes() {
     setClienteEmEdicao(c);
     setForm({
       ...c,
-      codigo: c.codigo ?? "",
       nome: c.nome,
       email: c.email ?? "",
       cpf: formatCpf(c.cpf) === "—" ? "" : formatCpf(c.cpf),
@@ -186,7 +179,7 @@ export default function WebClientes() {
         ? { ...form, id: clienteEmEdicao.id, cpf: form.cpf?.replace(/\D/g, "") || undefined, telefone: form.telefone?.replace(/\D/g, "") || undefined, celular: form.celular?.replace(/\D/g, "") || undefined }
         : normalizeClienteToApi({ ...form, id: clienteEmEdicao.id });
       await api.patch(`/api/clientes/${clienteEmEdicao.id}`, payload);
-      setForm({ codigo: "", nome: "", email: "", cpf: "", telefone: "", celular: "", endereco: "", situacao: "Ativo" });
+      setForm({ nome: "", email: "", cpf: "", telefone: "", celular: "", endereco: "", situacao: "Ativo" });
       setModalAberto(false);
       setClienteEmEdicao(null);
       setMensagemSucesso("Cliente atualizado com sucesso.");
@@ -213,7 +206,7 @@ export default function WebClientes() {
     listar();
   }, []);
 
-  /* Busca por código/nome/CPF: envia termo ao backend após parar de digitar (debounce 400ms) */
+  /* Busca por nome: envia termo ao backend após parar de digitar (debounce 400ms) */
   useEffect(() => {
     if (!buscaDebounceRef.current) {
       buscaDebounceRef.current = true;
@@ -225,12 +218,11 @@ export default function WebClientes() {
       setPagina(1);
     }, 400);
     return () => clearTimeout(t);
-  }, [busca, filtroSituacao]);
+  }, [busca]);
 
   const filtrados = clientes.filter((c) => {
     const matchBusca =
       !busca.trim() ||
-      (c.codigo && c.codigo.toLowerCase().includes(busca.toLowerCase())) ||
       c.nome.toLowerCase().includes(busca.toLowerCase()) ||
       (c.cpf && c.cpf.replace(/\D/g, "").includes(busca.replace(/\D/g, "")));
     const situacao = c.situacao ?? "Ativo";
@@ -244,7 +236,6 @@ export default function WebClientes() {
   const ordenados = [...filtrados].sort((a, b) => {
     if (!ordenarPor) return 0;
     const mul = ordemAsc ? 1 : -1;
-    if (ordenarPor === "codigo") return mul * ((a.codigo || "").localeCompare(b.codigo || "", undefined, { numeric: true }) || 0);
     if (ordenarPor === "nome") return mul * (a.nome.localeCompare(b.nome) || 0);
     if (ordenarPor === "cpf") return mul * ((a.cpf || "").localeCompare(b.cpf || ""));
     return 0;
@@ -262,7 +253,7 @@ export default function WebClientes() {
     setPagina(1);
   }, [filtroSituacao]);
 
-  function toggleOrdenacao(campo: "codigo" | "nome" | "cpf") {
+  function toggleOrdenacao(campo: "nome" | "cpf") {
     if (ordenarPor === campo) setOrdemAsc((x) => !x);
     else {
       setOrdenarPor(campo);
@@ -310,7 +301,7 @@ export default function WebClientes() {
           <SearchIcon />
           <input
             type="text"
-            placeholder="Buscar por código, nome ou CPF/CNPJ..."
+            placeholder="Buscar clientes..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             className="page-clientes__input"
@@ -333,11 +324,6 @@ export default function WebClientes() {
           <thead>
             <tr>
               <th>
-                <button type="button" className="page-clientes__th" onClick={() => toggleOrdenacao("codigo")}>
-                  Código <SortIcon />
-                </button>
-              </th>
-              <th>
                 <button type="button" className="page-clientes__th" onClick={() => toggleOrdenacao("nome")}>
                   Nome <SortIcon />
                 </button>
@@ -356,18 +342,17 @@ export default function WebClientes() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} className="page-clientes__loading">
+                <td colSpan={6} className="page-clientes__loading">
                   Carregando...
                 </td>
               </tr>
             ) : ordenados.length === 0 ? (
               <tr>
-                <td colSpan={7} className="page-clientes__vazio">Nenhum cliente encontrado.</td>
+                <td colSpan={6} className="page-clientes__vazio">Nenhum cliente encontrado.</td>
               </tr>
             ) : (
               itensPagina.map((c) => (
-                  <tr key={c.id ?? `${c.codigo ?? ""}-${c.nome}-${c.cpf ?? ""}`}>
-                    <td>{c.codigo ?? "—"}</td>
+                  <tr key={c.id ?? `${c.nome}-${c.cpf ?? ""}`}>
                     <td>{c.nome}</td>
                     <td>{formatCpf(c.cpf)}</td>
                     <td>{formatTelefoneFixo(c.telefone)}</td>
@@ -457,14 +442,6 @@ export default function WebClientes() {
             <div className="modal modal--cadastro" onClick={(e) => e.stopPropagation()}>
               <h2 className="modal__titulo">{clienteEmEdicao ? "Editar Cliente" : "Cadastro de Cliente"}</h2>
               <div className="modal__grid">
-                <label className="modal__label">Código</label>
-                <input
-                  placeholder="Ex.: 4, MCA"
-                  value={form.codigo ?? ""}
-                  onChange={(e) => setForm({ ...form, codigo: e.target.value.toUpperCase() })}
-                  className="modal__input"
-                  maxLength={50}
-                />
                 <label className="modal__label modal__label--required">Nome</label>
                 <input
                   placeholder="Digite o nome completo"

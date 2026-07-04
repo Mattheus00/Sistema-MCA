@@ -17,15 +17,13 @@ import type {
 export function normalizeClienteFromApi(raw: Record<string, unknown>): Cliente {
   const id = raw.id ?? raw.clienteId;
   const situacao = raw.situacao ?? mapStatusClienteToSituacao(String(raw.statusCliente ?? ""));
-  const celular = raw.celular ?? raw.telefone ?? raw.telefoneFixo;
   return {
     id: id != null ? String(id) : undefined,
-    codigo: raw.codigo != null ? String(raw.codigo) : undefined,
     nome: String(raw.nome ?? ""),
     email: raw.email != null ? String(raw.email) : undefined,
     cpf: raw.cpf != null ? String(raw.cpf) : raw.cpfCnpj != null ? String(raw.cpfCnpj) : undefined,
     telefone: raw.telefone != null ? String(raw.telefone) : raw.telefoneFixo != null ? String(raw.telefoneFixo) : undefined,
-    celular: celular != null ? String(celular) : undefined,
+    celular: raw.celular != null ? String(raw.celular) : undefined,
     endereco: raw.endereco != null ? String(raw.endereco) : undefined,
     situacao: situacao as Cliente["situacao"],
     createdAt: raw.createdAt != null ? String(raw.createdAt) : raw.criadoEm != null ? String(raw.criadoEm) : undefined,
@@ -46,7 +44,6 @@ export function normalizeClienteToApi(c: Partial<Cliente>): Record<string, unkno
   const situacao = c.situacao ?? "Ativo";
   const statusCliente = situacao === "Ativo" ? "ATIVO" : situacao === "Inadimplente" ? "INADIMPLENTE" : "INATIVO";
   const payload: Record<string, unknown> = {
-    codigo: c.codigo?.trim().toUpperCase() || undefined,
     nome: c.nome,
     email: c.email,
     cpfCnpj: c.cpf?.replace(/\D/g, "") || undefined,
