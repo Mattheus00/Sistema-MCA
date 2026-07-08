@@ -4,6 +4,27 @@ import { api, AUTH_TOKEN_KEY, getApiErrorMessage, isMockEnabled, USER_DISPLAY_KE
 import type { LoginResponse, PerfilUsuario } from "@/types/api";
 import type { AxiosError } from "axios";
 
+const MSG_RECUPERACAO_CONTATO =
+  "Para redefinir sua senha, entre em contato com a proprietária do escritório.";
+const MSG_RECUPERACAO_422 =
+  "Recuperação de senha pública está desabilitada. Contate a proprietária do escritório.";
+const MSG_RECUPERACAO_429 = "Muitas tentativas. Aguarde um minuto e tente novamente.";
+
+/** API de produção (não localhost) — recuperação pública desabilitada no backend prod. */
+function isProducaoApi(): boolean {
+  if (isMockEnabled()) return false;
+  const raw = String(import.meta.env.VITE_API_URL ?? "").trim();
+  if (!raw) return false;
+  try {
+    const host = new URL(raw).hostname.toLowerCase();
+    return host !== "localhost" && host !== "127.0.0.1";
+  } catch {
+    return !/localhost|127\.0\.0\.1/i.test(raw);
+  }
+}
+
+type PassoRecuperacao = 1 | 2 | 3 | "contato";
+
 /** Mesmo ícone do logo da sidebar (Layout) */
 function LogoIcon() {
   return (
@@ -53,13 +74,14 @@ export default function Login() {
   const [loginCadastro, setLoginCadastro] = useState("");
   const [senhaCadastro, setSenhaCadastro] = useState("");
   const [modalRecuperacaoAberto, setModalRecuperacaoAberto] = useState(false);
-  const [passoRecuperacao, setPassoRecuperacao] = useState<1 | 2 | 3>(1);
+  const [passoRecuperacao, setPassoRecuperacao] = useState<PassoRecuperacao>(1);
   const [loginRecuperacao, setLoginRecuperacao] = useState("");
   const [nomeRecuperacao, setNomeRecuperacao] = useState("");
   const [novaSenhaRecuperacao, setNovaSenhaRecuperacao] = useState("");
   const [confirmarSenhaRecuperacao, setConfirmarSenhaRecuperacao] = useState("");
   const [erroRecuperacao, setErroRecuperacao] = useState<string | null>(null);
   const [loadingRecuperacao, setLoadingRecuperacao] = useState(false);
+  const recuperacaoPublicaDesabilitada = isProducaoApi();
 
   function extrairPerfil(data: LoginResponse): PerfilUsuario | null {
     const bruto = data.perfil ?? data.role ?? data.usuario?.perfil ?? data.usuario?.role;
@@ -158,11 +180,12 @@ export default function Login() {
     setErro(null);
     setMensagemSucesso(null);
     setErroRecuperacao(null);
-    setPassoRecuperacao(1);
     setLoginRecuperacao(login.trim());
     setNomeRecuperacao("");
     setNovaSenhaRecuperacao("");
     setConfirmarSenhaRecuperacao("");
+    // Em prod a API desabilita os endpoints públicos — mostra só o contato.
+    setPassoRecuperacao(recuperacaoPublicaDesabilitada ? "contato" : 1);
     setModalRecuperacaoAberto(true);
   }
 
@@ -184,11 +207,24 @@ export default function Login() {
     setTimeout(() => loginInputRef.current?.focus(), 0);
   }
 
+  function statusHttpRecuperacao(e: unknown): number | undefined {
+    return (e as AxiosError | undefined)?.response?.status;
+  }
+
   function getMensagemErroRecuperacao(e: unknown, fallback: string): string {
-    const status = (e as AxiosError<{ message?: string; error?: string }> | undefined)?.response?.status;
+    const status = statusHttpRecuperacao(e);
     if (status === 404) return "Usuário não encontrado";
-    if (status === 422) return getApiErrorMessage(e, fallback);
+    if (status === 429) return MSG_RECUPERACAO_429;
+    if (status === 422) return getApiErrorMessage(e, MSG_RECUPERACAO_422);
     return getApiErrorMessage(e, fallback);
+  }
+
+  function aplicarErroRecuperacao(e: unknown, fallback: string) {
+    const status = statusHttpRecuperacao(e);
+    const msg = getMensagemErroRecuperacao(e, fallback);
+    setErroRecuperacao(msg);
+    // 422: não avançar / esconder o passo de redefinir senha
+    if (status === 422) setPassoRecuperacao("contato");
   }
 
   async function validarLoginRecuperacao(e: React.FormEvent) {
@@ -213,11 +249,12 @@ export default function Login() {
         setErroRecuperacao("Usuário não encontrado");
         return;
       }
+      // 200: mantém fluxo local de duas etapas
       setLoginRecuperacao(String(res.data.login ?? loginTrim));
       setNomeRecuperacao(String(res.data.nome ?? ""));
       setPassoRecuperacao(2);
     } catch (e: unknown) {
-      setErroRecuperacao(getMensagemErroRecuperacao(e, "Não foi possível validar o login"));
+      aplicarErroRecuperacao(e, "Não foi possível validar o login");
     } finally {
       setLoadingRecuperacao(false);
     }
@@ -246,7 +283,7 @@ export default function Login() {
       }
       setPassoRecuperacao(3);
     } catch (e: unknown) {
-      setErroRecuperacao(getMensagemErroRecuperacao(e, "Não foi possível alterar senha"));
+      aplicarErroRecuperacao(e, "Não foi possível alterar senha");
     } finally {
       setLoadingRecuperacao(false);
     }
@@ -412,8 +449,23 @@ export default function Login() {
         <div className="modal-overlay page-login__recuperacao-overlay" onClick={fecharRecuperacaoSenha}>
           <div className="modal page-login__recuperacao-modal" onClick={(e) => e.stopPropagation()}>
             <h2 className="modal__titulo">Recuperar senha</h2>
-            <p className="page-login__recuperacao-step">Passo {passoRecuperacao} de 2</p>
+            {passoRecuperacao !== "contato" && passoRecuperacao !== 3 && (
+              <p className="page-login__recuperacao-step">Passo {passoRecuperacao} de 2</p>
+            )}
             {erroRecuperacao && <p className="page-login__erro">{erroRecuperacao}</p>}
+
+            {passoRecuperacao === "contato" && (
+              <div className="page-login__recuperacao-sucesso">
+                {!erroRecuperacao && (
+                  <p className="page-login__recuperacao-helper">{MSG_RECUPERACAO_CONTATO}</p>
+                )}
+                <div className="modal__botoes">
+                  <button type="button" className="btn btn--primary" onClick={fecharRecuperacaoSenha}>
+                    Fechar
+                  </button>
+                </div>
+              </div>
+            )}
 
             {passoRecuperacao === 1 && (
               <form className="page-login__form" onSubmit={validarLoginRecuperacao}>

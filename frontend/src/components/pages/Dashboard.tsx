@@ -12,7 +12,19 @@ function formatarData(iso: string): string {
   return `${d}/${m}/${y}`
 }
 
-type PeriodoChart = 30 | 60 | 90
+type PeriodoChart = 30 | 60 | 90 | 'total'
+
+const OPCOES_PERIODO_CHART: { valor: PeriodoChart; rotulo: string }[] = [
+  { valor: 30, rotulo: '30 dias' },
+  { valor: 60, rotulo: '60 dias' },
+  { valor: 90, rotulo: '90 dias' },
+  { valor: 'total', rotulo: 'Total' },
+]
+
+function urlResumoComPeriodo(periodo: PeriodoChart, cacheBust: string): string {
+  if (periodo === 'total') return `/api/relatorios/resumo?${cacheBust}`
+  return `/api/relatorios/resumo?dias=${periodo}&${cacheBust}`
+}
 
 export default function Dashboard() {
   const location = useLocation()
@@ -34,7 +46,7 @@ export default function Dashboard() {
     setLoadingChart(true)
     setLoadingAtividades(true)
     api.get<ResumoRelatorio>(`/api/relatorios/resumo?${cacheBust()}`).then((r) => setResumo(normalizeResumoRelatorioFromApi(r.data))).catch(() => setResumo(null)).finally(() => setLoading(false))
-    api.get<ResumoRelatorio>(`/api/relatorios/resumo?dias=${diasChart}&${cacheBust()}`).then((r) => setResumoChart(normalizeResumoRelatorioFromApi(r.data))).catch(() => setResumoChart(null)).finally(() => setLoadingChart(false))
+    api.get<ResumoRelatorio>(urlResumoComPeriodo(diasChart, cacheBust())).then((r) => setResumoChart(normalizeResumoRelatorioFromApi(r.data))).catch(() => setResumoChart(null)).finally(() => setLoadingChart(false))
     api.get(`/api/inadimplentes?${cacheBust()}`, { params: { paginado: false } })
       .then((r) => {
         const raw = normalizeListResponse<Record<string, unknown>>(r.data)
@@ -57,7 +69,7 @@ export default function Dashboard() {
     setLoadingChart(true)
     setLoadingAtividades(true)
     api.get<ResumoRelatorio>(`/api/relatorios/resumo?${t}`).then((r) => setResumo(normalizeResumoRelatorioFromApi(r.data))).catch(() => setResumo(null)).finally(() => setLoading(false))
-    api.get<ResumoRelatorio>(`/api/relatorios/resumo?dias=${periodoChart}&${t}`).then((r) => setResumoChart(normalizeResumoRelatorioFromApi(r.data))).catch(() => setResumoChart(null)).finally(() => setLoadingChart(false))
+    api.get<ResumoRelatorio>(urlResumoComPeriodo(periodoChart, t)).then((r) => setResumoChart(normalizeResumoRelatorioFromApi(r.data))).catch(() => setResumoChart(null)).finally(() => setLoadingChart(false))
     api.get(`/api/inadimplentes?${t}`, { params: { paginado: false } })
       .then((r) => {
         const raw = normalizeListResponse<Record<string, unknown>>(r.data)
@@ -165,14 +177,14 @@ export default function Dashboard() {
         <div className="dashboard-chart-header">
           <h2 className="dashboard-section__title">Montante a receber</h2>
           <div className="dashboard-chart-filtros">
-            {([30, 60, 90] as const).map((d) => (
+            {OPCOES_PERIODO_CHART.map(({ valor, rotulo }) => (
               <button
-                key={d}
+                key={String(valor)}
                 type="button"
-                className={`dashboard-chart-filtro ${periodoChart === d ? 'dashboard-chart-filtro--ativo' : ''}`}
-                onClick={() => setPeriodoChart(d)}
+                className={`dashboard-chart-filtro ${periodoChart === valor ? 'dashboard-chart-filtro--ativo' : ''}`}
+                onClick={() => setPeriodoChart(valor)}
               >
-                {d} dias
+                {rotulo}
               </button>
             ))}
           </div>

@@ -12,11 +12,16 @@ import type {
   PerfilUsuario,
   UsuarioAtivo,
   UsuarioPendente,
+  CobrancaSicoob,
+  SicoobStatus,
+  PagamentoInadimplencia,
 } from "@/types/api";
 
 const store = {
   clientes: [] as Cliente[],
   inadimplentes: [] as Inadimplencia[],
+  cobrancasSicoob: [] as CobrancaSicoob[],
+  pagamentos: [] as PagamentoInadimplencia[],
   usuarios: [
     {
       usuarioId: "u-proprietaria",
@@ -533,6 +538,42 @@ export function createMockClient() {
         return Promise.resolve({ data: ativos } as { data: T });
       }
 
+      if (url === "/api/sicoob/status") {
+        const status: SicoobStatus = {
+          enabled: true,
+          mock: true,
+          configuredForApi: false,
+          clientIdConfigured: false,
+          certificateConfigured: false,
+          pixChaveConfigured: true,
+          contasBoletoConfigured: true,
+          webhookSecretConfigured: false,
+          mensagem: "Integração Sicoob em modo simulação (mock).",
+        };
+        return Promise.resolve({ data: status } as { data: T });
+      }
+
+      const matchCobrancasDivida = url.match(/^\/api\/sicoob\/dividas\/([\w-]+)\/cobrancas$/);
+      if (matchCobrancasDivida) {
+        const dividaId = matchCobrancasDivida[1];
+        const list = store.cobrancasSicoob.filter((c) => c.dividaId === dividaId);
+        return Promise.resolve({ data: list } as { data: T });
+      }
+
+      const matchPagamentosDivida = url.match(/^\/api\/pagamentos\/divida\/([\w-]+)$/);
+      if (matchPagamentosDivida) {
+        const dividaId = matchPagamentosDivida[1];
+        const list = store.pagamentos.filter((p) => p.dividaId === dividaId);
+        return Promise.resolve({ data: list } as { data: T });
+      }
+
+      const matchCobranca = url.match(/^\/api\/sicoob\/cobrancas\/([\w-]+)$/);
+      if (matchCobranca) {
+        const cob = store.cobrancasSicoob.find((c) => c.cobrancaId === matchCobranca[1]);
+        if (!cob) return Promise.reject(new Error("Cobrança Sicoob não encontrada."));
+        return Promise.resolve({ data: cob } as { data: T });
+      }
+
       return Promise.reject(new Error(`Mock: rota não encontrada: ${url}`));
     },
 
@@ -603,6 +644,97 @@ export function createMockClient() {
         store.inadimplentes.push(novo);
         return Promise.resolve({ data: novo } as { data: T });
       }
+
+      if (url === "/api/pagamentos") {
+        const payload = (body ?? {}) as {
+          dividaId?: string;
+          valorPago?: number;
+          dataPagamento?: string;
+          metodoPagamento?: string;
+          comprovante?: string;
+        };
+        const valorBruto = Number(payload.valorPago ?? 0);
+        const valorPago = valorBruto >= 100 ? valorBruto / 100 : valorBruto;
+        const pag: PagamentoInadimplencia = {
+          pagamentoId: `pag-mock-${Date.now()}`,
+          dividaId: payload.dividaId,
+          valorPago,
+          dataPagamento: payload.dataPagamento ?? new Date().toISOString().slice(0, 10),
+          metodoPagamento: payload.metodoPagamento,
+          comprovante: payload.comprovante,
+          criadoEm: new Date().toISOString(),
+        };
+        store.pagamentos.push(pag);
+        return Promise.resolve({ data: pag } as { data: T });
+      }
+
+      if (url === "/api/notificacoes/enviar-cobranca") {
+        const payload = (body ?? {}) as { clienteId?: string; dividaId?: string };
+        const divida = store.inadimplentes.find((i) => i.id === payload.dividaId);
+        const cliente = store.clientes.find((c) => c.id === payload.clienteId);
+        return Promise.resolve({
+          data: {
+            notificacaoId: `notif-mock-${Date.now()}`,
+            clienteId: payload.clienteId,
+            dividaId: payload.dividaId,
+            tipo: "COBRANCA_EMAIL",
+            emailDestino: cliente?.email ?? "cliente@exemplo.com",
+            assunto: "Cobrança - Débito em Aberto",
+            valorComunicado: divida?.valor ?? 0,
+            statusEnvio: "ENVIADO",
+            tentativas: 1,
+            dataEnvio: new Date().toISOString(),
+            cobrancaSicoobId: `bol-mock-${Date.now()}`,
+            boletoLinhaDigitavel: "75691.23456 78901.234567 89012.345678 9 12340000010000",
+            boletoNossoNumero: "12345678",
+            boletoPdfAnexado: true,
+          },
+        } as { data: T });
+      }
+
+      const matchPix = url.match(/^\/api\/sicoob\/dividas\/([\w-]+)\/pix$/);
+      if (matchPix) {
+        const dividaId = matchPix[1];
+        const divida = store.inadimplentes.find((i) => i.id === dividaId);
+        const valorCentavos = Math.round((divida?.valor ?? 0) * 100);
+        const cob: CobrancaSicoob = {
+          cobrancaId: `pix-mock-${Date.now()}`,
+          dividaId,
+          protocoloDivida: `DIV-${dividaId}`,
+          tipo: "PIX",
+          status: "PENDENTE",
+          valorCentavos,
+          pixTxid: `TXIDMOCK${Date.now()}`,
+          pixCopiaECola:
+            "00020126580014br.gov.bcb.pix0136mock-chave-pix-sgi-contabilidade5204000053039865802BR5925MCA SERVICOS CONTABEIS6009SAO PAULO62070503***6304ABCD",
+          pixQrCode: null,
+          criadoEm: new Date().toISOString(),
+        };
+        store.cobrancasSicoob.push(cob);
+        return Promise.resolve({ data: cob, status: 201 } as { data: T; status: number });
+      }
+
+      const matchBoleto = url.match(/^\/api\/sicoob\/dividas\/([\w-]+)\/boleto$/);
+      if (matchBoleto) {
+        const dividaId = matchBoleto[1];
+        const divida = store.inadimplentes.find((i) => i.id === dividaId);
+        const valorCentavos = Math.round((divida?.valor ?? 0) * 100);
+        const cob: CobrancaSicoob = {
+          cobrancaId: `bol-mock-${Date.now()}`,
+          dividaId,
+          protocoloDivida: `DIV-${dividaId}`,
+          tipo: "BOLETO",
+          status: "PENDENTE",
+          valorCentavos,
+          boletoNossoNumero: String(Date.now()).slice(-8),
+          boletoLinhaDigitavel: "75691.23456 78901.234567 89012.345678 9 12340000010000",
+          boletoCodigoBarras: "75691234567890123456789012345678912340000010000",
+          criadoEm: new Date().toISOString(),
+        };
+        store.cobrancasSicoob.push(cob);
+        return Promise.resolve({ data: cob, status: 201 } as { data: T; status: number });
+      }
+
       return Promise.reject(new Error(`Mock: rota não encontrada: ${url}`));
     },
 

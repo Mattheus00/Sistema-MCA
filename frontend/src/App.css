@@ -506,6 +506,7 @@ a.sidebar-brand:focus-visible {
 
 .dashboard-chart-filtros {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   padding: 4px;
   background: #f1f5f9;
@@ -1737,26 +1738,73 @@ a.sidebar-brand:focus-visible {
 }
 
 .modal-cobranca-canal__pergunta {
-  margin: 0 0 16px;
-  font-size: 1rem;
+  margin: 8px 0 12px;
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+}
+
+.modal-cobranca-canal__resultado {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.modal-cobranca-canal__resultado-ok {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: #047857;
+  line-height: 1.45;
+}
+
+.modal-cobranca-canal__linha {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modal-cobranca-canal__linha-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+}
+
+.modal-cobranca-canal__linha-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.modal-cobranca-canal__linha-code {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  word-break: break-all;
+  padding: 8px 10px;
+  background: #f9fafb;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+}
+
+.modal-cobranca-canal__loading {
+  margin: 8px 0 12px;
+  font-size: 0.875rem;
   color: var(--text-secondary);
   text-align: center;
 }
 
 .modal-cobranca-canal__opcoes .modal-pagamento__tipo-tab {
+  width: 100%;
   cursor: pointer;
 }
 
 .modal-cobranca-canal__opcoes .modal-pagamento__tipo-tab:disabled {
   opacity: 0.55;
   cursor: not-allowed;
-}
-
-.modal-cobranca-canal__loading {
-  margin: 0 0 12px;
-  text-align: center;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
 }
 
 .modal-pagamento__tipo-texto {
@@ -2731,11 +2779,51 @@ select.modal__select {
   margin-top: 8px;
 }
 
+.page-inadimplentes__tabela-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
 .page-inadimplentes__tabela-titulo {
   font-size: 1.125rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0 0 16px;
+  margin: 0;
+}
+
+.page-inadimplentes__busca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  background: #fff;
+  flex: 1;
+  min-width: 220px;
+  max-width: 420px;
+}
+
+.page-inadimplentes__busca svg {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.page-inadimplentes__busca-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.9375rem;
+  outline: none;
+  color: var(--text-primary);
+}
+
+.page-inadimplentes__busca-input::placeholder {
+  color: var(--text-muted);
 }
 
 .page-inadimplentes__tabela-wrap {
@@ -2825,9 +2913,509 @@ select.modal__select {
 }
 
 /* Página de honorários por cliente */
-.page-inadimplentes--honorarios {
+.page-inadimplentes--honorarios,
+.page-inadimplentes--registro {
   max-width: 1100px;
   width: 100%;
+}
+
+.page-inadimplentes-registro__formulario {
+  margin-top: 24px;
+  padding: 24px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  max-width: 720px;
+}
+
+.page-inadimplentes-registro__formulario .modal__campos {
+  display: grid;
+  gap: 16px;
+}
+
+.page-inadimplentes-registro__botoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--glass-border);
+}
+
+.page-inadimplentes--registro .modal__textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+/* Registro de inadimplência — layout profissional */
+.registro-inadimplencia__header {
+  margin-bottom: 28px;
+}
+
+.registro-inadimplencia__erro {
+  margin-bottom: 20px;
+}
+
+.registro-inadimplencia__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 24px;
+  align-items: start;
+}
+
+.registro-inadimplencia__principal {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.registro-inadimplencia__card {
+  background: #fff;
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.registro-inadimplencia__card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.registro-inadimplencia__card-head--split {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.registro-inadimplencia__card-head-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.registro-inadimplencia__step {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(147, 51, 234, 0.1);
+  color: var(--cor-principal);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.registro-inadimplencia__card-title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.registro-inadimplencia__card-desc {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.registro-inadimplencia__label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.registro-inadimplencia__required {
+  color: #dc2626;
+}
+
+.registro-inadimplencia__combobox {
+  position: relative;
+}
+
+.registro-inadimplencia__combobox svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.registro-inadimplencia__input,
+.registro-inadimplencia__select,
+.registro-inadimplencia__textarea {
+  width: 100%;
+  padding: 11px 14px;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.registro-inadimplencia__combobox .registro-inadimplencia__input {
+  padding-left: 42px;
+}
+
+.registro-inadimplencia__input:focus,
+.registro-inadimplencia__select:focus,
+.registro-inadimplencia__textarea:focus {
+  outline: none;
+  background: #fff;
+  border-color: var(--cor-principal);
+  box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.12);
+}
+
+.registro-inadimplencia__textarea {
+  resize: vertical;
+  min-height: 112px;
+  line-height: 1.5;
+}
+
+.registro-inadimplencia__listbox {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+}
+
+.registro-inadimplencia__listbox-vazio,
+.registro-inadimplencia__opcao {
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+.registro-inadimplencia__listbox-vazio {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.registro-inadimplencia__opcao {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.registro-inadimplencia__opcao:hover,
+.registro-inadimplencia__opcao--ativa {
+  background: rgba(147, 51, 234, 0.08);
+}
+
+.registro-inadimplencia__opcao-nome {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.registro-inadimplencia__opcao-doc {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.registro-inadimplencia__cliente-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.registro-inadimplencia__cliente-info-nome {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.registro-inadimplencia__tabela-wrap {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.registro-inadimplencia__tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.registro-inadimplencia__tabela th {
+  padding: 12px 14px;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.registro-inadimplencia__tabela td {
+  padding: 10px 14px;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.registro-inadimplencia__tabela tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.registro-inadimplencia__linha-descricao td {
+  padding: 0 14px 16px;
+  background: #fafbfc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.registro-inadimplencia__descricao-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.registro-inadimplencia__descricao-opcional {
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-muted);
+}
+
+.registro-inadimplencia__input--descricao {
+  font-size: 0.875rem;
+}
+
+.registro-inadimplencia__th-acao {
+  width: 72px;
+  text-align: center;
+}
+
+.registro-inadimplencia__select {
+  min-width: 140px;
+  cursor: pointer;
+}
+
+.registro-inadimplencia__select--ano {
+  min-width: 96px;
+}
+
+.registro-inadimplencia__valor-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 160px;
+}
+
+.registro-inadimplencia__input--valor {
+  min-width: 0;
+}
+
+.registro-inadimplencia__btn-servicos {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--cor-principal);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.registro-inadimplencia__btn-servicos:hover {
+  background: rgba(147, 51, 234, 0.08);
+  border-color: var(--cor-principal);
+}
+
+.registro-inadimplencia__btn-remover {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin: 0 auto;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.registro-inadimplencia__btn-remover:hover:not(:disabled) {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.registro-inadimplencia__btn-remover:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.registro-inadimplencia__sidebar {
+  position: sticky;
+  top: 24px;
+}
+
+.registro-inadimplencia__resumo {
+  background: #fff;
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+}
+
+.registro-inadimplencia__resumo-titulo {
+  margin: 0 0 18px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.registro-inadimplencia__resumo-lista {
+  margin: 0 0 20px;
+  padding: 0;
+}
+
+.registro-inadimplencia__resumo-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.registro-inadimplencia__resumo-item:last-child {
+  border-bottom: none;
+}
+
+.registro-inadimplencia__resumo-item dt {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.registro-inadimplencia__resumo-item dd {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: right;
+}
+
+.registro-inadimplencia__resumo-item--total {
+  margin-top: 4px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: none;
+}
+
+.registro-inadimplencia__resumo-item--total dt {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.registro-inadimplencia__resumo-item--total dd {
+  font-size: 1.25rem;
+  color: var(--cor-principal);
+}
+
+.registro-inadimplencia__acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.registro-inadimplencia__btn-salvar,
+.registro-inadimplencia__btn-cancelar {
+  width: 100%;
+  justify-content: center;
+}
+
+@media (max-width: 960px) {
+  .registro-inadimplencia__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .registro-inadimplencia__sidebar {
+    position: static;
+    order: -1;
+  }
+
+  .registro-inadimplencia__resumo {
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  }
+
+  .registro-inadimplencia__acoes {
+    flex-direction: row;
+  }
+
+  .registro-inadimplencia__btn-salvar {
+    flex: 1;
+  }
+
+  .registro-inadimplencia__btn-cancelar {
+    flex: 0 0 auto;
+    width: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .registro-inadimplencia__card {
+    padding: 18px;
+  }
+
+  .registro-inadimplencia__card-head--split {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .registro-inadimplencia__card-head--split .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .registro-inadimplencia__acoes {
+    flex-direction: column;
+  }
+
+  .registro-inadimplencia__btn-cancelar {
+    width: 100%;
+  }
 }
 
 .page-inadimplentes-honorarios__voltar {
@@ -2883,14 +3471,55 @@ select.modal__select {
   margin-top: 8px;
 }
 
-.page-inadimplentes-honorarios__grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
+.page-inadimplentes-honorarios__tabela-wrap {
+  margin-top: 4px;
+}
+
+.page-inadimplentes-honorarios__tabela {
+  width: 100%;
+}
+
+.page-inadimplentes-honorarios__descricao {
+  max-width: 280px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  word-break: break-word;
+}
+
+.page-inadimplentes-honorarios__status {
+  display: inline-block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.page-inadimplentes-honorarios__status--pago {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.page-inadimplentes-honorarios__status--parcial {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.page-inadimplentes-honorarios__status--aberto {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.page-inadimplentes-honorarios__acoes-linha {
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.page-inadimplentes-honorarios__sem-acao {
+  color: var(--text-muted);
 }
 
 .page-inadimplentes-honorarios__paginacao {
-  margin-top: 20px;
+  margin-top: 16px;
 }
 
 .page-inadimplentes-honorarios__card {
@@ -3015,6 +3644,225 @@ select.modal__select {
   margin-bottom: 0;
 }
 
+/* —— Sicoob cobrança (honorários) —— */
+.sicoob-panel {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sicoob-panel__banner-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sicoob-panel__titulo {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sicoob-panel__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sicoob-panel__badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  color: var(--text-secondary);
+  border: 1px solid var(--glass-border);
+}
+
+.sicoob-panel__badge--mock {
+  background: #fff7ed;
+  color: #9a3412;
+  border-color: #fdba74;
+}
+
+.sicoob-panel__badge--ok {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #6ee7b7;
+}
+
+.sicoob-panel__badge--alerta {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.sicoob-panel__mensagem {
+  margin: 8px 0 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.sicoob-panel__hint {
+  margin: 4px 0 0;
+  font-size: 0.8125rem;
+  color: #9a3412;
+}
+
+.sicoob-panel__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sicoob-panel__emitida {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sicoob-panel__emitida-meta {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.sicoob-panel__campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sicoob-panel__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+}
+
+.sicoob-panel__campo-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.sicoob-panel__code {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  word-break: break-all;
+  padding: 8px 10px;
+  background: #f9fafb;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+}
+
+.sicoob-panel__erro-item {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #b91c1c;
+}
+
+.sicoob-panel__lista-titulo {
+  margin: 0 0 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sicoob-panel__vazio {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.sicoob-panel__ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sicoob-panel__li {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  gap: 6px 10px;
+  align-items: baseline;
+  font-size: 0.8125rem;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.sicoob-panel__li:last-child {
+  border-bottom: none;
+}
+
+.sicoob-panel__li-tipo {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.sicoob-panel__li-status {
+  font-weight: 500;
+}
+
+.sicoob-panel__li-status--pago {
+  color: #047857;
+}
+
+.sicoob-panel__li-status--erro {
+  color: #b91c1c;
+}
+
+.sicoob-panel__li-status--pendente {
+  color: #b45309;
+}
+
+.sicoob-panel__li-valor {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.sicoob-panel__li-data {
+  color: var(--text-secondary);
+  grid-column: 4;
+}
+
+.sicoob-panel__li-erro {
+  grid-column: 1 / -1;
+  color: #b91c1c;
+  font-size: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .sicoob-panel__li {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .sicoob-panel__li-data {
+    grid-column: auto;
+  }
+
+  .sicoob-panel__campo-row {
+    flex-direction: column;
+  }
+}
+
 .page-inadimplentes-honorarios__total-geral {
   margin-top: 24px;
   padding: 16px 20px;
@@ -3040,6 +3888,146 @@ select.modal__select {
 
 .page-inadimplentes-honorarios__vazio p {
   margin: 0 0 16px;
+  color: var(--text-secondary);
+}
+
+.page-inadimplentes-honorarios__linha--clicavel {
+  cursor: pointer;
+}
+
+.page-inadimplentes-honorarios__linha--clicavel:hover td {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.page-inadimplentes-honorarios__linha--expandida td {
+  background: rgba(0, 0, 0, 0.03);
+  border-bottom-color: transparent;
+}
+
+.page-inadimplentes-honorarios__detalhe-row td {
+  padding: 0 12px 16px;
+  background: rgba(0, 0, 0, 0.02);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.honorarios-sicoob {
+  display: grid;
+  gap: 16px;
+  padding: 12px 0 4px;
+}
+
+.honorarios-sicoob__mock-banner {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 0.875rem;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+}
+
+.honorarios-sicoob__mock-banner--page {
+  margin-bottom: 16px;
+}
+
+.honorarios-sicoob__secao {
+  display: grid;
+  gap: 8px;
+}
+
+.honorarios-sicoob__titulo {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.honorarios-sicoob__vazio {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.honorarios-sicoob__lista-cobrancas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.honorarios-sicoob__item-cobranca {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.honorarios-sicoob__tipo {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.honorarios-sicoob__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+.honorarios-sicoob__badge--inline {
+  display: inline-flex;
+}
+
+.honorarios-sicoob__badge--pendente {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.honorarios-sicoob__badge--pago {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.honorarios-sicoob__badge--erro {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.honorarios-sicoob__badge--cancelado {
+  color: #4b5563;
+  background: #f3f4f6;
+}
+
+.honorarios-sicoob__polling {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.honorarios-sicoob__tabela-pagamentos {
+  margin-top: 4px;
+}
+
+.honorarios-sicoob__pagamento-auto {
+  display: grid;
+  gap: 4px;
+}
+
+.honorarios-sicoob__comprovante {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
+.honorarios-sicoob__metodo {
+  font-size: 0.875rem;
   color: var(--text-secondary);
 }
 
@@ -3767,6 +4755,15 @@ select.modal__select {
   .page-clientes__filtro-situacao {
     width: 100%;
     min-width: 0;
+  }
+
+  .page-inadimplentes__tabela-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-inadimplentes__busca {
+    max-width: none;
   }
 
   .page-clientes__tabela-wrap,

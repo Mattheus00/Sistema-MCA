@@ -121,6 +121,26 @@ export type ExtratoNotificacao = {
   tentativas: number;
 };
 
+/** Resposta de POST /api/notificacoes/enviar-cobranca (SMTP + boleto Sicoob opcional) */
+export type NotificacaoCobrancaResponse = {
+  notificacaoId?: string;
+  clienteId?: string;
+  dividaId?: string;
+  tipo?: string;
+  emailDestino?: string;
+  assunto?: string;
+  valorComunicado?: number;
+  statusEnvio: string;
+  tentativas?: number;
+  dataEnvio?: string | null;
+  mensagemErro?: string | null;
+  criadoEm?: string | null;
+  cobrancaSicoobId?: string | null;
+  boletoLinhaDigitavel?: string | null;
+  boletoNossoNumero?: string | null;
+  boletoPdfAnexado?: boolean;
+};
+
 export type ExtratoCliente = {
   cliente: {
     nome: string;
@@ -279,6 +299,43 @@ export type UsuarioAtivo = {
   perfil: PerfilUsuario | string;
   statusUsuario: string;
   criadoEm: string;
+};
+
+/** Status da integração Sicoob — GET /api/sicoob/status */
+export type SicoobStatus = {
+  enabled: boolean;
+  mock: boolean;
+  configuredForApi: boolean;
+  clientIdConfigured: boolean;
+  certificateConfigured: boolean;
+  pixChaveConfigured: boolean;
+  contasBoletoConfigured: boolean;
+  webhookSecretConfigured: boolean;
+  mensagem?: string;
+};
+
+export type SicoobCobrancaTipo = "PIX" | "BOLETO";
+export type StatusCobrancaSicoob = "PENDENTE" | "PAGO" | "CANCELADO" | "ERRO";
+/** @deprecated use StatusCobrancaSicoob */
+export type SicoobCobrancaStatus = StatusCobrancaSicoob | string;
+
+/** Resposta de emissão/consulta de cobrança Sicoob */
+export type CobrancaSicoob = {
+  cobrancaId: string;
+  dividaId: string;
+  protocoloDivida?: string;
+  tipo: SicoobCobrancaTipo;
+  status: StatusCobrancaSicoob | string;
+  valorCentavos: number;
+  pixTxid?: string | null;
+  pixCopiaECola?: string | null;
+  pixQrCode?: string | null;
+  boletoNossoNumero?: string | null;
+  boletoLinhaDigitavel?: string | null;
+  boletoCodigoBarras?: string | null;
+  mensagemErro?: string | null;
+  criadoEm?: string | null;
+  pagoEm?: string | null;
 };
 
 /** Formato de erro da API (ajuste conforme o backend) */

@@ -70,7 +70,7 @@ function getCobrancaParams(
 export function buildCobrancaMensagemTexto(
   item: Inadimplencia,
   nomeCliente: string,
-  stripePaymentLinkUrl?: string | null
+  linkPagamentoUrl?: string | null
 ): string {
   const mesAno = formatarMesAno(item.vencimento);
   const valor = (item.valor ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -79,8 +79,8 @@ export function buildCobrancaMensagemTexto(
   const prot = protocolo(item.id, item.vencimento);
   const descricao = (item.descricao || "").trim();
   const linkPagamento =
-    typeof stripePaymentLinkUrl === "string" && /^https:\/\//i.test(stripePaymentLinkUrl.trim())
-      ? stripePaymentLinkUrl.trim()
+    typeof linkPagamentoUrl === "string" && /^https:\/\//i.test(linkPagamentoUrl.trim())
+      ? linkPagamentoUrl.trim()
       : null;
 
   const linhas = [
@@ -123,10 +123,10 @@ export function buildWhatsAppCobrancaUrl(
   item: Inadimplencia,
   nomeCliente: string,
   telefoneCliente?: string | null,
-  stripePaymentLinkUrl?: string | null
+  linkPagamentoUrl?: string | null
 ): string {
   const phone = normalizeTelefoneParaWhatsApp(telefoneCliente);
-  const text = encodeURIComponent(buildCobrancaMensagemTexto(item, nomeCliente, stripePaymentLinkUrl));
+  const text = encodeURIComponent(buildCobrancaMensagemTexto(item, nomeCliente, linkPagamentoUrl));
   if (phone) return `https://wa.me/${phone}?text=${text}`;
   return `https://api.whatsapp.com/send?text=${text}`;
 }
@@ -157,7 +157,7 @@ function escapeHtml(s: string): string {
 export function buildCobrancaEmailHtml(
   item: Inadimplencia,
   nomeCliente: string,
-  stripePaymentLinkUrl?: string | null
+  linkPagamentoUrl?: string | null
 ): string {
   const mesAno = formatarMesAno(item.vencimento);
   const valor = (item.valor ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -166,8 +166,8 @@ export function buildCobrancaEmailHtml(
   const prot = protocolo(item.id, item.vencimento);
   const descricao = (item.descricao || "").trim();
   const linkPagamento =
-    typeof stripePaymentLinkUrl === "string" && /^https:\/\//i.test(stripePaymentLinkUrl.trim())
-      ? stripePaymentLinkUrl.trim()
+    typeof linkPagamentoUrl === "string" && /^https:\/\//i.test(linkPagamentoUrl.trim())
+      ? linkPagamentoUrl.trim()
       : null;
   const linkPagamentoEscapado = linkPagamento ? escapeHtml(linkPagamento) : "";
   const pixQrUrl = PIX_CODE ? buildPixQrCodeImageUrl(PIX_CODE) : "";
@@ -222,10 +222,10 @@ export function buildCobrancaEmailHtml(
 export async function copyCobrancaEmailToClipboard(
   item: Inadimplencia,
   nomeCliente: string,
-  stripePaymentLinkUrl?: string | null
+  linkPagamentoUrl?: string | null
 ): Promise<boolean> {
-  const html = buildCobrancaEmailHtml(item, nomeCliente, stripePaymentLinkUrl);
-  const plain = buildCobrancaMensagemTexto(item, nomeCliente, stripePaymentLinkUrl);
+  const html = buildCobrancaEmailHtml(item, nomeCliente, linkPagamentoUrl);
+  const plain = buildCobrancaMensagemTexto(item, nomeCliente, linkPagamentoUrl);
   try {
     await navigator.clipboard.write([
       new ClipboardItem({

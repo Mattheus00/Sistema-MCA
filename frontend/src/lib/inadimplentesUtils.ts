@@ -44,6 +44,18 @@ export function isInadimplenciaEmAberto(i: Inadimplencia): boolean {
   return s !== "pago" && s !== "quitada" && s !== "cancelado" && s !== "cancelada";
 }
 
+export function statusPagamentoHonorario(i: Inadimplencia): "Pago" | "Parcial" | "Em aberto" {
+  const s = String(i.status ?? "EmAberto").toLowerCase();
+  if (s === "pago" || s === "quitada") return "Pago";
+  if (s === "parcial" || s === "acordo") return "Parcial";
+  return "Em aberto";
+}
+
+export function isInadimplenciaCancelada(i: Inadimplencia): boolean {
+  const s = String(i.status ?? "").toLowerCase();
+  return s === "cancelado" || s === "cancelada";
+}
+
 export function saldoDevedorItem(i: Inadimplencia): number {
   const totalDaApi = i.valor ?? i.valorDevedor ?? 0;
   const juros = i.juros ?? 0;

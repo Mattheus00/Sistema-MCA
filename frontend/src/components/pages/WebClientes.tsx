@@ -106,10 +106,10 @@ export default function WebClientes() {
 
   const [form, setForm] = useState<Cliente>({ ...FORM_VAZIO });
 
-  function buildListParams(termoBusca?: string) {
+  function buildListParams(termoBusca?: string, page = 0, size = 200) {
     const params: Record<string, string | number> = {
-      page: 0,
-      size: 100,
+      page,
+      size,
       statusCliente: "ATIVO",
     };
     const termo = termoBusca?.trim();
@@ -117,15 +117,44 @@ export default function WebClientes() {
     return params;
   }
 
+  /** Busca todas as páginas Spring até esgotar (evita o teto antigo de 100). */
+  async function listarTodasPaginas(termo?: string): Promise<Cliente[]> {
+    const pageSize = 200;
+    const all: Cliente[] = [];
+    let page = 0;
+    let totalPages = 1;
+
+    while (page < totalPages) {
+      const r = await api.get("/api/clientes", { params: buildListParams(termo, page, pageSize) });
+      const data = r.data;
+      const rawList = normalizeListResponse<Record<string, unknown>>(data);
+      all.push(...rawList.map((c) => normalizeClienteFromApi(c)));
+
+      if (data && typeof data === "object" && !Array.isArray(data)) {
+        const body = data as { totalPages?: number; last?: boolean; totalElements?: number };
+        if (typeof body.totalPages === "number") {
+          totalPages = Math.max(1, body.totalPages);
+        } else if (body.last === true || rawList.length < pageSize) {
+          break;
+        } else {
+          totalPages = page + 2;
+        }
+      } else {
+        break;
+      }
+      page += 1;
+      // segurança: evita loop infinito se a API ignorar page
+      if (page > 50) break;
+    }
+    return all;
+  }
+
   async function listar(termoBusca?: string) {
     try {
       setLoading(true);
       setErro(null);
       const termo = termoBusca?.trim();
-      const r = await api.get("/api/clientes", { params: buildListParams(termo) });
-      let list = normalizeListResponse<Record<string, unknown>>(r.data).map((c) =>
-        normalizeClienteFromApi(c)
-      );
+      let list = await listarTodasPaginas(termo);
       if (isMockEnabled() && termo) {
         list = filtrarClientesPorTermoMock(list, termo);
       }

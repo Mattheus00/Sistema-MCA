@@ -110,17 +110,17 @@ describe("buildGmailComposeUrl", () => {
 });
 
 describe("buildCobrancaEmailHtml", () => {
-  it("inclui seção de pagamento online quando link Stripe é https", () => {
+  it("inclui seção de pagamento online quando link https é informado", () => {
     const item: Inadimplencia = {
       id: "1",
       clienteId: "c1",
       valor: 100,
       vencimento: "2026-01-15",
     };
-    const html = buildCobrancaEmailHtml(item, "Cliente", "https://pay.stripe.com/test_link");
+    const html = buildCobrancaEmailHtml(item, "Cliente", "https://pay.exemplo.com/boleto");
     expect(html).toContain("Pagamento online");
     expect(html).toContain("Pagar com Boleto ou Pix");
-    expect(html).toContain("https://pay.stripe.com/test_link");
+    expect(html).toContain("https://pay.exemplo.com/boleto");
   });
 
   it("não inclui seção de pagamento online quando link é inválido", () => {
