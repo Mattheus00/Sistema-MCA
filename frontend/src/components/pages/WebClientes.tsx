@@ -53,6 +53,8 @@ const FORM_VAZIO: Cliente = {
   situacao: "Ativo",
 };
 
+type FiltroSituacaoCliente = "ATIVO" | "INATIVO";
+
 /** Filtro local apenas para modo mock (API real já filtra com `busca`). */
 function filtrarClientesPorTermoMock(lista: Cliente[], termo?: string): Cliente[] {
   const t = termo?.trim();
@@ -95,6 +97,7 @@ export default function WebClientes() {
   const [erro, setErro] = useState<string | null>(null);
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
+  const [filtroSituacao, setFiltroSituacao] = useState<FiltroSituacaoCliente>("ATIVO");
   const [modalAberto, setModalAberto] = useState(false);
   const [clienteEmEdicao, setClienteEmEdicao] = useState<Cliente | null>(null);
   const [clienteParaExcluir, setClienteParaExcluir] = useState<Cliente | null>(null);
@@ -103,14 +106,15 @@ export default function WebClientes() {
   const [pagina, setPagina] = useState(1);
   const itensPorPagina = 10;
   const buscaDebounceRef = useRef(false);
+  const filtroInitRef = useRef(true);
 
   const [form, setForm] = useState<Cliente>({ ...FORM_VAZIO });
 
-  function buildListParams(termoBusca?: string, page = 0, size = 200) {
+  function buildListParams(termoBusca?: string, page = 0, size = 200, status: FiltroSituacaoCliente = filtroSituacao) {
     const params: Record<string, string | number> = {
       page,
       size,
-      statusCliente: "ATIVO",
+      statusCliente: status,
     };
     const termo = termoBusca?.trim();
     if (termo) params.busca = termo;
@@ -118,14 +122,14 @@ export default function WebClientes() {
   }
 
   /** Busca todas as páginas Spring até esgotar (evita o teto antigo de 100). */
-  async function listarTodasPaginas(termo?: string): Promise<Cliente[]> {
+  async function listarTodasPaginas(termo?: string, status: FiltroSituacaoCliente = filtroSituacao): Promise<Cliente[]> {
     const pageSize = 200;
     const all: Cliente[] = [];
     let page = 0;
     let totalPages = 1;
 
     while (page < totalPages) {
-      const r = await api.get("/api/clientes", { params: buildListParams(termo, page, pageSize) });
+      const r = await api.get("/api/clientes", { params: buildListParams(termo, page, pageSize, status) });
       const data = r.data;
       const rawList = normalizeListResponse<Record<string, unknown>>(data);
       all.push(...rawList.map((c) => normalizeClienteFromApi(c)));
@@ -149,12 +153,12 @@ export default function WebClientes() {
     return all;
   }
 
-  async function listar(termoBusca?: string) {
+  async function listar(termoBusca?: string, status: FiltroSituacaoCliente = filtroSituacao) {
     try {
       setLoading(true);
       setErro(null);
       const termo = termoBusca?.trim();
-      let list = await listarTodasPaginas(termo);
+      let list = await listarTodasPaginas(termo, status);
       if (isMockEnabled() && termo) {
         list = filtrarClientesPorTermoMock(list, termo);
       }
@@ -272,7 +276,7 @@ export default function WebClientes() {
   }
 
   useEffect(() => {
-    listar();
+    void listar();
   }, []);
 
   useEffect(() => {
@@ -282,11 +286,20 @@ export default function WebClientes() {
     }
     const termo = busca.trim();
     const t = setTimeout(() => {
-      listar(termo || undefined);
+      void listar(termo || undefined);
       setPagina(1);
     }, 300);
     return () => clearTimeout(t);
   }, [busca]);
+
+  useEffect(() => {
+    if (filtroInitRef.current) {
+      filtroInitRef.current = false;
+      return;
+    }
+    void listar(busca.trim() || undefined);
+    setPagina(1);
+  }, [filtroSituacao]);
 
   const ordenados = [...clientes].sort((a, b) => {
     if (!ordenarPor) return 0;
@@ -319,7 +332,10 @@ export default function WebClientes() {
       return;
     }
     setErro(null);
-    exportarRelatorioClientesExcel(ordenados, { busca, situacao: "ativo" });
+    exportarRelatorioClientesExcel(ordenados, {
+      busca,
+      situacao: filtroSituacao === "INATIVO" ? "inativo" : "ativo",
+    });
     setMensagemSucesso("Relatório exportado. Abra o arquivo no Excel.");
   }
 
@@ -359,6 +375,27 @@ export default function WebClientes() {
             className="page-clientes__input"
           />
         </div>
+        <div className="page-clientes__filtro-grupo" role="group" aria-label="Filtrar por situação do cliente">
+          {(
+            [
+              { valor: "ATIVO" as const, rotulo: "Ativos" },
+              { valor: "INATIVO" as const, rotulo: "Inativos" },
+            ] as const
+          ).map(({ valor, rotulo }) => (
+            <button
+              key={valor}
+              type="button"
+              className={`page-clientes__filtro ${filtroSituacao === valor ? "page-clientes__filtro--ativo" : ""}`}
+              aria-pressed={filtroSituacao === valor}
+              onClick={() => {
+                setFiltroSituacao(valor);
+                setPagina(1);
+              }}
+            >
+              {rotulo}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="page-clientes__tabela-wrap">
@@ -395,7 +432,9 @@ export default function WebClientes() {
             ) : ordenados.length === 0 ? (
               <tr>
                 <td colSpan={6} className="page-clientes__vazio">
-                  Nenhum cliente encontrado.
+                  {filtroSituacao === "INATIVO"
+                    ? "Nenhum cliente inativo encontrado."
+                    : "Nenhum cliente ativo encontrado."}
                 </td>
               </tr>
             ) : (
