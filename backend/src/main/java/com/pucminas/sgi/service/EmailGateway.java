@@ -38,6 +38,7 @@ public class EmailGateway {
 
     /**
      * Configura a sessão de email a partir da configuração ativa no banco.
+     * Porta 465 → SSL implícito (Zoho, etc.). Porta 587 → STARTTLS.
      */
     public void configurarSessao() {
         dynamicSender = null;
@@ -49,7 +50,18 @@ public class EmailGateway {
             sender.setPassword(config.getSenha());
             Properties props = sender.getJavaMailProperties();
             props.put("mail.smtp.auth", "true");
-            props.put("mail.smtp.starttls.enable", config.getUsarTLS());
+            int porta = config.getPorta() != null ? config.getPorta() : 587;
+            boolean sslImplicito = porta == 465;
+            if (sslImplicito) {
+                props.put("mail.smtp.ssl.enable", "true");
+                props.put("mail.smtp.socketFactory.port", String.valueOf(porta));
+                props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+                props.put("mail.smtp.starttls.enable", "false");
+            } else {
+                boolean tls = Boolean.TRUE.equals(config.getUsarTLS());
+                props.put("mail.smtp.starttls.enable", String.valueOf(tls));
+                props.put("mail.smtp.ssl.enable", "false");
+            }
             dynamicSender = sender;
         });
     }
@@ -91,9 +103,10 @@ public class EmailGateway {
             throw new EmailSendException("Email remetente não configurado.");
         }
         String nomeRemetente = obterNomeRemetente();
+        boolean multipart = html != null && !html.isBlank();
         try {
             MimeMessage message = sender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+            MimeMessageHelper helper = new MimeMessageHelper(message, multipart, "UTF-8");
             helper.setFrom(nomeRemetente != null && !nomeRemetente.isBlank()
                     ? nomeRemetente + " <" + remetente + ">"
                     : remetente);

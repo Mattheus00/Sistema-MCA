@@ -36,17 +36,20 @@ public class NotificationService {
     private final DividaRepository dividaRepository;
     private final EmailGateway emailGateway;
     private final String nomeEscritorioCobranca;
+    private final int maxTentativasEmail;
 
     public NotificationService(NotificacaoEmailRepository notificacaoRepository,
                                ClienteRepository clienteRepository,
                                DividaRepository dividaRepository,
                                EmailGateway emailGateway,
-                               @Value("${cobranca.email.nome-escritorio:Contabilidade São Judas Tadeu}") String nomeEscritorioCobranca) {
+                               @Value("${cobranca.email.nome-escritorio:Contabilidade São Judas Tadeu}") String nomeEscritorioCobranca,
+                               @Value("${sgi.email.max-tentativas:5}") int maxTentativasEmail) {
         this.notificacaoRepository = notificacaoRepository;
         this.clienteRepository = clienteRepository;
         this.dividaRepository = dividaRepository;
         this.emailGateway = emailGateway;
         this.nomeEscritorioCobranca = nomeEscritorioCobranca;
+        this.maxTentativasEmail = Math.max(1, maxTentativasEmail);
     }
 
     @Transactional
@@ -83,10 +86,14 @@ public class NotificationService {
             vencimento = d.getVencimento().toString();
             descricao = d.getDescricao() != null ? d.getDescricao() : "-";
             assunto = "Cobrança - Débito em Aberto - " + protocolo;
+
             StringBuilder corpoBuilder = new StringBuilder();
             corpoBuilder.append("Prezado(a) ").append(cliente.getNome()).append(",\n\n");
-            corpoBuilder.append("Identificamos um débito em aberto no valor de R$ ").append(MoneyUtil.centavosParaReais(valorDevido)).append(".\n\n");
-            corpoBuilder.append("Protocolo: ").append(protocolo).append("\nVencimento: ").append(vencimento).append("\nDescrição: ").append(descricao);
+            corpoBuilder.append("Identificamos um débito em aberto no valor de R$ ")
+                    .append(MoneyUtil.centavosParaReais(valorDevido)).append(".\n\n");
+            corpoBuilder.append("Protocolo: ").append(protocolo)
+                    .append("\nVencimento: ").append(vencimento)
+                    .append("\nDescrição: ").append(descricao);
             if (d.getItensServicos() != null && !d.getItensServicos().isEmpty()) {
                 corpoBuilder.append("\n\nServiços prestados:\n");
                 d.getItensServicos().forEach(item -> corpoBuilder.append("  - ")
@@ -95,12 +102,15 @@ public class NotificationService {
                         .append(MoneyUtil.centavosParaReais(item.getValor()))
                         .append("\n"));
             }
-            corpoBuilder.append("\nPor favor, regularize sua situação.\n\nAtenciosamente,\nEscritório de Contabilidade");
+            corpoBuilder.append("\n\nPor favor, regularize sua situação.\n\nAtenciosamente,\nEscritório de Contabilidade");
             corpo = corpoBuilder.toString();
         } else {
-            List<Divida> abertas = new ArrayList<>(dividaRepository.findByCliente_ClienteIdAndStatusDivida(clienteId, com.pucminas.sgi.enums.StatusDivida.EM_ABERTO));
-            abertas.addAll(dividaRepository.findByCliente_ClienteIdAndStatusDivida(clienteId, com.pucminas.sgi.enums.StatusDivida.PARCIAL));
-            abertas.addAll(dividaRepository.findByCliente_ClienteIdAndStatusDivida(clienteId, com.pucminas.sgi.enums.StatusDivida.VENCIDA));
+            List<Divida> abertas = new ArrayList<>(
+                    dividaRepository.findByCliente_ClienteIdAndStatusDivida(clienteId, com.pucminas.sgi.enums.StatusDivida.EM_ABERTO));
+            abertas.addAll(dividaRepository.findByCliente_ClienteIdAndStatusDivida(
+                    clienteId, com.pucminas.sgi.enums.StatusDivida.PARCIAL));
+            abertas.addAll(dividaRepository.findByCliente_ClienteIdAndStatusDivida(
+                    clienteId, com.pucminas.sgi.enums.StatusDivida.VENCIDA));
             dividasAgregadas = abertas;
             valorDevido = abertas.stream().map(Divida::getValorDevedor).reduce(BigDecimal.ZERO, BigDecimal::add);
             if (valorDevido.compareTo(BigDecimal.ZERO) <= 0) {
@@ -108,9 +118,12 @@ public class NotificationService {
             }
             StringBuilder corpoBuilder = new StringBuilder();
             corpoBuilder.append("Prezado(a) ").append(cliente.getNome()).append(",\n\n");
-            corpoBuilder.append("Identificamos débitos em aberto no valor total de R$ ").append(MoneyUtil.centavosParaReais(valorDevido)).append(".\n\n");
+            corpoBuilder.append("Identificamos débitos em aberto no valor total de R$ ")
+                    .append(MoneyUtil.centavosParaReais(valorDevido)).append(".\n\n");
             for (Divida d : abertas) {
-                corpoBuilder.append("Protocolo: ").append(d.getProtocolo()).append(" - Vencimento: ").append(d.getVencimento()).append(" - Valor: R$ ").append(MoneyUtil.centavosParaReais(d.getValorDevedor())).append("\n");
+                corpoBuilder.append("Protocolo: ").append(d.getProtocolo())
+                        .append(" - Vencimento: ").append(d.getVencimento())
+                        .append(" - Valor: R$ ").append(MoneyUtil.centavosParaReais(d.getValorDevedor())).append("\n");
             }
             corpoBuilder.append("\nPor favor, regularize sua situação.\n\nAtenciosamente,\nEscritório de Contabilidade");
             protocolo = "-";
@@ -136,7 +149,8 @@ public class NotificationService {
 
         String htmlCorpo;
         if (dividaUnica != null) {
-            BigDecimal jurosCentavos = dividaUnica.getValorDevedor().subtract(dividaUnica.getValorOriginal()).max(BigDecimal.ZERO);
+            BigDecimal jurosCentavos = dividaUnica.getValorDevedor()
+                    .subtract(dividaUnica.getValorOriginal()).max(BigDecimal.ZERO);
             htmlCorpo = CobrancaEmailHtmlBuilder.htmlCobrancaDividaUnica(
                     nomeEscritorioCobranca,
                     cliente.getNome(),
@@ -165,14 +179,12 @@ public class NotificationService {
         notif = notificacaoRepository.save(notif);
 
         try {
-            emailGateway.enviarTextoEHtml(cliente.getEmail(), assunto, notif.getCorpoEmail(), notif.getCorpoHtml());
+            emailGateway.enviarTextoEHtml(
+                    cliente.getEmail(), assunto, notif.getCorpoEmail(), notif.getCorpoHtml());
             notif.setStatusEnvio(StatusEnvio.ENVIADO);
             notif.setDataEnvio(LocalDateTime.now());
         } catch (Exception e) {
-            notif.setStatusEnvio(StatusEnvio.FALHOU);
-            notif.setTentativas(notif.getTentativas() + 1);
-            notif.setMensagemErro(e.getMessage());
-            notif.setProximaTentativa(LocalDateTime.now().plusHours(1));
+            registrarFalhaEnvio(notif, e.getMessage());
         }
         notificacaoRepository.save(notif);
         return toResponse(notif);
@@ -180,28 +192,50 @@ public class NotificationService {
 
     @Transactional
     public int reprocessarFalhas() {
-        List<NotificacaoEmail> falhas = notificacaoRepository.findByStatusEnvioAndProximaTentativaBefore(StatusEnvio.FALHOU, LocalDateTime.now());
+        List<NotificacaoEmail> falhas = notificacaoRepository
+                .findByStatusEnvioAndProximaTentativaBefore(StatusEnvio.FALHOU, LocalDateTime.now());
         int enviados = 0;
         for (NotificacaoEmail notif : falhas) {
+            int tentativasAtuais = notif.getTentativas() == null ? 0 : notif.getTentativas();
+            if (tentativasAtuais >= maxTentativasEmail) {
+                notif.setStatusEnvio(StatusEnvio.ESGOTADO);
+                notif.setMensagemErro("Número máximo de tentativas esgotado (" + maxTentativasEmail + ").");
+                notificacaoRepository.save(notif);
+                continue;
+            }
             try {
                 if (notif.getCorpoHtml() != null && !notif.getCorpoHtml().isBlank()) {
-                    emailGateway.enviarTextoEHtml(notif.getEmailDestino(), notif.getAssunto(), notif.getCorpoEmail(), notif.getCorpoHtml());
+                    emailGateway.enviarTextoEHtml(
+                            notif.getEmailDestino(), notif.getAssunto(), notif.getCorpoEmail(), notif.getCorpoHtml());
                 } else {
-                    emailGateway.enviar(notif.getEmailDestino(), notif.getAssunto(), notif.getCorpoEmail(), notif.getValorComunicado());
+                    emailGateway.enviar(
+                            notif.getEmailDestino(), notif.getAssunto(), notif.getCorpoEmail(), notif.getValorComunicado());
                 }
                 notif.setStatusEnvio(StatusEnvio.ENVIADO);
                 notif.setDataEnvio(LocalDateTime.now());
                 notificacaoRepository.save(notif);
                 enviados++;
             } catch (Exception e) {
-                notif.setTentativas(notif.getTentativas() + 1);
-                notif.setMensagemErro(e.getMessage());
-                notif.setProximaTentativa(LocalDateTime.now().plusHours(1));
+                registrarFalhaEnvio(notif, e.getMessage());
                 notificacaoRepository.save(notif);
             }
         }
         log.info("Reprocessamento de falhas: {} reenviados de {}", enviados, falhas.size());
         return enviados;
+    }
+
+    private void registrarFalhaEnvio(NotificacaoEmail notif, String erro) {
+        int tentativas = (notif.getTentativas() == null ? 0 : notif.getTentativas()) + 1;
+        notif.setTentativas(tentativas);
+        notif.setMensagemErro(erro);
+        if (tentativas >= maxTentativasEmail) {
+            notif.setStatusEnvio(StatusEnvio.ESGOTADO);
+            notif.setProximaTentativa(null);
+            log.warn("E-mail {} esgotou {} tentativas.", notif.getNotificacaoId(), maxTentativasEmail);
+        } else {
+            notif.setStatusEnvio(StatusEnvio.FALHOU);
+            notif.setProximaTentativa(LocalDateTime.now().plusHours(1));
+        }
     }
 
     @Transactional(readOnly = true)

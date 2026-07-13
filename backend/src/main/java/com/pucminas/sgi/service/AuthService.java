@@ -9,10 +9,12 @@ import com.pucminas.sgi.dto.response.UsuarioResponseDTO;
 import com.pucminas.sgi.dto.response.ValidarLoginResponseDTO;
 import com.pucminas.sgi.entity.Usuario;
 import com.pucminas.sgi.enums.StatusUsuario;
+import com.pucminas.sgi.exception.BusinessRuleException;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
 import com.pucminas.sgi.repository.UsuarioRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,12 +34,22 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
 
+    @Value("${sgi.auth.password-recovery-enabled:true}")
+    private boolean passwordRecoveryEnabled;
+
     public AuthService(UsuarioRepository usuarioRepository,
                        JwtTokenProvider jwtTokenProvider,
                        PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.jwtTokenProvider = jwtTokenProvider;
         this.passwordEncoder = passwordEncoder;
+    }
+
+    private void ensurePasswordRecoveryEnabled() {
+        if (!passwordRecoveryEnabled) {
+            throw new BusinessRuleException(
+                    "Recuperação de senha pública está desabilitada. Contate a proprietária do escritório.");
+        }
     }
 
     @Transactional(readOnly = true)
@@ -106,6 +118,7 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public ValidarLoginResponseDTO validarLoginRecuperacao(ValidarLoginRequestDTO dto) {
+        ensurePasswordRecoveryEnabled();
         String login = dto.getLogin() == null ? "" : dto.getLogin().trim();
         Usuario usuario = usuarioRepository.findByTelefone(login)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário com login", login));
@@ -119,9 +132,10 @@ public class AuthService {
 
     @Transactional
     public void redefinirSenhaSemToken(RedefinirSenhaRequestDTO dto) {
+        ensurePasswordRecoveryEnabled();
         String login = dto.getLogin() == null ? "" : dto.getLogin().trim();
         if (!dto.getNovaSenha().equals(dto.getConfirmarSenha())) {
-            throw new com.pucminas.sgi.exception.BusinessRuleException("Confirmação de senha não confere.");
+            throw new BusinessRuleException("Confirmação de senha não confere.");
         }
         Usuario usuario = usuarioRepository.findByTelefone(login)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário com login", login));

@@ -1,75 +1,154 @@
-# Sistema-MCA
+# TCC — Sistema de Gerenciamento de Inadimplentes (SGI)
 
-Frontend em React + TypeScript + Vite.
+Este projeto tem como objetivo desenvolver um sistema de gerenciamento de inadimplentes para um escritório de contabilidade, visando substituir o processo manual realizado em cadernos.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A solução permite registrar clientes em atraso, acompanhar saldos devedores, registrar pagamentos manualmente, gerar relatórios financeiros, exportar dados em PDF/Excel, visualizar ranking de maiores devedores, acompanhar indicadores no dashboard, enviar e-mails de cobrança e agendar lembretes periódicos.
 
-Currently, two official plugins are available:
+## 👤 Integrante da Equipe
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Matheus Pereira de Carvalho Silva
 
-## React Compiler
+## 👨‍🏫 Professores Responsáveis
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Cleiton Silva Tavares
+- Danilo de Quadros Maia Filho
+- Leonardo Vilela Cardoso
+- Raphael Ramos Dias Costa
 
-## Expanding the ESLint configuration
+## 🛠️ Tecnologias Utilizadas
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Frontend:** React, Vite e TypeScript
+- **Backend:** Java 21, Spring Boot e Maven
+- **Banco de Dados:** SQLite
+- **Autenticação:** JWT
+- **Hospedagem:** Vercel (frontend) e Render (backend)
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🌐 Acesso ao Sistema
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+O sistema pode ser acessado pela versão hospedada ou pela execução local do projeto.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- **Painel web:** configure a URL do frontend na Vercel após o deploy
+- **API:** configure a URL do backend no Render após o deploy
+- **Documentação da API (local):** http://localhost:8080/swagger-ui.html
+
+## ▶️ Instruções de Replicação / Reprodução
+
+Para executar o projeto localmente, é necessário ter instalado:
+
+- Java 21
+- Maven 3.8+
+- Node.js 20 ou superior
+- npm
+
+### 1. Clonar este repositório
+
+```bash
+git clone https://github.com/ICEI-PUC-Minas-PPLES-TI/plf-es-2025-2-tcci-0393100-dev-matheus-pereira.git
+cd plf-es-2025-2-tcci-0393100-dev-matheus-pereira
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Instalar as dependências
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+O frontend fica na raiz do projeto e o backend na pasta `Backend/`.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+**Backend:**
+
+```bash
+cd Backend
+mvn clean install -DskipTests
 ```
+
+**Frontend:**
+
+```bash
+cd ..
+npm install
+```
+
+### 3. Configurar o banco de dados
+
+O sistema utiliza **SQLite**. O arquivo do banco é criado automaticamente em `Backend/data/sgi.db` na primeira execução do backend.
+
+Não é necessário instalar um servidor de banco separado. Na inicialização, o sistema cria as tabelas e os usuários iniciais.
+
+**Usuários padrão:**
+
+| Perfil | Login | Senha |
+|--------|-------|-------|
+| Responsável Financeiro | `josecarlos` | `484659` |
+| Proprietária | `claudia` | `2527` |
+
+### 4. Configurar as variáveis de ambiente
+
+**Frontend**
+
+Na raiz do projeto, copie o arquivo de exemplo:
+
+```bash
+cp .env.example .env
+```
+
+Exemplo de configuração:
+
+```env
+VITE_API_URL=http://localhost:8080
+VITE_USE_MOCK=false
+```
+
+- `VITE_USE_MOCK=false` — usa a API real (recomendado)
+- `VITE_USE_MOCK=true` — usa dados em memória, sem backend
+
+**Backend (opcional)**
+
+O backend funciona com as configurações padrão de `Backend/src/main/resources/application.properties`.
+
+Para e-mail de cobrança, configure no `.env` ou nas variáveis de ambiente:
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=seu-email@gmail.com
+SMTP_PASS=sua-senha-de-app
+```
+
+### 5. Executar a aplicação
+
+Em um terminal, execute o **backend**:
+
+```bash
+cd Backend
+mvn spring-boot:run
+```
+
+A API ficará disponível em: http://localhost:8080
+
+Em outro terminal, execute o **frontend**:
+
+```bash
+npm run dev
+```
+
+Acesse o sistema em: http://localhost:5173
+
+Faça login com um dos usuários padrão e utilize as funcionalidades do sistema (clientes, inadimplentes, pagamentos, relatórios e dashboard).
+
+### 6. Executar os testes (opcional)
+
+**Backend:**
+
+```bash
+cd Backend
+mvn test
+```
+
+**Frontend:**
+
+```bash
+npm run test:run
+```
+
+## 📄 Observação
+
+Este projeto foi desenvolvido como parte do Trabalho de Conclusão de Curso em Engenharia de Software (PUC Minas), com foco na gestão de inadimplentes de um escritório de contabilidade.
+
+Documentação complementar: `Backend/README.md`, `docs/COMO-INTEGRAR-FRONTEND.md` e `docs/CONTRATO-API-BACKEND.md`.

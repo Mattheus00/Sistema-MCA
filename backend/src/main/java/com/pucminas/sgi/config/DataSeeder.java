@@ -1,7 +1,6 @@
 package com.pucminas.sgi.config;
 
 import com.pucminas.sgi.entity.EmailConfig;
-import com.pucminas.sgi.entity.Servico;
 import com.pucminas.sgi.entity.Usuario;
 import com.pucminas.sgi.enums.Perfil;
 import com.pucminas.sgi.enums.StatusUsuario;
@@ -10,6 +9,7 @@ import com.pucminas.sgi.repository.ServicoRepository;
 import com.pucminas.sgi.repository.UsuarioRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 /**
  * Popula apenas usuários de login e configuração de e-mail.
  * Clientes e dívidas vêm do import (ClientesImportRunner) ou do uso da API.
+ * Em produção, não cria usuários demo nem reescreve senhas.
  */
 @Component
 @Profile("!test")
@@ -34,6 +35,12 @@ public class DataSeeder implements CommandLineRunner {
     private final EmailConfigRepository emailConfigRepository;
     private final ServicoRepository servicoRepository;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${sgi.seed.enabled:true}")
+    private boolean seedEnabled;
+
+    @Value("${sgi.seed.reset-passwords:false}")
+    private boolean resetPasswords;
 
     public DataSeeder(UsuarioRepository usuarioRepository,
                       EmailConfigRepository emailConfigRepository,
@@ -48,11 +55,19 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
+        if (!seedEnabled) {
+            log.info("Seed desabilitado (sgi.seed.enabled=false).");
+            return;
+        }
+
         if (usuarioRepository.count() > 0) {
-            log.info("Dados já existem, pulando seed.");
-            atualizarLoginResponsavelFinanceiroSeExistir();
-            atualizarLoginProprietariaSeExistir();
-            atualizarSenhaProprietariaSeExistir();
+            log.info("Dados já existem, pulando criação de usuários.");
+            if (resetPasswords) {
+                log.warn("sgi.seed.reset-passwords=true: migrando logins antigos e resetando senhas demo.");
+                atualizarLoginResponsavelFinanceiroSeExistir();
+                atualizarLoginProprietariaSeExistir();
+                atualizarSenhaProprietariaSeExistir();
+            }
             removerServicosSeedAntigos();
             seedServicosSeVazio();
             return;
