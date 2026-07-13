@@ -1,10 +1,21 @@
 import { useEffect, useState } from "react";
-import { api, getApiErrorMessage, getRelatorioErrorMessage, isMockEnabled, normalizeListResponse } from "@/lib/api";
+import {
+  api,
+  decodeConfirmadoPorComprovante,
+  getApiErrorMessage,
+  getRelatorioErrorMessage,
+  isMockEnabled,
+  normalizeListResponse,
+} from "@/lib/api";
 import { exportarCSV } from "@/lib/exportarCsv";
 import { exportarRelatorioPdf, type DadosRelatorioPdf } from "@/lib/relatorioPdf";
 import {
   normalizeClienteFromApi,
+  normalizeInadimplenciaFromApi,
   normalizeInadimplenciaPeriodoFromApi,
+  normalizePagamentoInadimplenciaFromApi,
+  normalizePagamentosRecebidosFromApi,
+  mesReferenciaPagamentoRecebido,
   normalizeRankingFromApi,
   normalizeResumoFinanceiroFromApi,
 } from "@/lib/apiNormalizers";
@@ -13,7 +24,7 @@ import type {
   RankingDevedorItem,
   ExtratoCliente,
   InadimplenciaPeriodoRelatorio,
-  ResumoFinanceiro,
+  PagamentosRecebidosRelatorio,
   AgingRelatorio,
   EfetividadeCobrancaRelatorio,
 } from "@/types/api";
@@ -128,7 +139,7 @@ export default function WebRelatorios() {
     return d.toISOString().slice(0, 10);
   });
   const [dataFimPag, setDataFimPag] = useState(() => new Date().toISOString().slice(0, 10));
-  const [pagamentos, setPagamentos] = useState<ResumoFinanceiro | null>(null);
+  const [pagamentos, setPagamentos] = useState<PagamentosRecebidosRelatorio | null>(null);
   const [loadingPagamentos, setLoadingPagamentos] = useState(false);
 
   // Aging
@@ -226,13 +237,121 @@ export default function WebRelatorios() {
     setErro(null);
     setLoadingPagamentos(true);
     try {
-      const r = await api.get("/api/relatorios/resumo-financeiro", {
-        params: {
-          periodoInicio: dataInicioPag,
-          periodoFim: dataFimPag,
-        },
+      try {
+        const r = await api.get("/api/relatorios/pagamentos-recebidos", {
+          params: { dataInicio: dataInicioPag, dataFim: dataFimPag },
+        });
+        const normalizado = isMockEnabled()
+          ? (r.data as PagamentosRecebidosRelatorio)
+          : normalizePagamentosRecebidosFromApi(r.data);
+        if (normalizado) {
+          setPagamentos(normalizado);
+          return;
+        }
+      } catch {
+        // Endpoint opcional: tenta montar o detalhamento pelas dívidas pagas.
+      }
+
+      const [resumoRes, inadRes] = await Promise.allSettled([
+        api.get("/api/relatorios/resumo-financeiro", {
+          params: { periodoInicio: dataInicioPag, periodoFim: dataFimPag },
+        }),
+        api.get("/api/inadimplentes", { params: { paginado: false } }),
+      ]);
+
+      const resumo =
+        resumoRes.status === "fulfilled"
+          ? normalizeResumoFinanceiroFromApi(resumoRes.value.data)
+          : null;
+
+      let detalhamento: PagamentosRecebidosRelatorio["detalhamento"] = [];
+      if (inadRes.status === "fulfilled") {
+        const lista = normalizeListResponse<Record<string, unknown>>(inadRes.value.data).map((raw) =>
+          normalizeInadimplenciaFromApi(raw)
+        );
+        const inicio = new Date(dataInicioPag);
+        const fim = new Date(dataFimPag);
+        const naFaixa = (iso: string) => {
+          const dtStr = iso.split("T")[0];
+          if (!dtStr) return false;
+          const dt = new Date(dtStr);
+          return dt >= inicio && dt <= fim;
+        };
+
+        for (const i of lista) {
+          const pagamentosItem = i.pagamentos ?? [];
+          if (pagamentosItem.length > 0) {
+            for (const p of pagamentosItem) {
+              const dataPag = (p.dataPagamento ?? "").split("T")[0];
+              if (!dataPag || !naFaixa(dataPag)) continue;
+              detalhamento.push({
+                data: dataPag,
+                clienteNome: i.clienteNome ?? `Cliente #${i.clienteId ?? "—"}`,
+                protocolo: String(p.pagamentoId ?? i.id ?? ""),
+                valor: Number(p.valorPago ?? 0),
+                metodo: p.metodoPagamento ?? "—",
+                saldoRestante: 0,
+                vencimento: i.vencimento,
+                confirmadoPor:
+                  p.confirmadoPor?.trim() || decodeConfirmadoPorComprovante(p.comprovante) || undefined,
+              });
+            }
+            continue;
+          }
+
+          if (!String(i.status ?? "").toLowerCase().includes("pago")) continue;
+          const dataPag = (i.updatedAt ?? i.createdAt ?? i.vencimento ?? "").split("T")[0];
+          if (!dataPag || !naFaixa(dataPag)) continue;
+
+          // Dívida quitada sem array embutido: busca pagamentos da dívida
+          let confirmadoPor: string | undefined;
+          let metodo = "—";
+          let valor = Number(i.valor ?? 0);
+          try {
+            const rPag = await api.get(`/api/pagamentos/divida/${i.id}`);
+            const pags = normalizeListResponse<Record<string, unknown>>(rPag.data).map((raw) =>
+              normalizePagamentoInadimplenciaFromApi(raw)
+            );
+            const ultimo = pags.sort((a, b) =>
+              String(b.dataPagamento).localeCompare(String(a.dataPagamento))
+            )[0];
+            if (ultimo) {
+              confirmadoPor =
+                ultimo.confirmadoPor?.trim() ||
+                decodeConfirmadoPorComprovante(ultimo.comprovante) ||
+                undefined;
+              metodo = ultimo.metodoPagamento ?? metodo;
+              if (ultimo.valorPago > 0) valor = ultimo.valorPago;
+            }
+          } catch {
+            // sem endpoint de pagamentos por dívida
+          }
+
+          detalhamento.push({
+            data: dataPag,
+            clienteNome: i.clienteNome ?? `Cliente #${i.clienteId ?? "—"}`,
+            protocolo: String(i.id ?? ""),
+            valor,
+            metodo,
+            saldoRestante: 0,
+            vencimento: i.vencimento,
+            confirmadoPor,
+          });
+        }
+      }
+
+      const valorTotal =
+        resumo?.totalRecebido ??
+        detalhamento.reduce((s, p) => s + p.valor, 0);
+
+      setPagamentos({
+        dataInicio: resumo?.periodoInicio ?? dataInicioPag,
+        dataFim: resumo?.periodoFim ?? dataFimPag,
+        totalPagamentos: detalhamento.length,
+        valorTotal,
+        porMetodo: [],
+        detalhamento,
       });
-      setPagamentos(normalizeResumoFinanceiroFromApi(r.data));
     } catch (e: unknown) {
       setErro(getRelatorioErrorMessage(e, "Falha ao carregar pagamentos recebidos"));
       setPagamentos(null);
@@ -312,13 +431,26 @@ export default function WebRelatorios() {
 
   const exportarPagamentosExcel = () => {
     if (!pagamentos) return;
-    const cabecalhos = ["Período início", "Período fim", "Total recebido"];
-    const linhas = [[
-      pagamentos.periodoInicio ?? dataInicioPag,
-      pagamentos.periodoFim ?? dataFimPag,
-      String(pagamentos.totalRecebido),
-    ]];
-    exportarCSV("resumo-financeiro", cabecalhos, linhas);
+    const cabecalhos = ["Cliente", "Mês", "Valor recebido", "Confirmado por", "Data", "Método"];
+    const linhas =
+      pagamentos.detalhamento.length > 0
+        ? pagamentos.detalhamento.map((p) => [
+            p.clienteNome,
+            mesReferenciaPagamentoRecebido(p),
+            String(p.valor),
+            p.confirmadoPor?.trim() || "—",
+            p.data,
+            p.metodo,
+          ])
+        : [[
+            "—",
+            "—",
+            String(pagamentos.valorTotal),
+            "—",
+            `${pagamentos.dataInicio} a ${pagamentos.dataFim}`,
+            "—",
+          ]];
+    exportarCSV("pagamentos-recebidos", cabecalhos, linhas);
   };
 
   const exportarAgingExcel = () => {
@@ -508,10 +640,45 @@ export default function WebRelatorios() {
             {pagamentos && !loadingPagamentos && (
               <>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2} flexWrap="wrap" useFlexGap>
-                  <Card variant="outlined" sx={{ flex: "1 1 200px", minWidth: 0 }}><CardContent><Typography variant="body2" color="text.secondary">Período</Typography><Typography fontWeight={600}>{formatarData(pagamentos.periodoInicio ?? dataInicioPag)} a {formatarData(pagamentos.periodoFim ?? dataFimPag)}</Typography></CardContent></Card>
-                  <Card variant="outlined" sx={{ flex: "1 1 200px", minWidth: 0 }}><CardContent><Typography variant="body2" color="text.secondary">Valor total recebido</Typography><Typography fontWeight={600}>{formatarMoeda(pagamentos.totalRecebido)}</Typography></CardContent></Card>
+                  <Card variant="outlined" sx={{ flex: "1 1 200px", minWidth: 0 }}><CardContent><Typography variant="body2" color="text.secondary">Período</Typography><Typography fontWeight={600}>{formatarData(pagamentos.dataInicio || dataInicioPag)} a {formatarData(pagamentos.dataFim || dataFimPag)}</Typography></CardContent></Card>
+                  <Card variant="outlined" sx={{ flex: "1 1 200px", minWidth: 0 }}><CardContent><Typography variant="body2" color="text.secondary">Valor total recebido</Typography><Typography fontWeight={600}>{formatarMoeda(pagamentos.valorTotal)}</Typography></CardContent></Card>
                 </Stack>
-                <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap"><Button variant="contained" startIcon={<DownloadIcon />} onClick={() => gerarRelatorioPdf({ aba: "pagamentos", pagamentos: pagamentos ?? undefined, dataInicioPag, dataFimPag })}>Gerar relatório</Button><Button variant="contained" startIcon={<ExcelIcon />} onClick={exportarPagamentosExcel}>Exportar Excel</Button></Stack>
+                <Card elevation={1}>
+                  <CardHeader title="Detalhamento dos recebimentos" titleTypographyProps={{ variant: "h2", fontSize: "1.125rem" }} />
+                  <CardContent sx={{ pt: 0 }}>
+                    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1 }}>
+                      <Table size="small" stickyHeader>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell><strong>Cliente</strong></TableCell>
+                            <TableCell><strong>Mês</strong></TableCell>
+                            <TableCell align="right"><strong>Valor recebido</strong></TableCell>
+                            <TableCell><strong>Confirmado por</strong></TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {pagamentos.detalhamento.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={4} align="center">
+                                Nenhum pagamento detalhado neste período.
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            pagamentos.detalhamento.map((p, i) => (
+                              <TableRow key={`${p.protocolo}-${p.data}-${i}`} hover>
+                                <TableCell>{p.clienteNome}</TableCell>
+                                <TableCell>{mesReferenciaPagamentoRecebido(p)}</TableCell>
+                                <TableCell align="right">{formatarMoeda(p.valor)}</TableCell>
+                                <TableCell>{p.confirmadoPor?.trim() || "—"}</TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </CardContent>
+                </Card>
+                <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap"><Button variant="contained" startIcon={<DownloadIcon />} onClick={() => gerarRelatorioPdf({ aba: "pagamentos", pagamentosRecebidos: pagamentos ?? undefined, dataInicioPag, dataFimPag })}>Gerar relatório</Button><Button variant="contained" startIcon={<ExcelIcon />} onClick={exportarPagamentosExcel}>Exportar Excel</Button></Stack>
               </>
             )}
           </Stack>

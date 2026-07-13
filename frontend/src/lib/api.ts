@@ -33,6 +33,27 @@ export const USER_LOGIN_KEY = "sgi_user_login";
 /** Chave onde o perfil do usuário autenticado é guardado */
 export const USER_PROFILE_KEY = "sgi_user_profile";
 
+/** Prefixo gravado em `comprovante` para persistir quem confirmou (DTO do backend não tem esse campo). */
+export const CONFIRMADO_POR_COMPROVANTE_PREFIX = "user:";
+
+/** Nome/login do usuário autenticado para exibição e auditoria de pagamento. */
+export function getUsuarioLogadoLabel(): string {
+  if (typeof localStorage === "undefined") return "";
+  return (localStorage.getItem(USER_DISPLAY_KEY) || localStorage.getItem(USER_LOGIN_KEY) || "").trim();
+}
+
+export function encodeConfirmadoPorComprovante(label: string): string {
+  return `${CONFIRMADO_POR_COMPROVANTE_PREFIX}${label.trim()}`;
+}
+
+export function decodeConfirmadoPorComprovante(comprovante: string | null | undefined): string | undefined {
+  if (!comprovante) return undefined;
+  const s = comprovante.trim();
+  if (!s.toLowerCase().startsWith(CONFIRMADO_POR_COMPROVANTE_PREFIX)) return undefined;
+  const nome = s.slice(CONFIRMADO_POR_COMPROVANTE_PREFIX.length).trim();
+  return nome || undefined;
+}
+
 if (!isMockEnabled()) {
   axiosInstance.interceptors.request.use((config) => {
     const token = localStorage.getItem(AUTH_TOKEN_KEY);

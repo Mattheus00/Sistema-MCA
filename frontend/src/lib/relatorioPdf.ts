@@ -5,9 +5,11 @@ import type {
   EfetividadeCobrancaRelatorio,
   ExtratoCliente,
   InadimplenciaPeriodoRelatorio,
+  PagamentosRecebidosRelatorio,
   RankingDevedorItem,
   ResumoFinanceiro,
 } from "@/types/api";
+import { mesReferenciaPagamentoRecebido } from "@/lib/apiNormalizers";
 
 export type RelatorioAbaId =
   | "ranking"
@@ -26,6 +28,7 @@ export type DadosRelatorioPdf = {
   dataInicio?: string;
   dataFim?: string;
   pagamentos?: ResumoFinanceiro | null;
+  pagamentosRecebidos?: PagamentosRecebidosRelatorio | null;
   dataInicioPag?: string;
   dataFimPag?: string;
   aging?: AgingRelatorio | null;
@@ -225,19 +228,39 @@ export function exportarRelatorioPdf(d: DadosRelatorioPdf): void {
     });
   }
 
-  if (d.aba === "pagamentos" && d.pagamentos) {
+  if (d.aba === "pagamentos" && (d.pagamentosRecebidos || d.pagamentos)) {
+    const pagRec = d.pagamentosRecebidos;
     const pag = d.pagamentos;
-    const inicio = pag.periodoInicio ?? d.dataInicioPag ?? "";
-    const fim = pag.periodoFim ?? d.dataFimPag ?? "";
-    texto(
+    const inicio = pagRec?.dataInicio || pag?.periodoInicio || d.dataInicioPag || "";
+    const fim = pagRec?.dataFim || pag?.periodoFim || d.dataFimPag || "";
+    const total = pagRec?.valorTotal ?? pag?.totalRecebido ?? 0;
+    y = texto(
       doc,
       [
         `Período: ${formatarData(inicio)} a ${formatarData(fim)}`,
-        `Valor total recebido: ${formatarMoeda(pag.totalRecebido)}`,
+        `Valor total recebido: ${formatarMoeda(total)}`,
       ],
       y,
       margem
     );
+
+    if (pagRec && pagRec.detalhamento.length > 0) {
+      autoTable(doc, {
+        startY: y,
+        margin: { left: margem, right: margem },
+        head: [["Cliente", "Mês", "Valor recebido", "Confirmado por"]],
+        body: pagRec.detalhamento.map((r) => [
+          r.clienteNome,
+          mesReferenciaPagamentoRecebido(r),
+          formatarMoeda(r.valor),
+          r.confirmadoPor?.trim() || "—",
+        ]),
+        styles: { fontSize: 9, cellPadding: 3 },
+        headStyles: { fillColor: [164, 63, 155], textColor: 255, fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [249, 250, 251] },
+        columnStyles: { 2: { halign: "right" } },
+      });
+    }
   }
 
   if (d.aba === "aging" && d.aging) {

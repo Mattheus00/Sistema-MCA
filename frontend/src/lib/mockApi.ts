@@ -237,6 +237,25 @@ export function createMockClient() {
         }));
         return Promise.resolve({ data: itens } as { data: T });
       }
+      const matchPagsDivida = url.match(/^\/api\/pagamentos\/divida\/([\w-]+)$/);
+      if (matchPagsDivida) {
+        const dividaId = matchPagsDivida[1];
+        const pags = store.pagamentos.filter((p) => p.dividaId === dividaId);
+        const daDivida = store.inadimplentes.find((i) => i.id === dividaId)?.pagamentos ?? [];
+        const merged = [...pags];
+        for (const p of daDivida) {
+          if (!merged.some((m) => m.pagamentoId === p.pagamentoId)) merged.push(p);
+        }
+        return Promise.resolve({ data: merged } as { data: T });
+      }
+      if (url.startsWith("/api/pagamentos")) {
+        const urlObj = new URL(url, "http://x");
+        const dividaId = urlObj.searchParams.get("dividaId") ?? (config?.params?.dividaId != null ? String(config.params.dividaId) : "");
+        const pags = dividaId
+          ? store.pagamentos.filter((p) => p.dividaId === dividaId)
+          : store.pagamentos;
+        return Promise.resolve({ data: pags } as { data: T });
+      }
       if (url.startsWith("/api/relatorios/resumo")) {
         const urlObj = new URL(url, "http://x");
         const diasParam = urlObj.searchParams.get("dias");
@@ -466,6 +485,12 @@ export function createMockClient() {
           valor: d.valor,
           metodo: "PIX",
           saldoRestante: 0,
+          vencimento: d.vencimento,
+          mesReferencia: (() => {
+            const [y, m] = (d.vencimento || "").split("T")[0].split("-");
+            return y && m ? `${m}/${y}` : undefined;
+          })(),
+          confirmadoPor: "josecarlos",
         }));
         const res: PagamentosRecebidosRelatorio = {
           dataInicio,
@@ -652,19 +677,37 @@ export function createMockClient() {
           dataPagamento?: string;
           metodoPagamento?: string;
           comprovante?: string;
+          confirmadoPor?: string;
         };
         const valorBruto = Number(payload.valorPago ?? 0);
         const valorPago = valorBruto >= 100 ? valorBruto / 100 : valorBruto;
+        const confirmadoPor =
+          payload.confirmadoPor?.trim() ||
+          (payload.comprovante?.startsWith("user:") ? payload.comprovante.slice(5) : undefined) ||
+          getCurrentUserByToken()?.login ||
+          "mock.user";
         const pag: PagamentoInadimplencia = {
           pagamentoId: `pag-mock-${Date.now()}`,
           dividaId: payload.dividaId,
           valorPago,
           dataPagamento: payload.dataPagamento ?? new Date().toISOString().slice(0, 10),
           metodoPagamento: payload.metodoPagamento,
-          comprovante: payload.comprovante,
+          comprovante: payload.comprovante ?? `user:${confirmadoPor}`,
           criadoEm: new Date().toISOString(),
+          confirmadoPor,
         };
         store.pagamentos.push(pag);
+        // Espelha na dívida para a listagem de inadimplentes
+        if (payload.dividaId) {
+          const idx = store.inadimplentes.findIndex((x) => x.id === payload.dividaId);
+          if (idx >= 0) {
+            const atual = store.inadimplentes[idx];
+            store.inadimplentes[idx] = {
+              ...atual,
+              pagamentos: [...(atual.pagamentos ?? []), pag],
+            };
+          }
+        }
         return Promise.resolve({ data: pag } as { data: T });
       }
 
@@ -788,9 +831,11 @@ export function createMockClient() {
         const idx = store.inadimplentes.findIndex((x) => x.id === id);
         if (idx === -1) return Promise.reject(new Error(`Mock: inadimplência ${id} não encontrada`));
         const atual = store.inadimplentes[idx];
+        // Quem confirmou já veio no POST /api/pagamentos (antes do PATCH).
         const atualizado: Inadimplencia = {
           ...atual,
           status: (payload?.status as Inadimplencia["status"]) ?? atual.status,
+          updatedAt: new Date().toISOString(),
         };
         store.inadimplentes[idx] = atualizado;
         return Promise.resolve({ data: atualizado } as { data: T });

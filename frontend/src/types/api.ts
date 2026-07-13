@@ -31,6 +31,8 @@ export type PagamentoInadimplencia = {
   metodoPagamento?: string;
   comprovante?: string;
   criadoEm?: string;
+  /** Usuário que registrou/confirmou o pagamento (quando a API enviar). */
+  confirmadoPor?: string;
 };
 
 export type Inadimplencia = {
@@ -181,6 +183,11 @@ export type PagamentoRecebidoItem = {
   valor: number;
   metodo: string;
   saldoRestante: number;
+  /** Mês de referência do honorário (ex.: 04/2026). Se ausente, o front deriva de vencimento/data/protocolo. */
+  mesReferencia?: string;
+  vencimento?: string;
+  /** Usuário que confirmou/registrou o recebimento. */
+  confirmadoPor?: string;
 };
 
 export type PagamentoPorMetodo = {

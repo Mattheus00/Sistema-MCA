@@ -1,7 +1,6 @@
-import { Fragment, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import HonorariosSicoobDetalhe from "@/components/HonorariosSicoobDetalhe";
-import { api, getApiErrorMessage, isMockEnabled, normalizeListResponse } from "@/lib/api";
+import { api, getApiErrorMessage, isMockEnabled, normalizeListResponse, encodeConfirmadoPorComprovante, getUsuarioLogadoLabel } from "@/lib/api";
 import {
   normalizeClienteFromApi,
   normalizeInadimplenciaFromApi,
@@ -26,7 +25,6 @@ import {
   openWhatsAppCobranca,
 } from "@/lib/mailtoCobranca";
 import { gerarEBaixarAvisoPendenciaPdf } from "@/lib/cobrancaPdf";
-import { getSicoobStatus } from "@/lib/sicoobApi";
 import { parseValorReais } from "@/lib/valorBrasil";
 import type { Cliente, Inadimplencia } from "@/types/api";
 
@@ -55,8 +53,6 @@ export default function WebInadimplentesHonorarios() {
   const [modalCobrancaCanal, setModalCobrancaCanal] = useState<{ inadimplencia: Inadimplencia } | null>(null);
   const [loadingCobrancaCanal, setLoadingCobrancaCanal] = useState(false);
   const [gerandoPdfConsolidado, setGerandoPdfConsolidado] = useState(false);
-  const [sicoobMock, setSicoobMock] = useState(false);
-  const [dividaExpandidaId, setDividaExpandidaId] = useState<string | null>(null);
   const [pagina, setPagina] = useState(1);
   const itensPorPagina = 12;
 
@@ -83,12 +79,6 @@ export default function WebInadimplentesHonorarios() {
       if (!silent) setLoading(false);
     }
   }, [clienteId]);
-
-  const handlePagamentoSicoobConfirmado = useCallback(async () => {
-    setMensagemSucesso("Pagamento confirmado via Sicoob");
-    invalidateDashboard();
-    await listar({ silent: true });
-  }, [listar]);
 
   useEffect(() => {
     if (!clienteId) return;
@@ -117,19 +107,7 @@ export default function WebInadimplentesHonorarios() {
   }, [clienteId, listar]);
 
   useEffect(() => {
-    void (async () => {
-      try {
-        const st = await getSicoobStatus();
-        setSicoobMock(!!st.mock);
-      } catch {
-        setSicoobMock(false);
-      }
-    })();
-  }, []);
-
-  useEffect(() => {
     setPagina(1);
-    setDividaExpandidaId(null);
   }, [clienteId]);
 
   useEffect(() => {
@@ -188,18 +166,44 @@ export default function WebInadimplentesHonorarios() {
     setErro(null);
 
     try {
+      const confirmadoPor = getUsuarioLogadoLabel() || undefined;
+      const comprovanteUsuario = confirmadoPor ? encodeConfirmadoPorComprovante(confirmadoPor) : undefined;
+
       if (modalPagamento.tipo === "total") {
         const saldo = saldoDevedorItem(i);
         const desconto = descontoNormalizado(modalPagamento.descontoDigitado, saldo);
         const metodoPagamento = modalPagamento.metodoPagamento.trim();
-        const observacao = modalPagamento.observacao.trim();
+        const observacaoUsuario = modalPagamento.observacao.trim();
         const dataPagamento = modalPagamento.dataPagamento || new Date().toISOString().slice(0, 10);
+        const valorRecebido = Math.max(0, saldo - desconto);
+        const observacao = [
+          observacaoUsuario || undefined,
+          confirmadoPor ? `Confirmado por: ${confirmadoPor}` : undefined,
+        ]
+          .filter(Boolean)
+          .join("\n");
+
+        // Registra o pagamento (com quem confirmou) antes de quitar —
+        // igual ao parcial; depois do PATCH muitos backends rejeitam novo POST.
+        if (valorRecebido > 0) {
+          await api.post("/api/pagamentos", {
+            dividaId: i.id,
+            valorPago: Math.round(valorRecebido * 100),
+            dataPagamento,
+            metodoPagamento,
+            confirmadoPor,
+            comprovante: comprovanteUsuario,
+          });
+        }
+
         await api.patch(`/api/inadimplentes/${i.id}`, {
           status: "Pago",
           desconto,
           metodoPagamento,
           observacao: observacao || undefined,
           dataPagamento,
+          confirmadoPor,
+          registradoPor: confirmadoPor,
         });
         setMensagemSucesso("Pagamento total confirmado com sucesso.");
       } else {
@@ -209,6 +213,8 @@ export default function WebInadimplentesHonorarios() {
           valorPago: Math.round(valorReais * 100),
           dataPagamento: modalPagamento.dataPagamento || new Date().toISOString().slice(0, 10),
           metodoPagamento: modalPagamento.metodoPagamento || "PIX",
+          confirmadoPor,
+          comprovante: comprovanteUsuario,
         });
         setMensagemSucesso("Pagamento parcial registrado com sucesso.");
       }
@@ -339,14 +345,6 @@ export default function WebInadimplentesHonorarios() {
     if (pagina > totalPaginasHonorarios && totalPaginasHonorarios >= 1) setPagina(1);
   }, [itens.length, totalPaginasHonorarios, pagina]);
 
-  useEffect(() => {
-    setDividaExpandidaId(null);
-  }, [pagina]);
-
-  function toggleExpandirDivida(dividaId: string) {
-    setDividaExpandidaId((atual) => (atual === dividaId ? null : dividaId));
-  }
-
   if (!clienteId) {
     return (
       <div className="page-inadimplentes page-inadimplentes--honorarios">
@@ -382,9 +380,6 @@ export default function WebInadimplentesHonorarios() {
 
       {mensagemSucesso && <p className="toast toast--sucesso">{mensagemSucesso}</p>}
       {erro && <p className="page-inadimplentes__erro">{erro}</p>}
-      {sicoobMock && (
-        <p className="honorarios-sicoob__mock-banner honorarios-sicoob__mock-banner--page">Modo simulação Sicoob</p>
-      )}
 
       <div className="page-inadimplentes__cards page-inadimplentes-honorarios__cards">
         <div className="page-inadimplentes__card">
@@ -451,15 +446,8 @@ export default function WebInadimplentesHonorarios() {
                         ? "page-inadimplentes-honorarios__status--parcial"
                         : "page-inadimplentes-honorarios__status--aberto";
 
-                  const expandida = !!i.id && dividaExpandidaId === i.id;
-
                   return (
-                    <Fragment key={key}>
-                      <tr
-                        className={`page-inadimplentes-honorarios__linha${i.id ? " page-inadimplentes-honorarios__linha--clicavel" : ""}${expandida ? " page-inadimplentes-honorarios__linha--expandida" : ""}`}
-                        onClick={() => i.id && toggleExpandirDivida(i.id)}
-                        aria-expanded={i.id ? expandida : undefined}
-                      >
+                      <tr key={key} className="page-inadimplentes-honorarios__linha">
                         <td>{formatarMesAno(i.vencimento)}</td>
                         <td className="page-inadimplentes-honorarios__descricao" title={i.descricao?.trim() || undefined}>
                           {i.descricao?.trim() || "—"}
@@ -468,7 +456,7 @@ export default function WebInadimplentesHonorarios() {
                         <td>
                           <span className={`page-inadimplentes-honorarios__status ${statusClass}`}>{status}</span>
                         </td>
-                        <td onClick={(e) => e.stopPropagation()}>
+                        <td>
                           {isInadimplenciaEmAberto(i) ? (
                             <div className="page-inadimplentes__acoes-detalhe page-inadimplentes-honorarios__acoes-linha">
                               <button
@@ -506,18 +494,6 @@ export default function WebInadimplentesHonorarios() {
                           )}
                         </td>
                       </tr>
-                      {expandida && i.id && (
-                        <tr className="page-inadimplentes-honorarios__detalhe-row">
-                          <td colSpan={5}>
-                            <HonorariosSicoobDetalhe
-                              dividaId={i.id}
-                              sicoobMock={sicoobMock}
-                              onPagamentoConfirmado={() => void handlePagamentoSicoobConfirmado()}
-                            />
-                          </td>
-                        </tr>
-                      )}
-                    </Fragment>
                   );
                 })}
               </tbody>
