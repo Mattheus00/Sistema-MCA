@@ -556,7 +556,7 @@ export default function WebClientes() {
                 />
                 <label className="modal__label modal__label--required">CPF/CNPJ</label>
                 <input
-                  placeholder="000.000.000-00 ou IMP35"
+                  placeholder="000.000.000-00"
                   value={form.cpf ?? ""}
                   onChange={(e) => {
                     const v = e.target.value;
