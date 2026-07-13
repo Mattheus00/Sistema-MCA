@@ -152,12 +152,8 @@ public class DividaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Dívida", dividaId));
         BigDecimal totalPago = pagamentoRepository.sumValorPagoByDividaId(dividaId);
         if (totalPago == null) totalPago = BigDecimal.ZERO;
-        BigDecimal principal = d.getValorOriginal().subtract(totalPago);
         LocalDate hoje = LocalDate.now();
-        BigDecimal valorDevedor = principal.compareTo(BigDecimal.ZERO) <= 0 ? BigDecimal.ZERO
-                : (hoje.isAfter(d.getVencimento())
-                ? MultaJurosUtil.valorTotalComMultaEJuros(principal, d.getVencimento(), hoje)
-                : principal);
+        BigDecimal valorDevedor = calcularSaldoDevedorCentavos(d, totalPago, hoje);
         d.setValorDevedor(valorDevedor);
         if (valorDevedor.compareTo(BigDecimal.ZERO) <= 0) {
             d.setStatusDivida(StatusDivida.QUITADA);
@@ -174,7 +170,7 @@ public class DividaService {
 
     /**
      * Atualiza valorDevedor das dívidas em atraso com multa (0,33% ao dia, máx. 9,99%) e juros (2% ao mês).
-     * Principal = valorOriginal - totalPago; valorDevedor = principal + multa + juros.
+     * Saldo = (principal + multa + juros) − totalPago (pagamentos podem incluir juros).
      */
     @Transactional
     public void atualizarValorComMultaJuros() {
@@ -184,15 +180,11 @@ public class DividaService {
             if (!hoje.isAfter(d.getVencimento())) continue;
             BigDecimal totalPago = pagamentoRepository.sumValorPagoByDividaId(d.getDividaId());
             if (totalPago == null) totalPago = BigDecimal.ZERO;
-            BigDecimal principal = d.getValorOriginal().subtract(totalPago);
-            if (principal.compareTo(BigDecimal.ZERO) <= 0) {
-                d.setValorDevedor(BigDecimal.ZERO);
-                d.setStatusDivida(StatusDivida.QUITADA);
-                dividaRepository.save(d);
-                continue;
-            }
-            BigDecimal valorAtualizado = MultaJurosUtil.valorTotalComMultaEJuros(principal, d.getVencimento(), hoje);
+            BigDecimal valorAtualizado = calcularSaldoDevedorCentavos(d, totalPago, hoje);
             d.setValorDevedor(valorAtualizado);
+            if (valorAtualizado.compareTo(BigDecimal.ZERO) <= 0) {
+                d.setStatusDivida(StatusDivida.QUITADA);
+            }
             dividaRepository.save(d);
         }
         log.info("Atualização de multa e juros concluída");
@@ -263,6 +255,23 @@ public class DividaService {
     }
 
     /**
+     * Saldo em centavos: bruta (principal + multa/juros se vencida) − total pago.
+     * Não usar {@code valorOriginal - totalPago} como principal quando o pagamento já inclui juros —
+     * isso zera o saldo indevidamente e a tela mostra R$ 0,00 / "dívida já quitada".
+     */
+    private static BigDecimal calcularSaldoDevedorCentavos(Divida d, BigDecimal totalPago, LocalDate hoje) {
+        BigDecimal pago = totalPago != null ? totalPago : BigDecimal.ZERO;
+        BigDecimal bruto;
+        if (hoje.isAfter(d.getVencimento()) && StatusDivida.emAberto().contains(d.getStatusDivida())) {
+            bruto = MultaJurosUtil.valorTotalComMultaEJuros(d.getValorOriginal(), d.getVencimento(), hoje);
+        } else {
+            bruto = d.getValorOriginal();
+        }
+        BigDecimal saldo = bruto.subtract(pago);
+        return saldo.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : saldo;
+    }
+
+    /**
      * Calcula valor devedor e juros em tempo real. Para dívidas vencidas (EM_ABERTO, VENCIDA, PARCIAL)
      * usa MultaJurosUtil; caso contrário usa o valor armazenado.
      * Retorna [valorDevedorReais, jurosReais].
@@ -279,14 +288,11 @@ public class DividaService {
         }
         BigDecimal totalPago = pagamentoRepository.sumValorPagoByDividaId(d.getDividaId());
         if (totalPago == null) totalPago = BigDecimal.ZERO;
-        BigDecimal principal = d.getValorOriginal().subtract(totalPago);
-        if (principal.compareTo(BigDecimal.ZERO) <= 0) {
-            return new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO};
-        }
-        BigDecimal valorAtualizadoCentavos = MultaJurosUtil.valorTotalComMultaEJuros(principal, d.getVencimento(), hoje);
-        BigDecimal jurosCentavos = valorAtualizadoCentavos.subtract(principal);
+        BigDecimal saldoCentavos = calcularSaldoDevedorCentavos(d, totalPago, hoje);
+        BigDecimal principalRestante = d.getValorOriginal().subtract(totalPago.min(d.getValorOriginal())).max(BigDecimal.ZERO);
+        BigDecimal jurosCentavos = saldoCentavos.subtract(principalRestante).max(BigDecimal.ZERO);
         return new BigDecimal[]{
-                MoneyUtil.centavosParaReais(valorAtualizadoCentavos),
+                MoneyUtil.centavosParaReais(saldoCentavos),
                 MoneyUtil.centavosParaReais(jurosCentavos)
         };
     }

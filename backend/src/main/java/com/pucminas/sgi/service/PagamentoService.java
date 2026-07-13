@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -50,6 +51,15 @@ public class PagamentoService {
     public ReciboDTO registrarPagamento(PagamentoDTO dto) {
         Divida divida = dividaRepository.findById(dto.getDividaId())
                 .orElseThrow(() -> new ResourceNotFoundException("Dívida", dto.getDividaId()));
+
+        // Alinha valor_devedor com o saldo da tela (principal + multa/juros em tempo real).
+        // Sem isso, pagamento parcial no valor exibido falha quando o banco ainda não tinha juros.
+        BigDecimal saldoLiveCentavos = reaisParaCentavos(dividaService.getValorEJurosReais(divida)[0]);
+        if (saldoLiveCentavos.compareTo(divida.getValorDevedor()) > 0) {
+            divida.setValorDevedor(saldoLiveCentavos);
+            dividaRepository.saveAndFlush(divida);
+        }
+
         BigDecimal valorDevedor = divida.getValorDevedor();
         if (dto.getValorPago().compareTo(valorDevedor) > 0) {
             throw new BusinessRuleException("Valor pago não pode ser maior que o saldo devedor da dívida.");
@@ -82,6 +92,10 @@ public class PagamentoService {
                 .metodoPagamento(p.getMetodoPagamento())
                 .dataHoraRegistro(p.getCriadoEm())
                 .build();
+    }
+
+    private static BigDecimal reaisParaCentavos(BigDecimal reais) {
+        return reais == null ? BigDecimal.ZERO : reais.multiply(BigDecimal.valueOf(100)).setScale(0, RoundingMode.HALF_UP);
     }
 
     @Transactional(readOnly = true)
