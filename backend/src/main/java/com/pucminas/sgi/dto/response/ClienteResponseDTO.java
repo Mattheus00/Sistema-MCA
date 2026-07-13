@@ -39,8 +39,16 @@ public class ClienteResponseDTO {
         return telefone;
     }
 
+    /**
+     * Alias para o frontend: valores em português ("Ativo"/"Inativo").
+     * Se devolver o nome do enum (ATIVO/INATIVO), o front interpreta qualquer
+     * string diferente de "Ativo" como Inativo e grava o cliente como INATIVO ao salvar.
+     */
     @JsonProperty("situacao")
-    public StatusCliente getSituacao() {
-        return statusCliente;
+    public String getSituacao() {
+        if (statusCliente == StatusCliente.INATIVO) {
+            return "Inativo";
+        }
+        return "Ativo";
     }
 }
