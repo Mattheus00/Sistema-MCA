@@ -119,7 +119,7 @@ describe("buildCobrancaEmailHtml", () => {
     };
     const html = buildCobrancaEmailHtml(item, "Cliente", "https://pay.exemplo.com/boleto");
     expect(html).toContain("Pagamento online");
-    expect(html).toContain("Pagar com Boleto ou Pix");
+    expect(html).toContain("Abrir link de pagamento");
     expect(html).toContain("https://pay.exemplo.com/boleto");
   });
 
@@ -132,7 +132,7 @@ describe("buildCobrancaEmailHtml", () => {
     };
     const html = buildCobrancaEmailHtml(item, "Cliente", "http://inseguro.com");
     expect(html).not.toContain("Pagamento online");
-    expect(html).not.toContain("Pagar com Boleto ou Pix");
+    expect(html).not.toContain("Abrir link de pagamento");
   });
 });
 

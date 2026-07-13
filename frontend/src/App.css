@@ -3498,6 +3498,19 @@ select.modal__select {
   margin-top: 8px;
 }
 
+.page-inadimplentes-honorarios__secao-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.page-inadimplentes-honorarios__secao-topo .page-inadimplentes__tabela-titulo {
+  margin: 0;
+}
+
 .page-inadimplentes-honorarios__tabela-wrap {
   margin-top: 4px;
 }

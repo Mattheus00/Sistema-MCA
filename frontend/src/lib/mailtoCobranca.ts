@@ -18,16 +18,38 @@ function protocolo(id: string | number | undefined, vencimento: string): string 
   return `DIV-${d}-${idStr.length >= 4 ? idStr : idStr.padStart(4, "0")}`;
 }
 
+/** Protocolo no formato DIV-YYYYMMDD-XXXX — usado no PDF e no e-mail. */
+export function protocoloCobranca(id: string | number | undefined, vencimento: string): string {
+  return protocolo(id, vencimento);
+}
+
 const MAX_BODY_LENGTH = 1500;
 
-const PIX_CODE =
+export const PIX_CODE =
   "00020126360014br.gov.bcb.pix0114+55319982313435204000053039865802BR5922MCA SERVICOS CONTABEIS6015Conceicao do Ma610935860-000622905250JUH02173447164451724462563048D28";
+
 const PIX_INFO = {
   beneficiario: "MCA Serviços Contábeis",
   cidade: "Conceição do Mato Dentro",
   chave: "+55 31 99823-1343",
   banco: "Sicoob",
+  documento: "07.797.964/0001-51",
 };
+
+export function getPixCobrancaInfo() {
+  return {
+    chavePix: PIX_INFO.chave,
+    favorecido: PIX_INFO.beneficiario,
+    banco: PIX_INFO.banco,
+    documento: PIX_INFO.documento,
+    cidade: PIX_INFO.cidade,
+    pixCopiaECola: PIX_CODE,
+  };
+}
+
+export function buildPixQrCodeImageUrl(code: string = PIX_CODE, size = 280): string {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(code)}&bgcolor=ffffff&color=1a1a2e&qzone=1`;
+}
 
 /** Base do Gmail para abrir o redator (conta u/2). */
 const GMAIL_COMPOSE_BASE = "https://mail.google.com/mail/u/2/?view=cm&fs=1";
@@ -94,10 +116,12 @@ export function buildCobrancaMensagemTexto(
     `Juros: ${juros}`,
     `Valor: ${valor}`,
     ...(descricao ? [`Descrição: ${descricao}`] : []),
-    ...(linkPagamento ? ["", "Pagamento online (Boleto/Pix):", linkPagamento] : []),
+    ...(linkPagamento ? ["", "Pagamento online:", linkPagamento] : []),
     "",
-    `Pagamento via Pix (${PIX_INFO.banco}):`,
+    "Pagamento via Pix:",
     `Chave: ${PIX_INFO.chave}`,
+    `Favorecido: ${PIX_INFO.beneficiario}`,
+    `Banco: ${PIX_INFO.banco}`,
     "Pix Copia e Cola:",
     PIX_CODE,
     "",
@@ -137,10 +161,6 @@ export function openWhatsAppCobranca(url: string): void {
 
 const COR_PRINCIPAL = "#A43F9B";
 const COR_VENCIMENTO = "#dc2626";
-
-function buildPixQrCodeImageUrl(code: string, size = 220): string {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(code)}&bgcolor=ffffff&color=1a1a2e&qzone=1`;
-}
 
 function escapeHtml(s: string): string {
   return s
@@ -195,15 +215,15 @@ export function buildCobrancaEmailHtml(
     (linkPagamento
       ? `<div style="background:#f8fafc;border-left:4px solid ${COR_PRINCIPAL};padding:16px 20px;margin:0 0 20px;">` +
         `<p style="margin:0 0 10px;font-size:16px;font-weight:bold;color:${COR_PRINCIPAL};">Pagamento online</p>` +
-        '<p style="margin:0 0 14px;font-size:14px;color:#333;">Clique no botão abaixo para pagar com Boleto ou Pix.</p>' +
-        `<p style="margin:0 0 12px;"><a href="${linkPagamentoEscapado}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:${COR_PRINCIPAL};color:#fff;text-decoration:none;font-weight:bold;font-size:14px;padding:10px 16px;border-radius:4px;">Pagar com Boleto ou Pix</a></p>` +
+        '<p style="margin:0 0 14px;font-size:14px;color:#333;">Clique no botão abaixo para abrir o link de pagamento.</p>' +
+        `<p style="margin:0 0 12px;"><a href="${linkPagamentoEscapado}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:${COR_PRINCIPAL};color:#fff;text-decoration:none;font-weight:bold;font-size:14px;padding:10px 16px;border-radius:4px;">Abrir link de pagamento</a></p>` +
         `<p style="margin:0;font-size:12px;color:#555;word-break:break-all;">Se o botão não abrir, copie e cole este link no navegador:<br><a href="${linkPagamentoEscapado}" target="_blank" rel="noopener noreferrer" style="color:${COR_PRINCIPAL};">${linkPagamentoEscapado}</a></p>` +
         "</div>"
       : "") +
     (pixQrUrl
       ? `<div style="background:#f8fafc;border-left:4px solid ${COR_PRINCIPAL};padding:16px 20px;margin:0 0 20px;">` +
         `<p style="margin:0 0 10px;font-size:16px;font-weight:bold;color:${COR_PRINCIPAL};">Pagamento via Pix</p>` +
-        `<p style="margin:0 0 10px;font-size:13px;color:#555;">${escapeHtml(PIX_INFO.banco)} · ${escapeHtml(PIX_INFO.beneficiario)}</p>` +
+        `<p style="margin:0 0 10px;font-size:13px;color:#555;">${escapeHtml(PIX_INFO.beneficiario)}</p>` +
         '<p style="margin:0 0 12px;font-size:14px;color:#333;">Escaneie o QR Code abaixo para realizar o pagamento via Pix.</p>' +
         `<p style="margin:0 0 12px;"><img src="${escapeHtml(pixQrUrl)}" alt="QR Code Pix" style="max-width:260px;width:100%;height:auto;border:1px solid #e5e7eb;border-radius:6px;" /></p>` +
         '<p style="margin:0 0 6px;font-size:13px;color:#333;"><strong>Pix Copia e Cola:</strong></p>' +

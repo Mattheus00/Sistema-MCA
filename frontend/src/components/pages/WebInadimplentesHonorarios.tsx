@@ -1,7 +1,8 @@
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import HonorariosSicoobDetalhe from "@/components/HonorariosSicoobDetalhe";
-import { api, getApiErrorMessage, isMockEnabled, normalizeListResponse } from "@/lib/api";import {
+import { api, getApiErrorMessage, isMockEnabled, normalizeListResponse } from "@/lib/api";
+import {
   normalizeClienteFromApi,
   normalizeInadimplenciaFromApi,
 } from "@/lib/apiNormalizers";
@@ -19,16 +20,17 @@ import {
   valoresHonorario,
 } from "@/lib/inadimplentesUtils";
 import {
-  buildGmailComposeUrl,
   buildWhatsAppCobrancaUrl,
   copyCobrancaEmailToClipboard,
   normalizeTelefoneParaWhatsApp,
-  openGmailCompose,
   openWhatsAppCobranca,
 } from "@/lib/mailtoCobranca";
+import { gerarEBaixarAvisoPendenciaPdf } from "@/lib/cobrancaPdf";
 import { getSicoobStatus } from "@/lib/sicoobApi";
 import { parseValorReais } from "@/lib/valorBrasil";
-import type { Cliente, Inadimplencia, NotificacaoCobrancaResponse } from "@/types/api";
+import type { Cliente, Inadimplencia } from "@/types/api";
+
+const ZOHO_MAIL_URL = "https://mail.zoho.com/zm/#mail/folder/sent";
 
 export default function WebInadimplentesHonorarios() {
   const { clienteId } = useParams<{ clienteId: string }>();
@@ -38,7 +40,6 @@ export default function WebInadimplentesHonorarios() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
-  const [toastEmailFormatado, setToastEmailFormatado] = useState(false);
   const [inadimplenciaParaCancelar, setInadimplenciaParaCancelar] = useState<{ item: Inadimplencia; nomeCliente: string } | null>(null);
   const [modalPagamento, setModalPagamento] = useState<{
     tipo: "total" | "parcial";
@@ -53,8 +54,7 @@ export default function WebInadimplentesHonorarios() {
   const [salvandoPagamento, setSalvandoPagamento] = useState(false);
   const [modalCobrancaCanal, setModalCobrancaCanal] = useState<{ inadimplencia: Inadimplencia } | null>(null);
   const [loadingCobrancaCanal, setLoadingCobrancaCanal] = useState(false);
-  const [resultadoCobrancaEmail, setResultadoCobrancaEmail] = useState<NotificacaoCobrancaResponse | null>(null);
-  const [copiouLinhaDigitavel, setCopiouLinhaDigitavel] = useState(false);
+  const [gerandoPdfConsolidado, setGerandoPdfConsolidado] = useState(false);
   const [sicoobMock, setSicoobMock] = useState(false);
   const [dividaExpandidaId, setDividaExpandidaId] = useState<string | null>(null);
   const [pagina, setPagina] = useState(1);
@@ -244,87 +244,33 @@ export default function WebInadimplentesHonorarios() {
     }
   }
 
-  function mensagemErroCobrancaEmail(e: unknown): string {
-    const msg = getApiErrorMessage(e, "Falha ao enviar cobrança por e-mail.");
-    const lower = msg.toLowerCase();
-    if (
-      lower.includes("email-config") ||
-      lower.includes("email config") ||
-      lower.includes("smtp") ||
-      (lower.includes("e-mail") && lower.includes("config")) ||
-      (lower.includes("email") && lower.includes("configur"))
-    ) {
-      return "Configure o e-mail (SMTP) do escritório antes de enviar cobranças pelo sistema.";
-    }
-    return msg;
+  function emailClienteValido(): string {
+    return (cliente?.email ?? "").trim();
   }
 
-  async function enviarCobrancaPorEmailSmtp(item: Inadimplencia) {
-    if (!item.id) {
-      setErro("Dívida sem ID — não é possível enviar a cobrança pelo sistema.");
-      return;
-    }
-    if (!item.clienteId) {
-      setErro("Cliente não identificado — não é possível enviar a cobrança.");
+  async function abrirCobrancaPorEmail(item: Inadimplencia) {
+    const email = emailClienteValido();
+    if (!email) {
+      setErro("Cadastre o e-mail do cliente para enviar a cobrança.");
       return;
     }
     setLoadingCobrancaCanal(true);
     setErro(null);
-    setResultadoCobrancaEmail(null);
-    setCopiouLinhaDigitavel(false);
     try {
-      if (isMockEnabled()) {
-        const mock: NotificacaoCobrancaResponse = {
-          notificacaoId: `mock-${Date.now()}`,
-          clienteId: item.clienteId,
-          dividaId: item.id,
-          emailDestino: cliente?.email ?? "cliente@exemplo.com",
-          statusEnvio: "ENVIADO",
-          boletoPdfAnexado: true,
-          boletoLinhaDigitavel: "75691.23456 78901.234567 89012.345678 9 12340000010000",
-          boletoNossoNumero: "12345678",
-        };
-        setResultadoCobrancaEmail(mock);
-        const parts = ["E-mail enviado"];
-        if (mock.boletoPdfAnexado) parts.push("Boleto Sicoob anexado");
-        setMensagemSucesso(parts.join(". ") + ".");
-        return;
+      await gerarEBaixarAvisoPendenciaPdf(item, nomeCliente);
+      await copyCobrancaEmailToClipboard(item, nomeCliente);
+      try {
+        await navigator.clipboard.writeText(email);
+      } catch {
+        // HTML do e-mail já foi copiado acima; e-mail do cliente fica no toast
       }
-      const res = await api.post<NotificacaoCobrancaResponse>("/api/notificacoes/enviar-cobranca", {
-        clienteId: item.clienteId,
-        dividaId: item.id,
-      });
-      const data = res.data ?? ({} as NotificacaoCobrancaResponse);
-      const status = String(data.statusEnvio ?? "").toUpperCase();
-      setResultadoCobrancaEmail(data);
-      if (status === "ENVIADO") {
-        const parts = ["E-mail enviado"];
-        if (data.boletoPdfAnexado) parts.push("Boleto Sicoob anexado");
-        setMensagemSucesso(parts.join(". ") + ".");
-      } else if (status === "FALHOU") {
-        setErro(data.mensagemErro?.trim() || "Falha ao enviar o e-mail de cobrança.");
-      } else {
-        setMensagemSucesso(`E-mail processado (status: ${data.statusEnvio || "desconhecido"}).`);
-      }
+      window.open(ZOHO_MAIL_URL, "_blank", "noopener,noreferrer");
+      setModalCobrancaCanal(null);
+      setMensagemSucesso(
+        `PDF baixado e Zoho aberto. Destinatário: ${email}. Crie um novo e-mail, cole o destinatário, anexe o PDF e envie.`
+      );
     } catch (e: unknown) {
-      setErro(mensagemErroCobrancaEmail(e));
-    } finally {
-      setLoadingCobrancaCanal(false);
-    }
-  }
-
-  async function abrirCobrancaNoGmail(item: Inadimplencia) {
-    setLoadingCobrancaCanal(true);
-    setErro(null);
-    try {
-      const copiou = await copyCobrancaEmailToClipboard(item, nomeCliente);
-      if (copiou) {
-        setToastEmailFormatado(true);
-        setTimeout(() => setToastEmailFormatado(false), 5000);
-      }
-      openGmailCompose(buildGmailComposeUrl(item, nomeCliente, cliente?.email, true));
-    } catch (e: unknown) {
-      setErro(getApiErrorMessage(e, "Falha ao abrir o Gmail."));
+      setErro(getApiErrorMessage(e, "Falha ao gerar o PDF ou abrir o Zoho Mail."));
     } finally {
       setLoadingCobrancaCanal(false);
     }
@@ -350,21 +296,31 @@ export default function WebInadimplentesHonorarios() {
     }
   }
 
-  async function copiarLinhaDigitavel(linha: string) {
-    try {
-      await navigator.clipboard.writeText(linha);
-      setCopiouLinhaDigitavel(true);
-      setTimeout(() => setCopiouLinhaDigitavel(false), 2000);
-    } catch {
-      setErro("Não foi possível copiar a linha digitável.");
-    }
-  }
-
   function fecharModalCobrancaCanal() {
     if (loadingCobrancaCanal) return;
     setModalCobrancaCanal(null);
-    setResultadoCobrancaEmail(null);
-    setCopiouLinhaDigitavel(false);
+  }
+
+  async function gerarPdfTodasCobrancas() {
+    const emAberto = itens.filter(isInadimplenciaEmAberto);
+    if (emAberto.length === 0) {
+      setErro("Não há honorários em aberto para gerar o PDF.");
+      return;
+    }
+    setGerandoPdfConsolidado(true);
+    setErro(null);
+    try {
+      await gerarEBaixarAvisoPendenciaPdf(emAberto, nomeCliente);
+      setMensagemSucesso(
+        emAberto.length === 1
+          ? "PDF do aviso de pendência baixado."
+          : `PDF consolidado baixado com ${emAberto.length} períodos em aberto.`
+      );
+    } catch (e: unknown) {
+      setErro(getApiErrorMessage(e, "Falha ao gerar o PDF consolidado."));
+    } finally {
+      setGerandoPdfConsolidado(false);
+    }
   }
 
   const totalEmAberto = itens.filter(isInadimplenciaEmAberto).reduce((s, i) => s + saldoDevedorItem(i), 0);
@@ -425,11 +381,6 @@ export default function WebInadimplentesHonorarios() {
       </header>
 
       {mensagemSucesso && <p className="toast toast--sucesso">{mensagemSucesso}</p>}
-      {toastEmailFormatado && (
-        <p className="toast toast--sucesso">
-          E-mail formatado copiado. Cole no corpo da mensagem no Gmail (Ctrl+V) para usar o layout.
-        </p>
-      )}
       {erro && <p className="page-inadimplentes__erro">{erro}</p>}
       {sicoobMock && (
         <p className="honorarios-sicoob__mock-banner honorarios-sicoob__mock-banner--page">Modo simulação Sicoob</p>
@@ -451,7 +402,20 @@ export default function WebInadimplentesHonorarios() {
       </div>
 
       <section className="page-inadimplentes-honorarios__secao">
-        <h2 className="page-inadimplentes__tabela-titulo">Detalhamento por período</h2>
+        <div className="page-inadimplentes-honorarios__secao-topo">
+          <h2 className="page-inadimplentes__tabela-titulo">Detalhamento por período</h2>
+          {!loading && qtdEmAberto > 0 && (
+            <button
+              type="button"
+              className="btn btn--secondary btn--small"
+              onClick={() => void gerarPdfTodasCobrancas()}
+              disabled={gerandoPdfConsolidado}
+              title="Gera um PDF com todos os períodos em aberto"
+            >
+              {gerandoPdfConsolidado ? "Gerando PDF…" : "Gerar PDF (todas em aberto)"}
+            </button>
+          )}
+        </div>
 
         {loading ? (
           <p className="page-inadimplentes__loading">Carregando honorários...</p>
@@ -520,11 +484,7 @@ export default function WebInadimplentesHonorarios() {
                               <button
                                 type="button"
                                 className="page-inadimplentes__btn-icone page-inadimplentes__btn-icone--email"
-                                onClick={() => {
-                                  setResultadoCobrancaEmail(null);
-                                  setCopiouLinhaDigitavel(false);
-                                  setModalCobrancaCanal({ inadimplencia: i });
-                                }}
+                                onClick={() => setModalCobrancaCanal({ inadimplencia: i })}
                                 title="Enviar cobrança"
                                 aria-label="Enviar cobrança"
                               >
@@ -607,120 +567,68 @@ export default function WebInadimplentesHonorarios() {
               Vencimento: <strong>{formatarData(modalCobrancaCanal.inadimplencia.vencimento)}</strong>
             </p>
 
-            {resultadoCobrancaEmail && String(resultadoCobrancaEmail.statusEnvio).toUpperCase() === "ENVIADO" ? (
-              <div className="modal-cobranca-canal__resultado">
-                <p className="modal-cobranca-canal__resultado-ok">
-                  E-mail enviado
-                  {resultadoCobrancaEmail.emailDestino ? ` para ${resultadoCobrancaEmail.emailDestino}` : ""}.
-                  {resultadoCobrancaEmail.boletoPdfAnexado ? " Boleto Sicoob anexado." : ""}
-                </p>
-                {resultadoCobrancaEmail.boletoLinhaDigitavel && (
-                  <div className="modal-cobranca-canal__linha">
-                    <label className="modal-cobranca-canal__linha-label">Linha digitável do boleto</label>
-                    <div className="modal-cobranca-canal__linha-row">
-                      <code className="modal-cobranca-canal__linha-code">
-                        {resultadoCobrancaEmail.boletoLinhaDigitavel}
-                      </code>
-                      <button
-                        type="button"
-                        className="btn btn--secondary btn--small"
-                        onClick={() => void copiarLinhaDigitavel(resultadoCobrancaEmail.boletoLinhaDigitavel!)}
-                      >
-                        {copiouLinhaDigitavel ? "Copiado" : "Copiar"}
-                      </button>
-                    </div>
-                  </div>
-                )}
-                <div className="modal__botoes">
-                  <button type="button" className="btn btn--primary" onClick={fecharModalCobrancaCanal}>
-                    Fechar
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <p className="modal-cobranca-canal__pergunta">Como deseja enviar a cobrança?</p>
-                <div className="modal-pagamento__tipo-tabs modal-cobranca-canal__opcoes">
-                  <button
-                    type="button"
-                    className="modal-pagamento__tipo-tab"
-                    onClick={() => void enviarCobrancaPorEmailSmtp(modalCobrancaCanal.inadimplencia)}
-                    disabled={loadingCobrancaCanal || !modalCobrancaCanal.inadimplencia.id}
-                    title={
-                      !modalCobrancaCanal.inadimplencia.id
-                        ? "Dívida sem ID"
-                        : "Envia pelo SMTP do sistema (com PDF do boleto Sicoob quando disponível)"
-                    }
-                  >
-                    <span className="modal-pagamento__tipo-icone modal-pagamento__tipo-icone--email">
-                      <EmailSendIcon />
-                    </span>
-                    <span className="modal-pagamento__tipo-texto">
-                      <strong>{loadingCobrancaCanal ? "Enviando…" : "Enviar pelo sistema"}</strong>
-                      <small>
-                        {cliente?.email
-                          ? `SMTP para ${cliente.email} — anexa boleto Sicoob`
-                          : "SMTP do escritório — anexa boleto Sicoob"}
-                      </small>
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    className="modal-pagamento__tipo-tab"
-                    onClick={() => void abrirCobrancaNoGmail(modalCobrancaCanal.inadimplencia)}
-                    disabled={loadingCobrancaCanal}
-                    title="Abre o Gmail com o texto da cobrança. Não anexa PDF do boleto."
-                  >
-                    <span className="modal-pagamento__tipo-icone modal-pagamento__tipo-icone--email">
-                      <EmailSendIcon />
-                    </span>
-                    <span className="modal-pagamento__tipo-texto">
-                      <strong>Abrir Gmail</strong>
-                      <small>Não anexa PDF — só redator do Gmail</small>
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    className="modal-pagamento__tipo-tab"
-                    onClick={() => void enviarCobrancaPorWhatsApp(modalCobrancaCanal.inadimplencia)}
-                    disabled={
-                      loadingCobrancaCanal ||
-                      !normalizeTelefoneParaWhatsApp(cliente?.celular || cliente?.telefone)
-                    }
-                    title={
-                      !normalizeTelefoneParaWhatsApp(cliente?.celular || cliente?.telefone)
-                        ? "Cadastre celular ou telefone do cliente"
-                        : undefined
-                    }
-                  >
-                    <span className="modal-pagamento__tipo-icone modal-pagamento__tipo-icone--whatsapp">
-                      <WhatsAppIcon />
-                    </span>
-                    <span className="modal-pagamento__tipo-texto">
-                      <strong>WhatsApp</strong>
-                      <small>
-                        {normalizeTelefoneParaWhatsApp(cliente?.celular || cliente?.telefone)
-                          ? `Abre conversa com ${cliente?.celular || cliente?.telefone}`
-                          : "Cliente sem telefone cadastrado"}
-                      </small>
-                    </span>
-                  </button>
-                </div>
-                {loadingCobrancaCanal && (
-                  <p className="modal-cobranca-canal__loading">Enviando cobrança pelo sistema…</p>
-                )}
-                <div className="modal__botoes">
-                  <button
-                    type="button"
-                    className="btn btn--secondary"
-                    onClick={fecharModalCobrancaCanal}
-                    disabled={loadingCobrancaCanal}
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </>
-            )}
+            <p className="modal-cobranca-canal__pergunta">Como deseja enviar a cobrança?</p>
+            <div className="modal-pagamento__tipo-tabs modal-cobranca-canal__opcoes">
+              <button
+                type="button"
+                className="modal-pagamento__tipo-tab"
+                onClick={() => void abrirCobrancaPorEmail(modalCobrancaCanal.inadimplencia)}
+                disabled={loadingCobrancaCanal || !emailClienteValido()}
+                title={
+                  !emailClienteValido()
+                    ? "Cadastre o e-mail do cliente"
+                    : `Baixa PDF e abre o Zoho Mail para enviar a ${emailClienteValido()}`
+                }
+              >
+                <span className="modal-pagamento__tipo-icone modal-pagamento__tipo-icone--email">
+                  <EmailSendIcon />
+                </span>
+                <span className="modal-pagamento__tipo-texto">
+                  <strong>{loadingCobrancaCanal ? "Gerando PDF…" : "Abrir Zoho Mail"}</strong>
+                  <small>
+                    {emailClienteValido()
+                      ? `Baixa PDF e abre Zoho — destinatário ${emailClienteValido()}`
+                      : "Cliente sem e-mail cadastrado"}
+                  </small>
+                </span>
+              </button>
+              <button
+                type="button"
+                className="modal-pagamento__tipo-tab"
+                onClick={() => void enviarCobrancaPorWhatsApp(modalCobrancaCanal.inadimplencia)}
+                disabled={
+                  loadingCobrancaCanal ||
+                  !normalizeTelefoneParaWhatsApp(cliente?.celular || cliente?.telefone)
+                }
+                title={
+                  !normalizeTelefoneParaWhatsApp(cliente?.celular || cliente?.telefone)
+                    ? "Cadastre celular ou telefone do cliente"
+                    : undefined
+                }
+              >
+                <span className="modal-pagamento__tipo-icone modal-pagamento__tipo-icone--whatsapp">
+                  <WhatsAppIcon />
+                </span>
+                <span className="modal-pagamento__tipo-texto">
+                  <strong>WhatsApp</strong>
+                  <small>
+                    {normalizeTelefoneParaWhatsApp(cliente?.celular || cliente?.telefone)
+                      ? `Abre conversa com ${cliente?.celular || cliente?.telefone}`
+                      : "Cliente sem telefone cadastrado"}
+                  </small>
+                </span>
+              </button>
+            </div>
+            <div className="modal__botoes">
+              <button
+                type="button"
+                className="btn btn--secondary"
+                onClick={fecharModalCobrancaCanal}
+                disabled={loadingCobrancaCanal}
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
         </div>
       )}
