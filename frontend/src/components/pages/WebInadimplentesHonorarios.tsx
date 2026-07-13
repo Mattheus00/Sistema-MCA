@@ -654,214 +654,342 @@ export default function WebInadimplentesHonorarios() {
         </div>
       )}
 
-      {modalPagamento && (
-        <div className="modal-overlay" onClick={() => !salvandoPagamento && setModalPagamento(null)}>
-          <div className="modal modal--cadastro modal--pagamento" onClick={(e) => e.stopPropagation()}>
-            <p className="modal__eyebrow">REGISTRAR PAGAMENTO</p>
-            <h2 className="modal__titulo">{modalPagamento.nomeCliente}</h2>
-            <p className="modal__texto-confirmacao modal__label--full">
-              Mês: <strong>{formatarMesAno(modalPagamento.inadimplencia.vencimento)}</strong>{" "}
-              Vencimento: <strong>{formatarData(modalPagamento.inadimplencia.vencimento)}</strong>
-            </p>
+      {modalPagamento && (() => {
+        const i = modalPagamento.inadimplencia;
+        const saldo = saldoDevedorItem(i);
+        const desconto = descontoNormalizado(modalPagamento.descontoDigitado, saldo);
+        const { valorOriginal, juros } = valoresHonorario(i);
+        const valorParcial = parseValorReais(modalPagamento.valorParcialDigitado);
+        const totalReceber =
+          modalPagamento.tipo === "total"
+            ? Math.max(0, saldo - desconto)
+            : Math.max(0, valorParcial);
+        const saldoRestante =
+          modalPagamento.tipo === "parcial" && valorParcial > 0
+            ? Math.max(0, saldo - valorParcial)
+            : null;
+        const descricaoPeriodo = (i.descricao || "").trim();
 
-            <div className="modal-pagamento__tipo-tabs" role="tablist" aria-label="Tipo de pagamento">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={modalPagamento.tipo === "total"}
-                className={`modal-pagamento__tipo-tab${modalPagamento.tipo === "total" ? " modal-pagamento__tipo-tab--ativo" : ""}`}
-                onClick={() =>
-                  setModalPagamento((prev) =>
-                    prev ? { ...prev, tipo: "total", metodoPagamento: prev.metodoPagamento || "" } : prev
-                  )
-                }
-                disabled={salvandoPagamento}
-              >
-                <span className="modal-pagamento__tipo-icone modal-pagamento__tipo-icone--total">
-                  <CheckIcon />
-                </span>
-                <span className="modal-pagamento__tipo-texto">
-                  <strong>Pagamento total</strong>
-                  <small>Quita a dívida por completo</small>
-                </span>
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={modalPagamento.tipo === "parcial"}
-                className={`modal-pagamento__tipo-tab${modalPagamento.tipo === "parcial" ? " modal-pagamento__tipo-tab--ativo" : ""}`}
-                onClick={() =>
-                  setModalPagamento((prev) =>
-                    prev ? { ...prev, tipo: "parcial", metodoPagamento: prev.metodoPagamento || "PIX" } : prev
-                  )
-                }
-                disabled={salvandoPagamento}
-              >
-                <span className="modal-pagamento__tipo-icone modal-pagamento__tipo-icone--parcial">R$</span>
-                <span className="modal-pagamento__tipo-texto">
-                  <strong>Pagamento parcial</strong>
-                  <small>Registra apenas parte do valor</small>
-                </span>
-              </button>
-            </div>
+        return (
+          <div className="modal-overlay" onClick={() => !salvandoPagamento && setModalPagamento(null)}>
+            <div
+              className="modal modal--pagamento modal-pagamento-registro"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="modal-pagamento-titulo"
+            >
+              <header className="modal-pagamento-registro__header">
+                <p className="page-inadimplentes__contexto">Sistema de Gestão de Inadimplentes</p>
+                <h2 id="modal-pagamento-titulo" className="modal-pagamento-registro__titulo">
+                  Registrar pagamento
+                </h2>
+                <p className="modal-pagamento-registro__subtitle">
+                  Confirme o recebimento dos honorários em aberto deste período.
+                </p>
+              </header>
 
-            <div className="modal__grid">
-              {(() => {
-                const i = modalPagamento.inadimplencia;
-                const saldo = saldoDevedorItem(i);
-                const desconto = descontoNormalizado(modalPagamento.descontoDigitado, saldo);
-                const { valorOriginal, juros } = valoresHonorario(i);
-                const valorParcial = parseValorReais(modalPagamento.valorParcialDigitado);
-                return (
-                  <>
-                    <div className="modal__campo-inline modal__input--full modal__resumo-item">
-                      <span>Valor original</span>
-                      <strong>{formatarMoeda(valorOriginal)}</strong>
-                    </div>
-                    <div className="modal__campo-inline modal__input--full modal__resumo-item">
-                      <span>Juros</span>
-                      <strong>{formatarMoeda(juros)}</strong>
-                    </div>
-                    <div className="modal__campo-inline modal__input--full modal__resumo-item modal__resumo-item--destaque">
-                      <span>Saldo devedor</span>
-                      <strong>{formatarMoeda(saldo)}</strong>
+              <div className="modal-pagamento-registro__layout">
+                <div className="modal-pagamento-registro__principal">
+                  <section className="registro-inadimplencia__card">
+                    <div className="registro-inadimplencia__card-head">
+                      <span className="registro-inadimplencia__step">1</span>
+                      <div>
+                        <h3 className="registro-inadimplencia__card-title">Tipo de pagamento</h3>
+                        <p className="registro-inadimplencia__card-desc">
+                          Escolha se o valor quita a dívida ou apenas parte dela.
+                        </p>
+                      </div>
                     </div>
 
-                    {modalPagamento.tipo === "total" ? (
-                      <>
-                        <div className="modal__linha-dois-campos">
-                          <div className="modal__campo-stack">
-                            <label className="modal__label">Desconto (R$)</label>
-                            <input
-                              placeholder="0,00"
-                              value={modalPagamento.descontoDigitado}
+                    <div className="modal-pagamento__tipo-tabs" role="tablist" aria-label="Tipo de pagamento">
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={modalPagamento.tipo === "total"}
+                        className={`modal-pagamento__tipo-tab${modalPagamento.tipo === "total" ? " modal-pagamento__tipo-tab--ativo" : ""}`}
+                        onClick={() =>
+                          setModalPagamento((prev) =>
+                            prev ? { ...prev, tipo: "total", metodoPagamento: prev.metodoPagamento || "" } : prev
+                          )
+                        }
+                        disabled={salvandoPagamento}
+                      >
+                        <span className="modal-pagamento__tipo-icone modal-pagamento__tipo-icone--total">
+                          <CheckIcon />
+                        </span>
+                        <span className="modal-pagamento__tipo-texto">
+                          <strong>Pagamento total</strong>
+                          <small>Quita a dívida por completo</small>
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={modalPagamento.tipo === "parcial"}
+                        className={`modal-pagamento__tipo-tab${modalPagamento.tipo === "parcial" ? " modal-pagamento__tipo-tab--ativo" : ""}`}
+                        onClick={() =>
+                          setModalPagamento((prev) =>
+                            prev ? { ...prev, tipo: "parcial", metodoPagamento: prev.metodoPagamento || "PIX" } : prev
+                          )
+                        }
+                        disabled={salvandoPagamento}
+                      >
+                        <span className="modal-pagamento__tipo-icone modal-pagamento__tipo-icone--parcial">R$</span>
+                        <span className="modal-pagamento__tipo-texto">
+                          <strong>Pagamento parcial</strong>
+                          <small>Registra apenas parte do valor</small>
+                        </span>
+                      </button>
+                    </div>
+                  </section>
+
+                  <section className="registro-inadimplencia__card">
+                    <div className="registro-inadimplencia__card-head">
+                      <span className="registro-inadimplencia__step">2</span>
+                      <div>
+                        <h3 className="registro-inadimplencia__card-title">Dados do pagamento</h3>
+                        <p className="registro-inadimplencia__card-desc">
+                          {modalPagamento.tipo === "total"
+                            ? "Informe desconto, método, data e observação do recebimento."
+                            : "Informe o valor parcial, data e método de pagamento."}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="modal-pagamento-registro__campos">
+                      {modalPagamento.tipo === "total" ? (
+                        <>
+                          <div className="modal-pagamento-registro__linha-tres">
+                            <div className="modal-pagamento-registro__campo">
+                              <label className="registro-inadimplencia__label" htmlFor="pag-desconto">
+                                Desconto (R$)
+                              </label>
+                              <input
+                                id="pag-desconto"
+                                placeholder="0,00"
+                                value={modalPagamento.descontoDigitado}
+                                onChange={(e) =>
+                                  setModalPagamento((prev) =>
+                                    prev ? { ...prev, descontoDigitado: e.target.value } : prev
+                                  )
+                                }
+                                className="registro-inadimplencia__input"
+                                disabled={salvandoPagamento}
+                              />
+                            </div>
+                            <div className="modal-pagamento-registro__campo">
+                              <label className="registro-inadimplencia__label" htmlFor="pag-metodo-total">
+                                Método de pagamento <span className="registro-inadimplencia__required">*</span>
+                              </label>
+                              <select
+                                id="pag-metodo-total"
+                                value={modalPagamento.metodoPagamento}
+                                onChange={(e) =>
+                                  setModalPagamento((prev) =>
+                                    prev ? { ...prev, metodoPagamento: e.target.value } : prev
+                                  )
+                                }
+                                className="registro-inadimplencia__select"
+                                disabled={salvandoPagamento}
+                              >
+                                <option value="">Selecione</option>
+                                <option value="PIX">PIX</option>
+                                <option value="Dinheiro">Dinheiro</option>
+                                <option value="Cartão">Cartão</option>
+                                <option value="Transferência">Transferência</option>
+                                <option value="Boleto">Boleto</option>
+                              </select>
+                            </div>
+                            <div className="modal-pagamento-registro__campo">
+                              <label className="registro-inadimplencia__label" htmlFor="pag-data-total">
+                                Data do pagamento
+                              </label>
+                              <input
+                                id="pag-data-total"
+                                type="date"
+                                value={modalPagamento.dataPagamento}
+                                onChange={(e) =>
+                                  setModalPagamento((prev) =>
+                                    prev ? { ...prev, dataPagamento: e.target.value } : prev
+                                  )
+                                }
+                                className="registro-inadimplencia__input"
+                                disabled={salvandoPagamento}
+                              />
+                            </div>
+                          </div>
+                          <div className="modal-pagamento-registro__campo">
+                            <label className="registro-inadimplencia__label" htmlFor="pag-obs">
+                              Observação
+                              <span className="registro-inadimplencia__descricao-opcional"> (opcional)</span>
+                            </label>
+                            <textarea
+                              id="pag-obs"
+                              placeholder="Ex.: Pagamento confirmado via extrato bancário"
+                              value={modalPagamento.observacao}
                               onChange={(e) =>
-                                setModalPagamento((prev) => (prev ? { ...prev, descontoDigitado: e.target.value } : prev))
+                                setModalPagamento((prev) =>
+                                  prev ? { ...prev, observacao: e.target.value } : prev
+                                )
                               }
-                              className="modal__input"
+                              className="registro-inadimplencia__textarea"
+                              rows={2}
                               disabled={salvandoPagamento}
                             />
                           </div>
-                          <div className="modal__campo-stack">
-                            <label className="modal__label modal__label--required">Método de pagamento</label>
-                            <select
-                              value={modalPagamento.metodoPagamento}
+                        </>
+                      ) : (
+                        <>
+                          <div className="modal-pagamento-registro__campo">
+                            <label className="registro-inadimplencia__label" htmlFor="pag-valor-parcial">
+                              Valor a pagar agora <span className="registro-inadimplencia__required">*</span>
+                            </label>
+                            <input
+                              id="pag-valor-parcial"
+                              placeholder="0,00"
+                              value={modalPagamento.valorParcialDigitado}
                               onChange={(e) =>
-                                setModalPagamento((prev) => (prev ? { ...prev, metodoPagamento: e.target.value } : prev))
+                                setModalPagamento((prev) =>
+                                  prev ? { ...prev, valorParcialDigitado: e.target.value } : prev
+                                )
                               }
-                              className="modal__input modal__select"
+                              className="registro-inadimplencia__input"
                               disabled={salvandoPagamento}
-                            >
-                              <option value="">Selecione</option>
-                              <option value="PIX">PIX</option>
-                              <option value="Dinheiro">Dinheiro</option>
-                              <option value="Cartão">Cartão</option>
-                              <option value="Transferência">Transferência</option>
-                            </select>
+                            />
                           </div>
-                        </div>
-                        <div className="modal__campo-inline modal__input--full modal__resumo-item modal__resumo-item--destaque">
-                          <span>Total a receber após desconto</span>
-                          <strong>{formatarMoeda(Math.max(0, saldo - desconto))}</strong>
-                        </div>
-                        <label className="modal__label modal__label--full">Data do pagamento</label>
-                        <input
-                          type="date"
-                          value={modalPagamento.dataPagamento}
-                          onChange={(e) =>
-                            setModalPagamento((prev) => (prev ? { ...prev, dataPagamento: e.target.value } : prev))
-                          }
-                          className="modal__input modal__input--full"
-                          disabled={salvandoPagamento}
-                        />
-                        <label className="modal__label modal__label--full">Observação</label>
-                        <textarea
-                          placeholder="Opcional"
-                          value={modalPagamento.observacao}
-                          onChange={(e) =>
-                            setModalPagamento((prev) => (prev ? { ...prev, observacao: e.target.value } : prev))
-                          }
-                          className="modal__input modal__input--full"
-                          rows={3}
-                          disabled={salvandoPagamento}
-                        />
-                      </>
-                    ) : (
-                      <>
-                        <label className="modal__label modal__label--required">Valor a pagar agora</label>
-                        <input
-                          placeholder="0,00"
-                          value={modalPagamento.valorParcialDigitado}
-                          onChange={(e) =>
-                            setModalPagamento((prev) => (prev ? { ...prev, valorParcialDigitado: e.target.value } : prev))
-                          }
-                          className="modal__input"
-                          disabled={salvandoPagamento}
-                        />
-                        {valorParcial > 0 && (
-                          <div className="modal__campo-inline modal__input--full modal__resumo-item">
-                            <span>Saldo restante após pagamento</span>
-                            <strong>{formatarMoeda(Math.max(0, saldo - valorParcial))}</strong>
+                          <div className="modal-pagamento-registro__linha-dois">
+                            <div className="modal-pagamento-registro__campo">
+                              <label className="registro-inadimplencia__label" htmlFor="pag-data-parcial">
+                                Data do pagamento
+                              </label>
+                              <input
+                                id="pag-data-parcial"
+                                type="date"
+                                value={modalPagamento.dataPagamento}
+                                onChange={(e) =>
+                                  setModalPagamento((prev) =>
+                                    prev ? { ...prev, dataPagamento: e.target.value } : prev
+                                  )
+                                }
+                                className="registro-inadimplencia__input"
+                                disabled={salvandoPagamento}
+                              />
+                            </div>
+                            <div className="modal-pagamento-registro__campo">
+                              <label className="registro-inadimplencia__label" htmlFor="pag-metodo-parcial">
+                                Método de pagamento
+                              </label>
+                              <select
+                                id="pag-metodo-parcial"
+                                value={modalPagamento.metodoPagamento}
+                                onChange={(e) =>
+                                  setModalPagamento((prev) =>
+                                    prev ? { ...prev, metodoPagamento: e.target.value } : prev
+                                  )
+                                }
+                                className="registro-inadimplencia__select"
+                                disabled={salvandoPagamento}
+                              >
+                                <option value="PIX">PIX</option>
+                                <option value="Dinheiro">Dinheiro</option>
+                                <option value="Cartão">Cartão</option>
+                                <option value="Transferência">Transferência</option>
+                                <option value="Boleto">Boleto</option>
+                              </select>
+                            </div>
                           </div>
-                        )}
-                        <label className="modal__label">Data do pagamento</label>
-                        <input
-                          type="date"
-                          value={modalPagamento.dataPagamento}
-                          onChange={(e) =>
-                            setModalPagamento((prev) => (prev ? { ...prev, dataPagamento: e.target.value } : prev))
-                          }
-                          className="modal__input"
-                          disabled={salvandoPagamento}
-                        />
-                        <label className="modal__label">Método de pagamento</label>
-                        <select
-                          value={modalPagamento.metodoPagamento}
-                          onChange={(e) =>
-                            setModalPagamento((prev) => (prev ? { ...prev, metodoPagamento: e.target.value } : prev))
-                          }
-                          className="modal__input modal__select"
-                          disabled={salvandoPagamento}
-                        >
-                          <option value="PIX">PIX</option>
-                          <option value="Dinheiro">Dinheiro</option>
-                          <option value="Cartão">Cartão</option>
-                          <option value="Transferência">Transferência</option>
-                        </select>
-                      </>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
-            <div className="modal__botoes modal__botoes--duplo">
-              <button
-                type="button"
-                className="btn btn--secondary"
-                onClick={() => setModalPagamento(null)}
-                disabled={salvandoPagamento}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                className="btn btn--primary"
-                onClick={() => void salvarPagamentoModal()}
-                disabled={
-                  salvandoPagamento ||
-                  (modalPagamento.tipo === "total" && !modalPagamento.metodoPagamento.trim())
-                }
-              >
-                {salvandoPagamento
-                  ? "Salvando..."
-                  : modalPagamento.tipo === "total"
-                    ? "Confirmar pagamento total"
-                    : "Registrar pagamento parcial"}
-              </button>
+                        </>
+                      )}
+                    </div>
+                  </section>
+                </div>
+
+                <aside className="modal-pagamento-registro__sidebar">
+                  <div className="registro-inadimplencia__resumo">
+                    <h3 className="registro-inadimplencia__resumo-titulo">Resumo do pagamento</h3>
+                    <dl className="registro-inadimplencia__resumo-lista">
+                      <div className="registro-inadimplencia__resumo-item">
+                        <dt>Cliente</dt>
+                        <dd>{modalPagamento.nomeCliente}</dd>
+                      </div>
+                      <div className="registro-inadimplencia__resumo-item">
+                        <dt>Período</dt>
+                        <dd>{formatarMesAno(i.vencimento)}</dd>
+                      </div>
+                      <div className="registro-inadimplencia__resumo-item">
+                        <dt>Vencimento</dt>
+                        <dd>{formatarData(i.vencimento)}</dd>
+                      </div>
+                      {descricaoPeriodo ? (
+                        <div className="registro-inadimplencia__resumo-item">
+                          <dt>Descrição</dt>
+                          <dd>{descricaoPeriodo}</dd>
+                        </div>
+                      ) : null}
+                      <div className="registro-inadimplencia__resumo-item">
+                        <dt>Valor original</dt>
+                        <dd>{formatarMoeda(valorOriginal)}</dd>
+                      </div>
+                      <div className="registro-inadimplencia__resumo-item">
+                        <dt>Juros</dt>
+                        <dd>{formatarMoeda(juros)}</dd>
+                      </div>
+                      <div className="registro-inadimplencia__resumo-item">
+                        <dt>Saldo devedor</dt>
+                        <dd>{formatarMoeda(saldo)}</dd>
+                      </div>
+                      {modalPagamento.tipo === "total" && desconto > 0 ? (
+                        <div className="registro-inadimplencia__resumo-item">
+                          <dt>Desconto</dt>
+                          <dd>−{formatarMoeda(desconto)}</dd>
+                        </div>
+                      ) : null}
+                      {saldoRestante != null ? (
+                        <div className="registro-inadimplencia__resumo-item">
+                          <dt>Saldo restante</dt>
+                          <dd>{formatarMoeda(saldoRestante)}</dd>
+                        </div>
+                      ) : null}
+                      <div className="registro-inadimplencia__resumo-item registro-inadimplencia__resumo-item--total">
+                        <dt>{modalPagamento.tipo === "total" ? "Total a receber" : "Valor deste pagamento"}</dt>
+                        <dd>{formatarMoeda(totalReceber)}</dd>
+                      </div>
+                    </dl>
+
+                    <div className="registro-inadimplencia__acoes">
+                      <button
+                        type="button"
+                        className="btn btn--primary registro-inadimplencia__btn-salvar"
+                        onClick={() => void salvarPagamentoModal()}
+                        disabled={
+                          salvandoPagamento ||
+                          (modalPagamento.tipo === "total" && !modalPagamento.metodoPagamento.trim()) ||
+                          (modalPagamento.tipo === "parcial" && valorParcial <= 0)
+                        }
+                      >
+                        {salvandoPagamento
+                          ? "Salvando..."
+                          : modalPagamento.tipo === "total"
+                            ? "Confirmar pagamento total"
+                            : "Registrar pagamento parcial"}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn--secondary registro-inadimplencia__btn-cancelar"
+                        onClick={() => setModalPagamento(null)}
+                        disabled={salvandoPagamento}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                </aside>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

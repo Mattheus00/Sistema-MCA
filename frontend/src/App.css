@@ -1479,8 +1479,8 @@ a.sidebar-brand:focus-visible {
 
 /* Modal de pagamento: alinhado ao topo (honorários / inadimplentes) */
 .modal-overlay:has(.modal--pagamento) {
-  align-items: flex-start;
-  padding-top: 20px;
+  align-items: center;
+  padding: 12px;
 }
 
 .modal-overlay:has(.modal--pagamento) > .modal {
@@ -1605,9 +1605,194 @@ a.sidebar-brand:focus-visible {
 }
 
 .modal--pagamento {
-  max-width: 640px;
+  max-width: 940px;
+  width: calc(100% - 28px);
+  border-radius: 14px;
+  padding: 22px 24px 20px;
+  max-height: min(100dvh - 28px, 100vh - 28px);
+  overflow: hidden;
+  box-sizing: border-box;
+  background: #f7f5f8;
+  border: 1px solid var(--glass-border, #e2e8f0);
+}
+
+.modal-pagamento-registro__header {
+  margin-bottom: 16px;
+}
+
+.modal-pagamento-registro__titulo {
+  margin: 0 0 4px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.modal-pagamento-registro__subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.modal-pagamento-registro__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 270px;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.modal-pagamento-registro__principal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.modal-pagamento-registro__sidebar {
+  position: static;
+  display: flex;
+  min-height: 0;
+}
+
+.modal-pagamento-registro__campos {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-pagamento-registro__campo {
+  min-width: 0;
+}
+
+.modal-pagamento-registro__linha-dois {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.modal-pagamento-registro__linha-tres {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 12px;
+}
+
+.modal-pagamento-registro .modal-pagamento__tipo-tabs {
+  margin: 0;
+}
+
+.modal-pagamento-registro .modal-pagamento__tipo-tab {
+  padding: 12px 14px;
+  gap: 10px;
+}
+
+.modal-pagamento-registro .modal-pagamento__tipo-icone {
+  width: 34px;
+  height: 34px;
+}
+
+.modal-pagamento-registro .modal-pagamento__tipo-texto strong {
+  font-size: 0.9375rem;
+}
+
+.modal-pagamento-registro .modal-pagamento__tipo-texto small {
+  font-size: 0.78125rem;
+}
+
+.modal-pagamento-registro .registro-inadimplencia__card {
+  padding: 16px 18px;
   border-radius: 12px;
-  padding: 24px 24px 22px;
+}
+
+.modal-pagamento-registro .registro-inadimplencia__card-head {
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.modal-pagamento-registro .registro-inadimplencia__card-desc {
+  display: none;
+}
+
+.modal-pagamento-registro .registro-inadimplencia__step {
+  width: 28px;
+  height: 28px;
+  font-size: 0.8125rem;
+}
+
+.modal-pagamento-registro .registro-inadimplencia__card-title {
+  font-size: 1rem;
+}
+
+.modal-pagamento-registro .registro-inadimplencia__label {
+  margin-bottom: 6px;
+  font-size: 0.8125rem;
+}
+
+.modal-pagamento-registro .registro-inadimplencia__input,
+.modal-pagamento-registro .registro-inadimplencia__select,
+.modal-pagamento-registro .registro-inadimplencia__textarea {
+  padding: 10px 12px;
+  font-size: 0.9375rem;
+  border-radius: 8px;
+}
+
+.modal-pagamento-registro .registro-inadimplencia__textarea {
+  min-height: 64px;
+  resize: none;
+}
+
+.modal-pagamento-registro .registro-inadimplencia__resumo {
+  margin: 0;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.modal-pagamento-registro .registro-inadimplencia__resumo-titulo {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.modal-pagamento-registro .registro-inadimplencia__resumo-lista {
+  margin-bottom: 12px;
+  flex: 1;
+}
+
+.modal-pagamento-registro .registro-inadimplencia__resumo-item {
+  padding: 8px 0;
+}
+
+.modal-pagamento-registro .registro-inadimplencia__resumo-item dt {
+  font-size: 0.8125rem;
+}
+
+.modal-pagamento-registro .registro-inadimplencia__resumo-item dd {
+  font-size: 0.875rem;
+}
+
+.modal-pagamento-registro .registro-inadimplencia__resumo-item--total {
+  padding-top: 12px;
+}
+
+.modal-pagamento-registro .registro-inadimplencia__resumo-item--total dd {
+  font-size: 1.125rem;
+}
+
+.modal-pagamento-registro .registro-inadimplencia__acoes {
+  gap: 8px;
+  margin-top: auto;
+}
+
+.modal-pagamento-registro .registro-inadimplencia__acoes .btn {
+  min-height: 42px;
+  font-size: 0.9375rem;
+}
+
+.modal-pagamento-registro .page-inadimplentes__contexto {
+  margin: 0 0 2px;
+  font-size: 0.75rem;
 }
 
 .modal__eyebrow {
@@ -1616,52 +1801,6 @@ a.sidebar-brand:focus-visible {
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0.06em;
-}
-
-.modal--pagamento .modal__titulo {
-  margin: 0 0 10px;
-  font-size: 2rem;
-  line-height: 1.15;
-}
-
-.modal--pagamento .modal__texto-confirmacao {
-  margin: 0 0 12px;
-  color: #334155;
-}
-
-.modal--pagamento .modal__grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.modal--pagamento .modal__linha-dois-campos {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px 16px;
-  grid-column: 1 / -1;
-  width: 100%;
-  margin-top: 4px;
-}
-
-.modal--pagamento .modal__campo-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.modal--pagamento .modal__campo-stack .modal__input,
-.modal--pagamento .modal__campo-stack .modal__select {
-  width: 100%;
-  box-sizing: border-box;
-}
-
-@media (max-width: 520px) {
-  .modal--pagamento .modal__linha-dois-campos {
-    grid-template-columns: 1fr;
-  }
 }
 
 .modal__resumo-item {
@@ -1678,23 +1817,6 @@ a.sidebar-brand:focus-visible {
   border-color: #d9ccff;
   color: #5b21b6;
   font-weight: 700;
-}
-
-.modal--pagamento .modal__label {
-  margin-top: 6px;
-  margin-bottom: 2px;
-  color: #0f172a;
-  font-size: 1rem;
-}
-
-.modal--pagamento .modal__input {
-  min-height: 50px;
-  font-size: 1.05rem;
-  border-radius: 10px;
-}
-
-.modal--pagamento textarea.modal__input {
-  min-height: 88px;
 }
 
 .modal-pagamento__tipo-tabs {
@@ -1855,6 +1977,55 @@ a.sidebar-brand:focus-visible {
 @media (max-width: 520px) {
   .modal-pagamento__tipo-tabs {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .modal--pagamento {
+    overflow-y: auto;
+  }
+
+  .modal-pagamento-registro__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-pagamento-registro__sidebar {
+    position: static;
+    order: -1;
+  }
+
+  .modal-pagamento-registro__linha-dois,
+  .modal-pagamento-registro__linha-tres {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .modal-pagamento-registro__titulo {
+    font-size: 1.2rem;
+  }
+
+  .modal--pagamento {
+    padding: 14px 12px;
+    width: calc(100% - 16px);
+  }
+}
+
+@media (max-height: 700px) {
+  .modal-pagamento-registro__subtitle {
+    display: none;
+  }
+
+  .modal-pagamento-registro .page-inadimplentes__contexto {
+    display: none;
+  }
+
+  .modal-pagamento-registro .modal-pagamento__tipo-texto small {
+    display: none;
+  }
+
+  .modal-pagamento-registro .registro-inadimplencia__textarea {
+    min-height: 48px;
   }
 }
 
@@ -4869,8 +5040,8 @@ select.modal__select {
   }
 
   .modal-overlay:has(.modal--pagamento) {
-    align-items: flex-start;
-    padding-top: max(20px, env(safe-area-inset-top));
+    align-items: center;
+    padding: max(8px, env(safe-area-inset-top)) 8px;
   }
 
   .modal {
@@ -4885,8 +5056,8 @@ select.modal__select {
     grid-template-columns: 1fr;
   }
 
-  .modal--pagamento .modal__titulo {
-    font-size: 1.55rem;
+  .modal-pagamento-registro__titulo {
+    font-size: 1.4rem;
   }
 
   .modal__titulo {
@@ -4974,8 +5145,8 @@ select.modal__select {
   }
 
   .modal-overlay:has(.modal--pagamento) {
-    align-items: flex-start;
-    padding-top: max(16px, env(safe-area-inset-top));
+    align-items: center;
+    padding-top: max(8px, env(safe-area-inset-top));
   }
 
   .modal {
