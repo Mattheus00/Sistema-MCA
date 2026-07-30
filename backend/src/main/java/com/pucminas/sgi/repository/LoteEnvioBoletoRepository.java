@@ -24,8 +24,8 @@ public interface LoteEnvioBoletoRepository extends JpaRepository<LoteEnvioBoleto
             AND (:clienteId IS NULL OR c.clienteId = :clienteId)
             AND (:dataInicio IS NULL OR l.criadoEm >= :dataInicio)
             AND (:dataFim IS NULL OR l.criadoEm <= :dataFim)
-            AND (:email IS NULL OR LOWER(i.emailDestinatario) LIKE LOWER(CONCAT('%', :email, '%')))
-            AND (:nomeArquivo IS NULL OR LOWER(i.nomeArquivoOriginal) LIKE LOWER(CONCAT('%', :nomeArquivo, '%')))
+            AND (:emailLike IS NULL OR LOWER(i.emailDestinatario) LIKE :emailLike)
+            AND (:nomeArquivoLike IS NULL OR LOWER(i.nomeArquivoOriginal) LIKE :nomeArquivoLike)
             """)
     Page<LoteEnvioBoleto> buscarHistorico(
             @Param("status") StatusLoteEnvioBoleto status,
@@ -33,7 +33,7 @@ public interface LoteEnvioBoletoRepository extends JpaRepository<LoteEnvioBoleto
             @Param("clienteId") UUID clienteId,
             @Param("dataInicio") LocalDateTime dataInicio,
             @Param("dataFim") LocalDateTime dataFim,
-            @Param("email") String email,
-            @Param("nomeArquivo") String nomeArquivo,
+            @Param("emailLike") String emailLike,
+            @Param("nomeArquivoLike") String nomeArquivoLike,
             Pageable pageable);
 }

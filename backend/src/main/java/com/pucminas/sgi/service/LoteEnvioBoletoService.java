@@ -176,7 +176,12 @@ public class LoteEnvioBoletoService {
         accessService.assertPodeGerenciarBoletos(usuarioId);
         LocalDateTime inicio = dataInicio != null ? dataInicio.atStartOfDay() : null;
         LocalDateTime fim = dataFim != null ? dataFim.atTime(LocalTime.MAX) : null;
-        return loteRepository.buscarHistorico(status, filtroUsuarioId, clienteId, inicio, fim, email, nomeArquivo, pageable)
+        String emailLike = (email != null && !email.isBlank()) ? "%" + email.trim().toLowerCase() + "%" : null;
+        String nomeArquivoLike = (nomeArquivo != null && !nomeArquivo.isBlank())
+                ? "%" + nomeArquivo.trim().toLowerCase() + "%"
+                : null;
+        return loteRepository.buscarHistorico(
+                        status, filtroUsuarioId, clienteId, inicio, fim, emailLike, nomeArquivoLike, pageable)
                 .map(mapper::toHistorico);
     }
 

@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
@@ -29,6 +30,12 @@ public class EmailGateway {
     private final EmailConfigRepository emailConfigRepository;
     private final JavaMailSender defaultMailSender;
     private JavaMailSenderImpl dynamicSender;
+
+    @Value("${spring.mail.username:}")
+    private String defaultMailUsername;
+
+    @Value("${cobranca.email.nome-escritorio:Contabilidade São Judas Tadeu}")
+    private String defaultNomeRemetente;
 
     @Autowired(required = false)
     public EmailGateway(EmailConfigRepository emailConfigRepository,
@@ -175,20 +182,27 @@ public class EmailGateway {
     private String obterRemetente() {
         return emailConfigRepository.findFirstByAtivoTrue()
                 .map(EmailConfig::getEmailRemetente)
-                .orElse(null);
+                .filter(email -> email != null && !email.isBlank())
+                .orElseGet(() -> defaultMailUsername != null && !defaultMailUsername.isBlank()
+                        ? defaultMailUsername
+                        : null);
     }
 
     private String obterNomeRemetente() {
         return emailConfigRepository.findFirstByAtivoTrue()
                 .map(EmailConfig::getNomeRemetente)
-                .orElse(null);
+                .filter(nome -> nome != null && !nome.isBlank())
+                .orElse(defaultNomeRemetente);
     }
 
     /**
-     * Verifica se há configuração SMTP ativa.
+     * Verifica se há configuração SMTP ativa e remetente definido.
      */
     public boolean hasConfigAtiva() {
         configurarSessao();
-        return dynamicSender != null || defaultMailSender != null;
+        String remetente = obterRemetente();
+        return (dynamicSender != null || defaultMailSender != null)
+                && remetente != null
+                && !remetente.isBlank();
     }
 }
