@@ -38,10 +38,10 @@ public interface ClienteRepository extends JpaRepository<Cliente, UUID> {
             (:filtrarStatus = false OR c.statusCliente = :status)
             AND (:excluirInativo = false OR c.statusCliente <> :inativo)
             AND (
-              :termo IS NULL OR
-              LOWER(c.nome) LIKE LOWER(CONCAT('%', :termo, '%')) OR
-              LOWER(c.codigo) LIKE LOWER(CONCAT('%', :termo, '%')) OR
-              (:digitos IS NOT NULL AND c.cpfCnpj LIKE CONCAT('%', :digitos, '%'))
+              :termoLike IS NULL OR
+              LOWER(c.nome) LIKE :termoLike OR
+              LOWER(c.codigo) LIKE :termoLike OR
+              (:digitosLike IS NOT NULL AND c.cpfCnpj LIKE :digitosLike)
             )
             """)
     Page<Cliente> buscar(
@@ -49,8 +49,8 @@ public interface ClienteRepository extends JpaRepository<Cliente, UUID> {
             @Param("filtrarStatus") boolean filtrarStatus,
             @Param("excluirInativo") boolean excluirInativo,
             @Param("inativo") StatusCliente inativo,
-            @Param("termo") String termo,
-            @Param("digitos") String digitos,
+            @Param("termoLike") String termoLike,
+            @Param("digitosLike") String digitosLike,
             Pageable pageable);
 
     List<Cliente> findTop10ByOrderBySaldoDevedorDesc();
