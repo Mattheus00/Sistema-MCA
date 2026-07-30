@@ -6,6 +6,8 @@ import com.pucminas.sgi.repository.EmailConfigRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import jakarta.mail.MessagingException;
+import jakarta.mail.internet.AddressException;
+import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +18,8 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 /**
@@ -85,7 +89,7 @@ public class EmailGateway {
         String remetente = obterRemetente();
         String nomeRemetente = obterNomeRemetente();
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(nomeRemetente != null ? nomeRemetente + " <" + remetente + ">" : remetente);
+        message.setFrom(formatarRemetente(remetente, nomeRemetente));
         message.setTo(destinatario);
         message.setSubject(assunto);
         message.setText(corpo);
@@ -115,9 +119,7 @@ public class EmailGateway {
         try {
             MimeMessage message = sender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, multipart, "UTF-8");
-            helper.setFrom(nomeRemetente != null && !nomeRemetente.isBlank()
-                    ? nomeRemetente + " <" + remetente + ">"
-                    : remetente);
+            helper.setFrom(criarEnderecoRemetente(remetente, nomeRemetente));
             helper.setTo(destinatario);
             helper.setSubject(assunto);
             helper.setText(textoPlano != null ? textoPlano : "", html != null ? html : "");
@@ -149,9 +151,7 @@ public class EmailGateway {
         try {
             MimeMessage message = sender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(nomeRemetente != null && !nomeRemetente.isBlank()
-                    ? nomeRemetente + " <" + remetente + ">"
-                    : remetente);
+            helper.setFrom(criarEnderecoRemetente(remetente, nomeRemetente));
             helper.setTo(destinatario);
             helper.setSubject(assunto);
             helper.setText(textoPlano != null ? textoPlano : "", html != null ? html : "");
@@ -193,6 +193,21 @@ public class EmailGateway {
                 .map(EmailConfig::getNomeRemetente)
                 .filter(nome -> nome != null && !nome.isBlank())
                 .orElse(defaultNomeRemetente);
+    }
+
+    private InternetAddress criarEnderecoRemetente(String remetente, String nomeRemetente) {
+        try {
+            if (nomeRemetente != null && !nomeRemetente.isBlank()) {
+                return new InternetAddress(remetente, nomeRemetente, StandardCharsets.UTF_8.name());
+            }
+            return new InternetAddress(remetente);
+        } catch (AddressException | UnsupportedEncodingException e) {
+            throw new EmailSendException("Falha ao codificar nome do remetente: " + e.getMessage(), e);
+        }
+    }
+
+    private String formatarRemetente(String remetente, String nomeRemetente) {
+        return criarEnderecoRemetente(remetente, nomeRemetente).toString();
     }
 
     /**
