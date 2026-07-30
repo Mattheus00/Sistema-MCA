@@ -498,28 +498,29 @@ export default function WebInadimplentes() {
 
       {modalAjustarJurosAberto && (
         <div className="modal-overlay" onClick={() => !loadingJurosGlobal && setModalAjustarJurosAberto(false)}>
-          <div className="modal modal--cadastro modal--pagamento" onClick={(e) => e.stopPropagation()}>
-            <p className="modal__eyebrow">AJUSTAR JUROS</p>
-            <h2 className="modal__titulo">Configuração global</h2>
-            <div className="modal__grid">
-              <label className="modal__label modal__label--full">Multa diária (% ao dia)</label>
-              <input
-                type="text"
-                className="modal__input modal__input--full"
-                value={jurosGlobal.multa}
-                onChange={(e) => setJurosGlobal((prev) => ({ ...prev, multa: e.target.value }))}
-                disabled={loadingJurosGlobal}
-              />
-              <label className="modal__label modal__label--full">Juros ao mês (%)</label>
-              <input
-                type="text"
-                className="modal__input modal__input--full"
-                value={jurosGlobal.juros}
-                onChange={(e) => setJurosGlobal((prev) => ({ ...prev, juros: e.target.value }))}
-                disabled={loadingJurosGlobal}
-              />
-            </div>
-            <div className="modal__botoes modal__botoes--duplo">
+          <div className="modal modal--juros-global" onClick={(e) => e.stopPropagation()}>
+            <aside className="modal-juros__aside">
+              <span className="modal-juros__aside-icon">⚙</span>
+              <h2>Ajustar juros</h2>
+              <p>Defina as taxas de juros aplicadas automaticamente nas inadimplências.</p>
+              <div className="modal-juros__aside-note">ⓘ Essas configurações serão aplicadas a todas as novas inadimplências.</div>
+            </aside>
+            <section className="modal-juros__content">
+              <button type="button" className="modal-juros__close" onClick={() => setModalAjustarJurosAberto(false)} disabled={loadingJurosGlobal} aria-label="Fechar">×</button>
+              <p className="modal__eyebrow">AJUSTAR JUROS</p>
+              <h2 className="modal__titulo">Configuração global</h2>
+              <p className="modal-juros__subtitle">Defina os parâmetros padrão de juros que serão aplicados ao sistema.</p>
+              <div className="modal-juros__field">
+                <span className="modal-juros__field-icon">%</span>
+                <div><label>Multa diária (% ao dia) ⓘ</label><p>Percentual aplicado sobre o valor da inadimplência por dia de atraso.</p><div className="modal-juros__input"><input type="text" value={jurosGlobal.multa} onChange={(e) => setJurosGlobal((prev) => ({ ...prev, multa: e.target.value }))} disabled={loadingJurosGlobal} /><span>% ao dia</span></div></div>
+              </div>
+              <div className="modal-juros__field">
+                <span className="modal-juros__field-icon">↗</span>
+                <div><label>Juros ao mês (%) ⓘ</label><p>Percentual de juros aplicado sobre o valor da inadimplência ao mês.</p><div className="modal-juros__input"><input type="text" value={jurosGlobal.juros} onChange={(e) => setJurosGlobal((prev) => ({ ...prev, juros: e.target.value }))} disabled={loadingJurosGlobal} /><span>% ao mês</span></div></div>
+              </div>
+              <div className="modal-juros__important"><strong>♢ &nbsp; Importante</strong><span>As alterações feitas aqui afetarão todos os cálculos de juros futuros do sistema.</span></div>
+            </section>
+            <div className="modal-juros__footer">
               <button
                 type="button"
                 className="btn btn--secondary"
@@ -528,7 +529,7 @@ export default function WebInadimplentes() {
               >
                 Desativar juros
               </button>
-              <button
+              <div className="modal-juros__footer-right"><button
                 type="button"
                 className="btn btn--secondary"
                 onClick={() => setModalAjustarJurosAberto(false)}
@@ -543,7 +544,7 @@ export default function WebInadimplentes() {
                 disabled={loadingJurosGlobal}
               >
                 {loadingJurosGlobal ? "Salvando..." : "Salvar juros"}
-              </button>
+              </button></div>
             </div>
           </div>
         </div>

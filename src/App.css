@@ -2041,6 +2041,64 @@ select.modal__select {
   font-size: 0.75rem;
   color: var(--text-muted);
 }
+
+/* Ajuste global de juros */
+.modal--juros-global {
+  width: min(92vw, 1120px);
+  max-width: none;
+  min-height: 620px;
+  padding: 52px 46px 106px 370px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+}
+.modal--juros-global::before {
+  content: "⚙\A\A Ajustar juros\A\A Defina as taxas de juros aplicadas automaticamente nas inadimplências.";
+  white-space: pre-line;
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 300px;
+  box-sizing: border-box;
+  padding: 135px 34px 36px;
+  border-right: 1px solid #e5e7eb;
+  color: #64748b;
+  font-size: 1rem;
+  line-height: 1.6;
+  background: #fff;
+}
+.modal--juros-global::after {
+  content: "Estas configurações serão aplicadas a todas as novas inadimplências.";
+  position: absolute;
+  left: 34px;
+  bottom: 126px;
+  width: 230px;
+  padding: 18px;
+  box-sizing: border-box;
+  border: 1px solid #e3e8ef;
+  border-radius: 12px;
+  background: #fafbfc;
+  color: #64748b;
+  font-size: .84rem;
+  line-height: 1.5;
+}
+.modal--juros-global .modal__eyebrow { color: #A43F9B; margin: 0 0 12px; }
+.modal--juros-global .modal__titulo { font-size: 2rem; margin-bottom: 12px; }
+.modal--juros-global .modal__titulo::after { content: "Defina os parâmetros padrão de juros que serão aplicados ao sistema."; display: block; margin-top: 12px; color: #64748b; font-size: 1rem; font-weight: 400; line-height: 1.5; }
+.modal--juros-global .modal__grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 38px; }
+.modal--juros-global .modal__label { font-size: 1.05rem; font-weight: 700; color: #0f172a; }
+.modal--juros-global .modal__input { height: 58px; border-radius: 10px; font-size: 1.05rem; border-color: #d7dde7; padding: 0 18px; }
+.modal--juros-global .modal__input:focus { border-color: #A43F9B; box-shadow: 0 0 0 2px rgba(164,63,155,.15); }
+.modal--juros-global .modal__botoes { position: absolute; left: 0; right: 0; bottom: 0; padding: 24px 42px; margin: 0; border-top: 1px solid #e5e7eb; background: #fff; display: flex; }
+.modal--juros-global .modal__botoes .btn:first-child { margin-right: auto; }
+.modal--juros-global .modal__botoes .btn--primary { background: #A43F9B; border-color: #A43F9B; }
+@media (max-width: 760px) { .modal--juros-global { padding: 32px 24px 150px; min-height: 0; }.modal--juros-global::before,.modal--juros-global::after { display:none; }.modal--juros-global .modal__botoes { padding:18px 24px; flex-wrap:wrap; } }
+
+.modal--juros-global { padding: 0; display: grid; grid-template-columns: 300px minmax(0, 1fr); min-height: 660px; }
+.modal--juros-global::before,.modal--juros-global::after { display: none; }
+.modal-juros__aside { padding: 138px 32px 30px; border-right: 1px solid #e5e7eb; }.modal-juros__aside-icon,.modal-juros__field-icon { display:grid; place-items:center; width:82px; height:82px; border-radius:18px; color:#A43F9B; background:#f7edf7; font-size:32px; font-weight:700; }.modal-juros__aside h2 { margin:28px 0 18px; color:#0f172a; }.modal-juros__aside p { color:#64748b; line-height:1.55; }.modal-juros__aside-note { margin-top:44px; padding:18px; border:1px solid #e3e8ef; border-radius:12px; color:#64748b; line-height:1.5; font-size:.84rem; }
+.modal-juros__content { padding:48px 44px 30px; position:relative; }.modal-juros__content .modal__titulo::after { display:none; }.modal-juros__subtitle { color:#64748b; margin:14px 0 38px; }.modal-juros__close { position:absolute; top:28px; right:30px; border:0; background:transparent; font-size:32px; color:#64748b; cursor:pointer; }.modal-juros__field { display:grid; grid-template-columns:82px minmax(0,1fr); gap:18px; margin:28px 0; }.modal-juros__field label { display:block; color:#0f172a; font-weight:700; font-size:1.05rem; }.modal-juros__field p { color:#64748b; margin:8px 0 16px; }.modal-juros__input { display:flex; overflow:hidden; border:1px solid #d7dde7; border-radius:10px; }.modal-juros__input input { flex:1; min-width:0; padding:15px 18px; border:0; outline:0; font-size:1rem; }.modal-juros__input span { padding:0 18px; display:grid; place-items:center; border-left:1px solid #d7dde7; color:#64748b; background:#fafbfc; }.modal-juros__input:focus-within { border-color:#A43F9B; box-shadow:0 0 0 2px rgba(164,63,155,.15); }.modal-juros__important { padding:18px 24px; border-radius:12px; display:flex; flex-direction:column; gap:7px; color:#64748b; background:#f7eff8; }.modal-juros__important strong { color:#A43F9B; }
+.modal-juros__footer { grid-column:1 / -1; padding:26px 42px; display:flex; justify-content:space-between; gap:16px; border-top:1px solid #e5e7eb; }.modal-juros__footer-right { display:flex; gap:16px; }.modal-juros__footer .btn--primary { background:#A43F9B; border-color:#A43F9B; }
+@media (max-width:760px) { .modal--juros-global { display:block; min-height:0; }.modal-juros__aside { display:none; }.modal-juros__content { padding:36px 24px; }.modal-juros__field { grid-template-columns:1fr; }.modal-juros__footer { padding:20px 24px; flex-direction:column; }.modal-juros__footer-right { justify-content:flex-end; } }
 .modal__mensalidades-header {
   display: flex;
   align-items: center;
