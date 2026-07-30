@@ -32,7 +32,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.time.temporal.ChronoUnit;
 import java.util.stream.Collectors;
@@ -99,24 +102,46 @@ public class RelatorioService {
 
     @Transactional(readOnly = true)
     public RankingDevedoresDTO gerarRankingMaioresDevedores(int limite) {
-        List<Cliente> top = clienteRepository.findTop10ByOrderBySaldoDevedorDesc();
-        if (limite > 0 && limite < top.size()) {
-            top = top.subList(0, limite);
+        int limiteEfetivo = limite > 0 ? limite : 10;
+        Map<UUID, Cliente> clientesPorId = new LinkedHashMap<>();
+        Map<UUID, BigDecimal> saldoPorClienteReais = new LinkedHashMap<>();
+
+        for (Divida divida : dividaRepository.findByStatusDividaIn(StatusDivida.emAberto())) {
+            if (divida.getValorDevedor() == null || divida.getValorDevedor().compareTo(BigDecimal.ZERO) <= 0) {
+                continue;
+            }
+            Cliente cliente = divida.getCliente();
+            if (cliente == null) {
+                continue;
+            }
+            BigDecimal valorReais = dividaService.getValorEJurosReais(divida)[0];
+            if (valorReais.compareTo(BigDecimal.ZERO) <= 0) {
+                continue;
+            }
+            UUID clienteId = cliente.getClienteId();
+            clientesPorId.putIfAbsent(clienteId, cliente);
+            saldoPorClienteReais.merge(clienteId, valorReais, BigDecimal::add);
         }
+
+        List<Map.Entry<UUID, BigDecimal>> ordenados = saldoPorClienteReais.entrySet().stream()
+                .sorted(Map.Entry.<UUID, BigDecimal>comparingByValue(Comparator.reverseOrder()))
+                .limit(limiteEfetivo)
+                .toList();
+
         List<RankingDevedoresDTO.ItemRankingDTO> itensRanking = new ArrayList<>();
         int pos = 1;
-        for (Cliente c : top) {
-            if (c.getSaldoDevedor().compareTo(BigDecimal.ZERO) <= 0) continue;
+        for (Map.Entry<UUID, BigDecimal> entry : ordenados) {
+            Cliente c = clientesPorId.get(entry.getKey());
             itensRanking.add(RankingDevedoresDTO.ItemRankingDTO.builder()
                     .clienteId(c.getClienteId())
                     .nomeCliente(c.getNome())
                     .cpfCnpj(c.getCpfCnpj())
-                    .saldoDevedor(MoneyUtil.centavosParaReais(c.getSaldoDevedor()))
+                    .saldoDevedor(entry.getValue())
                     .posicao(pos++)
                     .build());
         }
         return RankingDevedoresDTO.builder()
-                .limite(limite > 0 ? limite : 10)
+                .limite(limiteEfetivo)
                 .ranking(itensRanking)
                 .build();
     }

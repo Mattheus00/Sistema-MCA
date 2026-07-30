@@ -97,36 +97,63 @@ public class InadimplenciaService {
     public InadimplenciaResponseDTO confirmarPagamento(UUID dividaId, InadimplenciaStatusDTO body) {
         Divida d = dividaRepository.findById(dividaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Dívida", dividaId));
-        if (d.getValorDevedor().compareTo(java.math.BigDecimal.ZERO) <= 0) {
-            throw new BusinessRuleException("Dívida já está quitada.");
-        }
         if (body == null || body.getMetodoPagamento() == null || body.getMetodoPagamento().isBlank()) {
             throw new BusinessRuleException("Método de pagamento é obrigatório para confirmar.");
         }
+
+        // Mesmo saldo que a tela exibe: principal + multa/juros em tempo real (reais → centavos).
+        BigDecimal saldoLiveCentavos = reaisParaCentavos(dividaService.getValorEJurosReais(d)[0]);
+        if (saldoLiveCentavos.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessRuleException("Dívida já está quitada.");
+        }
+
         BigDecimal descontoCentavos = reaisParaCentavos(body.getDesconto() != null ? body.getDesconto() : BigDecimal.ZERO);
         if (descontoCentavos.compareTo(BigDecimal.ZERO) < 0) {
             throw new BusinessRuleException("Desconto não pode ser negativo.");
         }
-        if (descontoCentavos.compareTo(d.getValorDevedor()) > 0) {
+        if (descontoCentavos.compareTo(saldoLiveCentavos) > 0) {
             throw new BusinessRuleException("Desconto não pode ser maior que o saldo devedor.");
         }
-        BigDecimal valorPagoCentavos = d.getValorDevedor().subtract(descontoCentavos);
-        PagamentoDTO pag = PagamentoDTO.builder()
-                .dividaId(dividaId)
-                .valorPago(valorPagoCentavos)
-                .dataPagamento(body.getDataPagamento() != null ? body.getDataPagamento() : LocalDate.now())
-                .metodoPagamento(body.getMetodoPagamento())
-                .comprovante(body.getObservacao())
-                .build();
-        pagamentoService.registrarPagamento(pag);
-        // Com desconto aplicado, a dívida deve ser encerrada após registrar o pagamento.
+
+        // Sincroniza o saldo persistido com o valor da tela antes de registrar o pagamento,
+        // evitando "Valor pago > saldo" quando multa/juros ainda não estavam em valor_devedor.
+        d.setValorDevedor(saldoLiveCentavos);
+        dividaRepository.saveAndFlush(d);
+
+        BigDecimal valorPagoCentavos = saldoLiveCentavos.subtract(descontoCentavos);
+        LocalDate dataPagamento = body.getDataPagamento() != null ? body.getDataPagamento() : LocalDate.now();
+        String comprovante = montarComprovanteDesconto(body.getObservacao(), descontoCentavos);
+
+        if (valorPagoCentavos.compareTo(BigDecimal.ZERO) > 0) {
+            PagamentoDTO pag = PagamentoDTO.builder()
+                    .dividaId(dividaId)
+                    .valorPago(valorPagoCentavos)
+                    .dataPagamento(dataPagamento)
+                    .metodoPagamento(body.getMetodoPagamento())
+                    .comprovante(comprovante)
+                    .build();
+            pagamentoService.registrarPagamento(pag);
+        } else {
+            log.info("Quitação só com desconto (100%) na dívida {}", dividaId);
+        }
+
+        // Com desconto/pagamento aplicados, encerra a dívida.
         d = dividaRepository.findById(dividaId).orElseThrow();
         d.setValorDevedor(BigDecimal.ZERO);
         d.setStatusDivida(StatusDivida.QUITADA);
         dividaRepository.save(d);
         d = dividaRepository.findById(dividaId).orElseThrow();
-        log.info("Pagamento confirmado para dívida {}", dividaId);
+        log.info("Pagamento confirmado para dívida {} (desconto={} centavos)", dividaId, descontoCentavos);
         return toInadimplenciaDTO(d);
+    }
+
+    private static String montarComprovanteDesconto(String observacao, BigDecimal descontoCentavos) {
+        String obs = observacao != null ? observacao.trim() : "";
+        if (descontoCentavos == null || descontoCentavos.compareTo(BigDecimal.ZERO) <= 0) {
+            return obs.isEmpty() ? null : obs;
+        }
+        String descontoTxt = "Desconto: R$ " + MoneyUtil.centavosParaReais(descontoCentavos).toPlainString();
+        return obs.isEmpty() ? descontoTxt : obs + " | " + descontoTxt;
     }
 
     @Transactional(readOnly = true)

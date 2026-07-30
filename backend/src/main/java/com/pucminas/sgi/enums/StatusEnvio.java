@@ -6,5 +6,7 @@ package com.pucminas.sgi.enums;
 public enum StatusEnvio {
     PENDENTE,
     ENVIADO,
-    FALHOU
+    FALHOU,
+    /** Esgotou tentativas de reenvio; requer intervenção manual. */
+    ESGOTADO
 }

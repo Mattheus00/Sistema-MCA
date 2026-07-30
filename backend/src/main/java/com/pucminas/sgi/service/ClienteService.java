@@ -191,7 +191,6 @@ public class ClienteService {
         if (digitos != null && digitos.isEmpty()) {
             digitos = null;
         }
-        // Padrões montados no Java: CONCAT('%', :param, '%') no PostgreSQL pode bindar bytea e quebrar lower().
         String termoLike = termo != null ? "%" + termo.toLowerCase() + "%" : null;
         String digitosLike = digitos != null ? "%" + digitos + "%" : null;
         boolean filtrarStatus = status != null;

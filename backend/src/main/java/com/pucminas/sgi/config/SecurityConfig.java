@@ -30,19 +30,18 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> {})
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/auth/login",
-                                "/api/auth/register",
-                                "/api/auth/validar-login-recuperacao",
-                                "/api/auth/redefinir-senha"
-                        ).permitAll()
-                        .requestMatchers("/health").permitAll()
-                        .requestMatchers("/api/sicoob/webhook/**").permitAll()
-                        .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/api/**").authenticated()
-                        .anyRequest().authenticated()
-                )
+                .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers(
+                            "/api/auth/login",
+                            "/api/auth/register",
+                            "/api/auth/validar-login-recuperacao",
+                            "/api/auth/redefinir-senha"
+                    ).permitAll();
+                    auth.requestMatchers("/health").permitAll();
+                    auth.requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll();
+                    auth.requestMatchers("/api/**").authenticated();
+                    auth.anyRequest().authenticated();
+                })
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

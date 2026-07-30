@@ -3,12 +3,17 @@ backend/target/
 backend/src/main/resources/application-local.properties
 backend/data/*.db
 !backend/data/.gitkeep
+backend/data/boletos-temp/
+backend/data/.clientes-relatorio-hash
 
 Codigo/Backend/target/
 Codigo/Backend/data/*.db
 
-# Atalho local (junction) Backend -> backend — só para abrir no Cursor
+# Atalho local (junction) Backend -> backend — só para abrir no Cursor.
+# No Windows o FS é case-insensitive: /Backend/ ignorava backend/ inteiro; usar negação explícita.
 /Backend/
+!backend/
+!backend/**
 
 # Arquivos temporários
 Backend.zip

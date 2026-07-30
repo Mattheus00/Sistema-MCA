@@ -101,6 +101,34 @@ class RelatorioServiceTest {
     }
 
     @Test
+    @DisplayName("gerarRankingMaioresDevedores agrega dívidas em aberto por cliente")
+    void gerarRankingMaioresDevedores() {
+        Cliente cliente = Cliente.builder()
+                .clienteId(UUID.randomUUID())
+                .nome("Matheus")
+                .cpfCnpj("12345678901")
+                .saldoDevedor(BigDecimal.ZERO)
+                .build();
+        Divida divida = Divida.builder()
+                .dividaId(UUID.randomUUID())
+                .cliente(cliente)
+                .valorDevedor(new BigDecimal("500000"))
+                .valorOriginal(new BigDecimal("500000"))
+                .vencimento(LocalDate.now())
+                .statusDivida(StatusDivida.EM_ABERTO)
+                .protocolo("DIV-RANK")
+                .build();
+        when(dividaRepository.findByStatusDividaIn(StatusDivida.emAberto())).thenReturn(List.of(divida));
+        when(dividaService.getValorEJurosReais(divida)).thenReturn(new BigDecimal[]{new BigDecimal("5000.00"), BigDecimal.ZERO});
+
+        var ranking = relatorioService.gerarRankingMaioresDevedores(10);
+
+        assertEquals(1, ranking.getRanking().size());
+        assertEquals("Matheus", ranking.getRanking().get(0).getNomeCliente());
+        assertEquals(0, new BigDecimal("5000.00").compareTo(ranking.getRanking().get(0).getSaldoDevedor()));
+    }
+
+    @Test
     @DisplayName("exportarRelatorioPDF retorna recurso não vazio")
     void exportarPdf() throws Exception {
         Resource resource = relatorioService.exportarRelatorioPDF(

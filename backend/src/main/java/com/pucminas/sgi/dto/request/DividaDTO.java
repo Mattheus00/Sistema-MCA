@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import com.pucminas.sgi.enums.TipoCobranca;
 
 /**
  * DTO de entrada para registro de dívida.
@@ -33,6 +34,17 @@ public class DividaDTO {
 
     @Size(max = 500)
     private String descricao;
+
+    private TipoCobranca tipoCobranca;
+
+    /** Competência no formato yyyy-MM. Opcional para cobranças manuais. */
+    private String competencia;
+
+    private Boolean geradaAutomaticamente;
+
+    private String origemCobranca;
+
+    private Integer anoTaxaBalanco;
 
     /**
      * Serviços prestados com valor por item (para exibir no e-mail de cobrança).

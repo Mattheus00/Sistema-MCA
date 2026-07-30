@@ -1,6 +1,7 @@
 package com.pucminas.sgi.dto.response;
 
 import com.pucminas.sgi.enums.StatusDivida;
+import com.pucminas.sgi.enums.TipoCobranca;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,6 +31,11 @@ public class DividaResponseDTO {
     private BigDecimal juros;
     private LocalDate vencimento;
     private String descricao;
+    private TipoCobranca tipoCobranca;
+    private String competencia;
+    private Boolean geradaAutomaticamente;
+    private String origemCobranca;
+    private Integer anoTaxaBalanco;
     private StatusDivida statusDivida;
     private String protocolo;
     private LocalDateTime criadoEm;

@@ -104,4 +104,21 @@ public class SchedulerService {
         if (!schedulerEnabled) return;
         dividaService.atualizarValorComMultaJuros();
     }
+
+    /**
+     * Reprocessa e-mails de cobrança que falharam e já passaram da próxima tentativa.
+     */
+    @Scheduled(cron = "${scheduler.email-retry.cron:0 */15 * * * ?}")
+    @Transactional
+    public void reprocessarEmailsComFalha() {
+        if (!schedulerEnabled) return;
+        try {
+            int enviados = notificationService.reprocessarFalhas();
+            if (enviados > 0) {
+                log.info("Retry de e-mails: {} reenviados com sucesso.", enviados);
+            }
+        } catch (Exception e) {
+            log.error("Erro no job de retry de e-mails: {}", e.getMessage());
+        }
+    }
 }
