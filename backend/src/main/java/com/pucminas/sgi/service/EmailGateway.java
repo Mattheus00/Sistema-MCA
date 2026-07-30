@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
@@ -120,6 +121,45 @@ public class EmailGateway {
             throw new EmailSendException("Falha ao enviar email: " + e.getMessage(), e);
         } catch (Exception e) {
             log.error("Falha ao enviar email para {}: {}", destinatario, e.getMessage());
+            throw new EmailSendException("Falha ao enviar email: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Envia e-mail com texto, HTML opcional e anexo PDF.
+     */
+    public void enviarComAnexoPdf(String destinatario, String assunto, String textoPlano, String html,
+                                  byte[] pdfBytes, String nomeAnexo) {
+        JavaMailSender sender = obterSender();
+        if (sender == null) {
+            throw new EmailSendException("Nenhuma configuração SMTP ativa disponível para envio.");
+        }
+        String remetente = obterRemetente();
+        if (remetente == null || remetente.isBlank()) {
+            throw new EmailSendException("Email remetente não configurado.");
+        }
+        String nomeRemetente = obterNomeRemetente();
+        try {
+            MimeMessage message = sender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(nomeRemetente != null && !nomeRemetente.isBlank()
+                    ? nomeRemetente + " <" + remetente + ">"
+                    : remetente);
+            helper.setTo(destinatario);
+            helper.setSubject(assunto);
+            helper.setText(textoPlano != null ? textoPlano : "", html != null ? html : "");
+            String anexo = (nomeAnexo != null && !nomeAnexo.isBlank()) ? nomeAnexo : "boleto.pdf";
+            if (!anexo.toLowerCase().endsWith(".pdf")) {
+                anexo = anexo + ".pdf";
+            }
+            helper.addAttachment(anexo, new ByteArrayResource(pdfBytes), "application/pdf");
+            sender.send(message);
+            log.info("Email com anexo PDF enviado para {} - assunto: {}", destinatario, assunto);
+        } catch (MessagingException e) {
+            log.error("Falha ao montar/enviar email com anexo para {}: {}", destinatario, e.getMessage());
+            throw new EmailSendException("Falha ao enviar email: " + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("Falha ao enviar email com anexo para {}: {}", destinatario, e.getMessage());
             throw new EmailSendException("Falha ao enviar email: " + e.getMessage(), e);
         }
     }

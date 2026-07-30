@@ -3,6 +3,7 @@ package com.pucminas.sgi.exception;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -70,6 +71,13 @@ public class GlobalExceptionHandler {
             message = "ID inválido para inadimplência. Use o UUID da dívida (campo id da listagem).";
         }
         return buildResponse(HttpStatus.BAD_REQUEST, "Bad Request", message, request.getRequestURI());
+    }
+
+    @ExceptionHandler(CannotAcquireLockException.class)
+    public ResponseEntity<ErrorResponse> handleDatabaseLock(CannotAcquireLockException ex, HttpServletRequest request) {
+        log.warn("Banco ocupado em {}: {}", request.getRequestURI(), ex.getMessage());
+        return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, "Service Unavailable",
+                "O banco de dados está ocupado. Aguarde alguns segundos e tente novamente.", request.getRequestURI());
     }
 
     @ExceptionHandler(Exception.class)

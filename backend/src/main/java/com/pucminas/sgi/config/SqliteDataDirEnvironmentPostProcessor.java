@@ -26,6 +26,10 @@ public class SqliteDataDirEnvironmentPostProcessor implements EnvironmentPostPro
             return;
         }
         String filePath = url.substring(SQLITE_PREFIX.length());
+        int queryIndex = filePath.indexOf('?');
+        if (queryIndex >= 0) {
+            filePath = filePath.substring(0, queryIndex);
+        }
         Path parent = Paths.get(filePath).toAbsolutePath().normalize().getParent();
         if (parent == null) {
             return;
