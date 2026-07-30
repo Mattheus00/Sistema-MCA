@@ -68,7 +68,8 @@ public class EnvioBoletoMetodoIdentificacaoMigration {
                 .replace("CREATE TABLE \"envio_boleto\" ", "CREATE TABLE envio_boleto_new ")
                 .replace(OLD_CHECK, NEW_CHECK);
 
-        List<String> columns = jdbc.queryForList("PRAGMA table_info(envio_boleto)", (rs, rowNum) -> rs.getString("name"));
+        List<String> columns = jdbc.query("PRAGMA table_info(envio_boleto)",
+                (rs, rowNum) -> rs.getString("name"));
         String colList = String.join(", ", columns);
 
         jdbc.execute(createNew);

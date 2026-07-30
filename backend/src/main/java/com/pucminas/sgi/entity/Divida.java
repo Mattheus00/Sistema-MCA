@@ -16,9 +16,7 @@ import java.util.UUID;
  * Entidade que representa uma dívida de um cliente.
  */
 @Entity
-@Table(name = "divida", uniqueConstraints = {
-    @UniqueConstraint(name = "uk_divida_cliente_tipo_competencia", columnNames = {"cliente_id", "tipo_cobranca", "competencia"})
-}, indexes = {
+@Table(name = "divida", indexes = {
     @Index(name = "idx_divida_cliente", columnList = "clienteId"),
     @Index(name = "idx_divida_vencimento", columnList = "vencimento"),
     @Index(name = "idx_divida_status", columnList = "statusDivida"),

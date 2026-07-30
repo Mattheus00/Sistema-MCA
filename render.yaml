@@ -1,5 +1,11 @@
-# Blueprint Render — monorepo (backend em backend/)
+# Blueprint Render — PostgreSQL + disco para arquivos de boletos
 # Frontend na Vercel: VITE_API_URL=https://<sgi-backend>.onrender.com
+
+databases:
+  - name: sgi-postgres
+    databaseName: sgi
+    user: sgi
+    plan: basic-256mb
 
 services:
   - type: web
@@ -17,8 +23,10 @@ services:
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
-      - key: SPRING_DATASOURCE_URL
-        value: jdbc:sqlite:/var/data/sgi.db
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sgi-postgres
+          property: connectionString
       - key: SGI_BOLETOS_STORAGE_PATH
         value: /var/data/boletos-temp
       - key: JWT_SECRET
