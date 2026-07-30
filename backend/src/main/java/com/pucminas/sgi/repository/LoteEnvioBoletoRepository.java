@@ -19,21 +19,28 @@ public interface LoteEnvioBoletoRepository extends JpaRepository<LoteEnvioBoleto
             SELECT DISTINCT l FROM LoteEnvioBoleto l
             LEFT JOIN l.itens i
             LEFT JOIN i.cliente c
-            WHERE (:status IS NULL OR l.status = :status)
-            AND (:usuarioId IS NULL OR l.usuarioResponsavel.usuarioId = :usuarioId)
-            AND (:clienteId IS NULL OR c.clienteId = :clienteId)
-            AND (:dataInicio IS NULL OR l.criadoEm >= :dataInicio)
-            AND (:dataFim IS NULL OR l.criadoEm <= :dataFim)
-            AND (:emailLike IS NULL OR LOWER(i.emailDestinatario) LIKE :emailLike)
-            AND (:nomeArquivoLike IS NULL OR LOWER(i.nomeArquivoOriginal) LIKE :nomeArquivoLike)
+            WHERE (:filtrarStatus = false OR l.status = :status)
+            AND (:filtrarUsuario = false OR l.usuarioResponsavel.usuarioId = :usuarioId)
+            AND (:filtrarCliente = false OR c.clienteId = :clienteId)
+            AND (:filtrarDataInicio = false OR l.criadoEm >= :dataInicio)
+            AND (:filtrarDataFim = false OR l.criadoEm <= :dataFim)
+            AND (:filtrarEmail = false OR LOWER(i.emailDestinatario) LIKE :emailLike)
+            AND (:filtrarNomeArquivo = false OR LOWER(i.nomeArquivoOriginal) LIKE :nomeArquivoLike)
             """)
     Page<LoteEnvioBoleto> buscarHistorico(
             @Param("status") StatusLoteEnvioBoleto status,
+            @Param("filtrarStatus") boolean filtrarStatus,
             @Param("usuarioId") UUID usuarioId,
+            @Param("filtrarUsuario") boolean filtrarUsuario,
             @Param("clienteId") UUID clienteId,
+            @Param("filtrarCliente") boolean filtrarCliente,
             @Param("dataInicio") LocalDateTime dataInicio,
+            @Param("filtrarDataInicio") boolean filtrarDataInicio,
             @Param("dataFim") LocalDateTime dataFim,
+            @Param("filtrarDataFim") boolean filtrarDataFim,
             @Param("emailLike") String emailLike,
+            @Param("filtrarEmail") boolean filtrarEmail,
             @Param("nomeArquivoLike") String nomeArquivoLike,
+            @Param("filtrarNomeArquivo") boolean filtrarNomeArquivo,
             Pageable pageable);
 }
