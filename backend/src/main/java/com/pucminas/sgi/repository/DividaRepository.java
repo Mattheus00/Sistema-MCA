@@ -2,6 +2,7 @@ package com.pucminas.sgi.repository;
 
 import com.pucminas.sgi.entity.Divida;
 import com.pucminas.sgi.enums.StatusDivida;
+import com.pucminas.sgi.enums.TipoCobranca;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -36,6 +37,8 @@ public interface DividaRepository extends JpaRepository<Divida, UUID> {
     Page<Divida> findByCliente_ClienteId(UUID clienteId, Pageable pageable);
 
     Optional<Divida> findByProtocolo(String protocolo);
+
+    boolean existsByCliente_ClienteIdAndTipoCobrancaAndCompetencia(UUID clienteId, TipoCobranca tipoCobranca, String competencia);
 
     @Query("SELECT d FROM Divida d JOIN FETCH d.cliente WHERE d.dividaId = :id")
     Optional<Divida> findByIdWithCliente(@Param("id") UUID id);

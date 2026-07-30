@@ -11,6 +11,7 @@ import com.pucminas.sgi.entity.DividaServico;
 import com.pucminas.sgi.entity.Pagamento;
 import com.pucminas.sgi.entity.Servico;
 import com.pucminas.sgi.enums.StatusDivida;
+import com.pucminas.sgi.enums.TipoCobranca;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
 import com.pucminas.sgi.repository.ClienteRepository;
 import com.pucminas.sgi.repository.DividaRepository;
@@ -73,6 +74,11 @@ public class DividaService {
                 .valorDevedor(dto.getValorOriginal())
                 .vencimento(vencimento)
                 .descricao(dto.getDescricao())
+                .tipoCobranca(dto.getTipoCobranca() != null ? dto.getTipoCobranca() : TipoCobranca.COBRANCA_MANUAL)
+                .competencia(dto.getCompetencia())
+                .geradaAutomaticamente(Boolean.TRUE.equals(dto.getGeradaAutomaticamente()))
+                .origemCobranca(dto.getOrigemCobranca())
+                .anoTaxaBalanco(dto.getAnoTaxaBalanco())
                 .statusDivida(LocalDate.now().isAfter(vencimento) ? StatusDivida.VENCIDA : StatusDivida.EM_ABERTO)
                 .protocolo(protocolo)
                 .criadoEm(LocalDateTime.now())
@@ -232,6 +238,11 @@ public class DividaService {
                 .juros(juros)
                 .vencimento(d.getVencimento())
                 .descricao(d.getDescricao())
+                .tipoCobranca(d.getTipoCobranca())
+                .competencia(d.getCompetencia())
+                .geradaAutomaticamente(d.getGeradaAutomaticamente())
+                .origemCobranca(d.getOrigemCobranca())
+                .anoTaxaBalanco(d.getAnoTaxaBalanco())
                 .statusDivida(d.getStatusDivida())
                 .protocolo(d.getProtocolo())
                 .criadoEm(d.getCriadoEm())

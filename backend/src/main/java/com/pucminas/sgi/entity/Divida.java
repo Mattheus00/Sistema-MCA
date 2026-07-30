@@ -1,6 +1,7 @@
 package com.pucminas.sgi.entity;
 
 import com.pucminas.sgi.enums.StatusDivida;
+import com.pucminas.sgi.enums.TipoCobranca;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -15,11 +16,14 @@ import java.util.UUID;
  * Entidade que representa uma dívida de um cliente.
  */
 @Entity
-@Table(name = "divida", indexes = {
+@Table(name = "divida", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_divida_cliente_tipo_competencia", columnNames = {"cliente_id", "tipo_cobranca", "competencia"})
+}, indexes = {
     @Index(name = "idx_divida_cliente", columnList = "clienteId"),
     @Index(name = "idx_divida_vencimento", columnList = "vencimento"),
     @Index(name = "idx_divida_status", columnList = "statusDivida"),
-    @Index(name = "idx_divida_protocolo", columnList = "protocolo", unique = true)
+    @Index(name = "idx_divida_protocolo", columnList = "protocolo", unique = true),
+    @Index(name = "idx_divida_tipo_competencia", columnList = "tipo_cobranca,competencia")
 })
 @Getter
 @Setter
@@ -52,6 +56,23 @@ public class Divida {
     private LocalDate vencimento;
 
     private String descricao;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_cobranca")
+    private TipoCobranca tipoCobranca;
+
+    /** Competência no formato yyyy-MM. */
+    @Column(length = 7)
+    private String competencia;
+
+    @Column
+    @Builder.Default
+    private Boolean geradaAutomaticamente = false;
+
+    @Column(length = 50)
+    private String origemCobranca;
+
+    private Integer anoTaxaBalanco;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -25,6 +25,8 @@ public interface ClienteRepository extends JpaRepository<Cliente, UUID> {
 
     Page<Cliente> findByStatusCliente(StatusCliente status, Pageable pageable);
 
+    List<Cliente> findByStatusCliente(StatusCliente status);
+
     Page<Cliente> findByNomeContainingIgnoreCase(String nome, Pageable pageable);
 
     Page<Cliente> findByNomeContainingIgnoreCaseAndStatusCliente(String nome, StatusCliente status, Pageable pageable);
