@@ -10,6 +10,7 @@ import WebServicos from '@/components/pages/WebServicos'
 import WebReformaTributaria from '@/components/pages/WebReformaTributaria'
 import WebCadastroUsuario from '@/components/pages/WebCadastroUsuario'
 import WebUsuarios from '@/components/pages/WebUsuarios'
+import WebEnvioBoletos from '@/components/pages/WebEnvioBoletos'
 import Login from '@/components/pages/Login'
 import LandingPage from '@/components/pages/LandingPage'
 import './App.css'
@@ -28,6 +29,9 @@ function App() {
           <Route path="/servicos" element={<WebServicos />} />
           <Route path="/relatorios" element={<WebRelatorios />} />
           <Route path="/reforma-tributaria" element={<WebReformaTributaria />} />
+          <Route element={<ProtectedRoute allowedProfiles={["PROPRIETARIA", "RESPONSAVEL_FINANCEIRO"]} />}>
+            <Route path="/envio-boletos" element={<WebEnvioBoletos />} />
+          </Route>
           <Route path="/usuarios/cadastro" element={<WebCadastroUsuario />} />
           <Route element={<ProtectedRoute onlyProprietaria />}>
             <Route path="/usuarios" element={<WebUsuarios />} />

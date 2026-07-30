@@ -258,6 +258,40 @@ export type LoginResponse = {
 
 export type PerfilUsuario = "PROPRIETARIA" | "RESPONSAVEL_FINANCEIRO";
 
+export type StatusItemEnvioBoleto =
+  | "PENDENTE_ANALISE" | "AGUARDANDO_CORRECAO" | "PRONTO_PARA_ENVIO"
+  | "ENVIANDO" | "ENVIADO" | "ERRO" | "IGNORADO" | "CANCELADO";
+
+export type MetodoIdentificacaoBoleto = "CPF_CNPJ" | "NOME_EXATO" | "NOME_APROXIMADO" | "MANUAL" | "NAO_IDENTIFICADO";
+export type ConfiancaIdentificacaoBoleto = "ALTA" | "MEDIA" | "BAIXA" | "NAO_IDENTIFICADO";
+
+export type ItemEnvioBoleto = {
+  envioBoletoId: string;
+  clienteId?: string | null;
+  clienteNome?: string | null;
+  documentoMascarado?: string | null;
+  nomeArquivoOriginal: string;
+  emailDestinatario?: string | null;
+  metodoIdentificacao: MetodoIdentificacaoBoleto;
+  confiancaIdentificacao: ConfiancaIdentificacaoBoleto;
+  status: StatusItemEnvioBoleto;
+  bloqueios?: string[];
+  mensagemErro?: string | null;
+};
+
+export type LoteEnvioBoletos = {
+  loteId: string;
+  status: string;
+  quantidadeTotal: number;
+  quantidadeIdentificada: number;
+  quantidadePendente: number;
+  quantidadeEnviada: number;
+  quantidadeComErro: number;
+  itens: ItemEnvioBoleto[];
+};
+
+export type CriarLoteEnvioBoletosResponse = { loteId: string; lote: LoteEnvioBoletos };
+
 export type UsuarioPendente = {
   usuarioId: string;
   login: string;

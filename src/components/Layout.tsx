@@ -71,6 +71,15 @@ function CalculatorIcon() {
   )
 }
 
+function EmailIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3 7 9 6 9-6" />
+    </svg>
+  )
+}
+
 function UserIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -88,6 +97,7 @@ export default function Layout() {
   const userProfile = typeof localStorage !== 'undefined' ? localStorage.getItem(USER_PROFILE_KEY) : null
   const [sidebarHidden, setSidebarHidden] = useState(false)
   const isProprietaria = userProfile === 'PROPRIETARIA'
+  const podeVerEnvioBoletos = isProprietaria || userProfile === 'RESPONSAVEL_FINANCEIRO'
   const navItems = [
     { to: '/dashboard', label: 'Dashboard', icon: GridIcon },
     { to: '/clientes', label: 'Clientes', icon: PeopleIcon },
@@ -95,6 +105,7 @@ export default function Layout() {
     { to: '/servicos', label: 'Serviços', icon: ServicesIcon },
     { to: '/reforma-tributaria', label: 'Simulador', icon: CalculatorIcon },
     { to: '/relatorios', label: 'Relatórios', icon: ChartIcon },
+    ...(podeVerEnvioBoletos ? [{ to: '/envio-boletos', label: 'Envio de boletos', icon: EmailIcon }] : []),
     ...(isProprietaria ? [{ to: '/usuarios', label: 'Usuários', icon: UserIcon }] : []),
   ]
 
