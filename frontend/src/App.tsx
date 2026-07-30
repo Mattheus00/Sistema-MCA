@@ -9,6 +9,7 @@ import WebInadimplentesHonorarios from '@/components/pages/WebInadimplentesHonor
 import WebRelatorios from '@/components/pages/WebRelatorios'
 import WebServicos from '@/components/pages/WebServicos'
 import WebReformaTributaria from '@/components/pages/WebReformaTributaria'
+import WebEnvioBoletos from '@/components/pages/WebEnvioBoletos'
 import WebCadastroUsuario from '@/components/pages/WebCadastroUsuario'
 import WebUsuarios from '@/components/pages/WebUsuarios'
 import Login from '@/components/pages/Login'
@@ -29,6 +30,7 @@ function App() {
           <Route path="/inadimplentes/:clienteId/honorarios" element={<WebInadimplentesHonorarios />} />
           <Route path="/servicos" element={<WebServicos />} />
           <Route path="/relatorios" element={<WebRelatorios />} />
+          <Route path="/envio-boletos" element={<WebEnvioBoletos />} />
           <Route path="/reforma-tributaria" element={<WebReformaTributaria />} />
           <Route path="/usuarios/cadastro" element={<WebCadastroUsuario />} />
           <Route element={<ProtectedRoute onlyProprietaria />}>

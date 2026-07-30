@@ -15,7 +15,14 @@ import type {
   CobrancaSicoob,
   SicoobStatus,
   PagamentoInadimplencia,
+  LoteEnvioBoleto,
+  ItemEnvioBoleto,
+  LoteEnvioBoletoResumo,
 } from "@/types/api";
+
+function idItemEnvioBoleto(item: ItemEnvioBoleto): string {
+  return item.envioBoletoId || item.itemId;
+}
 
 const store = {
   clientes: [] as Cliente[],
@@ -46,7 +53,110 @@ const store = {
       senha: "123456",
     },
   ],
+  lotesEnvioBoletos: [] as LoteEnvioBoleto[],
 };
+
+let nextLoteId = 1;
+let nextItemId = 1;
+
+function buildResumoLote(itens: ItemEnvioBoleto[]) {
+  const pronto = (i: ItemEnvioBoleto) => {
+    const s = String(i.status).toUpperCase();
+    return s === "PRONTO_PARA_ENVIO" || s === "PRONTO" || s === "BAIXA";
+  };
+  return {
+    semEmail: itens.filter((i) => i.clienteNome?.trim() && !i.emailDestinatario?.trim()).length,
+    prontosParaEnvio: itens.filter((i) => pronto(i) && !!i.emailDestinatario?.trim()).length,
+    ignorados: itens.filter((i) => i.status === "IGNORADO").length,
+    enviados: itens.filter((i) => i.status === "ENVIADO").length,
+    erros: itens.filter((i) => i.status === "ERRO").length,
+    duplicados: itens.filter((i) => i.status === "DUPLICADO").length,
+    bloqueados: itens.filter((i) => i.bloqueado || i.status === "BLOQUEADO").length,
+  };
+}
+
+function validarLoteMock(lote: LoteEnvioBoleto) {
+  const bloqueios = (lote.itens ?? [])
+    .filter((i) => {
+      const s = String(i.status).toUpperCase();
+      if (s === "PRONTO_PARA_ENVIO" || s === "ENVIADO" || s === "IGNORADO") return false;
+      if (!i.emailDestinatario?.trim() && s === "AGUARDANDO_CORRECAO") return true;
+      return i.bloqueado || s === "BLOQUEADO" || s === "AGUARDANDO_CORRECAO" || s === "NAO_IDENTIFICADO" || s === "PENDENTE";
+    })
+    .map((i) => ({
+      itemId: idItemEnvioBoleto(i),
+      motivo: !i.emailDestinatario?.trim() && String(i.status).toUpperCase() === "AGUARDANDO_CORRECAO"
+        ? "Sem e-mail"
+        : i.motivoBloqueio ?? "Item bloqueado",
+    }));
+  const prontos = (lote.itens ?? []).filter((i) => String(i.status).toUpperCase() === "PRONTO_PARA_ENVIO");
+  return {
+    podeEnviar: prontos.length > 0,
+    bloqueios,
+  };
+}
+
+function loteToResumo(lote: LoteEnvioBoleto): LoteEnvioBoletoResumo {
+  const resumo = lote.resumo ?? buildResumoLote(lote.itens ?? []);
+  return {
+    loteId: lote.loteId,
+    status: lote.status,
+    criadoEm: lote.criadoEm,
+    enviadoEm: lote.enviadoEm,
+    criadoPor: lote.criadoPor,
+    totalItens: lote.quantidadeTotal ?? (lote.itens ?? []).length,
+    enviados: resumo.enviados,
+    erros: resumo.erros,
+  };
+}
+
+function analisarArquivoMock(nomeArquivoOriginal: string, idx: number): ItemEnvioBoleto {
+  const cliente = store.clientes[idx % Math.max(store.clientes.length, 1)];
+  const semEmail = nomeArquivoOriginal.toLowerCase().includes("sem-email");
+  const duplicado = nomeArquivoOriginal.toLowerCase().includes("duplicado");
+  const bloqueado = nomeArquivoOriginal.toLowerCase().includes("bloqueado");
+  const generico = nomeArquivoOriginal.toLowerCase() === "boleto.pdf";
+  const envioBoletoId = `item-mock-${nextItemId++}`;
+  let status: ItemEnvioBoleto["status"] = "PRONTO_PARA_ENVIO";
+  let metodoIdentificacao: ItemEnvioBoleto["metodoIdentificacao"] = "NOME_EXATO";
+  let confiancaIdentificacao: ItemEnvioBoleto["confiancaIdentificacao"] = "ALTA";
+
+  if (generico || bloqueado) {
+    status = "NAO_IDENTIFICADO";
+    metodoIdentificacao = "NAO_IDENTIFICADO";
+    confiancaIdentificacao = "BAIXA";
+  } else if (duplicado) {
+    status = "DUPLICADO";
+    confiancaIdentificacao = "MEDIA";
+  } else if (!cliente) {
+    status = "NAO_IDENTIFICADO";
+    metodoIdentificacao = "NAO_IDENTIFICADO";
+    confiancaIdentificacao = "BAIXA";
+  } else if (semEmail) {
+    status = "AGUARDANDO_CORRECAO";
+  }
+
+  const matchCodigo = nomeArquivoOriginal.match(/^(\d+)\s/);
+  if (matchCodigo) metodoIdentificacao = "CODIGO_CLIENTE";
+
+  return {
+    envioBoletoId,
+    itemId: envioBoletoId,
+    nomeArquivoOriginal,
+    tamanhoBytes: 120_000 + idx * 1000,
+    clienteId: generico || bloqueado ? undefined : cliente?.id,
+    clienteNome: generico || bloqueado ? undefined : cliente?.nome,
+    documentoMascarado: cliente?.cpf ? `***.***.${cliente.cpf.slice(-6)}` : undefined,
+    emailDestinatario: semEmail || generico || bloqueado ? "" : cliente?.email,
+    metodoIdentificacao,
+    confiancaIdentificacao,
+    status,
+    bloqueado: bloqueado || semEmail,
+    motivoBloqueio: bloqueado ? "Cliente não encontrado no cadastro" : semEmail ? "Cliente sem e-mail" : undefined,
+    simulado: true,
+  };
+}
+
 
 let nextId = 1;
 
@@ -175,9 +285,16 @@ function protocolo(id: string | number, vencimento: string): string {
   return `DIV-${d}-${String(id).padStart(4, "0")}`;
 }
 
+function readAuthItem(key: string): string | null {
+  if (typeof sessionStorage !== "undefined") {
+    const sessionValue = sessionStorage.getItem(key);
+    if (sessionValue) return sessionValue;
+  }
+  return typeof localStorage !== "undefined" ? localStorage.getItem(key) : null;
+}
+
 function getCurrentUserByToken() {
-  if (typeof localStorage === "undefined") return null;
-  const token = localStorage.getItem("sgi_token");
+  const token = readAuthItem("sgi_token");
   if (!token) return null;
   const userId = token.replace("mock-token-", "");
   return store.usuarios.find((u) => u.usuarioId === userId) ?? null;
@@ -599,6 +716,55 @@ export function createMockClient() {
         return Promise.resolve({ data: cob } as { data: T });
       }
 
+      if (url.startsWith("/api/lotes-envio-boletos")) {
+        const matchArquivo = url.match(/^\/api\/lotes-envio-boletos\/([\w-]+)\/itens\/([\w-]+)\/arquivo$/);
+        if (matchArquivo) {
+          const [, loteId, itemId] = matchArquivo;
+          const lote = store.lotesEnvioBoletos.find((l) => l.loteId === loteId);
+          const item = lote?.itens?.find((i) => idItemEnvioBoleto(i) === itemId);
+          const nome = item?.nomeArquivoOriginal ?? "boleto.pdf";
+          const blob = new Blob([`PDF mock: ${nome}`], { type: "application/pdf" });
+          return Promise.resolve({ data: blob } as { data: T });
+        }
+        const matchCsv = url.match(/^\/api\/lotes-envio-boletos\/([\w-]+)\/relatorio\.csv$/);
+        if (matchCsv) {
+          const loteId = matchCsv[1];
+          const lote = store.lotesEnvioBoletos.find((l) => l.loteId === loteId);
+          const linhas = ["cliente,email,arquivo,status,erro,simulado"];
+          for (const item of lote?.itens ?? []) {
+            linhas.push(
+              `"${item.clienteNome ?? ""}","${item.emailDestinatario ?? ""}","${item.nomeArquivoOriginal}","${item.status}","${item.erro ?? ""}","${item.simulado ? "sim" : "nao"}"`
+            );
+          }
+          const blob = new Blob([linhas.join("\n")], { type: "text/csv;charset=utf-8" });
+          return Promise.resolve({ data: blob } as { data: T });
+        }
+        const matchLote = url.match(/^\/api\/lotes-envio-boletos\/([\w-]+)$/);
+        if (matchLote) {
+          const lote = store.lotesEnvioBoletos.find((l) => l.loteId === matchLote[1]);
+          if (!lote) return Promise.reject(new Error("Lote não encontrado."));
+          return Promise.resolve({ data: lote } as { data: T });
+        }
+        const urlObj = new URL(url, "http://mock.local");
+        const page = Number(urlObj.searchParams.get("page") ?? config?.params?.page ?? 0);
+        const size = Number(urlObj.searchParams.get("size") ?? config?.params?.size ?? 10);
+        const statusFiltro = String(urlObj.searchParams.get("status") ?? config?.params?.status ?? "");
+        let lista = [...store.lotesEnvioBoletos].map(loteToResumo);
+        if (statusFiltro) lista = lista.filter((l) => String(l.status).toUpperCase() === statusFiltro.toUpperCase());
+        lista.sort((a, b) => String(b.criadoEm ?? "").localeCompare(String(a.criadoEm ?? "")));
+        const inicio = page * size;
+        const content = lista.slice(inicio, inicio + size);
+        return Promise.resolve({
+          data: {
+            content,
+            totalElements: lista.length,
+            totalPages: Math.max(1, Math.ceil(lista.length / size)),
+            number: page,
+            size,
+          },
+        } as { data: T });
+      }
+
       return Promise.reject(new Error(`Mock: rota não encontrada: ${url}`));
     },
 
@@ -668,6 +834,92 @@ export function createMockClient() {
         };
         store.inadimplentes.push(novo);
         return Promise.resolve({ data: novo } as { data: T });
+      }
+
+      if (url === "/api/lotes-envio-boletos") {
+        const arquivos: File[] = [];
+        if (body instanceof FormData) {
+          for (const entry of body.getAll("arquivos")) {
+            if (entry instanceof File) arquivos.push(entry);
+          }
+        }
+        if (arquivos.length === 0) return Promise.reject(new Error("Nenhum arquivo PDF enviado."));
+        const itens = arquivos.map((f, idx) => analisarArquivoMock(f.name, idx));
+        const loteId = `lote-mock-${nextLoteId++}`;
+        const lote: LoteEnvioBoleto = {
+          loteId,
+          status: "CONFERENCIA",
+          criadoEm: new Date().toISOString(),
+          criadoPor: getCurrentUserByToken()?.nome ?? "Usuário mock",
+          quantidadeTotal: itens.length,
+          quantidadeIdentificada: itens.filter((i) => i.clienteNome?.trim()).length,
+          quantidadePendente: itens.filter((i) => {
+            const s = String(i.status).toUpperCase();
+            return s === "AGUARDANDO_CORRECAO" || s === "NAO_IDENTIFICADO" || s === "PENDENTE";
+          }).length,
+          itens,
+          resumo: buildResumoLote(itens),
+          validacao: undefined,
+        };
+        lote.validacao = validarLoteMock(lote);
+        store.lotesEnvioBoletos.unshift(lote);
+        return Promise.resolve({ data: lote, status: 201 } as { data: T; status: number });
+      }
+
+      const matchValidarLote = url.match(/^\/api\/lotes-envio-boletos\/([\w-]+)\/validar$/);
+      if (matchValidarLote) {
+        const lote = store.lotesEnvioBoletos.find((l) => l.loteId === matchValidarLote[1]);
+        if (!lote) return Promise.reject(new Error("Lote não encontrado."));
+        const validacao = validarLoteMock(lote);
+        lote.validacao = validacao;
+        lote.resumo = buildResumoLote(lote.itens ?? []);
+        return Promise.resolve({
+          data: { ...lote, podeEnviar: validacao.podeEnviar, bloqueios: validacao.bloqueios },
+        } as { data: T });
+      }
+
+      const matchEnviarLote = url.match(/^\/api\/lotes-envio-boletos\/([\w-]+)\/enviar$/);
+      if (matchEnviarLote) {
+        const lote = store.lotesEnvioBoletos.find((l) => l.loteId === matchEnviarLote[1]);
+        if (!lote) return Promise.reject(new Error("Lote não encontrado."));
+        const payload = (body ?? {}) as { permitirReenvioDuplicado?: boolean; itemIds?: string[] };
+        const ids = Array.isArray(payload.itemIds) && payload.itemIds.length > 0
+          ? new Set(payload.itemIds)
+          : new Set(
+              (lote.itens ?? [])
+                .filter((i) => String(i.status).toUpperCase() === "PRONTO_PARA_ENVIO")
+                .map((i) => idItemEnvioBoleto(i))
+            );
+        if (ids.size === 0) {
+          return Promise.reject(new Error("Nenhum item pronto para envio"));
+        }
+        for (const item of lote.itens ?? []) {
+          if (!ids.has(idItemEnvioBoleto(item))) continue;
+          if (String(item.status).toUpperCase() !== "PRONTO_PARA_ENVIO") continue;
+          if (item.status === "DUPLICADO" && !payload.permitirReenvioDuplicado) {
+            item.status = "ERRO";
+            item.erro = "Boleto duplicado";
+            continue;
+          }
+          if (!item.emailDestinatario?.trim() || item.bloqueado) {
+            item.status = "ERRO";
+            item.erro = item.motivoBloqueio ?? "Item bloqueado";
+            continue;
+          }
+          if (item.nomeArquivoOriginal.toLowerCase().includes("erro")) {
+            item.status = "ERRO";
+            item.erro = "Falha simulada no envio";
+          } else {
+            item.status = "ENVIADO";
+            item.erro = undefined;
+          }
+          item.simulado = true;
+        }
+        lote.status = "CONCLUIDO";
+        lote.enviadoEm = new Date().toISOString();
+        lote.resumo = buildResumoLote(lote.itens ?? []);
+        lote.validacao = validarLoteMock(lote);
+        return Promise.resolve({ data: lote } as { data: T });
       }
 
       if (url === "/api/pagamentos") {
@@ -782,12 +1034,54 @@ export function createMockClient() {
     },
 
     patch<T = unknown>(url: string, body: unknown) {
+      const matchItemCliente = url.match(/^\/api\/lotes-envio-boletos\/([\w-]+)\/itens\/([\w-]+)\/cliente$/);
+      if (matchItemCliente) {
+        const [, loteId, itemId] = matchItemCliente;
+        const lote = store.lotesEnvioBoletos.find((l) => l.loteId === loteId);
+        const item = lote?.itens?.find((i) => idItemEnvioBoleto(i) === itemId);
+        if (!lote || !item) return Promise.reject(new Error("Item não encontrado."));
+        const payload = (body ?? {}) as { clienteId?: string };
+        const cliente = store.clientes.find((c) => c.id === payload.clienteId);
+        if (!cliente) return Promise.reject(new Error("Cliente não encontrado."));
+        item.clienteId = cliente.id;
+        item.clienteNome = cliente.nome;
+        item.documentoMascarado = cliente.cpf ? `***.***.${cliente.cpf.slice(-6)}` : undefined;
+        item.emailDestinatario = cliente.email;
+        item.metodoIdentificacao = "MANUAL";
+        item.confiancaIdentificacao = "ALTA";
+        item.status = cliente.email?.trim() ? "PRONTO_PARA_ENVIO" : "AGUARDANDO_CORRECAO";
+        item.bloqueado = !cliente.email?.trim();
+        item.motivoBloqueio = item.bloqueado ? "Cliente sem e-mail" : undefined;
+        item.motivoBloqueio = item.bloqueado ? "Cliente sem e-mail" : undefined;
+        lote.resumo = buildResumoLote(lote.itens ?? []);
+        lote.validacao = validarLoteMock(lote);
+        return Promise.resolve({ data: item } as { data: T });
+      }
+      const matchItemAcao = url.match(/^\/api\/lotes-envio-boletos\/([\w-]+)\/itens\/([\w-]+)\/(confirmar|ignorar|reativar)$/);
+      if (matchItemAcao) {
+        const [, loteId, itemId, acao] = matchItemAcao;
+        const lote = store.lotesEnvioBoletos.find((l) => l.loteId === loteId);
+        const item = lote?.itens?.find((i) => idItemEnvioBoleto(i) === itemId);
+        if (!lote || !item) return Promise.reject(new Error("Item não encontrado."));
+        if (acao === "confirmar") {
+          item.status = "PRONTO_PARA_ENVIO";
+          item.bloqueado = false;
+        } else if (acao === "ignorar") {
+          item.status = "IGNORADO";
+        } else {
+          item.status = item.emailDestinatario?.trim() ? "PRONTO_PARA_ENVIO" : "AGUARDANDO_CORRECAO";
+          item.bloqueado = !item.emailDestinatario?.trim();
+        }
+        lote.resumo = buildResumoLote(lote.itens ?? []);
+        lote.validacao = validarLoteMock(lote);
+        return Promise.resolve({ data: item } as { data: T });
+      }
+
       const matchAprovarUsuario = url.match(/^\/api\/usuarios\/([\w-]+)\/aprovar$/);
       if (matchAprovarUsuario) {
         const usuarioId = matchAprovarUsuario[1];
         const userAtual = getCurrentUserByToken();
-        const perfilStorage =
-          typeof localStorage !== "undefined" ? (localStorage.getItem("sgi_user_profile") as PerfilUsuario | null) : null;
+        const perfilStorage = readAuthItem("sgi_user_profile") as PerfilUsuario | null;
         const perfilAtual = userAtual?.perfil ?? perfilStorage;
         if (perfilAtual !== "PROPRIETARIA") {
           return Promise.reject(new Error("Apenas a proprietária pode aprovar cadastros."));
@@ -804,8 +1098,7 @@ export function createMockClient() {
       if (matchRevogar) {
         const usuarioId = matchRevogar[1];
         const userAtual = getCurrentUserByToken();
-        const perfilStorage =
-          typeof localStorage !== "undefined" ? (localStorage.getItem("sgi_user_profile") as PerfilUsuario | null) : null;
+        const perfilStorage = readAuthItem("sgi_user_profile") as PerfilUsuario | null;
         const perfilAtual = userAtual?.perfil ?? perfilStorage;
         if (perfilAtual !== "PROPRIETARIA") {
           return Promise.reject(new Error("Apenas a proprietária pode revogar acessos."));

@@ -345,6 +345,116 @@ export type CobrancaSicoob = {
   pagoEm?: string | null;
 };
 
+/** Status de um item no lote de envio de boletos (espelha o backend) */
+export type StatusItemEnvioBoleto =
+  | "AGUARDANDO_CORRECAO"
+  | "PRONTO_PARA_ENVIO"
+  | "ENVIADO"
+  | "IGNORADO"
+  | "ERRO"
+  | "NAO_IDENTIFICADO"
+  /** Legado / mock */
+  | "PENDENTE"
+  | "PRONTO"
+  | "BLOQUEADO"
+  | "BAIXA"
+  | "DUPLICADO";
+
+export type ConfiancaIdentificacaoBoleto = "ALTA" | "MEDIA" | "BAIXA";
+
+/** @deprecated use ConfiancaIdentificacaoBoleto */
+export type ConfiancaItemEnvioBoleto = ConfiancaIdentificacaoBoleto;
+
+export type MetodoIdentificacaoBoleto =
+  | "CODIGO_CLIENTE"
+  | "CPF_CNPJ"
+  | "NOME_EXATO"
+  | "NOME_APROXIMADO"
+  | "MANUAL"
+  | "NAO_IDENTIFICADO"
+  | string;
+
+export type StatusLoteEnvioBoleto =
+  | "RECEBIDO"
+  | "ANALISANDO"
+  | "CONFERENCIA"
+  | "ENVIANDO"
+  | "CONCLUIDO"
+  | "CANCELADO"
+  | string;
+
+/** Espelha ItemEnvioBoletoResponse do backend */
+export type ItemEnvioBoleto = {
+  /** UUID do item na API — usar para seleção e envio */
+  envioBoletoId: string;
+  /** @deprecated Preferir envioBoletoId; mantido para compatibilidade */
+  itemId: string;
+  nomeArquivoOriginal: string;
+  tamanhoBytes?: number;
+  clienteId?: string;
+  clienteNome?: string;
+  documentoMascarado?: string;
+  emailDestinatario?: string;
+  metodoIdentificacao?: MetodoIdentificacaoBoleto;
+  confiancaIdentificacao?: ConfiancaIdentificacaoBoleto;
+  status: StatusItemEnvioBoleto;
+  bloqueado?: boolean;
+  motivoBloqueio?: string;
+  erro?: string;
+  simulado?: boolean;
+};
+
+export type ResumoLoteEnvioBoleto = {
+  semEmail?: number;
+  prontosParaEnvio?: number;
+  ignorados?: number;
+  enviados?: number;
+  erros?: number;
+  duplicados?: number;
+  bloqueados?: number;
+  aguardandoCorrecao?: number;
+  naoIdentificados?: number;
+};
+
+export type ValidacaoLoteEnvioBoleto = {
+  podeEnviar: boolean;
+  bloqueios: Array<{ itemId: string; motivo: string }>;
+};
+
+/** Espelha LoteEnvioBoletoResponse do backend */
+export type LoteEnvioBoleto = {
+  loteId: string;
+  status: StatusLoteEnvioBoleto;
+  criadoEm?: string;
+  enviadoEm?: string;
+  criadoPor?: string;
+  quantidadeTotal?: number;
+  quantidadeIdentificada?: number;
+  quantidadePendente?: number;
+  resumo?: ResumoLoteEnvioBoleto;
+  itens?: ItemEnvioBoleto[];
+  validacao?: ValidacaoLoteEnvioBoleto;
+};
+
+export type LoteEnvioBoletoResumo = {
+  loteId: string;
+  status: StatusLoteEnvioBoleto;
+  criadoEm?: string;
+  enviadoEm?: string;
+  criadoPor?: string;
+  totalItens?: number;
+  enviados?: number;
+  erros?: number;
+};
+
+export type PaginaLotesEnvioBoleto = {
+  content: LoteEnvioBoletoResumo[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+};
+
 /** Formato de erro da API (ajuste conforme o backend) */
 export type ApiErrorBody = {
   message?: string;

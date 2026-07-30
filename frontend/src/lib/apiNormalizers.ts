@@ -14,6 +14,14 @@ import type {
   InadimplenciaPeriodoRelatorio,
   ResumoFinanceiro,
   ResumoRelatorio,
+  ItemEnvioBoleto,
+  LoteEnvioBoleto,
+  LoteEnvioBoletoResumo,
+  PaginaLotesEnvioBoleto,
+  ResumoLoteEnvioBoleto,
+  ValidacaoLoteEnvioBoleto,
+  ConfiancaIdentificacaoBoleto,
+  StatusItemEnvioBoleto,
 } from "@/types/api";
 
 /** Prefixo gravado em `comprovante` para persistir quem confirmou. */
@@ -148,6 +156,30 @@ export function normalizePagamentoInadimplenciaFromApi(raw: Record<string, unkno
   };
 }
 
+function normalizeStatusInadimplenciaFromApi(raw: unknown): Inadimplencia["status"] {
+  const s = String(raw ?? "EmAberto")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "_");
+  if (s === "PAGO" || s === "QUITADA" || s === "QUITADO") return "Pago";
+  if (s === "PARCIAL") return "PARCIAL";
+  if (s === "ACORDO") return "Acordo";
+  return "EmAberto";
+}
+
+function normalizeVencimentoFromApi(raw: Record<string, unknown>): string {
+  const candidatos = [raw.vencimento, raw.dataVencimento, raw.dataVencimentoOriginal, raw.mesReferencia];
+  for (const candidato of candidatos) {
+    if (candidato == null) continue;
+    const texto = String(candidato).trim();
+    if (!texto) continue;
+    if (/^\d{4}-\d{2}/.test(texto)) return texto;
+    const br = texto.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+  }
+  return "";
+}
+
 export function normalizeInadimplenciaFromApi(raw: Record<string, unknown>): Inadimplencia {
   const valor = Number(raw.valor ?? raw.valorDevedor ?? 0);
   const valorOriginal = raw.valorOriginal != null ? Number(raw.valorOriginal) : undefined;
@@ -180,11 +212,21 @@ export function normalizeInadimplenciaFromApi(raw: Record<string, unknown>): Ina
     detalhesJuros: raw.detalhesJuros != null ? String(raw.detalhesJuros) : undefined,
     multaDiaPercent: multaDiaPercent != null ? Number(multaDiaPercent) : undefined,
     jurosMesPercent: jurosMesPercent != null ? Number(jurosMesPercent) : undefined,
-    vencimento: String(raw.vencimento ?? ""),
+    vencimento: normalizeVencimentoFromApi(raw),
     descricao: raw.descricao != null ? String(raw.descricao) : undefined,
-    status: (raw.status as Inadimplencia["status"]) ?? "EmAberto",
-    createdAt: raw.createdAt != null ? String(raw.createdAt) : undefined,
-    updatedAt: raw.updatedAt != null ? String(raw.updatedAt) : undefined,
+    status: normalizeStatusInadimplenciaFromApi(raw.status),
+    createdAt:
+      raw.createdAt != null
+        ? String(raw.createdAt)
+        : raw.criadoEm != null
+          ? String(raw.criadoEm)
+          : undefined,
+    updatedAt:
+      raw.updatedAt != null
+        ? String(raw.updatedAt)
+        : raw.atualizadoEm != null
+          ? String(raw.atualizadoEm)
+          : undefined,
     pagamentos,
   };
 }
@@ -350,5 +392,182 @@ export function normalizePagamentosRecebidosFromApi(data: unknown): PagamentosRe
         }))
       : [],
     detalhamento,
+  };
+}
+
+function normalizeConfianca(raw: unknown): ConfiancaIdentificacaoBoleto | undefined {
+  const v = String(raw ?? "").toUpperCase();
+  if (v === "ALTA" || v === "MEDIA" || v === "BAIXA") return v;
+  return undefined;
+}
+
+function normalizeStatusItem(raw: unknown): StatusItemEnvioBoleto {
+  const v = String(raw ?? "PENDENTE").toUpperCase();
+  const conhecidos: StatusItemEnvioBoleto[] = [
+    "AGUARDANDO_CORRECAO",
+    "PRONTO_PARA_ENVIO",
+    "ENVIADO",
+    "IGNORADO",
+    "ERRO",
+    "NAO_IDENTIFICADO",
+    "PENDENTE",
+    "PRONTO",
+    "BLOQUEADO",
+    "BAIXA",
+    "DUPLICADO",
+  ];
+  if (conhecidos.includes(v as StatusItemEnvioBoleto)) return v as StatusItemEnvioBoleto;
+  return "PENDENTE";
+}
+
+export function normalizeItemEnvioBoletoFromApi(raw: Record<string, unknown>): ItemEnvioBoleto {
+  const envioBoletoId = String(raw.envioBoletoId ?? raw.itemId ?? raw.id ?? "");
+  return {
+    envioBoletoId,
+    itemId: envioBoletoId,
+    nomeArquivoOriginal: String(raw.nomeArquivoOriginal ?? raw.nomeArquivo ?? raw.arquivo ?? ""),
+    tamanhoBytes: raw.tamanhoBytes != null ? Number(raw.tamanhoBytes) : raw.tamanho != null ? Number(raw.tamanho) : undefined,
+    clienteId: raw.clienteId != null ? String(raw.clienteId) : undefined,
+    clienteNome: raw.clienteNome != null ? String(raw.clienteNome) : raw.nomeCliente != null ? String(raw.nomeCliente) : undefined,
+    documentoMascarado:
+      raw.documentoMascarado != null
+        ? String(raw.documentoMascarado)
+        : raw.cpfCnpj != null
+          ? String(raw.cpfCnpj)
+          : raw.cpf != null
+            ? String(raw.cpf)
+            : undefined,
+    emailDestinatario:
+      raw.emailDestinatario != null ? String(raw.emailDestinatario) : raw.email != null ? String(raw.email) : undefined,
+    metodoIdentificacao: raw.metodoIdentificacao != null ? String(raw.metodoIdentificacao) : raw.metodo != null ? String(raw.metodo) : undefined,
+    confiancaIdentificacao: normalizeConfianca(raw.confiancaIdentificacao ?? raw.confianca ?? raw.nivelConfianca),
+    status: normalizeStatusItem(raw.status),
+    bloqueado: raw.bloqueado === true || String(raw.bloqueado ?? "").toLowerCase() === "true",
+    motivoBloqueio: raw.motivoBloqueio != null ? String(raw.motivoBloqueio) : raw.motivo != null ? String(raw.motivo) : undefined,
+    erro: raw.erro != null ? String(raw.erro) : raw.mensagemErro != null ? String(raw.mensagemErro) : undefined,
+    simulado: raw.simulado === true || String(raw.simulado ?? "").toLowerCase() === "true",
+  };
+}
+
+function buildResumoFromItens(itens: ItemEnvioBoleto[]): ResumoLoteEnvioBoleto {
+  const statusApi = (i: ItemEnvioBoleto) => String(i.status ?? "").toUpperCase();
+  return {
+    semEmail: itens.filter((i) => !i.emailDestinatario?.trim() && statusApi(i) === "AGUARDANDO_CORRECAO").length,
+    prontosParaEnvio: itens.filter((i) => statusApi(i) === "PRONTO_PARA_ENVIO").length,
+    ignorados: itens.filter((i) => String(i.status).toUpperCase() === "IGNORADO").length,
+    enviados: itens.filter((i) => String(i.status).toUpperCase() === "ENVIADO").length,
+    erros: itens.filter((i) => String(i.status).toUpperCase() === "ERRO").length,
+    duplicados: itens.filter((i) => String(i.status).toUpperCase() === "DUPLICADO").length,
+    bloqueados: itens.filter((i) => i.bloqueado || String(i.status).toUpperCase() === "BLOQUEADO").length,
+    aguardandoCorrecao: itens.filter((i) => String(i.status).toUpperCase() === "AGUARDANDO_CORRECAO").length,
+    naoIdentificados: itens.filter(
+      (i) =>
+        String(i.status).toUpperCase() === "NAO_IDENTIFICADO" ||
+        String(i.metodoIdentificacao ?? "").toUpperCase() === "NAO_IDENTIFICADO" ||
+        !i.clienteNome?.trim()
+    ).length,
+  };
+}
+
+function normalizeResumoLoteFromApi(raw: Record<string, unknown> | undefined, itens: ItemEnvioBoleto[]): ResumoLoteEnvioBoleto {
+  if (!raw) return buildResumoFromItens(itens);
+  return {
+    semEmail: Number(raw.semEmail ?? 0),
+    prontosParaEnvio: Number(raw.prontosParaEnvio ?? raw.prontos ?? 0),
+    ignorados: Number(raw.ignorados ?? 0),
+    enviados: Number(raw.enviados ?? 0),
+    erros: Number(raw.erros ?? 0),
+    duplicados: Number(raw.duplicados ?? 0),
+    bloqueados: Number(raw.bloqueados ?? 0),
+    aguardandoCorrecao: Number(raw.aguardandoCorrecao ?? 0),
+    naoIdentificados: Number(raw.naoIdentificados ?? 0),
+  };
+}
+
+export function normalizeValidacaoLoteFromApi(raw: Record<string, unknown> | undefined): ValidacaoLoteEnvioBoleto | undefined {
+  if (!raw) return undefined;
+
+  const validacaoAninhada =
+    raw.validacao && typeof raw.validacao === "object" ? (raw.validacao as Record<string, unknown>) : undefined;
+
+  const bloqueiosRaw = Array.isArray(raw.bloqueios)
+    ? (raw.bloqueios as Record<string, unknown>[])
+    : validacaoAninhada && Array.isArray(validacaoAninhada.bloqueios)
+      ? (validacaoAninhada.bloqueios as Record<string, unknown>[])
+      : [];
+
+  const podeEnviarRaw = raw.podeEnviar ?? validacaoAninhada?.podeEnviar;
+
+  if (podeEnviarRaw === undefined && bloqueiosRaw.length === 0) return undefined;
+
+  return {
+    podeEnviar: podeEnviarRaw === true || String(podeEnviarRaw ?? "").toLowerCase() === "true",
+    bloqueios: bloqueiosRaw.map((b) => ({
+      itemId: String(b.itemId ?? b.envioBoletoId ?? b.id ?? ""),
+      motivo: String(b.motivo ?? b.mensagem ?? ""),
+    })),
+  };
+}
+
+export function normalizeLoteEnvioBoletoFromApi(raw: Record<string, unknown>): LoteEnvioBoleto {
+  const itensRaw = Array.isArray(raw.itens) ? (raw.itens as Record<string, unknown>[]) : [];
+  const itens = itensRaw.map(normalizeItemEnvioBoletoFromApi);
+  const resumoRaw = raw.resumo && typeof raw.resumo === "object" ? (raw.resumo as Record<string, unknown>) : undefined;
+  return {
+    loteId: String(raw.loteId ?? raw.id ?? ""),
+    status: String(raw.status ?? "CONFERENCIA"),
+    criadoEm: raw.criadoEm != null ? String(raw.criadoEm) : raw.createdAt != null ? String(raw.createdAt) : undefined,
+    enviadoEm: raw.enviadoEm != null ? String(raw.enviadoEm) : undefined,
+    criadoPor: raw.criadoPor != null ? String(raw.criadoPor) : undefined,
+    quantidadeTotal: raw.quantidadeTotal != null ? Number(raw.quantidadeTotal) : raw.totalItens != null ? Number(raw.totalItens) : itens.length,
+    quantidadeIdentificada:
+      raw.quantidadeIdentificada != null
+        ? Number(raw.quantidadeIdentificada)
+        : itens.filter((i) => i.clienteNome?.trim()).length,
+    quantidadePendente:
+      raw.quantidadePendente != null
+        ? Number(raw.quantidadePendente)
+        : itens.filter((i) => {
+            const s = String(i.status).toUpperCase();
+            return s === "AGUARDANDO_CORRECAO" || s === "PENDENTE" || s === "NAO_IDENTIFICADO";
+          }).length,
+    resumo: normalizeResumoLoteFromApi(resumoRaw, itens),
+    itens,
+    validacao: normalizeValidacaoLoteFromApi(raw),
+  };
+}
+
+export function normalizeLoteResumoFromApi(raw: Record<string, unknown>): LoteEnvioBoletoResumo {
+  return {
+    loteId: String(raw.loteId ?? raw.id ?? ""),
+    status: String(raw.status ?? ""),
+    criadoEm: raw.criadoEm != null ? String(raw.criadoEm) : undefined,
+    enviadoEm: raw.enviadoEm != null ? String(raw.enviadoEm) : undefined,
+    criadoPor: raw.criadoPor != null ? String(raw.criadoPor) : undefined,
+    totalItens: raw.totalItens != null ? Number(raw.totalItens) : undefined,
+    enviados: raw.enviados != null ? Number(raw.enviados) : undefined,
+    erros: raw.erros != null ? Number(raw.erros) : undefined,
+  };
+}
+
+export function normalizePaginaLotesEnvioFromApi(data: unknown): PaginaLotesEnvioBoleto {
+  if (data && typeof data === "object" && "content" in data) {
+    const body = data as Record<string, unknown>;
+    const content = Array.isArray(body.content) ? (body.content as Record<string, unknown>[]).map(normalizeLoteResumoFromApi) : [];
+    return {
+      content,
+      totalElements: Number(body.totalElements ?? content.length),
+      totalPages: Number(body.totalPages ?? 1),
+      number: Number(body.number ?? 0),
+      size: Number(body.size ?? content.length),
+    };
+  }
+  const list = Array.isArray(data) ? (data as Record<string, unknown>[]).map(normalizeLoteResumoFromApi) : [];
+  return {
+    content: list,
+    totalElements: list.length,
+    totalPages: 1,
+    number: 0,
+    size: list.length,
   };
 }
