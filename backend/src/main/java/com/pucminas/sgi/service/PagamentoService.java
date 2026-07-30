@@ -54,7 +54,10 @@ public class PagamentoService {
 
         // Alinha valor_devedor com o saldo da tela (principal + multa/juros em tempo real).
         // Sem isso, pagamento parcial no valor exibido falha quando o banco ainda não tinha juros.
-        BigDecimal saldoLiveCentavos = reaisParaCentavos(dividaService.getValorEJurosReais(divida)[0]);
+        BigDecimal[] valorEJuros = dividaService.getValorEJurosReais(divida);
+        BigDecimal saldoLiveCentavos = valorEJuros != null && valorEJuros.length > 0
+                ? reaisParaCentavos(valorEJuros[0])
+                : divida.getValorDevedor();
         if (saldoLiveCentavos.compareTo(divida.getValorDevedor()) > 0) {
             divida.setValorDevedor(saldoLiveCentavos);
             dividaRepository.saveAndFlush(divida);
