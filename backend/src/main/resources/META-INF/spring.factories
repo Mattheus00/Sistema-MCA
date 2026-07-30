@@ -1,1 +1,3 @@
-org.springframework.boot.env.EnvironmentPostProcessor=com.pucminas.sgi.config.SqliteDataDirEnvironmentPostProcessor
+org.springframework.boot.env.EnvironmentPostProcessor=\
+com.pucminas.sgi.config.PostgresDataSourceEnvironmentPostProcessor,\
+com.pucminas.sgi.config.SqliteDataDirEnvironmentPostProcessor

@@ -75,6 +75,16 @@ public class ClientesRelatorioImportRunner implements CommandLineRunner {
                 return;
             }
 
+            long clientesExistentes = clienteRepository.count();
+            if (clientesExistentes > 0) {
+                log.warn(
+                        "CSV de clientes mudou, mas o banco já possui {} clientes. "
+                                + "Reimportação destrutiva ignorada para preservar dívidas e pagamentos.",
+                        clientesExistentes);
+                salvarHashImportado(hashAtual);
+                return;
+            }
+
             pagamentoRepository.deleteAll();
             dividaRepository.deleteAll();
             clienteRepository.deleteAll();
