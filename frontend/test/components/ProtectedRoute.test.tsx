@@ -4,11 +4,13 @@ import { MemoryRouter, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import * as api from "@/lib/api";
 
-vi.mock("@/lib/api", () => ({
-  isMockEnabled: vi.fn(),
-  AUTH_TOKEN_KEY: "sgi_token",
-  USER_PROFILE_KEY: "sgi_user_profile",
-}));
+vi.mock("@/lib/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/api")>();
+  return {
+    ...actual,
+    isMockEnabled: vi.fn(),
+  };
+});
 
 function renderWithRouter(initialEntries: string[] = ["/"]) {
   return render(
@@ -27,6 +29,7 @@ describe("ProtectedRoute", () => {
   beforeEach(() => {
     vi.mocked(api.isMockEnabled).mockReturnValue(false);
     localStorage.clear();
+    sessionStorage.clear();
   });
 
   it("renderiza o outlet quando há token no localStorage", () => {
@@ -34,6 +37,12 @@ describe("ProtectedRoute", () => {
     renderWithRouter();
     expect(screen.getByText("Conteúdo protegido")).toBeInTheDocument();
     expect(screen.queryByText("Página de login")).not.toBeInTheDocument();
+  });
+
+  it("renderiza o outlet quando há token no sessionStorage", () => {
+    sessionStorage.setItem("sgi_token", "token-session");
+    renderWithRouter();
+    expect(screen.getByText("Conteúdo protegido")).toBeInTheDocument();
   });
 
   it("redireciona para /login quando não há token", () => {

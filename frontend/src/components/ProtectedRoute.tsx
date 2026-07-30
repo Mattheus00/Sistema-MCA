@@ -1,5 +1,5 @@
 import { Outlet, Navigate } from "react-router-dom";
-import { AUTH_TOKEN_KEY, isMockEnabled, USER_PROFILE_KEY } from "@/lib/api";
+import { getAuthToken, getAuthUserProfile, isMockEnabled } from "@/lib/api";
 
 /**
  * Protege rotas que exigem autenticação.
@@ -11,10 +11,10 @@ type ProtectedRouteProps = {
 
 export default function ProtectedRoute({ onlyProprietaria = false }: ProtectedRouteProps) {
   if (isMockEnabled() && !onlyProprietaria) return <Outlet />;
-  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  const token = getAuthToken();
   if (!token) return <Navigate to="/login" replace />;
   if (onlyProprietaria) {
-    const perfil = localStorage.getItem(USER_PROFILE_KEY);
+    const perfil = getAuthUserProfile();
     if (perfil !== "PROPRIETARIA") {
       return <Navigate to="/dashboard" replace state={{ erroPermissao: "Apenas a proprietária pode aprovar cadastros." }} />;
     }

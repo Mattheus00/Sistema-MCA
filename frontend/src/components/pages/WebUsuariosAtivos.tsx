@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
-import { api, getApiErrorMessage, normalizeListResponse, USER_LOGIN_KEY } from "@/lib/api";
+import { api, getApiErrorMessage, getAuthUserLogin, normalizeListResponse } from "@/lib/api";
 import type { UsuarioAtivo } from "@/types/api";
 
 function formatarData(iso: string): string {
@@ -29,7 +29,7 @@ export default function WebUsuariosAtivos({ embedded = false }: WebUsuariosAtivo
   const [erro, setErro] = useState<string | null>(null);
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
   const [confirmar, setConfirmar] = useState<UsuarioAtivo | null>(null);
-  const meuLogin = typeof localStorage !== "undefined" ? localStorage.getItem(USER_LOGIN_KEY) : null;
+  const meuLogin = getAuthUserLogin();
 
   const listar = useCallback(async () => {
     setLoading(true);

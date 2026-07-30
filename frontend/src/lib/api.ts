@@ -1,5 +1,6 @@
 import axios, { type AxiosError } from "axios";
-import type { ApiErrorBody } from "@/types/api";
+import type { ApiErrorBody, Inadimplencia, PerfilUsuario } from "@/types/api";
+import { normalizeInadimplenciaFromApi } from "@/lib/apiNormalizers";
 import { createMockClient, isMockEnabled } from "./mockApi";
 
 export { isMockEnabled } from "./mockApi";
@@ -32,14 +33,97 @@ export const USER_DISPLAY_KEY = "sgi_user_display";
 export const USER_LOGIN_KEY = "sgi_user_login";
 /** Chave onde o perfil do usuário autenticado é guardado */
 export const USER_PROFILE_KEY = "sgi_user_profile";
+/** Preferência do checkbox "Manter conectado" (sempre em localStorage) */
+export const REMEMBER_ME_KEY = "sgi_remember_me";
+
+const AUTH_SESSION_KEYS = [AUTH_TOKEN_KEY, USER_DISPLAY_KEY, USER_LOGIN_KEY, USER_PROFILE_KEY] as const;
+
+export type AuthSessionData = {
+  token: string;
+  display: string;
+  login: string;
+  profile?: PerfilUsuario | null;
+};
+
+function browserStorage(kind: "local" | "session"): Storage | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return kind === "local" ? window.localStorage : window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+/** Limpa token e dados do usuário em localStorage e sessionStorage. */
+export function clearAuthSession(): void {
+  const local = browserStorage("local");
+  const session = browserStorage("session");
+  for (const key of AUTH_SESSION_KEYS) {
+    local?.removeItem(key);
+    session?.removeItem(key);
+  }
+  local?.removeItem(REMEMBER_ME_KEY);
+}
+
+/**
+ * Retorna o storage ativo da sessão.
+ * Prioriza sessionStorage (sessão da aba) e depois localStorage (manter conectado).
+ */
+export function getAuthStorage(): Storage {
+  const local = browserStorage("local");
+  const session = browserStorage("session");
+  if (session?.getItem(AUTH_TOKEN_KEY)) return session;
+  if (local?.getItem(AUTH_TOKEN_KEY)) return local;
+  return local ?? session ?? localStorage;
+}
+
+export function getAuthToken(): string | null {
+  const session = browserStorage("session");
+  const local = browserStorage("local");
+  if (session?.getItem(AUTH_TOKEN_KEY)) return session.getItem(AUTH_TOKEN_KEY);
+  return local?.getItem(AUTH_TOKEN_KEY) ?? null;
+}
+
+export function getAuthUserDisplay(): string | null {
+  return getAuthStorage().getItem(USER_DISPLAY_KEY);
+}
+
+export function getAuthUserLogin(): string | null {
+  return getAuthStorage().getItem(USER_LOGIN_KEY);
+}
+
+export function getAuthUserProfile(): string | null {
+  return getAuthStorage().getItem(USER_PROFILE_KEY);
+}
+
+/** Padrão do checkbox: marcado (comportamento anterior do app). */
+export function isRememberMePreferred(): boolean {
+  const local = browserStorage("local");
+  if (!local) return true;
+  return local.getItem(REMEMBER_ME_KEY) !== "0";
+}
+
+/** Persiste sessão no storage escolhido e remove dados do outro (evita token fantasma). */
+export function setAuthSession(data: AuthSessionData, manterConectado: boolean): void {
+  clearAuthSession();
+  const storage = manterConectado ? browserStorage("local") : browserStorage("session");
+  if (!storage) return;
+  storage.setItem(AUTH_TOKEN_KEY, data.token);
+  storage.setItem(USER_DISPLAY_KEY, data.display);
+  storage.setItem(USER_LOGIN_KEY, data.login);
+  if (data.profile) storage.setItem(USER_PROFILE_KEY, data.profile);
+  browserStorage("local")?.setItem(REMEMBER_ME_KEY, manterConectado ? "1" : "0");
+}
 
 /** Prefixo gravado em `comprovante` para persistir quem confirmou (DTO do backend não tem esse campo). */
 export const CONFIRMADO_POR_COMPROVANTE_PREFIX = "user:";
 
 /** Nome/login do usuário autenticado para exibição e auditoria de pagamento. */
 export function getUsuarioLogadoLabel(): string {
-  if (typeof localStorage === "undefined") return "";
-  return (localStorage.getItem(USER_DISPLAY_KEY) || localStorage.getItem(USER_LOGIN_KEY) || "").trim();
+  if (typeof window === "undefined") return "";
+  if (!getAuthToken()) return "";
+  const storage = getAuthStorage();
+  return (storage.getItem(USER_DISPLAY_KEY) || storage.getItem(USER_LOGIN_KEY) || "").trim();
 }
 
 export function encodeConfirmadoPorComprovante(label: string): string {
@@ -56,7 +140,7 @@ export function decodeConfirmadoPorComprovante(comprovante: string | null | unde
 
 if (!isMockEnabled()) {
   axiosInstance.interceptors.request.use((config) => {
-    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    const token = getAuthToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -67,10 +151,7 @@ if (!isMockEnabled()) {
     (response) => response,
     (error: AxiosError<ApiErrorBody>) => {
       if (error.response?.status === 401) {
-        localStorage.removeItem(AUTH_TOKEN_KEY);
-        localStorage.removeItem(USER_DISPLAY_KEY);
-        localStorage.removeItem(USER_LOGIN_KEY);
-        localStorage.removeItem(USER_PROFILE_KEY);
+        clearAuthSession();
       }
       return Promise.reject(error);
     }
@@ -116,4 +197,53 @@ export function normalizeListResponse<T>(data: unknown): T[] {
     return (data as { content: T[] }).content;
   }
   return [];
+}
+
+function mapInadimplenciaResponseItem(raw: Record<string, unknown>): Inadimplencia {
+  return isMockEnabled() ? (raw as Inadimplencia) : normalizeInadimplenciaFromApi(raw);
+}
+
+/** Carrega todas as inadimplências, percorrendo páginas quando a API retorna PageResponse. */
+export async function fetchAllInadimplentes(): Promise<Inadimplencia[]> {
+  const first = await api.get("/api/inadimplentes", { params: { paginado: false } });
+  const data = first.data;
+
+  if (Array.isArray(data)) {
+    return data.map((item) => mapInadimplenciaResponseItem(item as Record<string, unknown>));
+  }
+
+  if (data && typeof data === "object" && Array.isArray((data as { content?: unknown[] }).content)) {
+    const body = data as {
+      content: Record<string, unknown>[];
+      totalPages?: number;
+      last?: boolean;
+      size?: number;
+    };
+    const all = body.content.map(mapInadimplenciaResponseItem);
+    const pageSize = body.size && body.size > 0 ? body.size : Math.max(body.content.length, 200);
+    let page = 1;
+    let totalPages = body.totalPages ?? 1;
+
+    while (page < totalPages) {
+      const r = await api.get("/api/inadimplentes", {
+        params: { paginado: true, page, size: pageSize },
+      });
+      const pageData = r.data as {
+        content?: Record<string, unknown>[];
+        totalPages?: number;
+        last?: boolean;
+      };
+      const chunk = Array.isArray(pageData.content) ? pageData.content.map(mapInadimplenciaResponseItem) : [];
+      if (chunk.length === 0) break;
+      all.push(...chunk);
+      if (pageData.last === true) break;
+      if (typeof pageData.totalPages === "number") totalPages = pageData.totalPages;
+      page += 1;
+      if (page > 100) break;
+    }
+
+    return all;
+  }
+
+  return normalizeListResponse<Record<string, unknown>>(data).map(mapInadimplenciaResponseItem);
 }

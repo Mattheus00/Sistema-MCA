@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { AUTH_TOKEN_KEY, isMockEnabled, USER_DISPLAY_KEY, USER_LOGIN_KEY, USER_PROFILE_KEY } from '@/lib/api'
+import { clearAuthSession, getAuthToken, getAuthUserDisplay, getAuthUserProfile, isMockEnabled } from '@/lib/api'
+import { iniciaisNome, labelPerfilUsuario } from '@/lib/dashboardUtils'
 
 function GridIcon() {
   return (
@@ -71,6 +72,16 @@ function CalculatorIcon() {
   )
 }
 
+function EmailAttachIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+      <path d="M4 20h4" />
+      <path d="M4 16v4" />
+    </svg>
+  )
+}
+
 function UserIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -83,11 +94,12 @@ function UserIcon() {
 export default function Layout() {
   const navigate = useNavigate()
   const SIDEBAR_HIDDEN_KEY = 'sgi_sidebar_hidden'
-  const showSair = !isMockEnabled() && typeof localStorage !== 'undefined' && localStorage.getItem(AUTH_TOKEN_KEY)
-  const userDisplay = typeof localStorage !== 'undefined' ? (localStorage.getItem(USER_DISPLAY_KEY) || 'Usuário') : 'Usuário'
-  const userProfile = typeof localStorage !== 'undefined' ? localStorage.getItem(USER_PROFILE_KEY) : null
+  const showSair = !isMockEnabled() && !!getAuthToken()
+  const userDisplay = getAuthUserDisplay() || 'Usuário'
+  const userProfile = getAuthUserProfile()
   const [sidebarHidden, setSidebarHidden] = useState(false)
   const isProprietaria = userProfile === 'PROPRIETARIA'
+  const podeVerEnvioBoletos = userProfile === 'PROPRIETARIA' || userProfile === 'RESPONSAVEL_FINANCEIRO'
   const navItems = [
     { to: '/dashboard', label: 'Dashboard', icon: GridIcon },
     { to: '/clientes', label: 'Clientes', icon: PeopleIcon },
@@ -95,14 +107,12 @@ export default function Layout() {
     { to: '/servicos', label: 'Serviços', icon: ServicesIcon },
     { to: '/reforma-tributaria', label: 'Simulador', icon: CalculatorIcon },
     { to: '/relatorios', label: 'Relatórios', icon: ChartIcon },
+    ...(podeVerEnvioBoletos ? [{ to: '/envio-boletos', label: 'Envio de boletos', icon: EmailAttachIcon, badge: 'Novo' as const }] : []),
     ...(isProprietaria ? [{ to: '/usuarios', label: 'Usuários', icon: UserIcon }] : []),
   ]
 
   function handleSair() {
-    localStorage.removeItem(AUTH_TOKEN_KEY)
-    localStorage.removeItem(USER_DISPLAY_KEY)
-    localStorage.removeItem(USER_LOGIN_KEY)
-    localStorage.removeItem(USER_PROFILE_KEY)
+    clearAuthSession()
     navigate('/login', { replace: true })
   }
 
@@ -151,15 +161,18 @@ export default function Layout() {
           </div>
         </Link>
         <div className="sidebar-user" aria-label="Usuário logado">
-          <span className="sidebar-user__icon" aria-hidden="true">
-            <UserIcon />
+          <span className="sidebar-user__avatar" aria-hidden="true">
+            {iniciaisNome(userDisplay)}
           </span>
-          <span className="sidebar-user__name" title={userDisplay}>
-            {userDisplay}
+          <span className="sidebar-user__info">
+            <span className="sidebar-user__name" title={userDisplay}>
+              {userDisplay}
+            </span>
+            <span className="sidebar-user__role">{labelPerfilUsuario(userProfile)}</span>
           </span>
         </div>
         <nav className="sidebar-nav" aria-label="Menu">
-          {navItems.map(({ to, label, icon: Icon }) => (
+          {navItems.map(({ to, label, icon: Icon, badge }) => (
             <NavLink
               key={to}
               to={to}
@@ -167,7 +180,8 @@ export default function Layout() {
               className={({ isActive }) => `sidebar-link ${isActive ? 'sidebar-link--active' : ''}`}
             >
               <Icon />
-              <span>{label}</span>
+              <span className="sidebar-link__label">{label}</span>
+              {badge && <span className="sidebar-link__badge">{badge}</span>}
             </NavLink>
           ))}
         </nav>

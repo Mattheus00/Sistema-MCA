@@ -1,8 +1,16 @@
 import { describe, it, expect } from "vitest";
 import {
+  clearAuthSession,
   getApiErrorMessage,
+  getAuthToken,
   getRelatorioErrorMessage,
+  isRememberMePreferred,
   normalizeListResponse,
+  setAuthSession,
+  AUTH_TOKEN_KEY,
+  USER_DISPLAY_KEY,
+  USER_LOGIN_KEY,
+  USER_PROFILE_KEY,
 } from "@/lib/api";
 import type { AxiosError } from "axios";
 import type { ApiErrorBody } from "@/types/api";
@@ -92,5 +100,51 @@ describe("normalizeListResponse", () => {
     expect(normalizeListResponse(null)).toEqual([]);
     expect(normalizeListResponse({})).toEqual([]);
     expect(normalizeListResponse({ items: [] })).toEqual([]);
+  });
+});
+
+describe("auth session helpers", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+
+  it("salva sessão em localStorage quando manter conectado", () => {
+    setAuthSession(
+      { token: "t1", display: "João", login: "joao", profile: "PROPRIETARIA" },
+      true
+    );
+    expect(localStorage.getItem(AUTH_TOKEN_KEY)).toBe("t1");
+    expect(localStorage.getItem(USER_DISPLAY_KEY)).toBe("João");
+    expect(sessionStorage.getItem(AUTH_TOKEN_KEY)).toBeNull();
+    expect(getAuthToken()).toBe("t1");
+    expect(isRememberMePreferred()).toBe(true);
+  });
+
+  it("salva sessão em sessionStorage quando não manter conectado", () => {
+    setAuthSession({ token: "t2", display: "Maria", login: "maria" }, false);
+    expect(sessionStorage.getItem(AUTH_TOKEN_KEY)).toBe("t2");
+    expect(localStorage.getItem(AUTH_TOKEN_KEY)).toBeNull();
+    expect(getAuthToken()).toBe("t2");
+    expect(isRememberMePreferred()).toBe(false);
+  });
+
+  it("limpa auth dos dois storages", () => {
+    localStorage.setItem(AUTH_TOKEN_KEY, "a");
+    sessionStorage.setItem(AUTH_TOKEN_KEY, "b");
+    localStorage.setItem(USER_LOGIN_KEY, "x");
+    sessionStorage.setItem(USER_PROFILE_KEY, "PROPRIETARIA");
+    clearAuthSession();
+    expect(localStorage.getItem(AUTH_TOKEN_KEY)).toBeNull();
+    expect(sessionStorage.getItem(AUTH_TOKEN_KEY)).toBeNull();
+    expect(localStorage.getItem(USER_LOGIN_KEY)).toBeNull();
+    expect(sessionStorage.getItem(USER_PROFILE_KEY)).toBeNull();
+    expect(getAuthToken()).toBeNull();
+  });
+
+  it("prioriza sessionStorage ao ler token", () => {
+    localStorage.setItem(AUTH_TOKEN_KEY, "local");
+    sessionStorage.setItem(AUTH_TOKEN_KEY, "session");
+    expect(getAuthToken()).toBe("session");
   });
 });
