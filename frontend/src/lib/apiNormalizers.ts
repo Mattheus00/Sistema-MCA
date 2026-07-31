@@ -18,6 +18,8 @@ import type {
   LoteEnvioBoleto,
   LoteEnvioBoletoResumo,
   PaginaLotesEnvioBoleto,
+  ResultadoEnvioItem,
+  ResultadoEnvioLote,
   ResumoLoteEnvioBoleto,
   ValidacaoLoteEnvioBoleto,
   ConfiancaIdentificacaoBoleto,
@@ -542,11 +544,70 @@ export function normalizeLoteResumoFromApi(raw: Record<string, unknown>): LoteEn
     loteId: String(raw.loteId ?? raw.id ?? ""),
     status: String(raw.status ?? ""),
     criadoEm: raw.criadoEm != null ? String(raw.criadoEm) : undefined,
-    enviadoEm: raw.enviadoEm != null ? String(raw.enviadoEm) : undefined,
-    criadoPor: raw.criadoPor != null ? String(raw.criadoPor) : undefined,
-    totalItens: raw.totalItens != null ? Number(raw.totalItens) : undefined,
-    enviados: raw.enviados != null ? Number(raw.enviados) : undefined,
-    erros: raw.erros != null ? Number(raw.erros) : undefined,
+    enviadoEm: raw.dataFinalizacao != null ? String(raw.dataFinalizacao) : raw.enviadoEm != null ? String(raw.enviadoEm) : undefined,
+    criadoPor:
+      raw.criadoPor != null
+        ? String(raw.criadoPor)
+        : raw.usuarioResponsavelNome != null
+          ? String(raw.usuarioResponsavelNome)
+          : undefined,
+    totalItens:
+      raw.totalItens != null
+        ? Number(raw.totalItens)
+        : raw.quantidadeTotal != null
+          ? Number(raw.quantidadeTotal)
+          : undefined,
+    enviados:
+      raw.enviados != null
+        ? Number(raw.enviados)
+        : raw.quantidadeEnviada != null
+          ? Number(raw.quantidadeEnviada)
+          : undefined,
+    erros:
+      raw.erros != null
+        ? Number(raw.erros)
+        : raw.quantidadeComErro != null
+          ? Number(raw.quantidadeComErro)
+          : undefined,
+  };
+}
+
+function normalizeResultadoEnvioItemFromApi(raw: Record<string, unknown>): ResultadoEnvioItem {
+  return {
+    envioBoletoId: String(raw.envioBoletoId ?? raw.itemId ?? ""),
+    clienteId: raw.clienteId != null ? String(raw.clienteId) : undefined,
+    clienteNome: raw.clienteNome != null ? String(raw.clienteNome) : undefined,
+    emailDestinatario: raw.emailDestinatario != null ? String(raw.emailDestinatario) : undefined,
+    nomeArquivoOriginal: raw.nomeArquivoOriginal != null ? String(raw.nomeArquivoOriginal) : undefined,
+    status: raw.status != null ? String(raw.status) : undefined,
+    simulado: Boolean(raw.simulado),
+    reenvio: Boolean(raw.reenvio),
+    mensagemErro:
+      raw.mensagemErro != null
+        ? String(raw.mensagemErro)
+        : raw.erro != null
+          ? String(raw.erro)
+          : null,
+    dataEnvio: raw.dataEnvio != null ? String(raw.dataEnvio) : undefined,
+  };
+}
+
+export function normalizeResultadoEnvioLoteFromApi(raw: Record<string, unknown>): ResultadoEnvioLote {
+  const mapLista = (lista: unknown): ResultadoEnvioItem[] =>
+    Array.isArray(lista) ? (lista as Record<string, unknown>[]).map(normalizeResultadoEnvioItemFromApi) : [];
+
+  return {
+    loteId: String(raw.loteId ?? raw.id ?? ""),
+    status: raw.status != null ? String(raw.status) : undefined,
+    criadoEm: raw.criadoEm != null ? String(raw.criadoEm) : undefined,
+    dataFinalizacao: raw.dataFinalizacao != null ? String(raw.dataFinalizacao) : undefined,
+    quantidadeTotal: raw.quantidadeTotal != null ? Number(raw.quantidadeTotal) : undefined,
+    quantidadeEnviada: raw.quantidadeEnviada != null ? Number(raw.quantidadeEnviada) : undefined,
+    quantidadeComErro: raw.quantidadeComErro != null ? Number(raw.quantidadeComErro) : undefined,
+    quantidadeNaoEnviada: raw.quantidadeNaoEnviada != null ? Number(raw.quantidadeNaoEnviada) : undefined,
+    enviados: mapLista(raw.enviados),
+    comErro: mapLista(raw.comErro),
+    naoEnviados: mapLista(raw.naoEnviados),
   };
 }
 

@@ -14,7 +14,7 @@ import {
   atualizarClienteItem,
   baixarRelatorioCsv,
   confirmarItemEnvioBoleto,
-  consultarLoteEnvioBoletos,
+  consultarResultadoEnvioLote,
   criarLoteEnvioBoletos,
   enviarLoteEnvioBoletos,
   ignorarItemEnvioBoleto,
@@ -41,7 +41,7 @@ import {
   todosItensSelecionaveis,
   validarArquivosPdf,
 } from "@/lib/envioBoletosUtils";
-import type { Cliente, ItemEnvioBoleto, LoteEnvioBoleto, LoteEnvioBoletoResumo } from "@/types/api";
+import type { Cliente, ItemEnvioBoleto, LoteEnvioBoleto, LoteEnvioBoletoResumo, ResultadoEnvioItem, ResultadoEnvioLote } from "@/types/api";
 
 type AbaPrincipal = "novo" | "historico";
 type EtapaNovo = "upload" | "conferencia" | "resultado";
@@ -83,7 +83,7 @@ export default function WebEnvioBoletos() {
   const [filtroStatus, setFiltroStatus] = useState("");
   const [filtroDataInicio, setFiltroDataInicio] = useState("");
   const [filtroDataFim, setFiltroDataFim] = useState("");
-  const [loteHistorico, setLoteHistorico] = useState<LoteEnvioBoleto | null>(null);
+  const [resultadoHistorico, setResultadoHistorico] = useState<ResultadoEnvioLote | null>(null);
 
   const inputArquivosRef = useRef<HTMLInputElement>(null);
   const inputPastaRef = useRef<HTMLInputElement>(null);
@@ -280,7 +280,7 @@ export default function WebEnvioBoletos() {
     try {
       setLoading(true);
       setErro(null);
-      setLoteHistorico(await consultarLoteEnvioBoletos(loteId));
+      setResultadoHistorico(await consultarResultadoEnvioLote(loteId));
     } catch (e: unknown) {
       setErro(getApiErrorMessage(e, "Falha ao carregar o lote."));
     } finally {
@@ -324,12 +324,12 @@ export default function WebEnvioBoletos() {
   }, [aba]);
 
   useEffect(() => {
-    const bloqueado = modalConfirmarEnvio || itemCorrigir != null || loteHistorico != null;
+    const bloqueado = modalConfirmarEnvio || itemCorrigir != null || resultadoHistorico != null;
     document.body.style.overflow = bloqueado ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [modalConfirmarEnvio, itemCorrigir, loteHistorico]);
+  }, [modalConfirmarEnvio, itemCorrigir, resultadoHistorico]);
 
   useEffect(() => {
     if (etapa === "conferencia" && lote?.loteId && !lote.validacao) {
@@ -792,6 +792,8 @@ export default function WebEnvioBoletos() {
             </button>
           </div>
 
+          <p className="page-envio-boletos__historico-dica">Clique em um lote para ver os detalhes do envio por cliente.</p>
+
           <div className="page-envio-boletos__tabela-wrap">
             <table className="page-envio-boletos__tabela">
               <thead>
@@ -822,6 +824,7 @@ export default function WebEnvioBoletos() {
                     <tr
                       key={h.loteId}
                       className="page-envio-boletos__linha-clicavel"
+                      title="Clique para ver detalhes"
                       onClick={() => abrirDetalheHistorico(h.loteId)}
                       onKeyDown={(e) => e.key === "Enter" && abrirDetalheHistorico(h.loteId)}
                       tabIndex={0}
@@ -1021,40 +1024,53 @@ export default function WebEnvioBoletos() {
           document.body
         )}
 
-      {loteHistorico &&
+      {resultadoHistorico &&
         createPortal(
-          <div className="modal-overlay" role="presentation" onClick={() => setLoteHistorico(null)}>
+          <div className="modal-overlay" role="presentation" onClick={() => setResultadoHistorico(null)}>
             <div className="modal modal--largo" role="dialog" aria-modal="true" aria-labelledby="modal-historico-titulo" onClick={(e) => e.stopPropagation()}>
               <h2 id="modal-historico-titulo" className="modal__titulo">
                 Detalhe do lote
               </h2>
-              <p>
-                {formatarDataHora(loteHistorico.criadoEm)} · {loteHistorico.status}
+              <p className="page-envio-boletos__modal-resumo">
+                {formatarDataHora(resultadoHistorico.criadoEm)}
+                {resultadoHistorico.dataFinalizacao ? ` · Finalizado em ${formatarDataHora(resultadoHistorico.dataFinalizacao)}` : ""}
+                {resultadoHistorico.status ? ` · ${resultadoHistorico.status}` : ""}
               </p>
-              <div className="page-envio-boletos__tabela-wrap">
-                <table className="page-envio-boletos__tabela">
-                  <thead>
-                    <tr>
-                      <th>Cliente</th>
-                      <th>Arquivo</th>
-                      <th>E-mail</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(loteHistorico.itens ?? []).map((item) => (
-                      <tr key={item.itemId}>
-                        <td>{item.clienteNome ?? "—"}</td>
-                        <td>{item.nomeArquivoOriginal}</td>
-                        <td>{exibirDocumento(item.emailDestinatario)}</td>
-                        <td>{labelStatusItem(item.status)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+
+              <SecaoResultadoHistorico
+                titulo="Enviados"
+                variante="verde"
+                itens={resultadoHistorico.enviados}
+                colunas={["cliente", "email", "arquivo", "data"]}
+              />
+              <SecaoResultadoHistorico
+                titulo="Com erro"
+                variante="vermelho"
+                itens={resultadoHistorico.comErro}
+                colunas={["cliente", "email", "arquivo", "erro"]}
+              />
+              <SecaoResultadoHistorico
+                titulo="Não enviados"
+                variante="cinza"
+                itens={resultadoHistorico.naoEnviados}
+                colunas={["cliente", "email", "arquivo", "status"]}
+              />
+
               <div className="modal__acoes">
-                <button type="button" className="btn btn--secondary" onClick={() => setLoteHistorico(null)}>
+                <button
+                  type="button"
+                  className="btn btn--secondary"
+                  onClick={async () => {
+                    try {
+                      await baixarRelatorioCsv(resultadoHistorico.loteId);
+                    } catch (e: unknown) {
+                      setErro(getApiErrorMessage(e, "Falha ao baixar o relatório."));
+                    }
+                  }}
+                >
+                  Baixar CSV
+                </button>
+                <button type="button" className="btn btn--secondary" onClick={() => setResultadoHistorico(null)}>
                   Fechar
                 </button>
               </div>
@@ -1063,6 +1079,56 @@ export default function WebEnvioBoletos() {
           document.body
         )}
     </div>
+  );
+}
+
+function SecaoResultadoHistorico({
+  titulo,
+  variante,
+  itens,
+  colunas,
+}: {
+  titulo: string;
+  variante: "verde" | "vermelho" | "cinza";
+  itens: ResultadoEnvioItem[];
+  colunas: Array<"cliente" | "email" | "arquivo" | "data" | "erro" | "status">;
+}) {
+  return (
+    <section className={`page-envio-boletos__secao-resultado page-envio-boletos__secao-resultado--${variante}`}>
+      <h3 className="page-envio-boletos__secao-titulo">
+        {titulo} <span className="page-envio-boletos__secao-contagem">({itens.length})</span>
+      </h3>
+      {itens.length === 0 ? (
+        <p className="page-envio-boletos__secao-vazio">Nenhum item.</p>
+      ) : (
+        <div className="page-envio-boletos__tabela-wrap">
+          <table className="page-envio-boletos__tabela page-envio-boletos__tabela--secao">
+            <thead>
+              <tr>
+                {colunas.includes("cliente") && <th>Cliente</th>}
+                {colunas.includes("email") && <th>E-mail</th>}
+                {colunas.includes("arquivo") && <th>Arquivo</th>}
+                {colunas.includes("data") && <th>Data envio</th>}
+                {colunas.includes("erro") && <th>Erro</th>}
+                {colunas.includes("status") && <th>Status</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {itens.map((item) => (
+                <tr key={item.envioBoletoId}>
+                  {colunas.includes("cliente") && <td>{item.clienteNome?.trim() || "—"}</td>}
+                  {colunas.includes("email") && <td>{exibirDocumento(item.emailDestinatario)}</td>}
+                  {colunas.includes("arquivo") && <td>{item.nomeArquivoOriginal ?? "—"}</td>}
+                  {colunas.includes("data") && <td>{formatarDataHora(item.dataEnvio)}</td>}
+                  {colunas.includes("erro") && <td>{item.mensagemErro?.trim() || "—"}</td>}
+                  {colunas.includes("status") && <td>{labelStatusItem(item.status)}</td>}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 

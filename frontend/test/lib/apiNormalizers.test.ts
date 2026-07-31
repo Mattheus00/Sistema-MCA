@@ -6,6 +6,8 @@ import {
   normalizeInadimplenciaToApi,
   normalizeRankingFromApi,
   normalizeInadimplenciaPeriodoFromApi,
+  normalizeLoteResumoFromApi,
+  normalizeResultadoEnvioLoteFromApi,
   normalizeResumoRelatorioFromApi,
 } from "@/lib/apiNormalizers";
 
@@ -214,5 +216,39 @@ describe("normalizeResumoRelatorioFromApi", () => {
       totalRecebido: 50,
     });
     expect(r?.totalPago).toBe(50);
+  });
+});
+
+describe("normalizeLoteResumoFromApi", () => {
+  it("mapeia aliases do backend para campos do histórico", () => {
+    const r = normalizeLoteResumoFromApi({
+      loteId: "l1",
+      status: "CONCLUIDO",
+      criadoEm: "2026-01-10T10:00:00",
+      dataFinalizacao: "2026-01-10T11:00:00",
+      usuarioResponsavelNome: "Maria",
+      quantidadeTotal: 10,
+      quantidadeEnviada: 8,
+      quantidadeComErro: 1,
+    });
+    expect(r.totalItens).toBe(10);
+    expect(r.enviados).toBe(8);
+    expect(r.erros).toBe(1);
+    expect(r.criadoPor).toBe("Maria");
+    expect(r.enviadoEm).toBe("2026-01-10T11:00:00");
+  });
+});
+
+describe("normalizeResultadoEnvioLoteFromApi", () => {
+  it("normaliza listas enviados, comErro e naoEnviados", () => {
+    const r = normalizeResultadoEnvioLoteFromApi({
+      loteId: "l1",
+      enviados: [{ envioBoletoId: "e1", clienteNome: "Ana", status: "ENVIADO" }],
+      comErro: [{ envioBoletoId: "e2", mensagemErro: "SMTP falhou" }],
+      naoEnviados: [{ envioBoletoId: "e3", status: "IGNORADO" }],
+    });
+    expect(r.enviados).toHaveLength(1);
+    expect(r.comErro[0].mensagemErro).toBe("SMTP falhou");
+    expect(r.naoEnviados).toHaveLength(1);
   });
 });

@@ -18,6 +18,8 @@ import type {
   LoteEnvioBoleto,
   ItemEnvioBoleto,
   LoteEnvioBoletoResumo,
+  ResultadoEnvioItem,
+  ResultadoEnvioLote,
 } from "@/types/api";
 
 function idItemEnvioBoleto(item: ItemEnvioBoleto): string {
@@ -103,10 +105,56 @@ function loteToResumo(lote: LoteEnvioBoleto): LoteEnvioBoletoResumo {
     status: lote.status,
     criadoEm: lote.criadoEm,
     enviadoEm: lote.enviadoEm,
-    criadoPor: lote.criadoPor,
+    criadoPor: lote.criadoPor ?? "Usuário mock",
     totalItens: lote.quantidadeTotal ?? (lote.itens ?? []).length,
     enviados: resumo.enviados,
     erros: resumo.erros,
+  };
+}
+
+function itemParaResultadoEnvio(item: ItemEnvioBoleto): ResultadoEnvioItem {
+  const extra = item as ItemEnvioBoleto & { reenvio?: boolean; enviadoEm?: string };
+  return {
+    envioBoletoId: idItemEnvioBoleto(item),
+    clienteId: item.clienteId,
+    clienteNome: item.clienteNome,
+    emailDestinatario: item.emailDestinatario,
+    nomeArquivoOriginal: item.nomeArquivoOriginal,
+    status: item.status,
+    simulado: item.simulado,
+    reenvio: extra.reenvio,
+    mensagemErro: item.erro ?? null,
+    dataEnvio: extra.enviadoEm,
+  };
+}
+
+function buildResultadoEnvioLote(lote: LoteEnvioBoleto): ResultadoEnvioLote {
+  const itens = lote.itens ?? [];
+  const enviados: ResultadoEnvioItem[] = [];
+  const comErro: ResultadoEnvioItem[] = [];
+  const naoEnviados: ResultadoEnvioItem[] = [];
+  for (const item of itens) {
+    const mapped = itemParaResultadoEnvio(item);
+    const status = String(item.status ?? "").toUpperCase();
+    if (status === "ENVIADO") enviados.push(mapped);
+    else if (status === "ERRO") comErro.push(mapped);
+    else naoEnviados.push(mapped);
+  }
+  const resumo = lote.resumo ?? buildResumoLote(itens);
+  const enviadosCount = resumo.enviados ?? 0;
+  const errosCount = resumo.erros ?? 0;
+  return {
+    loteId: lote.loteId,
+    status: lote.status,
+    criadoEm: lote.criadoEm,
+    dataFinalizacao: lote.enviadoEm,
+    quantidadeTotal: lote.quantidadeTotal ?? itens.length,
+    quantidadeEnviada: enviadosCount,
+    quantidadeComErro: errosCount,
+    quantidadeNaoEnviada: Math.max(0, itens.length - enviadosCount - errosCount),
+    enviados,
+    comErro,
+    naoEnviados,
   };
 }
 
@@ -738,6 +786,12 @@ export function createMockClient() {
           }
           const blob = new Blob([linhas.join("\n")], { type: "text/csv;charset=utf-8" });
           return Promise.resolve({ data: blob } as { data: T });
+        }
+        const matchResultado = url.match(/^\/api\/lotes-envio-boletos\/([\w-]+)\/resultado-envio$/);
+        if (matchResultado) {
+          const lote = store.lotesEnvioBoletos.find((l) => l.loteId === matchResultado[1]);
+          if (!lote) return Promise.reject(new Error("Lote não encontrado."));
+          return Promise.resolve({ data: buildResultadoEnvioLote(lote) } as { data: T });
         }
         const matchLote = url.match(/^\/api\/lotes-envio-boletos\/([\w-]+)$/);
         if (matchLote) {

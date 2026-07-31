@@ -455,6 +455,33 @@ export type PaginaLotesEnvioBoleto = {
   size: number;
 };
 
+export type ResultadoEnvioItem = {
+  envioBoletoId: string;
+  clienteId?: string;
+  clienteNome?: string;
+  emailDestinatario?: string;
+  nomeArquivoOriginal?: string;
+  status?: string;
+  simulado?: boolean;
+  reenvio?: boolean;
+  mensagemErro?: string | null;
+  dataEnvio?: string;
+};
+
+export type ResultadoEnvioLote = {
+  loteId: string;
+  status?: string;
+  criadoEm?: string;
+  dataFinalizacao?: string;
+  quantidadeTotal?: number;
+  quantidadeEnviada?: number;
+  quantidadeComErro?: number;
+  quantidadeNaoEnviada?: number;
+  enviados: ResultadoEnvioItem[];
+  comErro: ResultadoEnvioItem[];
+  naoEnviados: ResultadoEnvioItem[];
+};
+
 /** Formato de erro da API (ajuste conforme o backend) */
 export type ApiErrorBody = {
   message?: string;

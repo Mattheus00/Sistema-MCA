@@ -1,9 +1,10 @@
 import { api, getAuthToken, isMockEnabled } from "@/lib/api";
 import {
   normalizeLoteEnvioBoletoFromApi,
+  normalizeResultadoEnvioLoteFromApi,
   normalizeValidacaoLoteFromApi,
 } from "@/lib/apiNormalizers";
-import type { LoteEnvioBoleto } from "@/types/api";
+import type { LoteEnvioBoleto, ResultadoEnvioLote } from "@/types/api";
 
 function getApiBaseUrl(): string {
   if (isMockEnabled()) return "";
@@ -34,6 +35,11 @@ export async function criarLoteEnvioBoletos(files: File[]): Promise<LoteEnvioBol
 export async function consultarLoteEnvioBoletos(loteId: string): Promise<LoteEnvioBoleto> {
   const r = await api.get(`/api/lotes-envio-boletos/${loteId}`);
   return normalizeLoteEnvioBoletoFromApi(r.data as Record<string, unknown>);
+}
+
+export async function consultarResultadoEnvioLote(loteId: string): Promise<ResultadoEnvioLote> {
+  const r = await api.get(`/api/lotes-envio-boletos/${loteId}/resultado-envio`);
+  return normalizeResultadoEnvioLoteFromApi(r.data as Record<string, unknown>);
 }
 
 export async function atualizarClienteItem(
