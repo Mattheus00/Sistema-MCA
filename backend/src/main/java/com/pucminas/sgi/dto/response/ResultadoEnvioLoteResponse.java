@@ -7,25 +7,24 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class HistoricoLoteResponse {
+public class ResultadoEnvioLoteResponse {
 
     private UUID loteId;
     private StatusLoteEnvioBoleto status;
-    private String usuarioResponsavelNome;
+    private LocalDateTime criadoEm;
+    private LocalDateTime dataFinalizacao;
     private Integer quantidadeTotal;
     private Integer quantidadeEnviada;
     private Integer quantidadeComErro;
-    /** Aliases para o frontend (mesmos valores de quantidade*). */
-    private Integer totalItens;
-    private Integer enviados;
-    private Integer erros;
-    private String criadoPor;
-    private LocalDateTime criadoEm;
-    private LocalDateTime dataFinalizacao;
+    private Integer quantidadeNaoEnviada;
+    private List<ResultadoEnvioItemResponse> enviados;
+    private List<ResultadoEnvioItemResponse> comErro;
+    private List<ResultadoEnvioItemResponse> naoEnviados;
 }

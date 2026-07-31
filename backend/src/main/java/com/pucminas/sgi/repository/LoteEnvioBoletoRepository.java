@@ -4,6 +4,7 @@ import com.pucminas.sgi.entity.LoteEnvioBoleto;
 import com.pucminas.sgi.enums.StatusLoteEnvioBoleto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -27,6 +28,7 @@ public interface LoteEnvioBoletoRepository extends JpaRepository<LoteEnvioBoleto
             AND (:filtrarEmail = false OR LOWER(i.emailDestinatario) LIKE :emailLike)
             AND (:filtrarNomeArquivo = false OR LOWER(i.nomeArquivoOriginal) LIKE :nomeArquivoLike)
             """)
+    @EntityGraph(attributePaths = "usuarioResponsavel")
     Page<LoteEnvioBoleto> buscarHistorico(
             @Param("status") StatusLoteEnvioBoleto status,
             @Param("filtrarStatus") boolean filtrarStatus,

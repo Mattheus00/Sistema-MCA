@@ -6,6 +6,7 @@ import com.pucminas.sgi.dto.response.CriarLoteEnvioResponse;
 import com.pucminas.sgi.dto.response.EnviarLoteResponse;
 import com.pucminas.sgi.dto.response.HistoricoLoteResponse;
 import com.pucminas.sgi.dto.response.LoteEnvioBoletoResponse;
+import com.pucminas.sgi.dto.response.ResultadoEnvioLoteResponse;
 import com.pucminas.sgi.dto.response.ValidacaoLoteResponse;
 import com.pucminas.sgi.entity.EnvioBoleto;
 import com.pucminas.sgi.enums.StatusLoteEnvioBoleto;
@@ -77,6 +78,15 @@ public class LoteEnvioBoletoController {
             @PathVariable UUID loteId) {
         UUID usuarioId = (UUID) authentication.getPrincipal();
         return ResponseEntity.ok(loteService.consultarLote(usuarioId, loteId));
+    }
+
+    @GetMapping("/{loteId}/resultado-envio")
+    @Operation(summary = "Resultado do envio por cliente (enviados, erros e não enviados)")
+    public ResponseEntity<ResultadoEnvioLoteResponse> consultarResultadoEnvio(
+            Authentication authentication,
+            @PathVariable UUID loteId) {
+        UUID usuarioId = (UUID) authentication.getPrincipal();
+        return ResponseEntity.ok(loteService.consultarResultadoEnvio(usuarioId, loteId));
     }
 
     @PatchMapping("/{loteId}/itens/{itemId}/cliente")

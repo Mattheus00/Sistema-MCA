@@ -14,6 +14,6 @@ public class BoletoEnvioProperties {
     private String storagePath = "./data/boletos-temp";
     private long maxFileSizeBytes = 10_485_760L;
     private String allowedContentTypes = "application/pdf";
-    private int maxFilesPerLote = 100;
+    private int maxFilesPerLote = 150;
     private String nomeEscritorio = "Contabilidade São Judas Tadeu";
 }

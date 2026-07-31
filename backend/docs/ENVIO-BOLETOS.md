@@ -13,6 +13,7 @@ Fluxo assistido para upload de PDFs de boletos (exportados manualmente do Sicoob
 | POST | `/api/lotes-envio-boletos` | multipart `arquivos` — cria lote e analisa |
 | GET | `/api/lotes-envio-boletos` | histórico paginado |
 | GET | `/api/lotes-envio-boletos/{loteId}` | detalhe do lote |
+| GET | `/api/lotes-envio-boletos/{loteId}/resultado-envio` | enviados / erros / não enviados por cliente |
 | PATCH | `.../itens/{itemId}/cliente` | correção manual |
 | PATCH | `.../itens/{itemId}/confirmar` | confirma item com confiança BAIXA |
 | PATCH | `.../itens/{itemId}/ignorar` | ignora item |
@@ -36,7 +37,7 @@ Fluxo assistido para upload de PDFs de boletos (exportados manualmente do Sicoob
 SGI_EMAIL_ENABLED=false
 SGI_BOLETOS_STORAGE_PATH=./data/boletos-temp
 SGI_BOLETOS_MAX_FILE_SIZE_BYTES=10485760
-SGI_BOLETOS_MAX_FILES_PER_LOTE=100
+SGI_BOLETOS_MAX_FILES_PER_LOTE=150
 MAIL_HOST=smtp.gmail.com
 MAIL_PORT=587
 MAIL_USERNAME=

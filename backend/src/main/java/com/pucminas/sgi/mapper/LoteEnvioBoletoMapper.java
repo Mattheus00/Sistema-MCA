@@ -5,6 +5,7 @@ import com.pucminas.sgi.dto.response.ItemEnvioBoletoResponse;
 import com.pucminas.sgi.dto.response.LoteEnvioBoletoResponse;
 import com.pucminas.sgi.dto.response.ResumoLoteEnvioResponse;
 import com.pucminas.sgi.dto.response.ResultadoEnvioItemResponse;
+import com.pucminas.sgi.dto.response.ResultadoEnvioLoteResponse;
 import com.pucminas.sgi.entity.Cliente;
 import com.pucminas.sgi.entity.EnvioBoleto;
 import com.pucminas.sgi.entity.LoteEnvioBoleto;
@@ -76,15 +77,52 @@ public class LoteEnvioBoletoMapper {
     }
 
     public HistoricoLoteResponse toHistorico(LoteEnvioBoleto lote) {
+        String criadoPor = lote.getUsuarioResponsavel() != null ? lote.getUsuarioResponsavel().getNome() : null;
+        Integer total = lote.getQuantidadeTotal();
+        Integer enviados = lote.getQuantidadeEnviada();
+        Integer erros = lote.getQuantidadeComErro();
         return HistoricoLoteResponse.builder()
                 .loteId(lote.getLoteId())
                 .status(lote.getStatus())
-                .usuarioResponsavelNome(lote.getUsuarioResponsavel().getNome())
-                .quantidadeTotal(lote.getQuantidadeTotal())
-                .quantidadeEnviada(lote.getQuantidadeEnviada())
-                .quantidadeComErro(lote.getQuantidadeComErro())
+                .usuarioResponsavelNome(criadoPor)
+                .quantidadeTotal(total)
+                .quantidadeEnviada(enviados)
+                .quantidadeComErro(erros)
+                .totalItens(total)
+                .enviados(enviados)
+                .erros(erros)
+                .criadoPor(criadoPor)
                 .criadoEm(lote.getCriadoEm())
                 .dataFinalizacao(lote.getDataFinalizacao())
+                .build();
+    }
+
+    public ResultadoEnvioLoteResponse toResultadoEnvio(LoteEnvioBoleto lote) {
+        List<ResultadoEnvioItemResponse> enviados = new ArrayList<>();
+        List<ResultadoEnvioItemResponse> comErro = new ArrayList<>();
+        List<ResultadoEnvioItemResponse> naoEnviados = new ArrayList<>();
+        for (EnvioBoleto item : lote.getItens()) {
+            ResultadoEnvioItemResponse resultado = toResultado(item);
+            if (item.getStatus() == StatusEnvioBoleto.ENVIADO) {
+                enviados.add(resultado);
+            } else if (item.getStatus() == StatusEnvioBoleto.ERRO) {
+                comErro.add(resultado);
+            } else {
+                naoEnviados.add(resultado);
+            }
+        }
+        return ResultadoEnvioLoteResponse.builder()
+                .loteId(lote.getLoteId())
+                .status(lote.getStatus())
+                .criadoEm(lote.getCriadoEm())
+                .dataFinalizacao(lote.getDataFinalizacao())
+                .quantidadeTotal(lote.getQuantidadeTotal())
+                .quantidadeEnviada(enviados.size())
+                .quantidadeComErro(comErro.size())
+                .quantidadeNaoEnviada(naoEnviados.size())
+                .enviados(enviados)
+                .comErro(comErro)
+                .naoEnviados(naoEnviados)
                 .build();
     }
 

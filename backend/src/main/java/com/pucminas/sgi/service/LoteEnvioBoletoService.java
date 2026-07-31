@@ -7,6 +7,7 @@ import com.pucminas.sgi.dto.response.CriarLoteEnvioResponse;
 import com.pucminas.sgi.dto.response.EnviarLoteResponse;
 import com.pucminas.sgi.dto.response.HistoricoLoteResponse;
 import com.pucminas.sgi.dto.response.LoteEnvioBoletoResponse;
+import com.pucminas.sgi.dto.response.ResultadoEnvioLoteResponse;
 import com.pucminas.sgi.dto.response.ResultadoEnvioItemResponse;
 import com.pucminas.sgi.dto.response.ValidacaoLoteResponse;
 import com.pucminas.sgi.entity.Cliente;
@@ -165,6 +166,13 @@ public class LoteEnvioBoletoService {
         LoteEnvioBoleto lote = buscarLoteComItens(loteId);
         atualizarStatusItensDoLote(lote);
         return mapper.toLoteResponse(lote, montarBloqueiosItens(lote.getItens()));
+    }
+
+    @Transactional(readOnly = true)
+    public ResultadoEnvioLoteResponse consultarResultadoEnvio(UUID usuarioId, UUID loteId) {
+        accessService.assertPodeGerenciarBoletos(usuarioId);
+        LoteEnvioBoleto lote = buscarLoteComItens(loteId);
+        return mapper.toResultadoEnvio(lote);
     }
 
     @Transactional(readOnly = true)
