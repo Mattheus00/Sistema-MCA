@@ -13,7 +13,7 @@ import java.util.UUID;
         @Index(name = "idx_documento_cliente_cliente", columnList = "cliente_id"),
         @Index(name = "idx_documento_cliente_divida", columnList = "divida_id"),
         @Index(name = "idx_documento_cliente_status", columnList = "status"),
-        @Index(name = "idx_documento_cliente_enviado", columnList = "enviadoEm")
+        @Index(name = "idx_documento_cliente_enviado", columnList = "enviado_em")
 })
 @Getter
 @Setter

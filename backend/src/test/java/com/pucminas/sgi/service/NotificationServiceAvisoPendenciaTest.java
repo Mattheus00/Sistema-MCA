@@ -59,6 +59,14 @@ class NotificationServiceAvisoPendenciaTest {
             assertNotNull(n.getValorComunicado());
             return n;
         });
+        when(notificacaoRepository.saveAndFlush(any(NotificacaoEmail.class))).thenAnswer(inv -> {
+            NotificacaoEmail n = inv.getArgument(0);
+            if (n.getNotificacaoId() == null) {
+                n.setNotificacaoId(UUID.randomUUID());
+            }
+            assertNotNull(n.getValorComunicado());
+            return n;
+        });
 
         MockMultipartFile pdf = new MockMultipartFile(
                 "arquivo", "aviso.pdf", "application/pdf", "%PDF-1.4 conteudo".getBytes());

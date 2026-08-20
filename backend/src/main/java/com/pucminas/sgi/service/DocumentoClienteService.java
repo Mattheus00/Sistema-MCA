@@ -14,6 +14,8 @@ import com.pucminas.sgi.portal.PortalAccessGuard;
 import com.pucminas.sgi.repository.ClienteRepository;
 import com.pucminas.sgi.repository.DocumentoClienteRepository;
 import com.pucminas.sgi.repository.UsuarioRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,8 @@ import java.util.UUID;
 
 @Service
 public class DocumentoClienteService {
+
+    private static final Logger log = LoggerFactory.getLogger(DocumentoClienteService.class);
 
     private final DocumentoClienteRepository documentoRepository;
     private final ClienteRepository clienteRepository;
@@ -143,11 +147,21 @@ public class DocumentoClienteService {
 
     @Transactional(readOnly = true)
     public ResumoDocumentosClientesDTO resumo() {
-        return ResumoDocumentosClientesDTO.builder()
-                .recebidos(documentoRepository.countByStatus(StatusDocumentoCliente.RECEBIDO))
-                .emAnalise(documentoRepository.countByStatus(StatusDocumentoCliente.EM_ANALISE))
-                .arquivados(documentoRepository.countByStatus(StatusDocumentoCliente.ARQUIVADO))
-                .build();
+        try {
+            return ResumoDocumentosClientesDTO.builder()
+                    .recebidos(documentoRepository.countByStatus(StatusDocumentoCliente.RECEBIDO))
+                    .emAnalise(documentoRepository.countByStatus(StatusDocumentoCliente.EM_ANALISE))
+                    .arquivados(documentoRepository.countByStatus(StatusDocumentoCliente.ARQUIVADO))
+                    .build();
+        } catch (RuntimeException e) {
+            // Evita derrubar a home do escritório se a tabela ainda não existir no Postgres.
+            log.warn("Falha ao montar resumo de documentos-clientes: {}", e.getMessage());
+            return ResumoDocumentosClientesDTO.builder()
+                    .recebidos(0L)
+                    .emAnalise(0L)
+                    .arquivados(0L)
+                    .build();
+        }
     }
 
     private PortalDocumentoDTO toDto(DocumentoCliente doc) {

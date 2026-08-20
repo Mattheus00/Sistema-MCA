@@ -7,6 +7,7 @@ import com.pucminas.sgi.entity.NotificacaoEmail;
 import com.pucminas.sgi.enums.StatusEnvio;
 import com.pucminas.sgi.enums.TipoNotificacao;
 import com.pucminas.sgi.exception.BusinessRuleException;
+import com.pucminas.sgi.exception.EmailSendException;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
 import com.pucminas.sgi.repository.ClienteRepository;
 import com.pucminas.sgi.repository.DividaRepository;
@@ -200,7 +201,7 @@ public class NotificationService {
      * Envia o PDF do aviso de pendência (gerado no frontend) para o e-mail do cliente via SMTP (Gmail),
      * no mesmo canal usado para boletos.
      */
-    @Transactional
+    @Transactional(noRollbackFor = EmailSendException.class)
     public NotificacaoResponseDTO enviarAvisoPendenciaPdf(UUID clienteId, MultipartFile arquivo) {
         Cliente cliente = clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cliente", clienteId));
@@ -227,15 +228,15 @@ public class NotificationService {
         String texto = AvisoPendenciaEmailTemplateBuilder.textoPlano(cliente.getNome(), nomeEscritorioCobranca);
         String html = AvisoPendenciaEmailTemplateBuilder.html(cliente.getNome(), nomeEscritorioCobranca);
 
-        BigDecimal valorComunicado = BigDecimal.ZERO;
         List<Divida> abertas = new ArrayList<>(
                 dividaRepository.findByCliente_ClienteIdAndStatusDivida(clienteId, com.pucminas.sgi.enums.StatusDivida.EM_ABERTO));
         abertas.addAll(dividaRepository.findByCliente_ClienteIdAndStatusDivida(
                 clienteId, com.pucminas.sgi.enums.StatusDivida.PARCIAL));
         abertas.addAll(dividaRepository.findByCliente_ClienteIdAndStatusDivida(
                 clienteId, com.pucminas.sgi.enums.StatusDivida.VENCIDA));
-        valorComunicado = abertas.stream()
+        BigDecimal valorComunicado = abertas.stream()
                 .map(Divida::getValorDevedor)
+                .map(v -> v != null ? v : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         NotificacaoEmail notif = NotificacaoEmail.builder()
@@ -246,12 +247,12 @@ public class NotificationService {
                 .assunto(assunto)
                 .corpoEmail(texto)
                 .corpoHtml(html)
-                .valorComunicado(valorComunicado)
+                .valorComunicado(valorComunicado != null ? valorComunicado : BigDecimal.ZERO)
                 .statusEnvio(StatusEnvio.PENDENTE)
                 .tentativas(0)
                 .proximaTentativa(LocalDateTime.now())
                 .build();
-        notif = notificacaoRepository.save(notif);
+        notif = notificacaoRepository.saveAndFlush(notif);
 
         try {
             emailGateway.enviarComAnexoPdf(
@@ -263,10 +264,17 @@ public class NotificationService {
                     nomeAnexo);
             notif.setStatusEnvio(StatusEnvio.ENVIADO);
             notif.setDataEnvio(LocalDateTime.now());
+            notif.setMensagemErro(null);
             log.info("Aviso de pendência PDF enviado para cliente {} ({})", clienteId, cliente.getEmail());
         } catch (Exception e) {
             registrarFalhaEnvio(notif, e.getMessage());
             log.warn("Falha ao enviar aviso de pendência PDF para {}: {}", clienteId, e.getMessage());
+            notificacaoRepository.save(notif);
+            throw new EmailSendException(
+                    e.getMessage() != null && !e.getMessage().isBlank()
+                            ? e.getMessage()
+                            : "Falha ao enviar o aviso de pendência por e-mail.",
+                    e);
         }
         notificacaoRepository.save(notif);
         return toResponse(notif);
