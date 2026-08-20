@@ -124,6 +124,7 @@ export default function WebEnvioBoletos() {
     setSelecionados(new Set());
     setPermitirReenvioDuplicado(false);
     setErro(null);
+    setMensagemSucesso(null);
   };
 
   async function enviarUpload() {
@@ -733,6 +734,14 @@ export default function WebEnvioBoletos() {
               </div>
 
               <div className="page-envio-boletos__acoes-principais">
+                <button
+                  type="button"
+                  className="btn btn--secondary"
+                  disabled={loading}
+                  onClick={limparNovoEnvio}
+                >
+                  Iniciar novo envio
+                </button>
                 <button
                   type="button"
                   className="btn btn--secondary"

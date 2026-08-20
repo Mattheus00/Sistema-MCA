@@ -24,6 +24,12 @@ import type {
   ValidacaoLoteEnvioBoleto,
   ConfiancaIdentificacaoBoleto,
   StatusItemEnvioBoleto,
+  DocumentoCliente,
+  ResumoDocumentosClientes,
+  PaginaDocumentosClientes,
+  PortalDocumento,
+  StatusDocumentoCliente,
+  TipoDocumentoCliente,
 } from "@/types/api";
 
 /** Prefixo gravado em `comprovante` para persistir quem confirmou. */
@@ -512,12 +518,24 @@ export function normalizeValidacaoLoteFromApi(raw: Record<string, unknown> | und
 }
 
 export function normalizeLoteEnvioBoletoFromApi(raw: Record<string, unknown>): LoteEnvioBoleto {
-  const itensRaw = Array.isArray(raw.itens) ? (raw.itens as Record<string, unknown>[]) : [];
+  let itensRaw = Array.isArray(raw.itens) ? (raw.itens as Record<string, unknown>[]) : [];
+  if (itensRaw.length === 0 && Array.isArray(raw.resultados)) {
+    itensRaw = raw.resultados as Record<string, unknown>[];
+  }
   const itens = itensRaw.map(normalizeItemEnvioBoletoFromApi);
-  const resumoRaw = raw.resumo && typeof raw.resumo === "object" ? (raw.resumo as Record<string, unknown>) : undefined;
+  const resumoEmbutido = raw.resumo && typeof raw.resumo === "object" ? (raw.resumo as Record<string, unknown>) : undefined;
+  const resumoRaw =
+    resumoEmbutido ??
+    (raw.enviados != null || raw.erros != null || raw.ignorados != null
+      ? {
+          enviados: raw.enviados,
+          erros: raw.erros,
+          ignorados: raw.ignorados,
+        }
+      : undefined);
   return {
     loteId: String(raw.loteId ?? raw.id ?? ""),
-    status: String(raw.status ?? "CONFERENCIA"),
+    status: String(raw.status ?? raw.statusLote ?? "CONFERENCIA"),
     criadoEm: raw.criadoEm != null ? String(raw.criadoEm) : raw.createdAt != null ? String(raw.createdAt) : undefined,
     enviadoEm: raw.enviadoEm != null ? String(raw.enviadoEm) : undefined,
     criadoPor: raw.criadoPor != null ? String(raw.criadoPor) : undefined,
@@ -631,4 +649,129 @@ export function normalizePaginaLotesEnvioFromApi(data: unknown): PaginaLotesEnvi
     number: 0,
     size: list.length,
   };
+}
+
+function normalizeStatusDocumentoCliente(raw: unknown): StatusDocumentoCliente {
+  const s = String(raw ?? "RECEBIDO")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/\s+/g, "_");
+  if (s === "ENVIADO" || s.includes("ENVIAD")) return "ENVIADO";
+  if (s === "EM_ANALISE" || s.includes("ANALISE")) return "EM_ANALISE";
+  if (s === "ARQUIVADO" || s.includes("ARQUIVAD")) return "ARQUIVADO";
+  return "RECEBIDO";
+}
+
+function normalizeTipoDocumentoCliente(raw: unknown): TipoDocumentoCliente {
+  const t = String(raw ?? "OUTRO").toUpperCase();
+  const validos: TipoDocumentoCliente[] = ["COMPROVANTE", "NOTA_FISCAL", "CONTRATO", "DECLARACAO", "OUTRO"];
+  return validos.includes(t as TipoDocumentoCliente) ? (t as TipoDocumentoCliente) : "OUTRO";
+}
+
+export function normalizeDocumentoClienteFromApi(raw: Record<string, unknown>): DocumentoCliente {
+  return {
+    documentoId: String(raw.documentoId ?? raw.id ?? ""),
+    clienteId: raw.clienteId != null ? String(raw.clienteId) : undefined,
+    clienteNome: raw.clienteNome != null ? String(raw.clienteNome) : undefined,
+    clienteCodigo: raw.clienteCodigo != null ? String(raw.clienteCodigo) : raw.codigo != null ? String(raw.codigo) : undefined,
+    dividaId: raw.dividaId != null ? String(raw.dividaId) : undefined,
+    protocoloDivida: raw.protocoloDivida != null ? String(raw.protocoloDivida) : undefined,
+    tipo: normalizeTipoDocumentoCliente(raw.tipo),
+    status: normalizeStatusDocumentoCliente(raw.status),
+    nomeOriginal: String(raw.nomeOriginal ?? raw.nomeArquivo ?? raw.nomeArquivoOriginal ?? "arquivo"),
+    contentType: String(raw.contentType ?? raw.mimeType ?? "application/octet-stream"),
+    tamanhoBytes: Number(raw.tamanhoBytes ?? raw.tamanho ?? 0),
+    observacaoCliente:
+      raw.observacaoCliente != null
+        ? String(raw.observacaoCliente)
+        : raw.observacao != null
+          ? String(raw.observacao)
+          : undefined,
+    respostaEscritorio: raw.respostaEscritorio != null ? String(raw.respostaEscritorio) : undefined,
+    respondidoEm: raw.respondidoEm != null ? String(raw.respondidoEm) : undefined,
+    respondidoPorNome: raw.respondidoPorNome != null ? String(raw.respondidoPorNome) : undefined,
+    enviadoEm: String(raw.enviadoEm ?? raw.criadoEm ?? raw.createdAt ?? new Date().toISOString()),
+  };
+}
+
+export function normalizeResumoDocumentosClientesFromApi(data: unknown): ResumoDocumentosClientes {
+  const raw = (data ?? {}) as Record<string, unknown>;
+  const recebidos = Number(raw.recebidos ?? 0);
+  const pendentes = raw.pendentes != null ? Number(raw.pendentes) : Number(raw.novos ?? 0);
+  return {
+    pendentes,
+    recebidos,
+    emAnalise: Number(raw.emAnalise ?? raw.em_analise ?? 0),
+    arquivados: Number(raw.arquivados ?? 0),
+  };
+}
+
+export function normalizePaginaDocumentosClientesFromApi(data: unknown): PaginaDocumentosClientes {
+  if (data && typeof data === "object" && "content" in data) {
+    const body = data as Record<string, unknown>;
+    const content = Array.isArray(body.content)
+      ? (body.content as Record<string, unknown>[]).map(normalizeDocumentoClienteFromApi)
+      : [];
+    return {
+      content,
+      totalElements: Number(body.totalElements ?? content.length),
+      totalPages: Number(body.totalPages ?? 1),
+      number: Number(body.number ?? 0),
+      size: Number(body.size ?? content.length),
+    };
+  }
+  const list = Array.isArray(data) ? (data as Record<string, unknown>[]).map(normalizeDocumentoClienteFromApi) : [];
+  return {
+    content: list,
+    totalElements: list.length,
+    totalPages: 1,
+    number: 0,
+    size: list.length,
+  };
+}
+
+export function normalizeDocumentoPortalFromApi(raw: Record<string, unknown>): PortalDocumento {
+  return {
+    id: String(raw.documentoId ?? raw.id ?? ""),
+    tipo: normalizeTipoDocumentoCliente(raw.tipo),
+    nomeArquivo:
+      raw.nomeOriginal != null
+        ? String(raw.nomeOriginal)
+        : raw.nomeArquivo != null
+          ? String(raw.nomeArquivo)
+          : raw.nomeArquivoOriginal != null
+            ? String(raw.nomeArquivoOriginal)
+            : undefined,
+    status: normalizeStatusDocumentoCliente(raw.status),
+    observacao:
+      raw.observacaoCliente != null
+        ? String(raw.observacaoCliente)
+        : raw.observacao != null
+          ? String(raw.observacao)
+          : undefined,
+    dividaId: raw.dividaId != null ? String(raw.dividaId) : undefined,
+    criadoEm:
+      raw.enviadoEm != null
+        ? String(raw.enviadoEm)
+        : raw.criadoEm != null
+          ? String(raw.criadoEm)
+          : undefined,
+    respostaEscritorio: raw.respostaEscritorio != null ? String(raw.respostaEscritorio) : undefined,
+    respondidoEm: raw.respondidoEm != null ? String(raw.respondidoEm) : undefined,
+    respondidoPorNome: raw.respondidoPorNome != null ? String(raw.respondidoPorNome) : undefined,
+  };
+}
+
+/** Lista de documentos do portal a partir de Page Spring ou array legado. */
+export function normalizePaginaDocumentosPortalFromApi(data: unknown): PortalDocumento[] {
+  if (data && typeof data === "object" && "content" in data) {
+    const body = data as Record<string, unknown>;
+    const content = Array.isArray(body.content) ? body.content : [];
+    return (content as Record<string, unknown>[]).map(normalizeDocumentoPortalFromApi);
+  }
+  if (Array.isArray(data)) {
+    return (data as Record<string, unknown>[]).map(normalizeDocumentoPortalFromApi);
+  }
+  return [];
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { clearAuthSession, getAuthToken, getAuthUserDisplay, getAuthUserProfile, isMockEnabled } from '@/lib/api'
+import { obterContagemDocumentosNovos, DOCUMENTOS_CLIENTES_RESUMO_INVALIDATE_EVENT } from '@/lib/documentosClientesApi'
 import { iniciaisNome, labelPerfilUsuario } from '@/lib/dashboardUtils'
 
 function GridIcon() {
@@ -91,8 +92,20 @@ function UserIcon() {
   )
 }
 
+function DocumentosPortalIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <path d="M12 18v-6" />
+      <path d="M9 15h6" />
+    </svg>
+  )
+}
+
 export default function Layout() {
   const navigate = useNavigate()
+  const location = useLocation()
   const SIDEBAR_HIDDEN_KEY = 'sgi_sidebar_hidden'
   const showSair = !isMockEnabled() && !!getAuthToken()
   const userDisplay = getAuthUserDisplay() || 'Usuário'
@@ -100,6 +113,8 @@ export default function Layout() {
   const [sidebarHidden, setSidebarHidden] = useState(false)
   const isProprietaria = userProfile === 'PROPRIETARIA'
   const podeVerEnvioBoletos = userProfile === 'PROPRIETARIA' || userProfile === 'RESPONSAVEL_FINANCEIRO'
+  const podeVerDocumentosPortal = podeVerEnvioBoletos
+  const [badgeDocumentos, setBadgeDocumentos] = useState(0)
   const navItems = [
     { to: '/dashboard', label: 'Dashboard', icon: GridIcon },
     { to: '/clientes', label: 'Clientes', icon: PeopleIcon },
@@ -108,6 +123,14 @@ export default function Layout() {
     { to: '/reforma-tributaria', label: 'Simulador', icon: CalculatorIcon },
     { to: '/relatorios', label: 'Relatórios', icon: ChartIcon },
     ...(podeVerEnvioBoletos ? [{ to: '/envio-boletos', label: 'Envio de boletos', icon: EmailAttachIcon, badge: 'Novo' as const }] : []),
+    ...(podeVerDocumentosPortal
+      ? [{
+          to: '/documentos-clientes',
+          label: 'Documentos do portal',
+          icon: DocumentosPortalIcon,
+          badge: badgeDocumentos > 0 ? String(badgeDocumentos > 9 ? '9+' : badgeDocumentos) : undefined,
+        }]
+      : []),
     ...(isProprietaria ? [{ to: '/usuarios', label: 'Usuários', icon: UserIcon }] : []),
   ]
 
@@ -115,6 +138,24 @@ export default function Layout() {
     clearAuthSession()
     navigate('/login', { replace: true })
   }
+
+  useEffect(() => {
+    if (!podeVerDocumentosPortal) return
+    let ativo = true
+    function atualizarBadge() {
+      obterContagemDocumentosNovos()
+        .then((n) => {
+          if (ativo) setBadgeDocumentos(n)
+        })
+        .catch(() => {})
+    }
+    atualizarBadge()
+    window.addEventListener(DOCUMENTOS_CLIENTES_RESUMO_INVALIDATE_EVENT, atualizarBadge)
+    return () => {
+      ativo = false
+      window.removeEventListener(DOCUMENTOS_CLIENTES_RESUMO_INVALIDATE_EVENT, atualizarBadge)
+    }
+  }, [podeVerDocumentosPortal, location.pathname])
 
   useEffect(() => {
     if (typeof localStorage === 'undefined') return

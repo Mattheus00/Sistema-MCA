@@ -29,6 +29,18 @@
   box-sizing: border-box;
 }
 
+body:has(.portal-app) {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+#root:has(.portal-app) {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   min-width: 320px;

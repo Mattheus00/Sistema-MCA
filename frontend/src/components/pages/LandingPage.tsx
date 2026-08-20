@@ -187,6 +187,9 @@ export default function LandingPage() {
               ))}
             </ul>
             <div className="landing-header__actions">
+              <Link to="/portal/login" className="landing-btn landing-btn--ghost" onClick={() => setNavOpen(false)}>
+                Área do Cliente
+              </Link>
               <button type="button" className="landing-btn landing-btn--ghost" onClick={() => scrollToId("#contato")}>
                 Solicitar proposta
               </button>
@@ -332,6 +335,9 @@ export default function LandingPage() {
             MCA-Serviços Contábeis Ltda - CNPJ 07.797.964/0001-51 | MCA-Serviços Contábeis Ltda •{" "}
             {new Date().getFullYear()} Todos os Direitos Reservados.
           </p>
+          <Link to="/portal/login" className="landing-footer__link">
+            Área do Cliente
+          </Link>
           <Link to="/login" className="landing-footer__link">
             Acesso do funcionário
           </Link>

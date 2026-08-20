@@ -482,6 +482,108 @@ export type ResultadoEnvioLote = {
   naoEnviados: ResultadoEnvioItem[];
 };
 
+/** --- Área do Cliente (portal self-service) --- */
+
+export type TipoDocumentoCliente = "COMPROVANTE" | "NOTA_FISCAL" | "CONTRATO" | "DECLARACAO" | "OUTRO";
+
+export type StatusDocumentoCliente = "ENVIADO" | "RECEBIDO" | "EM_ANALISE" | "ARQUIVADO";
+
+export type PortalLoginResponse = {
+  token: string;
+  clienteId?: string;
+  clienteNome?: string;
+  nome?: string;
+};
+
+export type PortalResumo = {
+  saldoDevedorTotal: number;
+  quantidadeDividasAbertas: number;
+  quantidadeDividasVencidas: number;
+  clienteNome?: string;
+};
+
+export type PortalDivida = {
+  id: string;
+  protocolo?: string;
+  descricao?: string;
+  vencimento?: string;
+  valorDevedor?: number;
+  valor?: number;
+  status?: string;
+  diasAtraso?: number;
+};
+
+export type PortalPagamentoHistorico = {
+  id?: string;
+  dataPagamento?: string;
+  valor?: number;
+  metodo?: string;
+};
+
+export type PortalDividaDetalhe = PortalDivida & {
+  valorOriginal?: number;
+  juros?: number;
+  pagamentos?: PortalPagamentoHistorico[];
+};
+
+export type PortalDocumento = {
+  id: string;
+  tipo: TipoDocumentoCliente;
+  nomeArquivo?: string;
+  status: StatusDocumentoCliente;
+  observacao?: string;
+  dividaId?: string;
+  criadoEm?: string;
+  respostaEscritorio?: string;
+  respondidoEm?: string;
+  respondidoPorNome?: string;
+};
+
+export type PortalExtrato = {
+  movimentacoes?: Array<{
+    data: string;
+    descricao: string;
+    valor: number;
+    tipo: string;
+  }>;
+};
+
+/** Documentos enviados pelo portal — visão staff (escritório) */
+export interface DocumentoCliente {
+  documentoId: string;
+  clienteId?: string;
+  clienteNome?: string;
+  clienteCodigo?: string;
+  dividaId?: string;
+  protocoloDivida?: string;
+  tipo: TipoDocumentoCliente;
+  status: StatusDocumentoCliente;
+  nomeOriginal: string;
+  contentType: string;
+  tamanhoBytes: number;
+  observacaoCliente?: string;
+  respostaEscritorio?: string;
+  respondidoEm?: string;
+  respondidoPorNome?: string;
+  enviadoEm: string;
+}
+
+export interface ResumoDocumentosClientes {
+  /** Documentos novos enviados pelo cliente, ainda não confirmados pelo escritório */
+  pendentes: number;
+  recebidos: number;
+  emAnalise: number;
+  arquivados: number;
+}
+
+export interface PaginaDocumentosClientes {
+  content: DocumentoCliente[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
 /** Formato de erro da API (ajuste conforme o backend) */
 export type ApiErrorBody = {
   message?: string;

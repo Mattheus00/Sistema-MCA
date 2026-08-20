@@ -79,10 +79,7 @@ export async function enviarLoteEnvioBoletos(
   const body: { permitirReenvioDuplicado?: boolean; itemIds?: string[] } = {};
   if (opcoes?.permitirReenvioDuplicado) body.permitirReenvioDuplicado = true;
   if (opcoes?.itemIds && opcoes.itemIds.length > 0) body.itemIds = opcoes.itemIds;
-  const r = await api.post(`/api/lotes-envio-boletos/${loteId}/enviar`, body);
-  if (r.data && typeof r.data === "object" && "loteId" in (r.data as object)) {
-    return normalizeLoteEnvioBoletoFromApi(r.data as Record<string, unknown>);
-  }
+  await api.post(`/api/lotes-envio-boletos/${loteId}/enviar`, body);
   return consultarLoteEnvioBoletos(loteId);
 }
 

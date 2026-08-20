@@ -20,6 +20,10 @@ import type {
   LoteEnvioBoletoResumo,
   ResultadoEnvioItem,
   ResultadoEnvioLote,
+  PortalDocumento,
+  TipoDocumentoCliente,
+  DocumentoCliente,
+  ResumoDocumentosClientes,
 } from "@/types/api";
 
 function idItemEnvioBoleto(item: ItemEnvioBoleto): string {
@@ -56,7 +60,12 @@ const store = {
     },
   ],
   lotesEnvioBoletos: [] as LoteEnvioBoleto[],
+  portalContas: [] as Array<{ cpfCnpj: string; email: string; senha: string; clienteId: string; nome: string }>,
+  portalDocumentos: [] as Array<PortalDocumento & { clienteId: string }>,
+  documentosClientes: [] as DocumentoCliente[],
 };
+
+let nextDocumentoStaffId = 1;
 
 let nextLoteId = 1;
 let nextItemId = 1;
@@ -302,7 +311,84 @@ function seedScreenshotDemoData() {
   });
 }
 
+let nextPortalDocId = 1;
+
+function readPortalToken(): string | null {
+  return readAuthItem("sgi_portal_token");
+}
+
+function getPortalSessao() {
+  const token = readPortalToken();
+  if (!token?.startsWith("portal-mock-")) return null;
+  const clienteId = token.replace("portal-mock-", "");
+  const cliente = getCliente(clienteId);
+  if (!cliente?.id) return null;
+  return { clienteId: cliente.id, nome: cliente.nome };
+}
+
+function dividasAbertasCliente(clienteId: string) {
+  return store.inadimplentes.filter((d) => d.clienteId === clienteId && String(d.status ?? "EmAberto").toLowerCase() !== "pago");
+}
+
+function mapDividaPortal(d: Inadimplencia) {
+  const atraso = diasAtraso(d.vencimento);
+  return {
+    id: String(d.id),
+    protocolo: protocolo(d.id ?? "0", d.vencimento),
+    descricao: d.descricao,
+    vencimento: d.vencimento,
+    valorDevedor: d.valor,
+    valor: d.valor,
+    status: d.status ?? "EmAberto",
+    diasAtraso: atraso,
+  };
+}
+
+function seedPortalMockData() {
+  if (import.meta.env.VITE_USE_MOCK !== "true" && import.meta.env.VITE_USE_MOCK !== "1") return;
+  if (store.portalContas.length > 0) return;
+  if (store.clientes.length === 0) {
+    store.clientes.push({
+      id: "portal-demo",
+      nome: "Cliente Portal Demo",
+      email: "cliente@demo.com",
+      cpf: "529.982.247-25",
+      situacao: "Inadimplente",
+    });
+    store.inadimplentes.push(
+      {
+        id: "portal-d1",
+        clienteId: "portal-demo",
+        valor: 1500,
+        valorOriginal: 1200,
+        juros: 300,
+        vencimento: "2025-06-01",
+        descricao: "Honorários contábeis — maio/2025",
+        status: "EmAberto",
+      },
+      {
+        id: "portal-d2",
+        clienteId: "portal-demo",
+        valor: 800,
+        vencimento: "2026-02-10",
+        descricao: "Declaração anual",
+        status: "EmAberto",
+      }
+    );
+  }
+  const c = store.clientes[0];
+  if (!c?.id) return;
+  store.portalContas.push({
+    cpfCnpj: (c.cpf ?? "").replace(/\D/g, ""),
+    email: (c.email ?? "cliente@demo.com").toLowerCase(),
+    senha: "123456",
+    clienteId: c.id,
+    nome: c.nome,
+  });
+}
+
 seedScreenshotDemoData();
+seedPortalMockData();
 
 function nextIdCliente(): string {
   return String(nextId++);
@@ -355,7 +441,7 @@ function mapSituacaoToStatusCliente(situacao: Cliente["situacao"]): string {
 }
 
 function filtrarClientesMock(params: URLSearchParams): Cliente[] {
-  const busca = (params.get("busca") ?? params.get("nome") ?? "").trim().toLowerCase();
+  const busca = (params.get("busca") ?? params.get("termo") ?? params.get("nome") ?? "").trim().toLowerCase();
   const status = params.get("statusCliente")?.toUpperCase();
 
   return store.clientes.filter((c) => {
@@ -377,9 +463,276 @@ function filtrarClientesMock(params: URLSearchParams): Cliente[] {
   });
 }
 
+function ensureMockClientesParaDocumentosStaff() {
+  if (store.clientes.length > 0) return;
+  store.clientes.push({
+    id: "mock-cli-1",
+    codigo: "99",
+    nome: "Cliente Portal Demo",
+    email: "cliente@demo.com",
+    cpf: "123.456.789-00",
+    situacao: "Ativo",
+  });
+}
+
+function seedDocumentosClientesStaffMock() {
+  ensureMockClientesParaDocumentosStaff();
+  if (store.documentosClientes.length > 0) return;
+  const cliente = store.clientes[0];
+  store.documentosClientes.push(
+    {
+      documentoId: `doc-staff-${nextDocumentoStaffId++}`,
+      clienteId: cliente.id,
+      clienteNome: cliente.nome,
+      clienteCodigo: cliente.codigo,
+      tipo: "COMPROVANTE",
+      status: "ENVIADO",
+      nomeOriginal: "comprovante-pagamento.pdf",
+      contentType: "application/pdf",
+      tamanhoBytes: 245_760,
+      observacaoCliente: "Segue comprovante do pagamento referente aos honorários.",
+      enviadoEm: "2026-03-10T14:30:00",
+    },
+    {
+      documentoId: `doc-staff-${nextDocumentoStaffId++}`,
+      clienteId: cliente.id,
+      clienteNome: cliente.nome,
+      clienteCodigo: cliente.codigo,
+      tipo: "NOTA_FISCAL",
+      status: "EM_ANALISE",
+      nomeOriginal: "nota-fiscal.pdf",
+      contentType: "application/pdf",
+      tamanhoBytes: 128_000,
+      observacaoCliente: "Nota fiscal para conferência.",
+      respostaEscritorio: "Recebemos o documento. Estamos conferindo.",
+      respondidoEm: "2026-03-11T09:15:00",
+      respondidoPorNome: "Responsável Financeiro",
+      enviadoEm: "2026-03-09T10:00:00",
+    }
+  );
+}
+
+function filtrarDocumentosStaffMock(params: Record<string, unknown>): DocumentoCliente[] {
+  seedDocumentosClientesStaffMock();
+  sincronizarDocumentosPortalParaStaff();
+  let list = [...store.documentosClientes];
+  const clienteId = params.clienteId != null ? String(params.clienteId) : "";
+  const status = params.status != null ? String(params.status).toUpperCase() : "";
+  const tipo = params.tipo != null ? String(params.tipo).toUpperCase() : "";
+  if (clienteId) list = list.filter((d) => d.clienteId === clienteId);
+  if (status) list = list.filter((d) => d.status === status);
+  if (tipo) list = list.filter((d) => d.tipo === tipo);
+  return list.sort((a, b) => b.enviadoEm.localeCompare(a.enviadoEm));
+}
+
+function paginarDocumentosStaffMock(list: DocumentoCliente[], page: number, size: number) {
+  const start = page * size;
+  const content = list.slice(start, start + size);
+  return {
+    content,
+    totalElements: list.length,
+    totalPages: Math.max(1, Math.ceil(list.length / Math.max(size, 1))),
+    number: page,
+    size,
+  };
+}
+
+function resumoDocumentosStaffMock(): ResumoDocumentosClientes {
+  seedDocumentosClientesStaffMock();
+  sincronizarDocumentosPortalParaStaff();
+  return {
+    pendentes: store.documentosClientes.filter((d) => d.status === "ENVIADO").length,
+    recebidos: store.documentosClientes.filter((d) => d.status === "RECEBIDO").length,
+    emAnalise: store.documentosClientes.filter((d) => d.status === "EM_ANALISE").length,
+    arquivados: store.documentosClientes.filter((d) => d.status === "ARQUIVADO").length,
+  };
+}
+
+function getDocumentoStaffMock(id: string): DocumentoCliente | undefined {
+  sincronizarDocumentosPortalParaStaff();
+  return store.documentosClientes.find((d) => d.documentoId === id);
+}
+
+type PortalDocumentoStore = PortalDocumento & { clienteId: string };
+
+function staffFromPortalDoc(doc: PortalDocumentoStore): DocumentoCliente {
+  const cliente = store.clientes.find((c) => c.id === doc.clienteId);
+  return {
+    documentoId: doc.id,
+    clienteId: doc.clienteId,
+    clienteNome: cliente?.nome,
+    clienteCodigo: cliente?.codigo,
+    dividaId: doc.dividaId,
+    tipo: doc.tipo,
+    status: doc.status,
+    nomeOriginal: doc.nomeArquivo ?? "documento",
+    contentType: "application/octet-stream",
+    tamanhoBytes: 0,
+    observacaoCliente: doc.observacao,
+    respostaEscritorio: doc.respostaEscritorio,
+    respondidoEm: doc.respondidoEm,
+    respondidoPorNome: doc.respondidoPorNome,
+    enviadoEm: doc.criadoEm ?? new Date().toISOString(),
+  };
+}
+
+function upsertStaffFromPortalDoc(doc: PortalDocumentoStore) {
+  const idx = store.documentosClientes.findIndex((d) => d.documentoId === doc.id);
+  const staff = staffFromPortalDoc(doc);
+  if (idx >= 0) {
+    const existing = store.documentosClientes[idx];
+    store.documentosClientes[idx] = {
+      ...staff,
+      ...existing,
+      clienteNome: existing.clienteNome ?? staff.clienteNome,
+      clienteCodigo: existing.clienteCodigo ?? staff.clienteCodigo,
+      nomeOriginal: existing.nomeOriginal || staff.nomeOriginal,
+      observacaoCliente: existing.observacaoCliente ?? staff.observacaoCliente,
+    };
+  } else {
+    store.documentosClientes.unshift(staff);
+  }
+}
+
+function syncPortalFromStaff(staff: DocumentoCliente) {
+  const idx = store.portalDocumentos.findIndex((d) => d.id === staff.documentoId);
+  if (idx < 0) return;
+  const portal = store.portalDocumentos[idx];
+  store.portalDocumentos[idx] = {
+    ...portal,
+    status: staff.status,
+    respostaEscritorio: staff.respostaEscritorio,
+    respondidoEm: staff.respondidoEm,
+    respondidoPorNome: staff.respondidoPorNome,
+  };
+}
+
+function sincronizarDocumentosPortalParaStaff() {
+  for (const doc of store.portalDocumentos) {
+    if (!store.documentosClientes.some((d) => d.documentoId === doc.id)) {
+      store.documentosClientes.unshift(staffFromPortalDoc(doc));
+    }
+  }
+}
+
 export function createMockClient() {
   return {
     get<T = unknown>(url: string, config?: { params?: Record<string, unknown> }) {
+      const matchDocsCliente = url.match(/^\/api\/clientes\/([\w-]+)\/documentos$/);
+      if (matchDocsCliente) {
+        const clienteId = matchDocsCliente[1];
+        const params = config?.params ?? {};
+        const page = Number(params.page ?? 0);
+        const size = Number(params.size ?? 20);
+        const list = filtrarDocumentosStaffMock({ ...params, clienteId });
+        return Promise.resolve({ data: paginarDocumentosStaffMock(list, page, size) } as { data: T });
+      }
+      if (url.startsWith("/api/documentos-clientes")) {
+        const matchArquivo = url.match(/^\/api\/documentos-clientes\/([\w-]+)\/arquivo$/);
+        if (matchArquivo) {
+          const doc = getDocumentoStaffMock(matchArquivo[1]);
+          if (!doc) return Promise.reject(new Error("Documento não encontrado."));
+          const blob = new Blob([`Mock arquivo: ${doc.nomeOriginal}`], { type: doc.contentType });
+          return Promise.resolve({ data: blob } as { data: T });
+        }
+        const matchId = url.match(/^\/api\/documentos-clientes\/([\w-]+)$/);
+        if (matchId) {
+          const doc = getDocumentoStaffMock(matchId[1]);
+          if (!doc) return Promise.reject(new Error("Documento não encontrado."));
+          return Promise.resolve({ data: doc } as { data: T });
+        }
+        if (url === "/api/documentos-clientes/resumo") {
+          return Promise.resolve({ data: resumoDocumentosStaffMock() } as { data: T });
+        }
+        if (url === "/api/documentos-clientes") {
+          const params = config?.params ?? {};
+          const page = Number(params.page ?? 0);
+          const size = Number(params.size ?? 20);
+          const list = filtrarDocumentosStaffMock(params);
+          return Promise.resolve({ data: paginarDocumentosStaffMock(list, page, size) } as { data: T });
+        }
+      }
+      if (url.startsWith("/api/portal/")) {
+        const sessao = getPortalSessao();
+        if (url === "/api/portal/resumo") {
+          if (!sessao) return Promise.reject(new Error("Não autorizado."));
+          const abertas = dividasAbertasCliente(sessao.clienteId);
+          const vencidas = abertas.filter((d) => diasAtraso(d.vencimento) > 0);
+          const saldo = abertas.reduce((s, d) => s + (d.valor ?? 0), 0);
+          return Promise.resolve({
+            data: {
+              saldoDevedorTotal: saldo,
+              quantidadeDividasAbertas: abertas.length,
+              quantidadeDividasVencidas: vencidas.length,
+              clienteNome: sessao.nome,
+            },
+          } as { data: T });
+        }
+        if (url.startsWith("/api/portal/dividas")) {
+          if (!sessao) return Promise.reject(new Error("Não autorizado."));
+          const matchId = url.match(/^\/api\/portal\/dividas\/([\w-]+)$/);
+          if (matchId) {
+            const d = store.inadimplentes.find((i) => i.id === matchId[1] && i.clienteId === sessao.clienteId);
+            if (!d) return Promise.reject(new Error("Dívida não encontrada."));
+            const pags = store.pagamentos
+              .filter((p) => p.dividaId === d.id)
+              .map((p) => ({
+                id: p.pagamentoId,
+                dataPagamento: p.dataPagamento,
+                valor: p.valorPago,
+                metodo: p.metodoPagamento ?? "PIX",
+              }));
+            return Promise.resolve({
+              data: {
+                ...mapDividaPortal(d),
+                valorOriginal: d.valorOriginal,
+                juros: d.juros,
+                pagamentos: pags,
+              },
+            } as { data: T });
+          }
+          const abertas = dividasAbertasCliente(sessao.clienteId).map(mapDividaPortal);
+          return Promise.resolve({ data: abertas } as { data: T });
+        }
+        if (url === "/api/portal/extrato") {
+          if (!sessao) return Promise.reject(new Error("Não autorizado."));
+          const movimentacoes = dividasAbertasCliente(sessao.clienteId).map((d) => ({
+            data: d.vencimento,
+            descricao: d.descricao ?? "Dívida",
+            valor: d.valor ?? 0,
+            tipo: "DEBITO",
+          }));
+          return Promise.resolve({ data: { movimentacoes } } as { data: T });
+        }
+        if (url === "/api/portal/documentos") {
+          if (!sessao) return Promise.reject(new Error("Não autorizado."));
+          const params = config?.params ?? {};
+          const page = Number(params.page ?? 0);
+          const size = Number(params.size ?? 20);
+          const docs = store.portalDocumentos
+            .filter((d) => d.clienteId === sessao.clienteId)
+            .map(({ clienteId: _c, ...doc }) => doc);
+          const start = page * size;
+          const content = docs.slice(start, start + size);
+          return Promise.resolve({
+            data: {
+              content,
+              totalElements: docs.length,
+              totalPages: Math.max(1, Math.ceil(docs.length / Math.max(size, 1))),
+              number: page,
+              size,
+            },
+          } as { data: T });
+        }
+        const matchDownload = url.match(/^\/api\/portal\/documentos\/([\w-]+)\/download$/);
+        if (matchDownload) {
+          const doc = store.portalDocumentos.find((d) => d.id === matchDownload[1]);
+          if (!doc) return Promise.reject(new Error("Documento não encontrado."));
+          const blob = new Blob([`Mock documento: ${doc.nomeArquivo}`], { type: "application/octet-stream" });
+          return Promise.resolve({ data: blob } as { data: T });
+        }
+        return Promise.reject(new Error(`Mock: rota portal não encontrada: ${url}`));
+      }
       if (url.startsWith("/api/clientes")) {
         const urlObj = new URL(url, "http://mock.local");
         const params = config?.params ?? {};
@@ -823,6 +1176,72 @@ export function createMockClient() {
     },
 
     post<T = unknown>(url: string, body: unknown) {
+      if (url === "/api/portal/auth/login") {
+        const payload = (body ?? {}) as { cpfCnpj?: string; senha?: string };
+        const doc = String(payload.cpfCnpj ?? "").replace(/\D/g, "");
+        const senha = String(payload.senha ?? "");
+        const conta = store.portalContas.find((c) => c.cpfCnpj === doc);
+        if (!conta || conta.senha !== senha) {
+          return Promise.reject(new Error("CPF/CNPJ ou senha inválidos."));
+        }
+        return Promise.resolve({
+          data: {
+            token: `portal-mock-${conta.clienteId}`,
+            clienteId: conta.clienteId,
+            clienteNome: conta.nome,
+          },
+        } as { data: T });
+      }
+      if (url === "/api/portal/auth/ativar") {
+        const payload = (body ?? {}) as { cpfCnpj?: string; email?: string; senha?: string; confirmarSenha?: string };
+        const doc = String(payload.cpfCnpj ?? "").replace(/\D/g, "");
+        const email = String(payload.email ?? "").trim().toLowerCase();
+        const senha = String(payload.senha ?? "");
+        const confirmarSenha = String(payload.confirmarSenha ?? "");
+        if (senha !== confirmarSenha) {
+          return Promise.reject(new Error("Confirmação de senha não confere."));
+        }
+        const cliente = store.clientes.find((c) => (c.cpf ?? "").replace(/\D/g, "") === doc);
+        if (!cliente?.id) return Promise.reject(new Error("Cliente não encontrado para o CPF/CNPJ informado."));
+        if ((cliente.email ?? "").trim().toLowerCase() !== email) {
+          return Promise.reject(new Error("E-mail não confere com o cadastro do escritório."));
+        }
+        const existente = store.portalContas.findIndex((c) => c.cpfCnpj === doc);
+        const conta = { cpfCnpj: doc, email, senha, clienteId: cliente.id, nome: cliente.nome };
+        if (existente >= 0) store.portalContas[existente] = conta;
+        else store.portalContas.push(conta);
+        return Promise.resolve({
+          data: {
+            token: `portal-mock-${cliente.id}`,
+            clienteId: cliente.id,
+            clienteNome: cliente.nome,
+          },
+        } as { data: T });
+      }
+      if (url === "/api/portal/documentos") {
+        const sessao = getPortalSessao();
+        if (!sessao) return Promise.reject(new Error("Não autorizado."));
+        const form = body as FormData;
+        const arquivo = form instanceof FormData ? form.get("arquivo") : null;
+        const tipo = (form instanceof FormData ? String(form.get("tipo") ?? "OUTRO") : "OUTRO") as TipoDocumentoCliente;
+        const dividaId = form instanceof FormData ? String(form.get("dividaId") ?? "") : "";
+        const observacao = form instanceof FormData ? String(form.get("observacao") ?? "") : "";
+        const nomeArquivo =
+          arquivo && typeof arquivo === "object" && "name" in arquivo ? String((arquivo as File).name) : "documento.pdf";
+        const doc: PortalDocumento & { clienteId: string } = {
+          id: `pdoc-${nextPortalDocId++}`,
+          tipo,
+          nomeArquivo,
+          status: "ENVIADO",
+          observacao: observacao || undefined,
+          dividaId: dividaId || undefined,
+          criadoEm: new Date().toISOString(),
+          clienteId: sessao.clienteId,
+        };
+        store.portalDocumentos.unshift(doc);
+        upsertStaffFromPortalDoc(doc);
+        return Promise.resolve({ data: doc } as { data: T });
+      }
       if (url === "/api/auth/login") {
         const payload = (body ?? {}) as { login?: string; senha?: string };
         const login = String(payload.login ?? "").trim();
@@ -1041,6 +1460,36 @@ export function createMockClient() {
         } as { data: T });
       }
 
+      if (url === "/api/notificacoes/enviar-aviso-pendencia") {
+        const form = body as FormData;
+        const clienteId =
+          form instanceof FormData ? String(form.get("clienteId") ?? "") : String((body as { clienteId?: string })?.clienteId ?? "");
+        const cliente = store.clientes.find((c) => c.id === clienteId);
+        const email = (cliente?.email ?? "").trim();
+        if (!email) {
+          return Promise.resolve({
+            data: {
+              clienteId,
+              tipo: "AVISO_PENDENCIA",
+              statusEnvio: "FALHOU",
+              mensagemErro: "Cliente sem e-mail cadastrado.",
+            },
+          } as { data: T });
+        }
+        return Promise.resolve({
+          data: {
+            notificacaoId: `aviso-mock-${Date.now()}`,
+            clienteId,
+            tipo: "AVISO_PENDENCIA",
+            emailDestino: email,
+            assunto: "Aviso de pendência",
+            statusEnvio: "ENVIADO",
+            tentativas: 1,
+            dataEnvio: new Date().toISOString(),
+          },
+        } as { data: T });
+      }
+
       const matchPix = url.match(/^\/api\/sicoob\/dividas\/([\w-]+)\/pix$/);
       if (matchPix) {
         const dividaId = matchPix[1];
@@ -1088,6 +1537,37 @@ export function createMockClient() {
     },
 
     patch<T = unknown>(url: string, body: unknown) {
+      const matchStatusDoc = url.match(/^\/api\/documentos-clientes\/([\w-]+)\/status$/);
+      if (matchStatusDoc) {
+        const docId = matchStatusDoc[1];
+        const idx = store.documentosClientes.findIndex((d) => d.documentoId === docId);
+        if (idx < 0) return Promise.reject(new Error("Documento não encontrado."));
+        const payload = (body ?? {}) as { status?: string };
+        const novoStatus = String(payload.status ?? "RECEBIDO").toUpperCase() as DocumentoCliente["status"];
+        store.documentosClientes[idx] = { ...store.documentosClientes[idx], status: novoStatus };
+        syncPortalFromStaff(store.documentosClientes[idx]);
+        return Promise.resolve({ data: { ...store.documentosClientes[idx] } } as { data: T });
+      }
+      const matchRespostaDoc = url.match(/^\/api\/documentos-clientes\/([\w-]+)\/resposta$/);
+      if (matchRespostaDoc) {
+        const docId = matchRespostaDoc[1];
+        const idx = store.documentosClientes.findIndex((d) => d.documentoId === docId);
+        if (idx < 0) return Promise.reject(new Error("Documento não encontrado."));
+        const payload = (body ?? {}) as { resposta?: string };
+        const resposta = String(payload.resposta ?? "").trim();
+        if (!resposta) return Promise.reject(new Error("Informe a resposta ao cliente."));
+        const atual = store.documentosClientes[idx];
+        const atualizado: DocumentoCliente = {
+          ...atual,
+          respostaEscritorio: resposta,
+          respondidoEm: new Date().toISOString(),
+          respondidoPorNome: readAuthItem("sgi_user_display") ?? "Escritório",
+          status: atual.status === "RECEBIDO" || atual.status === "ENVIADO" ? "EM_ANALISE" : atual.status,
+        };
+        store.documentosClientes[idx] = atualizado;
+        syncPortalFromStaff(atualizado);
+        return Promise.resolve({ data: { ...atualizado } } as { data: T });
+      }
       const matchItemCliente = url.match(/^\/api\/lotes-envio-boletos\/([\w-]+)\/itens\/([\w-]+)\/cliente$/);
       if (matchItemCliente) {
         const [, loteId, itemId] = matchItemCliente;

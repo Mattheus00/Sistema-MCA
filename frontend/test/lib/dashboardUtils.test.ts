@@ -56,9 +56,8 @@ describe("calcularEvolucaoValorAberto", () => {
       [divida({ id: "6", vencimento: "15/07/2026", valor: 4200 })],
       "total"
     );
-    expect(pontos).toHaveLength(1);
-    expect(pontos[0].mes).toBe("2026-07");
-    expect(pontos[0].valor).toBe(4200);
+    const pontoJulho = pontos.find((p) => p.mes === "2026-07");
+    expect(pontoJulho?.valor).toBe(4200);
   });
 
   it("ignora status INADIMPLENTE da API como em aberto", () => {

@@ -133,10 +133,10 @@ function computePageSlices(
 const MIN_SINGLE_PAGE_SCALE = 0.72;
 
 /**
- * Renderiza HTML offscreen → canvas → PDF A4.
+ * Renderiza HTML offscreen → canvas → PDF A4 e devolve Blob.
  * Prefere 1 página (escalando um pouco); se precisar de várias, evita buracos grandes.
  */
-async function renderHtmlToPdf(html: string, filename: string): Promise<void> {
+async function renderHtmlToPdfBlob(html: string): Promise<Blob> {
   const host = document.createElement("div");
   host.setAttribute("aria-hidden", "true");
   host.style.cssText =
@@ -189,8 +189,7 @@ async function renderHtmlToPdf(html: string, filename: string): Promise<void> {
       const h = canvas.height * ratio;
       const x = (pageWidth - w) / 2;
       pdf.addImage(canvas.toDataURL("image/png"), "PNG", x, 0, w, h, undefined, "FAST");
-      pdf.save(filename);
-      return;
+      return pdf.output("blob");
     }
 
     const scale = canvas.height / cssHeight;
@@ -235,10 +234,37 @@ async function renderHtmlToPdf(html: string, filename: string): Promise<void> {
       );
     });
 
-    pdf.save(filename);
+    return pdf.output("blob");
   } finally {
     document.body.removeChild(host);
   }
+}
+
+function baixarBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Gera o PDF do aviso de pendência (1 ou mais períodos) e devolve Blob + nome do arquivo.
+ */
+export async function gerarAvisoPendenciaPdfBlob(
+  itensOuItem: Inadimplencia | Inadimplencia[],
+  nomeCliente: string
+): Promise<{ blob: Blob; filename: string }> {
+  const itens = Array.isArray(itensOuItem) ? itensOuItem : [itensOuItem];
+  if (itens.length === 0) {
+    throw new Error("Nenhuma cobrança para incluir no PDF.");
+  }
+  const filename = nomeArquivoPdf(itens, nomeCliente);
+  const qrCodeSrc = await fetchPixQrCodeDataUrl(180);
+  const html = buildAvisoPendenciaHtml({ itens, nomeCliente, qrCodeSrc });
+  const blob = await renderHtmlToPdfBlob(html);
+  return { blob, filename };
 }
 
 /**
@@ -248,11 +274,6 @@ export async function gerarEBaixarAvisoPendenciaPdf(
   itensOuItem: Inadimplencia | Inadimplencia[],
   nomeCliente: string
 ): Promise<void> {
-  const itens = Array.isArray(itensOuItem) ? itensOuItem : [itensOuItem];
-  if (itens.length === 0) {
-    throw new Error("Nenhuma cobrança para incluir no PDF.");
-  }
-  const qrCodeSrc = await fetchPixQrCodeDataUrl(180);
-  const html = buildAvisoPendenciaHtml({ itens, nomeCliente, qrCodeSrc });
-  await renderHtmlToPdf(html, nomeArquivoPdf(itens, nomeCliente));
+  const { blob, filename } = await gerarAvisoPendenciaPdfBlob(itensOuItem, nomeCliente);
+  baixarBlob(blob, filename);
 }

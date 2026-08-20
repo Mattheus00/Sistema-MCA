@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, getApiErrorMessage, isMockEnabled, normalizeListResponse, encodeConfirmadoPorComprovante, getUsuarioLogadoLabel } from "@/lib/api";
 import {
@@ -24,9 +25,9 @@ import {
   normalizeTelefoneParaWhatsApp,
   openWhatsAppCobranca,
 } from "@/lib/mailtoCobranca";
-import { gerarEBaixarAvisoPendenciaPdf } from "@/lib/cobrancaPdf";
+import { gerarAvisoPendenciaPdfBlob, gerarEBaixarAvisoPendenciaPdf } from "@/lib/cobrancaPdf";
 import { parseValorReais } from "@/lib/valorBrasil";
-import type { Cliente, Inadimplencia } from "@/types/api";
+import type { Cliente, Inadimplencia, NotificacaoCobrancaResponse } from "@/types/api";
 
 const ZOHO_MAIL_URL = "https://mail.zoho.com/zm/#mail/folder/sent";
 
@@ -52,6 +53,7 @@ export default function WebInadimplentesHonorarios() {
   const [salvandoPagamento, setSalvandoPagamento] = useState(false);
   const [modalCobrancaCanal, setModalCobrancaCanal] = useState<{ inadimplencia: Inadimplencia } | null>(null);
   const [loadingCobrancaCanal, setLoadingCobrancaCanal] = useState(false);
+  const [modalPdfConsolidado, setModalPdfConsolidado] = useState(false);
   const [gerandoPdfConsolidado, setGerandoPdfConsolidado] = useState(false);
   const [pagina, setPagina] = useState(1);
   const itensPorPagina = 12;
@@ -307,7 +309,22 @@ export default function WebInadimplentesHonorarios() {
     setModalCobrancaCanal(null);
   }
 
-  async function gerarPdfTodasCobrancas() {
+  function abrirModalPdfConsolidado() {
+    const emAberto = itens.filter(isInadimplenciaEmAberto);
+    if (emAberto.length === 0) {
+      setErro("Não há honorários em aberto para gerar o PDF.");
+      return;
+    }
+    setErro(null);
+    setModalPdfConsolidado(true);
+  }
+
+  function fecharModalPdfConsolidado() {
+    if (gerandoPdfConsolidado) return;
+    setModalPdfConsolidado(false);
+  }
+
+  async function baixarPdfTodasCobrancas() {
     const emAberto = itens.filter(isInadimplenciaEmAberto);
     if (emAberto.length === 0) {
       setErro("Não há honorários em aberto para gerar o PDF.");
@@ -317,6 +334,7 @@ export default function WebInadimplentesHonorarios() {
     setErro(null);
     try {
       await gerarEBaixarAvisoPendenciaPdf(emAberto, nomeCliente);
+      setModalPdfConsolidado(false);
       setMensagemSucesso(
         emAberto.length === 1
           ? "PDF do aviso de pendência baixado."
@@ -324,6 +342,44 @@ export default function WebInadimplentesHonorarios() {
       );
     } catch (e: unknown) {
       setErro(getApiErrorMessage(e, "Falha ao gerar o PDF consolidado."));
+    } finally {
+      setGerandoPdfConsolidado(false);
+    }
+  }
+
+  async function enviarPdfTodasCobrancasPorEmail() {
+    if (!clienteId) return;
+    const email = emailClienteValido();
+    if (!email) {
+      setErro("Cadastre o e-mail do cliente para enviar o aviso.");
+      return;
+    }
+    const emAberto = itens.filter(isInadimplenciaEmAberto);
+    if (emAberto.length === 0) {
+      setErro("Não há honorários em aberto para gerar o PDF.");
+      return;
+    }
+    setGerandoPdfConsolidado(true);
+    setErro(null);
+    try {
+      const { blob, filename } = await gerarAvisoPendenciaPdfBlob(emAberto, nomeCliente);
+      const form = new FormData();
+      form.append("clienteId", clienteId);
+      form.append("arquivo", blob, filename);
+      const r = await api.post("/api/notificacoes/enviar-aviso-pendencia", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+        timeout: 120_000,
+      });
+      const data = r.data as NotificacaoCobrancaResponse;
+      const status = String(data?.statusEnvio ?? "").toUpperCase();
+      if (status === "ENVIADO") {
+        setModalPdfConsolidado(false);
+        setMensagemSucesso(`Aviso enviado para ${data.emailDestino ?? email}.`);
+      } else {
+        setErro(data?.mensagemErro?.trim() || "Falha ao enviar o e-mail.");
+      }
+    } catch (e: unknown) {
+      setErro(getApiErrorMessage(e, "Falha ao enviar o e-mail."));
     } finally {
       setGerandoPdfConsolidado(false);
     }
@@ -344,6 +400,16 @@ export default function WebInadimplentesHonorarios() {
   useEffect(() => {
     if (pagina > totalPaginasHonorarios && totalPaginasHonorarios >= 1) setPagina(1);
   }, [itens.length, totalPaginasHonorarios, pagina]);
+
+  const modalAberto = Boolean(modalCobrancaCanal || inadimplenciaParaCancelar || modalPagamento || modalPdfConsolidado);
+
+  useEffect(() => {
+    if (!modalAberto) return;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [modalAberto]);
 
   if (!clienteId) {
     return (
@@ -403,11 +469,11 @@ export default function WebInadimplentesHonorarios() {
             <button
               type="button"
               className="btn btn--secondary btn--small"
-              onClick={() => void gerarPdfTodasCobrancas()}
+              onClick={abrirModalPdfConsolidado}
               disabled={gerandoPdfConsolidado}
-              title="Gera um PDF com todos os períodos em aberto"
+              title="Gera um PDF com todos os períodos em aberto (baixar ou enviar por e-mail)"
             >
-              {gerandoPdfConsolidado ? "Gerando PDF…" : "Gerar PDF (todas em aberto)"}
+              {gerandoPdfConsolidado ? "Processando…" : "Gerar PDF (todas em aberto)"}
             </button>
           )}
         </div>
@@ -533,7 +599,74 @@ export default function WebInadimplentesHonorarios() {
         )}
       </section>
 
-      {modalCobrancaCanal && (
+      {modalPdfConsolidado &&
+        createPortal(
+        <div className="modal-overlay" onClick={fecharModalPdfConsolidado}>
+          <div className="modal modal--cadastro modal--pagamento" onClick={(e) => e.stopPropagation()}>
+            <p className="modal__eyebrow">AVISO DE PENDÊNCIA</p>
+            <h2 className="modal__titulo">{nomeCliente}</h2>
+            <p className="modal__texto-confirmacao modal__label--full">
+              PDF consolidado com <strong>{qtdEmAberto}</strong> período{qtdEmAberto === 1 ? "" : "s"} em aberto
+              {emailClienteValido() ? (
+                <>
+                  {" · "}Destino: <strong>{emailClienteValido()}</strong>
+                </>
+              ) : null}
+            </p>
+
+            <p className="modal-cobranca-canal__pergunta">O que deseja fazer com o PDF?</p>
+            <div className="modal-pagamento__tipo-tabs modal-cobranca-canal__opcoes">
+              <button
+                type="button"
+                className="modal-pagamento__tipo-tab"
+                onClick={() => void baixarPdfTodasCobrancas()}
+                disabled={gerandoPdfConsolidado}
+              >
+                <span className="modal-pagamento__tipo-icone modal-pagamento__tipo-icone--email">
+                  <DownloadPdfIcon />
+                </span>
+                <span className="modal-pagamento__tipo-texto">
+                  <strong>{gerandoPdfConsolidado ? "Gerando PDF…" : "Só baixar PDF"}</strong>
+                  <small>Salva o arquivo no computador</small>
+                </span>
+              </button>
+              <button
+                type="button"
+                className="modal-pagamento__tipo-tab"
+                onClick={() => void enviarPdfTodasCobrancasPorEmail()}
+                disabled={gerandoPdfConsolidado || !emailClienteValido()}
+                title={!emailClienteValido() ? "Cadastre o e-mail do cliente" : `Envia o PDF para ${emailClienteValido()}`}
+              >
+                <span className="modal-pagamento__tipo-icone modal-pagamento__tipo-icone--email">
+                  <EmailSendIcon />
+                </span>
+                <span className="modal-pagamento__tipo-texto">
+                  <strong>{gerandoPdfConsolidado ? "Enviando…" : "Enviar por e-mail"}</strong>
+                  <small>
+                    {emailClienteValido()
+                      ? `Envia automaticamente para ${emailClienteValido()}`
+                      : "Cadastre o e-mail do cliente"}
+                  </small>
+                </span>
+              </button>
+            </div>
+            <div className="modal__botoes">
+              <button
+                type="button"
+                className="btn btn--secondary"
+                onClick={fecharModalPdfConsolidado}
+                disabled={gerandoPdfConsolidado}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {modalCobrancaCanal &&
+        createPortal(
         <div className="modal-overlay" onClick={fecharModalCobrancaCanal}>
           <div className="modal modal--cadastro modal--pagamento" onClick={(e) => e.stopPropagation()}>
             <p className="modal__eyebrow">ENVIAR COBRANÇA</p>
@@ -606,10 +739,12 @@ export default function WebInadimplentesHonorarios() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {inadimplenciaParaCancelar && (
+      {inadimplenciaParaCancelar &&
+        createPortal(
         <div className="modal-overlay" onClick={() => setInadimplenciaParaCancelar(null)}>
           <div className="modal modal--confirmar-exclusao" onClick={(e) => e.stopPropagation()}>
             <h2 className="modal__titulo">Apagar inadimplência?</h2>
@@ -627,10 +762,13 @@ export default function WebInadimplentesHonorarios() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {modalPagamento && (() => {
+      {modalPagamento &&
+        createPortal(
+        (() => {
         const i = modalPagamento.inadimplencia;
         const saldo = saldoDevedorItem(i);
         const desconto = descontoNormalizado(modalPagamento.descontoDigitado, saldo);
@@ -965,7 +1103,9 @@ export default function WebInadimplentesHonorarios() {
             </div>
           </div>
         );
-      })()}
+      })(),
+        document.body
+      )}
     </div>
   );
 }
@@ -994,6 +1134,17 @@ function EmailSendIcon() {
       <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
       <path d="M16 14h6" />
       <path d="m19 11 3 3-3 3" />
+    </svg>
+  );
+}
+
+function DownloadPdfIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <path d="M12 18v-6" />
+      <path d="M9 15l3 3 3-3" />
     </svg>
   );
 }

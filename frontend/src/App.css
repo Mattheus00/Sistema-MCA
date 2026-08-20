@@ -1,4 +1,4 @@
-/* Layout – Soft Light + Glassmorphism */
+﻿/* Layout â€“ Soft Light + Glassmorphism */
 .app-layout {
   display: flex;
   min-height: 100vh;
@@ -404,7 +404,7 @@ a.sidebar-brand:focus-visible {
   color: var(--text-primary);
 }
 
-/* Dashboard – Soft Light Premium */
+/* Dashboard â€“ Soft Light Premium */
 .dashboard {
   max-width: 1000px;
 }
@@ -1265,7 +1265,7 @@ a.sidebar-brand:focus-visible {
   }
 }
 
-/* Legado: SVG donut (mantido para referência) */
+/* Legado: SVG donut (mantido para referÃªncia) */
 .dashboard-chart__svg {
   display: block;
 }
@@ -1462,7 +1462,7 @@ a.sidebar-brand:focus-visible {
   color: var(--text-secondary);
 }
 
-/* Listagem de Clientes – Soft Light */
+/* Listagem de Clientes â€“ Soft Light */
 .page-clientes {
   background: var(--glass-bg);
   backdrop-filter: blur(12px);
@@ -1513,7 +1513,7 @@ a.sidebar-brand:focus-visible {
   margin: 0;
 }
 
-/* Mensagem de sucesso (toast) – reutilizável */
+/* Mensagem de sucesso (toast) â€“ reutilizÃ¡vel */
 .toast {
   padding: 12px 16px;
   border-radius: 10px;
@@ -1534,13 +1534,23 @@ a.sidebar-brand:focus-visible {
   border: 1px solid #fecaca;
 }
 
+.toast--flutuante {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1100;
+  margin: 0;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+  max-width: min(420px, calc(100vw - 40px));
+}
+
 .page-clientes__erro {
   color: #f87171;
   font-size: 0.875rem;
   margin: 0 0 12px;
 }
 
-/* Página de Serviços – reutiliza o estilo “cartão” dos clientes */
+/* PÃ¡gina de ServiÃ§os â€“ reutiliza o estilo â€œcartÃ£oâ€ dos clientes */
 .page-servicos {
   background: var(--glass-bg);
   backdrop-filter: blur(12px);
@@ -2083,14 +2093,13 @@ a.sidebar-brand:focus-visible {
   border-color: #cbd5e1;
 }
 
-/* Modal – mais visível no Soft Light */
+/* Modal â€“ mais visÃ­vel no Soft Light */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  /* Fundo neutro, sem efeito de blur/escurecimento forte */
-  background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2099,6 +2108,7 @@ a.sidebar-brand:focus-visible {
   z-index: 1000;
   padding: 20px;
   box-sizing: border-box;
+  overflow-y: auto;
 }
 
 .modal-overlay > .modal {
@@ -2106,14 +2116,14 @@ a.sidebar-brand:focus-visible {
   flex-shrink: 0;
 }
 
-/* Modal de pagamento: alinhado ao topo (honorários / inadimplentes) */
+/* Modal de pagamento: alinhado ao topo (honorÃ¡rios / inadimplentes) */
 .modal-overlay:has(.modal--pagamento) {
   align-items: center;
   padding: 12px;
 }
 
 .modal-overlay:has(.modal--pagamento) > .modal {
-  margin: 0;
+  margin: auto;
 }
 
 .modal {
@@ -2127,7 +2137,7 @@ a.sidebar-brand:focus-visible {
   color: var(--text-primary);
 }
 
-/* Modal de confirmação de exclusão */
+/* Modal de confirmaÃ§Ã£o de exclusÃ£o */
 .modal--confirmar-exclusao {
   max-width: 420px;
   width: 100%;
@@ -2144,7 +2154,7 @@ a.sidebar-brand:focus-visible {
   color: var(--text-primary);
 }
 
-/* Modal de cadastro de cliente: mais largo, menos espaço em branco */
+/* Modal de cadastro de cliente: mais largo, menos espaÃ§o em branco */
 .modal--cadastro {
   max-width: 620px;
   width: 100%;
@@ -2447,6 +2457,12 @@ a.sidebar-brand:focus-visible {
   box-sizing: border-box;
   background: #f7f5f8;
   border: 1px solid var(--glass-border, #e2e8f0);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-pagamento-registro {
+  min-height: 0;
 }
 
 .modal-pagamento-registro__header {
@@ -2473,6 +2489,9 @@ a.sidebar-brand:focus-visible {
   grid-template-columns: minmax(0, 1fr) 270px;
   gap: 16px;
   align-items: stretch;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .modal-pagamento-registro__principal {
@@ -2927,7 +2946,7 @@ select.modal__select {
   background: #fff;
 }
 
-/* Combobox de cliente (busca) no modal de inadimplência */
+/* Combobox de cliente (busca) no modal de inadimplÃªncia */
 .modal__cliente-combobox {
   position: relative;
 }
@@ -3074,7 +3093,7 @@ select.modal__select {
   margin-bottom: 16px;
 }
 
-/* Modal inadimplência – mensalidades */
+/* Modal inadimplÃªncia â€“ mensalidades */
 .modal__mensalidades-wrap {
   grid-column: 1 / -1;
   margin-bottom: 4px;
@@ -3536,7 +3555,7 @@ select.modal__select {
   font-size: 0.875rem;
 }
 
-/* Cadastro de usuário */
+/* Cadastro de usuÃ¡rio */
 .page-cadastro-usuario {
   max-width: 560px;
   background: #fff;
@@ -3696,7 +3715,7 @@ select.modal__select {
   color: #dc2626;
 }
 
-/* Coluna Ação: título e botões centralizados na coluna */
+/* Coluna AÃ§Ã£o: tÃ­tulo e botÃµes centralizados na coluna */
 .page-cadastros-pendentes__acao {
   vertical-align: middle;
   width: 1%;
@@ -3744,7 +3763,7 @@ select.modal__select {
   margin-top: 8px;
 }
 
-/* Login – split layout (hero + card) */
+/* Login â€“ split layout (hero + card) */
 .page-login {
   min-height: 100vh;
   display: grid;
@@ -4215,7 +4234,7 @@ select.modal__select {
   text-align: center;
 }
 
-/* Lista de Inadimplentes – Soft Light */
+/* Lista de Inadimplentes â€“ Soft Light */
 .page-inadimplentes {
   background: var(--glass-bg);
   backdrop-filter: blur(12px);
@@ -4475,7 +4494,7 @@ select.modal__select {
   gap: 6px;
 }
 
-/* Página de honorários por cliente */
+/* PÃ¡gina de honorÃ¡rios por cliente */
 .page-inadimplentes--honorarios,
 .page-inadimplentes--registro {
   max-width: 1100px;
@@ -4510,7 +4529,7 @@ select.modal__select {
   resize: vertical;
 }
 
-/* Registro de inadimplência — layout profissional */
+/* Registro de inadimplÃªncia â€” layout profissional */
 .registro-inadimplencia__header {
   margin-bottom: 28px;
 }
@@ -5220,7 +5239,7 @@ select.modal__select {
   margin-bottom: 0;
 }
 
-/* —— Sicoob cobrança (honorários) —— */
+/* â€”â€” Sicoob cobranÃ§a (honorÃ¡rios) â€”â€” */
 .sicoob-panel {
   margin-top: 14px;
   padding-top: 14px;
@@ -5718,7 +5737,7 @@ select.modal__select {
   color: var(--text-primary);
 }
 
-/* Relatórios – Soft Light (MUI + overrides) */
+/* RelatÃ³rios â€“ Soft Light (MUI + overrides) */
 .page-relatorios {
   max-width: 100%;
   color: var(--text-primary);
@@ -6533,7 +6552,7 @@ select.modal__select {
   }
 }
 
-/* ========== Reforma Tributária ========== */
+/* ========== Reforma TributÃ¡ria ========== */
 .page-reforma {
   padding: 24px 20px;
   max-width: 900px;
@@ -6951,7 +6970,7 @@ select.modal__select {
   }
 }
 
-/* ========== Simulador de Impacto Tributário ========== */
+/* ========== Simulador de Impacto TributÃ¡rio ========== */
 .tax-sim__header {
   margin-bottom: 20px;
 }
@@ -7408,7 +7427,7 @@ select.modal__select {
   }
 }
 
-/* Sidebar oculta: conteúdo ocupa toda a largura (sobrescreve max-width das páginas) */
+/* Sidebar oculta: conteÃºdo ocupa toda a largura (sobrescreve max-width das pÃ¡ginas) */
 .app-layout--sidebar-hidden .page-reforma.tax-sim {
   max-width: none;
   width: 100%;
@@ -8600,6 +8619,405 @@ select.modal__select {
   .page-envio-boletos__acoes-principais--conferencia {
     flex-direction: column;
     align-items: stretch;
+  }
+}
+/* ========== Documentos do portal (staff) ========== */
+.page-documentos-clientes {
+  max-width: 1200px;
+}
+
+.page-documentos-clientes__head {
+  margin-bottom: 24px;
+}
+
+.page-documentos-clientes__contexto {
+  margin: 0 0 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.page-documentos-clientes__titulo {
+  margin: 0 0 6px;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.page-documentos-clientes__subtitulo {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.page-documentos-clientes__erro {
+  margin: 0 0 16px;
+  color: #dc2626;
+  font-size: 0.9375rem;
+}
+
+.page-documentos-clientes__cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.page-documentos-clientes__card {
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.page-documentos-clientes__card:hover {
+  border-color: rgba(164, 63, 155, 0.35);
+}
+
+.page-documentos-clientes__card--ativa {
+  border-color: var(--cor-principal);
+  box-shadow: 0 0 0 1px rgba(164, 63, 155, 0.2);
+}
+
+.page-documentos-clientes__card-label {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.page-documentos-clientes__card-valor {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.page-documentos-clientes__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 16px;
+}
+
+.page-documentos-clientes__filtro-cliente {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.page-documentos-clientes__filtro-tipo {
+  flex: 0 1 200px;
+}
+
+.page-documentos-clientes__filtro-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.page-documentos-clientes__input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  font: inherit;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.page-documentos-clientes__autocomplete {
+  position: relative;
+}
+
+.page-documentos-clientes__limpar-cliente {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--cor-principal);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.page-documentos-clientes__sugestoes {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.page-documentos-clientes__sugestoes button {
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.page-documentos-clientes__sugestoes button:hover {
+  background: #f9fafb;
+}
+
+.page-documentos-clientes__tabela-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.page-documentos-clientes__tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.page-documentos-clientes__tabela th,
+.page-documentos-clientes__tabela td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--glass-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.page-documentos-clientes__tabela th {
+  background: #f8fafc;
+  font-weight: 600;
+}
+
+.page-documentos-clientes__vazio {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 24px !important;
+}
+
+.page-documentos-clientes__cliente-celula {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.page-documentos-clientes__cliente-celula span {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.page-documentos-clientes__arquivo {
+  display: block;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-documentos-clientes__badge {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.page-documentos-clientes__badge--novo {
+  background: #fce7f3;
+  color: #9d174d;
+}
+
+.page-documentos-clientes__badge--recebido {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.page-documentos-clientes__badge--analise {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.page-documentos-clientes__badge--arquivado {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.page-documentos-clientes__acoes-linha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.page-documentos-clientes__paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-documentos-clientes__modal {
+  max-width: 920px;
+  width: calc(100% - 32px);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+}
+
+.page-documentos-clientes__modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.page-documentos-clientes__modal-titulo-linha {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.page-documentos-clientes__modal-feedback {
+  margin: 0 0 16px;
+}
+
+.page-documentos-clientes__modal-meta {
+  margin: 6px 0 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.page-documentos-clientes__modal-fechar {
+  border: none;
+  background: transparent;
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.page-documentos-clientes__modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.page-documentos-clientes__secao-titulo {
+  margin: 0 0 10px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.page-documentos-clientes__meta-lista {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.page-documentos-clientes__meta-lista div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.page-documentos-clientes__meta-lista dt {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.page-documentos-clientes__meta-lista dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.page-documentos-clientes__mensagem-cliente {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid var(--glass-border);
+  white-space: pre-wrap;
+}
+
+.page-documentos-clientes__arquivo-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.page-documentos-clientes__textarea {
+  width: 100%;
+  min-height: 160px;
+  padding: 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  font: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.page-documentos-clientes__contador {
+  margin: 6px 0 12px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.page-documentos-clientes__respondido-info {
+  margin: 0 0 12px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.page-documentos-clientes__status-linha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.page-documentos-clientes__status-linha label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.page-documentos-clientes__status-salvando {
+  font-weight: 400;
+  color: var(--cor-texto-secundario, #64748b);
+}
+
+.page-documentos-clientes__status-linha select {
+  flex: 1;
+  min-width: 140px;
+}
+
+@media (max-width: 900px) {
+  .page-documentos-clientes__cards {
+    grid-template-columns: 1fr;
+  }
+
+  .page-documentos-clientes__modal-grid {
+    grid-template-columns: 1fr;
   }
 }
 
