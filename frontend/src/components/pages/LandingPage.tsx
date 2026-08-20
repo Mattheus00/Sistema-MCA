@@ -193,8 +193,13 @@ export default function LandingPage() {
               <button type="button" className="landing-btn landing-btn--ghost" onClick={() => scrollToId("#contato")}>
                 Solicitar proposta
               </button>
-              <Link to="/login" className="landing-btn landing-btn--primary" onClick={() => setNavOpen(false)}>
-                Área do funcionário
+              <Link
+                to="/login"
+                className="landing-btn landing-btn--primary"
+                title="Área do funcionário"
+                onClick={() => setNavOpen(false)}
+              >
+                Funcionário
               </Link>
             </div>
           </nav>
