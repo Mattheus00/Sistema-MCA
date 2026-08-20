@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import "@/styles.css";
 
 const NAV_LINKS: { href: string; label: string }[] = [
-  { href: "#inicio", label: "Início" },
   { href: "#sobre", label: "Sobre nós" },
   { href: "#solucoes", label: "Soluções" },
   { href: "#como-funciona", label: "Como funciona" },
@@ -159,14 +158,14 @@ export default function LandingPage() {
           <button
             type="button"
             className="landing-nav__toggle"
+            aria-label="Abrir menu"
             aria-expanded={navOpen}
             aria-controls="landing-nav"
             onClick={() => setNavOpen((o) => !o)}
           >
-            <span className="landing-nav__toggle-bar" />
-            <span className="landing-nav__toggle-bar" />
-            <span className="landing-nav__toggle-bar" />
-            <span className="visually-hidden">Abrir menu</span>
+            <span className="landing-nav__toggle-bar" aria-hidden="true" />
+            <span className="landing-nav__toggle-bar" aria-hidden="true" />
+            <span className="landing-nav__toggle-bar" aria-hidden="true" />
           </button>
 
           <nav id="landing-nav" className={`landing-nav ${navOpen ? "landing-nav--open" : ""}`} aria-label="Principal">
@@ -193,14 +192,6 @@ export default function LandingPage() {
               <button type="button" className="landing-btn landing-btn--ghost" onClick={() => scrollToId("#contato")}>
                 Solicitar proposta
               </button>
-              <Link
-                to="/login"
-                className="landing-btn landing-btn--primary"
-                title="Área do funcionário"
-                onClick={() => setNavOpen(false)}
-              >
-                Funcionário
-              </Link>
             </div>
           </nav>
         </div>
