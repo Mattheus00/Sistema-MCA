@@ -11,13 +11,16 @@ import com.pucminas.sgi.exception.ResourceNotFoundException;
 import com.pucminas.sgi.repository.ClienteRepository;
 import com.pucminas.sgi.repository.DividaRepository;
 import com.pucminas.sgi.repository.NotificacaoEmailRepository;
+import com.pucminas.sgi.util.AvisoPendenciaEmailTemplateBuilder;
 import com.pucminas.sgi.util.CobrancaEmailHtmlBuilder;
 import com.pucminas.sgi.util.MoneyUtil;
+import com.pucminas.sgi.validator.BoletoArquivoValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -35,6 +38,7 @@ public class NotificationService {
     private final ClienteRepository clienteRepository;
     private final DividaRepository dividaRepository;
     private final EmailGateway emailGateway;
+    private final BoletoArquivoValidator boletoArquivoValidator;
     private final String nomeEscritorioCobranca;
     private final int maxTentativasEmail;
 
@@ -42,12 +46,14 @@ public class NotificationService {
                                ClienteRepository clienteRepository,
                                DividaRepository dividaRepository,
                                EmailGateway emailGateway,
+                               BoletoArquivoValidator boletoArquivoValidator,
                                @Value("${cobranca.email.nome-escritorio:Contabilidade São Judas Tadeu}") String nomeEscritorioCobranca,
                                @Value("${sgi.email.max-tentativas:5}") int maxTentativasEmail) {
         this.notificacaoRepository = notificacaoRepository;
         this.clienteRepository = clienteRepository;
         this.dividaRepository = dividaRepository;
         this.emailGateway = emailGateway;
+        this.boletoArquivoValidator = boletoArquivoValidator;
         this.nomeEscritorioCobranca = nomeEscritorioCobranca;
         this.maxTentativasEmail = Math.max(1, maxTentativasEmail);
     }
@@ -185,6 +191,82 @@ public class NotificationService {
             notif.setDataEnvio(LocalDateTime.now());
         } catch (Exception e) {
             registrarFalhaEnvio(notif, e.getMessage());
+        }
+        notificacaoRepository.save(notif);
+        return toResponse(notif);
+    }
+
+    /**
+     * Envia o PDF do aviso de pendência (gerado no frontend) para o e-mail do cliente via SMTP (Gmail),
+     * no mesmo canal usado para boletos.
+     */
+    @Transactional
+    public NotificacaoResponseDTO enviarAvisoPendenciaPdf(UUID clienteId, MultipartFile arquivo) {
+        Cliente cliente = clienteRepository.findById(clienteId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente", clienteId));
+        if (cliente.getEmail() == null || cliente.getEmail().isBlank()) {
+            throw new BusinessRuleException("Cliente não possui email cadastrado para envio do aviso.");
+        }
+        if (!emailGateway.hasConfigAtiva()) {
+            throw new BusinessRuleException("Nenhuma configuração SMTP ativa. Configure o envio de emails em /api/email-config.");
+        }
+        boletoArquivoValidator.validar(arquivo);
+
+        byte[] pdfBytes;
+        try {
+            pdfBytes = arquivo.getBytes();
+        } catch (Exception e) {
+            throw new BusinessRuleException("Não foi possível ler o arquivo PDF.");
+        }
+
+        String nomeAnexo = arquivo.getOriginalFilename();
+        if (nomeAnexo == null || nomeAnexo.isBlank()) {
+            nomeAnexo = "aviso-pendencia.pdf";
+        }
+        String assunto = AvisoPendenciaEmailTemplateBuilder.assunto(nomeEscritorioCobranca);
+        String texto = AvisoPendenciaEmailTemplateBuilder.textoPlano(cliente.getNome(), nomeEscritorioCobranca);
+        String html = AvisoPendenciaEmailTemplateBuilder.html(cliente.getNome(), nomeEscritorioCobranca);
+
+        BigDecimal valorComunicado = BigDecimal.ZERO;
+        List<Divida> abertas = new ArrayList<>(
+                dividaRepository.findByCliente_ClienteIdAndStatusDivida(clienteId, com.pucminas.sgi.enums.StatusDivida.EM_ABERTO));
+        abertas.addAll(dividaRepository.findByCliente_ClienteIdAndStatusDivida(
+                clienteId, com.pucminas.sgi.enums.StatusDivida.PARCIAL));
+        abertas.addAll(dividaRepository.findByCliente_ClienteIdAndStatusDivida(
+                clienteId, com.pucminas.sgi.enums.StatusDivida.VENCIDA));
+        valorComunicado = abertas.stream()
+                .map(Divida::getValorDevedor)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        NotificacaoEmail notif = NotificacaoEmail.builder()
+                .clienteId(clienteId)
+                .dividaId(null)
+                .tipo(TipoNotificacao.COBRANCA)
+                .emailDestino(cliente.getEmail().trim())
+                .assunto(assunto)
+                .corpoEmail(texto)
+                .corpoHtml(html)
+                .valorComunicado(valorComunicado)
+                .statusEnvio(StatusEnvio.PENDENTE)
+                .tentativas(0)
+                .proximaTentativa(LocalDateTime.now())
+                .build();
+        notif = notificacaoRepository.save(notif);
+
+        try {
+            emailGateway.enviarComAnexoPdf(
+                    cliente.getEmail().trim(),
+                    assunto,
+                    texto,
+                    html,
+                    pdfBytes,
+                    nomeAnexo);
+            notif.setStatusEnvio(StatusEnvio.ENVIADO);
+            notif.setDataEnvio(LocalDateTime.now());
+            log.info("Aviso de pendência PDF enviado para cliente {} ({})", clienteId, cliente.getEmail());
+        } catch (Exception e) {
+            registrarFalhaEnvio(notif, e.getMessage());
+            log.warn("Falha ao enviar aviso de pendência PDF para {}: {}", clienteId, e.getMessage());
         }
         notificacaoRepository.save(notif);
         return toResponse(notif);

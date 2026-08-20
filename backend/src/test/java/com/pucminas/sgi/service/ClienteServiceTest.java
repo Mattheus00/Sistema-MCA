@@ -2,6 +2,7 @@ package com.pucminas.sgi.service;
 
 import com.pucminas.sgi.dto.response.ClienteResponseDTO;
 import com.pucminas.sgi.entity.Cliente;
+import com.pucminas.sgi.entity.Divida;
 import com.pucminas.sgi.enums.StatusCliente;
 import com.pucminas.sgi.enums.StatusDivida;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
@@ -24,7 +25,6 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -54,9 +54,13 @@ class ClienteServiceTest {
                 .statusCliente(StatusCliente.INATIVO)
                 .saldoDevedor(BigDecimal.ZERO)
                 .build();
+        Divida divida = Divida.builder()
+                .statusDivida(StatusDivida.EM_ABERTO)
+                .valorDevedor(new BigDecimal("15000"))
+                .build();
         when(clienteRepository.findById(CLIENTE_ID)).thenReturn(Optional.of(cliente));
-        when(dividaRepository.sumValorDevedorByClienteId(eq(CLIENTE_ID), eq(StatusDivida.emAberto())))
-                .thenReturn(new BigDecimal("15000"));
+        when(dividaRepository.findByCliente_ClienteIdOrderByVencimentoAsc(CLIENTE_ID)).thenReturn(List.of(divida));
+        when(dividaService.getValorEJurosReais(divida)).thenReturn(new BigDecimal[]{new BigDecimal("150.00"), BigDecimal.ZERO});
 
         clienteService.atualizarStatusCliente(CLIENTE_ID);
 
@@ -66,14 +70,18 @@ class ClienteServiceTest {
     }
 
     @Test
-    @DisplayName("calcularSaldoDevedor usa status em aberto")
+    @DisplayName("calcularSaldoDevedor soma dívidas em aberto com juros em tempo real")
     void calcularSaldoDevedor() {
-        when(dividaRepository.sumValorDevedorByClienteId(CLIENTE_ID, StatusDivida.emAberto()))
-                .thenReturn(new BigDecimal("5000"));
+        Divida divida = Divida.builder()
+                .statusDivida(StatusDivida.VENCIDA)
+                .valorDevedor(new BigDecimal("5000"))
+                .build();
+        when(dividaRepository.findByCliente_ClienteIdOrderByVencimentoAsc(CLIENTE_ID)).thenReturn(List.of(divida));
+        when(dividaService.getValorEJurosReais(divida)).thenReturn(new BigDecimal[]{new BigDecimal("50.16"), new BigDecimal("0.16")});
 
         BigDecimal saldo = clienteService.calcularSaldoDevedor(CLIENTE_ID);
 
-        assertEquals(new BigDecimal("5000"), saldo);
+        assertEquals(new BigDecimal("5016"), saldo);
     }
 
     @Test
@@ -89,14 +97,15 @@ class ClienteServiceTest {
                 .build();
         Page<Cliente> page = new PageImpl<>(List.of(ativo));
         when(clienteRepository.buscar(
-                eq(null),
-                eq(false),
-                eq(true),
-                eq(StatusCliente.INATIVO),
-                eq(null),
-                eq(null),
-                eq(PageRequest.of(0, 20))))
+                org.mockito.ArgumentMatchers.eq(null),
+                org.mockito.ArgumentMatchers.eq(false),
+                org.mockito.ArgumentMatchers.eq(true),
+                org.mockito.ArgumentMatchers.eq(StatusCliente.INATIVO),
+                org.mockito.ArgumentMatchers.eq(null),
+                org.mockito.ArgumentMatchers.eq(null),
+                org.mockito.ArgumentMatchers.eq(PageRequest.of(0, 20))))
                 .thenReturn(page);
+        when(dividaRepository.findByCliente_ClienteIdOrderByVencimentoAsc(CLIENTE_ID)).thenReturn(List.of());
 
         Page<ClienteResponseDTO> result = clienteService.listarClientes(null, null, PageRequest.of(0, 20));
 

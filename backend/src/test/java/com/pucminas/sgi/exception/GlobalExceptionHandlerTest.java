@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
@@ -45,5 +46,29 @@ class GlobalExceptionHandlerTest {
                 new BusinessRuleException("Regra violada"), request);
 
         assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, response.getStatusCode());
+    }
+
+    @Test
+    @DisplayName("BadCredentials no portal preserva mensagem da exceção")
+    void handleBadCredentialsPortal() {
+        when(request.getRequestURI()).thenReturn("/api/portal/auth/login");
+
+        ResponseEntity<ErrorResponse> response = handler.handleBadCredentials(
+                new BadCredentialsException("CPF/CNPJ ou senha inválidos."), request);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("CPF/CNPJ ou senha inválidos.", response.getBody().getMessage());
+    }
+
+    @Test
+    @DisplayName("BadCredentials no escritório usa mensagem padrão de telefone")
+    void handleBadCredentialsEscritorio() {
+        when(request.getRequestURI()).thenReturn("/api/auth/login");
+
+        ResponseEntity<ErrorResponse> response = handler.handleBadCredentials(
+                new BadCredentialsException(""), request);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("Telefone ou senha inválidos.", response.getBody().getMessage());
     }
 }

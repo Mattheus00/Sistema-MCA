@@ -2,6 +2,7 @@ package com.pucminas.sgi.support;
 
 import com.pucminas.sgi.config.JwtAuthenticationFilter;
 import com.pucminas.sgi.config.JwtTokenProvider;
+import com.pucminas.sgi.config.PortalJwtAuthenticationFilter;
 import com.pucminas.sgi.repository.UsuarioRepository;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
@@ -15,6 +16,9 @@ public abstract class ControllerMvcTestSupport {
 
     @MockBean
     protected JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @MockBean
+    protected PortalJwtAuthenticationFilter portalJwtAuthenticationFilter;
 
     @MockBean
     protected UsuarioRepository usuarioRepository;

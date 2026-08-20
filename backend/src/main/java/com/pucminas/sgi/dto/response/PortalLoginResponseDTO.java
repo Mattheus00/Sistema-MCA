@@ -1,0 +1,21 @@
+package com.pucminas.sgi.dto.response;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class PortalLoginResponseDTO {
+    private String token;
+    private UUID clienteId;
+    private String nome;
+    private String cpfCnpjMascarado;
+    private String email;
+}

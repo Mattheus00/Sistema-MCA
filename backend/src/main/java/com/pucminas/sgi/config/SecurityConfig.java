@@ -12,16 +12,19 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
- * Configuração de segurança: JWT, endpoints públicos e protegidos.
+ * Configuração de segurança: JWT escritório, portal do cliente e endpoints públicos.
  */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final PortalJwtAuthenticationFilter portalJwtAuthenticationFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                          PortalJwtAuthenticationFilter portalJwtAuthenticationFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.portalJwtAuthenticationFilter = portalJwtAuthenticationFilter;
     }
 
     @Bean
@@ -37,11 +40,19 @@ public class SecurityConfig {
                             "/api/auth/validar-login-recuperacao",
                             "/api/auth/redefinir-senha"
                     ).permitAll();
+                    auth.requestMatchers(
+                            "/api/portal/auth/login",
+                            "/api/portal/auth/ativar",
+                            "/api/portal/auth/recuperar-senha"
+                    ).permitAll();
+                    auth.requestMatchers("/api/sicoob/webhook/**").permitAll();
                     auth.requestMatchers("/health").permitAll();
                     auth.requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll();
+                    auth.requestMatchers("/api/portal/**").authenticated();
                     auth.requestMatchers("/api/**").authenticated();
                     auth.anyRequest().authenticated();
                 })
+                .addFilterBefore(portalJwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

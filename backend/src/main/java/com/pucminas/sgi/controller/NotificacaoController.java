@@ -2,12 +2,15 @@ package com.pucminas.sgi.controller;
 
 import com.pucminas.sgi.dto.request.EnviarCobrancaRequestDTO;
 import com.pucminas.sgi.dto.response.NotificacaoResponseDTO;
+import com.pucminas.sgi.exception.BusinessRuleException;
 import com.pucminas.sgi.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -29,6 +32,17 @@ public class NotificacaoController {
     public ResponseEntity<NotificacaoResponseDTO> enviarCobranca(@Valid @RequestBody EnviarCobrancaRequestDTO dto) {
         NotificacaoResponseDTO response = notificationService.enviarCobrancaEmail(dto.getClienteId(), dto.getDividaId());
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping(value = "/enviar-aviso-pendencia", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Enviar aviso de pendência (PDF) por e-mail SMTP para o cliente")
+    public ResponseEntity<NotificacaoResponseDTO> enviarAvisoPendencia(
+            @RequestParam("clienteId") UUID clienteId,
+            @RequestParam("arquivo") MultipartFile arquivo) {
+        if (arquivo == null || arquivo.isEmpty()) {
+            throw new BusinessRuleException("Arquivo PDF do aviso é obrigatório.");
+        }
+        return ResponseEntity.ok(notificationService.enviarAvisoPendenciaPdf(clienteId, arquivo));
     }
 
     @GetMapping("/cliente/{clienteId}")

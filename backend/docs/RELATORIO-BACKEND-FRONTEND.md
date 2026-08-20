@@ -301,6 +301,7 @@ Este documento lista todos os endpoints, payloads e campos da API do backend par
 | Método | Endpoint | Descrição | Auth? |
 |--------|----------|-----------|-------|
 | POST | `/api/notificacoes/enviar-cobranca` | Enviar email de cobrança | Sim |
+| POST | `/api/notificacoes/enviar-aviso-pendencia` | Enviar PDF do aviso de pendência por SMTP (multipart) | Sim |
 | GET | `/api/notificacoes/cliente/{clienteId}` | Histórico do cliente | Sim |
 | POST | `/api/notificacoes/reprocessar-falhas` | Reprocessar falhas | Sim |
 
@@ -313,6 +314,18 @@ Este documento lista todos os endpoints, payloads e campos da API do backend par
   "dividaId": "uuid (opcional; se omitido, envia resumo de todas em aberto)"
 }
 ```
+
+### POST `/api/notificacoes/enviar-aviso-pendencia`
+
+Envia o PDF gerado no frontend (aviso consolidado ou unitário) para o **e-mail cadastrado do cliente**, via SMTP (mesmo canal dos boletos / Gmail).
+
+**Request (multipart/form-data):**
+- `clienteId` (UUID, obrigatório)
+- `arquivo` (PDF, obrigatório; máx. ~10MB; assinatura `%PDF`)
+
+**Response 200:** `NotificacaoResponseDTO` (`statusEnvio`: `ENVIADO` ou `FALHOU`).
+
+**Erros comuns:** cliente sem e-mail (422), SMTP inativo (422), PDF inválido (422).
 
 ---
 

@@ -53,6 +53,10 @@ public class Cliente {
     @Builder.Default
     private StatusCliente statusCliente = StatusCliente.ATIVO;
 
+    /** Permite bloquear acesso ao portal self-service sem apagar credencial. */
+    @Builder.Default
+    private Boolean portalHabilitado = true;
+
     /**
      * Saldo total devedor em centavos (soma das dívidas em aberto).
      */

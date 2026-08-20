@@ -21,6 +21,12 @@ public interface ClienteRepository extends JpaRepository<Cliente, UUID> {
 
     Optional<Cliente> findByCpfCnpj(String cpfCnpj);
 
+    @Query("""
+            SELECT c FROM Cliente c
+            WHERE REPLACE(REPLACE(REPLACE(REPLACE(c.cpfCnpj, '.', ''), '-', ''), '/', ''), ' ', '') = :digitos
+            """)
+    Optional<Cliente> findByCpfCnpjDigitos(@Param("digitos") String digitos);
+
     Optional<Cliente> findByCodigo(String codigo);
 
     Page<Cliente> findByStatusCliente(StatusCliente status, Pageable pageable);

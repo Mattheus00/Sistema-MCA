@@ -4,6 +4,7 @@ import com.pucminas.sgi.dto.request.ClienteDTO;
 import com.pucminas.sgi.dto.response.ClienteResponseDTO;
 import com.pucminas.sgi.dto.response.DividaResponseDTO;
 import com.pucminas.sgi.entity.Cliente;
+import com.pucminas.sgi.entity.Divida;
 import com.pucminas.sgi.enums.StatusCliente;
 import com.pucminas.sgi.enums.StatusDivida;
 import com.pucminas.sgi.exception.DuplicateResourceException;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -201,11 +203,22 @@ public class ClienteService {
     }
 
     /**
-     * Calcula o saldo devedor do cliente (soma das dívidas em aberto ou parcial).
+     * Calcula o saldo devedor do cliente em centavos (soma das dívidas em aberto com multa/juros em tempo real).
+     * Mesma regra usada em inadimplências e relatórios ({@link DividaService#getValorEJurosReais}).
      */
     @Transactional(readOnly = true)
     public BigDecimal calcularSaldoDevedor(UUID clienteId) {
-        return dividaRepository.sumValorDevedorByClienteId(clienteId, StatusDivida.emAberto());
+        BigDecimal totalCentavos = BigDecimal.ZERO;
+        for (Divida divida : dividaRepository.findByCliente_ClienteIdOrderByVencimentoAsc(clienteId)) {
+            if (!StatusDivida.emAberto().contains(divida.getStatusDivida())) {
+                continue;
+            }
+            BigDecimal valorReais = dividaService.getValorEJurosReais(divida)[0];
+            if (valorReais.compareTo(BigDecimal.ZERO) > 0) {
+                totalCentavos = totalCentavos.add(reaisParaCentavos(valorReais));
+            }
+        }
+        return totalCentavos;
     }
 
     /**
@@ -252,10 +265,14 @@ public class ClienteService {
                 .celular(c.getCelular())
                 .endereco(c.getEndereco())
                 .statusCliente(c.getStatusCliente())
-                .saldoDevedor(MoneyUtil.centavosParaReais(c.getSaldoDevedor()))
+                .saldoDevedor(MoneyUtil.centavosParaReais(calcularSaldoDevedor(c.getClienteId())))
                 .criadoEm(c.getCriadoEm())
                 .atualizadoEm(c.getAtualizadoEm())
                 .build();
+    }
+
+    private static BigDecimal reaisParaCentavos(BigDecimal reais) {
+        return reais == null ? BigDecimal.ZERO : reais.multiply(BigDecimal.valueOf(100)).setScale(0, RoundingMode.HALF_UP);
     }
 
     private static void normalizarDto(ClienteDTO dto) {

@@ -61,7 +61,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex, HttpServletRequest request) {
-        return buildResponse(HttpStatus.UNAUTHORIZED, "Unauthorized", "Telefone ou senha inválidos.", request.getRequestURI());
+        String message = ex.getMessage();
+        if (message == null || message.isBlank()) {
+            String path = request.getRequestURI();
+            if (path != null && path.contains("/api/portal/")) {
+                message = "CPF/CNPJ ou senha inválidos.";
+            } else {
+                message = "Telefone ou senha inválidos.";
+            }
+        }
+        return buildResponse(HttpStatus.UNAUTHORIZED, "Unauthorized", message, request.getRequestURI());
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
