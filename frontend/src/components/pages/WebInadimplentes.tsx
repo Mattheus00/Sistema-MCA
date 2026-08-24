@@ -13,7 +13,9 @@ import type { Inadimplencia } from "@/types/api";
 export default function WebInadimplentes() {
   const navigate = useNavigate();
   const location = useLocation();
-  const podeAjustarJuros = getAuthUserProfile() !== "FUNCIONARIO";
+  const isFuncionario = getAuthUserProfile() === "FUNCIONARIO";
+  const podeAjustarJuros = !isFuncionario;
+  const podeVerResumo = !isFuncionario;
   const [itens, setItens] = useState<Inadimplencia[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
@@ -220,29 +222,31 @@ export default function WebInadimplentes() {
         )}
       </div>
 
-      <div className="page-inadimplentes__cards">
-        <div className="page-inadimplentes__card">
-          <span className="page-inadimplentes__card-label">
-            Total de inadimplentes
-            <InfoIcon />
-          </span>
-          <span className="page-inadimplentes__card-value">
-            {loading ? "—" : agrupadosPorCliente.length}
-          </span>
+      {podeVerResumo && (
+        <div className="page-inadimplentes__cards">
+          <div className="page-inadimplentes__card">
+            <span className="page-inadimplentes__card-label">
+              Total de inadimplentes
+              <InfoIcon />
+            </span>
+            <span className="page-inadimplentes__card-value">
+              {loading ? "—" : agrupadosPorCliente.length}
+            </span>
+          </div>
+          <div className="page-inadimplentes__card">
+            <span className="page-inadimplentes__card-label">Valor total em aberto</span>
+            <span className="page-inadimplentes__card-value">
+              {loading ? "—" : totalValor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+            </span>
+          </div>
+          <div className="page-inadimplentes__card">
+            <span className="page-inadimplentes__card-label">Média de atraso</span>
+            <span className="page-inadimplentes__card-value">
+              {loading ? "—" : `${mediaAtraso} dias`}
+            </span>
+          </div>
         </div>
-        <div className="page-inadimplentes__card">
-          <span className="page-inadimplentes__card-label">Valor total em aberto</span>
-          <span className="page-inadimplentes__card-value">
-            {loading ? "—" : totalValor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-          </span>
-        </div>
-        <div className="page-inadimplentes__card">
-          <span className="page-inadimplentes__card-label">Média de atraso</span>
-          <span className="page-inadimplentes__card-value">
-            {loading ? "—" : `${mediaAtraso} dias`}
-          </span>
-        </div>
-      </div>
+      )}
 
       <section className="page-inadimplentes__tabela-secao">
         <div className="page-inadimplentes__tabela-header">
