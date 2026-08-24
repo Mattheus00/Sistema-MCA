@@ -1,5 +1,6 @@
 package com.pucminas.sgi.service;
 
+import com.pucminas.sgi.dto.request.CadastroUsuarioDTO;
 import com.pucminas.sgi.dto.response.UsuarioResponseDTO;
 import com.pucminas.sgi.entity.Usuario;
 import com.pucminas.sgi.enums.Perfil;
@@ -143,6 +144,57 @@ class UsuarioServiceTest {
         assertEquals(StatusUsuario.INATIVO, alvo.getStatusUsuario());
         assertEquals(StatusUsuario.INATIVO, dto.getStatusUsuario());
         verify(usuarioRepository).save(alvo);
+    }
+
+    @Test
+    @DisplayName("resolverPerfilCadastro: aceita FUNCIONARIO")
+    void resolverPerfil_funcionario() {
+        assertEquals(Perfil.FUNCIONARIO, UsuarioService.resolverPerfilCadastro("FUNCIONARIO"));
+        assertEquals(Perfil.PROPRIETARIA, UsuarioService.resolverPerfilCadastro("PROPRIETARIA"));
+        assertEquals(Perfil.RESPONSAVEL_FINANCEIRO, UsuarioService.resolverPerfilCadastro("corporativo"));
+    }
+
+    @Test
+    @DisplayName("cadastrarPorProprietaria: nao-proprietaria recebe 403")
+    void cadastrarPorProprietaria_naoProp() {
+        Usuario resp = usuarioBase(ID_RESP, Perfil.RESPONSAVEL_FINANCEIRO, StatusUsuario.ATIVO);
+        when(usuarioRepository.findById(ID_RESP)).thenReturn(Optional.of(resp));
+
+        CadastroUsuarioDTO dto = CadastroUsuarioDTO.builder()
+                .nome("Func")
+                .telefone1("31988887777")
+                .permissao("FUNCIONARIO")
+                .senha("senha123")
+                .build();
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> usuarioService.cadastrarPorProprietaria(dto, ID_RESP));
+        assertEquals(403, ex.getStatusCode().value());
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("cadastrarPorProprietaria: cria usuario FUNCIONARIO")
+    void cadastrarPorProprietaria_funcionario() {
+        Usuario prop = usuarioBase(ID_PROP, Perfil.PROPRIETARIA, StatusUsuario.ATIVO);
+        when(usuarioRepository.findById(ID_PROP)).thenReturn(Optional.of(prop));
+        when(usuarioRepository.findByTelefone("31988887777")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(any())).thenReturn("hash");
+        when(usuarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        CadastroUsuarioDTO dto = CadastroUsuarioDTO.builder()
+                .nome("Funcionario Teste")
+                .telefone1("31988887777")
+                .permissao("FUNCIONARIO")
+                .senha("senha123")
+                .ativo(true)
+                .build();
+
+        usuarioService.cadastrarPorProprietaria(dto, ID_PROP);
+        verify(usuarioRepository).save(org.mockito.ArgumentMatchers.argThat(u ->
+                u.getPerfil() == Perfil.FUNCIONARIO
+                        && u.getStatusUsuario() == StatusUsuario.ATIVO
+                        && "Funcionario Teste".equals(u.getNome())));
     }
 
     private static Usuario usuarioBase(UUID id, Perfil perfil, StatusUsuario status) {

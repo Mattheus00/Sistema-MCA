@@ -2,6 +2,7 @@ package com.pucminas.sgi.controller;
 
 import com.pucminas.sgi.dto.request.CadastroUsuarioDTO;
 import com.pucminas.sgi.dto.response.UsuarioResponseDTO;
+import com.pucminas.sgi.enums.Perfil;
 import com.pucminas.sgi.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,16 +27,18 @@ public class UsuarioController {
     }
 
     @PostMapping
-    @Operation(summary = "Cadastrar usuário")
-    public ResponseEntity<Void> cadastrar(@Valid @RequestBody CadastroUsuarioDTO dto) {
-        usuarioService.cadastrar(dto);
+    @Operation(summary = "Cadastrar usuário (somente proprietária; permite perfil FUNCIONARIO)")
+    public ResponseEntity<Void> cadastrar(@Valid @RequestBody CadastroUsuarioDTO dto, Authentication authentication) {
+        UUID solicitanteId = (UUID) authentication.getPrincipal();
+        usuarioService.cadastrarPorProprietaria(dto, solicitanteId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping("/pendentes")
-    @Operation(summary = "Listar cadastros pendentes de aprovação")
-    public ResponseEntity<List<UsuarioResponseDTO>> listarPendentes() {
-        return ResponseEntity.ok(usuarioService.listarPendentes());
+    @Operation(summary = "Listar cadastros pendentes de aprovação (somente proprietária)")
+    public ResponseEntity<List<UsuarioResponseDTO>> listarPendentes(Authentication authentication) {
+        UUID solicitanteId = (UUID) authentication.getPrincipal();
+        return ResponseEntity.ok(usuarioService.listarPendentes(solicitanteId));
     }
 
     @GetMapping("/ativos")
@@ -46,10 +49,17 @@ public class UsuarioController {
     }
 
     @PatchMapping("/{id}/aprovar")
-    @Operation(summary = "Aprovar cadastro de usuário pendente (somente proprietária)")
-    public ResponseEntity<UsuarioResponseDTO> aprovar(@PathVariable UUID id, Authentication authentication) {
+    @Operation(summary = "Aprovar cadastro de usuário pendente (somente proprietária; perfil opcional)")
+    public ResponseEntity<UsuarioResponseDTO> aprovar(
+            @PathVariable UUID id,
+            @RequestParam(required = false) String perfil,
+            Authentication authentication) {
         UUID aprovadorId = (UUID) authentication.getPrincipal();
-        return ResponseEntity.ok(usuarioService.aprovarCadastro(id, aprovadorId));
+        Perfil perfilAtribuido = null;
+        if (perfil != null && !perfil.isBlank()) {
+            perfilAtribuido = UsuarioService.resolverPerfilCadastro(perfil);
+        }
+        return ResponseEntity.ok(usuarioService.aprovarCadastro(id, aprovadorId, perfilAtribuido));
     }
 
     @PatchMapping("/{id}/revogar")

@@ -44,7 +44,7 @@ public class UsuarioService {
         if (usuarioRepository.findByTelefone(telefone).isPresent()) {
             throw new DuplicateResourceException("Já existe usuário com este telefone/login.");
         }
-        Perfil perfil = "PROPRIETARIA".equalsIgnoreCase(dto.getPermissao()) ? Perfil.PROPRIETARIA : Perfil.RESPONSAVEL_FINANCEIRO;
+        Perfil perfil = resolverPerfilCadastro(dto.getPermissao());
         String senhaHash = dto.getSenha() != null && !dto.getSenha().isBlank()
                 ? passwordEncoder.encode(dto.getSenha())
                 : passwordEncoder.encode("senha123");
@@ -56,7 +56,7 @@ public class UsuarioService {
                 .statusUsuario(Boolean.FALSE.equals(dto.getAtivo()) ? StatusUsuario.INATIVO : StatusUsuario.ATIVO)
                 .build();
         usuarioRepository.save(u);
-        log.info("Usuário cadastrado: {}", u.getTelefone());
+        log.info("Usuário cadastrado: {} perfil={}", u.getTelefone(), perfil);
     }
 
     @Transactional
@@ -85,7 +85,8 @@ public class UsuarioService {
     }
 
     @Transactional(readOnly = true)
-    public List<UsuarioResponseDTO> listarPendentes() {
+    public List<UsuarioResponseDTO> listarPendentes(UUID solicitanteId) {
+        assertProprietaria(solicitanteId);
         return usuarioRepository.findByStatusUsuarioOrderByCriadoEmAsc(StatusUsuario.PENDENTE_APROVACAO)
                 .stream()
                 .map(this::toResponse)
@@ -94,6 +95,11 @@ public class UsuarioService {
 
     @Transactional
     public UsuarioResponseDTO aprovarCadastro(UUID usuarioId, UUID aprovadorId) {
+        return aprovarCadastro(usuarioId, aprovadorId, null);
+    }
+
+    @Transactional
+    public UsuarioResponseDTO aprovarCadastro(UUID usuarioId, UUID aprovadorId, Perfil perfilAtribuido) {
         Usuario aprovador = usuarioRepository.findById(aprovadorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário aprovador", aprovadorId));
         if (aprovador.getPerfil() != Perfil.PROPRIETARIA) {
@@ -101,9 +107,12 @@ public class UsuarioService {
         }
         Usuario u = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário", usuarioId));
+        if (perfilAtribuido != null) {
+            u.setPerfil(perfilAtribuido);
+        }
         u.setStatusUsuario(StatusUsuario.ATIVO);
         usuarioRepository.save(u);
-        log.info("Cadastro aprovado: {} por {}", u.getTelefone(), aprovador.getTelefone());
+        log.info("Cadastro aprovado: {} por {} perfil={}", u.getTelefone(), aprovador.getTelefone(), u.getPerfil());
         return toResponse(u);
     }
 
@@ -140,12 +149,32 @@ public class UsuarioService {
         return toResponse(alvo);
     }
 
+    @Transactional
+    public void cadastrarPorProprietaria(CadastroUsuarioDTO dto, UUID solicitanteId) {
+        assertProprietaria(solicitanteId);
+        cadastrar(dto);
+    }
+
     private void assertProprietaria(UUID usuarioId) {
         Usuario u = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário", usuarioId));
         if (u.getPerfil() != Perfil.PROPRIETARIA) {
-            throw new ResponseStatusException(FORBIDDEN, "Apenas a proprietária pode listar usuários ativos.");
+            throw new ResponseStatusException(FORBIDDEN, "Apenas a proprietária pode realizar esta operação.");
         }
+    }
+
+    public static Perfil resolverPerfilCadastro(String permissao) {
+        if (permissao == null || permissao.isBlank()) {
+            return Perfil.RESPONSAVEL_FINANCEIRO;
+        }
+        String p = permissao.trim().toUpperCase();
+        if ("PROPRIETARIA".equals(p)) {
+            return Perfil.PROPRIETARIA;
+        }
+        if ("FUNCIONARIO".equals(p)) {
+            return Perfil.FUNCIONARIO;
+        }
+        return Perfil.RESPONSAVEL_FINANCEIRO;
     }
 
     private UsuarioResponseDTO toResponse(Usuario u) {

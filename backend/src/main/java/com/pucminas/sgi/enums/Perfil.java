@@ -5,5 +5,6 @@ package com.pucminas.sgi.enums;
  */
 public enum Perfil {
     RESPONSAVEL_FINANCEIRO,
-    PROPRIETARIA
+    PROPRIETARIA,
+    FUNCIONARIO
 }
