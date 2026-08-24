@@ -83,7 +83,18 @@ public class PostgresPortalSchemaBootstrap {
 
             jdbc.execute("ALTER TABLE notificacao_email ADD COLUMN IF NOT EXISTS corpo_html TEXT");
 
-            log.info("Bootstrap de schema Postgres (portal/documentos) concluído.");
+            // Hibernate cria CHECK do enum na criação da tabela, mas não atualiza ao adicionar valores.
+            jdbc.execute("ALTER TABLE usuario DROP CONSTRAINT IF EXISTS usuario_perfil_check");
+            jdbc.execute("""
+                    ALTER TABLE usuario ADD CONSTRAINT usuario_perfil_check
+                    CHECK ((perfil)::text = ANY ((ARRAY[
+                        'RESPONSAVEL_FINANCEIRO'::character varying,
+                        'PROPRIETARIA'::character varying,
+                        'FUNCIONARIO'::character varying
+                    ])::text[]))
+                    """);
+
+            log.info("Bootstrap de schema Postgres (portal/documentos/perfil) concluído.");
         } catch (Exception e) {
             log.error("Falha no bootstrap de schema Postgres: {}", e.getMessage(), e);
         }
