@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useLocation } from "react-router-dom";
-import { api, getApiErrorMessage, isMockEnabled, normalizeListResponse } from "@/lib/api";
+import { api, getApiErrorMessage, getAuthUserProfile, isMockEnabled, normalizeListResponse } from "@/lib/api";
 import { normalizeInadimplenciaFromApi } from "@/lib/apiNormalizers";
 import { invalidateDashboard } from "@/lib/dashboardRefresh";
 import {
@@ -13,6 +13,7 @@ import type { Inadimplencia } from "@/types/api";
 export default function WebInadimplentes() {
   const navigate = useNavigate();
   const location = useLocation();
+  const podeAjustarJuros = getAuthUserProfile() !== "FUNCIONARIO";
   const [itens, setItens] = useState<Inadimplencia[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
@@ -211,10 +212,12 @@ export default function WebInadimplentes() {
           <PlusIcon />
           Registrar inadimplência
         </button>
-        <button type="button" className="btn btn--primary btn--ajustar-juros" onClick={abrirModalAjustarJuros}>
-          <SlidersIcon />
-          Ajustar juros
-        </button>
+        {podeAjustarJuros && (
+          <button type="button" className="btn btn--primary btn--ajustar-juros" onClick={abrirModalAjustarJuros}>
+            <SlidersIcon />
+            Ajustar juros
+          </button>
+        )}
       </div>
 
       <div className="page-inadimplentes__cards">

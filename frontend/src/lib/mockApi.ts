@@ -58,6 +58,17 @@ const store = {
       criadoEm: "2026-01-02T09:00:00",
       senha: "123456",
     },
+    {
+      usuarioId: "u-funcionario",
+      login: "funcionario",
+      nome: "Usuário Funcionário",
+      telefone: "(11) 97777-0003",
+      perfil: "FUNCIONARIO" as PerfilUsuario,
+      statusUsuario: "ATIVO",
+      ultimoAcesso: null as string | null,
+      criadoEm: "2026-01-03T09:00:00",
+      senha: "123456",
+    },
   ],
   lotesEnvioBoletos: [] as LoteEnvioBoleto[],
   portalContas: [] as Array<{ cpfCnpj: string; email: string; senha: string; clienteId: string; nome: string }>,
@@ -1287,6 +1298,41 @@ export function createMockClient() {
         });
         return Promise.resolve({ data: { ok: true } } as { data: T });
       }
+      if (url === "/api/usuarios") {
+        const payload = (body ?? {}) as {
+          nome?: string;
+          email?: string;
+          senha?: string;
+          permissao?: string;
+          telefone1?: string;
+        };
+        const nome = String(payload.nome ?? "").trim();
+        const login = String(payload.email ?? "").trim().toLowerCase();
+        const senha = String(payload.senha ?? "123456");
+        const permissaoRaw = String(payload.permissao ?? "RESPONSAVEL_FINANCEIRO").toUpperCase();
+        const perfilValido: PerfilUsuario =
+          permissaoRaw === "PROPRIETARIA" || permissaoRaw === "FUNCIONARIO" || permissaoRaw === "RESPONSAVEL_FINANCEIRO"
+            ? (permissaoRaw as PerfilUsuario)
+            : "RESPONSAVEL_FINANCEIRO";
+        if (!nome || !login) {
+          return Promise.reject(new Error("Nome e e-mail são obrigatórios."));
+        }
+        const loginExiste = store.usuarios.some((u) => u.login.toLowerCase() === login);
+        if (loginExiste) return Promise.reject(new Error("Login já cadastrado."));
+        const novoId = `u-${Date.now()}`;
+        store.usuarios.push({
+          usuarioId: novoId,
+          login,
+          nome,
+          telefone: payload.telefone1 ?? "",
+          perfil: perfilValido,
+          statusUsuario: "PENDENTE_APROVACAO",
+          ultimoAcesso: null,
+          criadoEm: new Date().toISOString(),
+          senha,
+        });
+        return Promise.resolve({ data: { usuarioId: novoId, ok: true } } as { data: T });
+      }
       if (url === "/api/clientes") {
         const payload = body as Cliente;
         const novo: Cliente = {
@@ -1611,7 +1657,7 @@ export function createMockClient() {
         return Promise.resolve({ data: item } as { data: T });
       }
 
-      const matchAprovarUsuario = url.match(/^\/api\/usuarios\/([\w-]+)\/aprovar$/);
+      const matchAprovarUsuario = url.match(/^\/api\/usuarios\/([\w-]+)\/aprovar(?:\?.*)?$/);
       if (matchAprovarUsuario) {
         const usuarioId = matchAprovarUsuario[1];
         const userAtual = getCurrentUserByToken();
@@ -1623,7 +1669,13 @@ export function createMockClient() {
         const idx = store.usuarios.findIndex((u) => u.usuarioId === usuarioId);
         if (idx === -1) return Promise.reject(new Error("Usuário não encontrado."));
         const atual = store.usuarios[idx];
-        const aprovado = { ...atual, statusUsuario: "ATIVO" as const };
+        const perfilQuery = url.match(/[?&]perfil=([^&]+)/)?.[1];
+        const perfilDecoded = perfilQuery ? decodeURIComponent(perfilQuery).toUpperCase() : "";
+        const perfilAprovado: PerfilUsuario =
+          perfilDecoded === "FUNCIONARIO" || perfilDecoded === "PROPRIETARIA" || perfilDecoded === "RESPONSAVEL_FINANCEIRO"
+            ? (perfilDecoded as PerfilUsuario)
+            : (atual.perfil as PerfilUsuario) || "RESPONSAVEL_FINANCEIRO";
+        const aprovado = { ...atual, statusUsuario: "ATIVO" as const, perfil: perfilAprovado };
         store.usuarios[idx] = aprovado;
         const { senha: _senha, ...ret } = aprovado;
         return Promise.resolve({ data: ret } as { data: T });

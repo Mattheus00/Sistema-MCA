@@ -14,9 +14,9 @@ const OPCOES_FUNCAO = [
 ];
 
 const OPCOES_PERMISSAO = [
-  { value: "corporativo", label: "Corporativo" },
-  { value: "filial", label: "Filial" },
-  { value: "operador", label: "Operador" },
+  { value: "RESPONSAVEL_FINANCEIRO", label: "Responsável financeiro" },
+  { value: "FUNCIONARIO", label: "Funcionário" },
+  { value: "PROPRIETARIA", label: "Proprietária" },
 ];
 
 const OPCOES_PLANTA = [
@@ -36,7 +36,7 @@ export default function WebCadastroUsuario() {
     telefone1: "",
     telefone2: "",
     funcao: "",
-    permissao: "corporativo",
+    permissao: "RESPONSAVEL_FINANCEIRO",
     planta: "",
     senha: "",
     confirmarSenha: "",
@@ -112,7 +112,7 @@ export default function WebCadastroUsuario() {
         telefone1: "",
         telefone2: "",
         funcao: "",
-        permissao: "corporativo",
+        permissao: "RESPONSAVEL_FINANCEIRO",
         planta: "",
         senha: "",
         confirmarSenha: "",

@@ -46,19 +46,23 @@ function App() {
       </Route>
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/clientes" element={<WebClientes />} />
           <Route path="/inadimplentes" element={<WebInadimplentes />} />
           <Route path="/inadimplentes/registrar" element={<WebInadimplentesRegistro />} />
           <Route path="/inadimplentes/:clienteId/honorarios" element={<WebInadimplentesHonorarios />} />
-          <Route path="/servicos" element={<WebServicos />} />
-          <Route path="/relatorios" element={<WebRelatorios />} />
-          <Route path="/envio-boletos" element={<WebEnvioBoletos />} />
-          <Route path="/documentos-clientes" element={<WebDocumentosClientes />} />
-          <Route path="/reforma-tributaria" element={<WebReformaTributaria />} />
-          <Route path="/usuarios/cadastro" element={<WebCadastroUsuario />} />
+
+          <Route element={<ProtectedRoute denyFuncionario />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/servicos" element={<WebServicos />} />
+            <Route path="/relatorios" element={<WebRelatorios />} />
+            <Route path="/envio-boletos" element={<WebEnvioBoletos />} />
+            <Route path="/documentos-clientes" element={<WebDocumentosClientes />} />
+            <Route path="/reforma-tributaria" element={<WebReformaTributaria />} />
+          </Route>
+
           <Route element={<ProtectedRoute onlyProprietaria />}>
             <Route path="/usuarios" element={<WebUsuarios />} />
+            <Route path="/usuarios/cadastro" element={<WebCadastroUsuario />} />
             <Route path="/usuarios/pendentes" element={<Navigate to="/usuarios?aba=pendentes" replace />} />
             <Route path="/usuarios/ativos" element={<Navigate to="/usuarios" replace />} />
           </Route>

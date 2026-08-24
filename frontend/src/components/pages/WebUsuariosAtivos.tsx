@@ -13,6 +13,7 @@ function formatarData(iso: string): string {
 function labelPerfil(perfil: string): string {
   if (perfil === "PROPRIETARIA") return "Proprietária";
   if (perfil === "RESPONSAVEL_FINANCEIRO") return "Responsável financeiro";
+  if (perfil === "FUNCIONARIO") return "Funcionário";
   return perfil;
 }
 

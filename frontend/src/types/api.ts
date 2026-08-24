@@ -285,7 +285,7 @@ export type LoginResponse = {
   };
 };
 
-export type PerfilUsuario = "PROPRIETARIA" | "RESPONSAVEL_FINANCEIRO";
+export type PerfilUsuario = "PROPRIETARIA" | "RESPONSAVEL_FINANCEIRO" | "FUNCIONARIO";
 
 export type UsuarioPendente = {
   usuarioId: string;

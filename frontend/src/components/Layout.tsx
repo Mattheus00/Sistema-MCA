@@ -112,27 +112,33 @@ export default function Layout() {
   const userProfile = getAuthUserProfile()
   const [sidebarHidden, setSidebarHidden] = useState(false)
   const isProprietaria = userProfile === 'PROPRIETARIA'
+  const isFuncionario = userProfile === 'FUNCIONARIO'
   const podeVerEnvioBoletos = userProfile === 'PROPRIETARIA' || userProfile === 'RESPONSAVEL_FINANCEIRO'
   const podeVerDocumentosPortal = podeVerEnvioBoletos
   const [badgeDocumentos, setBadgeDocumentos] = useState(0)
-  const navItems = [
-    { to: '/dashboard', label: 'Dashboard', icon: GridIcon },
-    { to: '/clientes', label: 'Clientes', icon: PeopleIcon },
-    { to: '/inadimplentes', label: 'Inadimplentes', icon: AlertIcon },
-    { to: '/servicos', label: 'Serviços', icon: ServicesIcon },
-    { to: '/reforma-tributaria', label: 'Simulador', icon: CalculatorIcon },
-    { to: '/relatorios', label: 'Relatórios', icon: ChartIcon },
-    ...(podeVerEnvioBoletos ? [{ to: '/envio-boletos', label: 'Envio de boletos', icon: EmailAttachIcon, badge: 'Novo' as const }] : []),
-    ...(podeVerDocumentosPortal
-      ? [{
-          to: '/documentos-clientes',
-          label: 'Documentos do portal',
-          icon: DocumentosPortalIcon,
-          badge: badgeDocumentos > 0 ? String(badgeDocumentos > 9 ? '9+' : badgeDocumentos) : undefined,
-        }]
-      : []),
-    ...(isProprietaria ? [{ to: '/usuarios', label: 'Usuários', icon: UserIcon }] : []),
-  ]
+  const navItems = isFuncionario
+    ? [
+        { to: '/clientes', label: 'Clientes', icon: PeopleIcon },
+        { to: '/inadimplentes', label: 'Inadimplentes', icon: AlertIcon },
+      ]
+    : [
+        { to: '/dashboard', label: 'Dashboard', icon: GridIcon },
+        { to: '/clientes', label: 'Clientes', icon: PeopleIcon },
+        { to: '/inadimplentes', label: 'Inadimplentes', icon: AlertIcon },
+        { to: '/servicos', label: 'Serviços', icon: ServicesIcon },
+        { to: '/reforma-tributaria', label: 'Simulador', icon: CalculatorIcon },
+        { to: '/relatorios', label: 'Relatórios', icon: ChartIcon },
+        ...(podeVerEnvioBoletos ? [{ to: '/envio-boletos', label: 'Envio de boletos', icon: EmailAttachIcon, badge: 'Novo' as const }] : []),
+        ...(podeVerDocumentosPortal
+          ? [{
+              to: '/documentos-clientes',
+              label: 'Documentos do portal',
+              icon: DocumentosPortalIcon,
+              badge: badgeDocumentos > 0 ? String(badgeDocumentos > 9 ? '9+' : badgeDocumentos) : undefined,
+            }]
+          : []),
+        ...(isProprietaria ? [{ to: '/usuarios', label: 'Usuários', icon: UserIcon }] : []),
+      ]
 
   function handleSair() {
     clearAuthSession()

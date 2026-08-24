@@ -68,6 +68,7 @@ const ACOES: Acao[] = [
     id: "relatorios",
     label: "Relatórios",
     rota: "/relatorios",
+    perfis: ["PROPRIETARIA", "RESPONSAVEL_FINANCEIRO"],
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
         <line x1="18" y1="20" x2="18" y2="10" />
@@ -78,11 +79,14 @@ const ACOES: Acao[] = [
   },
 ];
 
+const ACOES_FUNCIONARIO = new Set(["cliente", "inadimplencia", "pagamento"]);
+
 export function QuickActions() {
   const navigate = useNavigate();
+  const perfil = getAuthUserProfile();
   const acoesVisiveis = ACOES.filter((acao) => {
-    if (!acao.perfis) return true;
-    if (acao.id === "boletos") return podeVerEnvioBoletos();
+    if (perfil === "FUNCIONARIO") return ACOES_FUNCIONARIO.has(acao.id);
+    if (acao.perfis) return perfil != null && acao.perfis.includes(perfil);
     return true;
   });
 
@@ -106,7 +110,7 @@ export function QuickActions() {
           </button>
         ))}
       </div>
-      <BoletosBanner />
+      {perfil !== "FUNCIONARIO" && <BoletosBanner />}
     </section>
   );
 }

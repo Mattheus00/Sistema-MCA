@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { api, getApiErrorMessage, isMockEnabled, normalizeListResponse } from "@/lib/api";
+import { api, getApiErrorMessage, getAuthUserProfile, isMockEnabled, normalizeListResponse } from "@/lib/api";
 import { normalizeClienteFromApi, normalizeClienteToApi } from "@/lib/apiNormalizers";
 import { exportarRelatorioClientesExcel } from "@/lib/relatorioClientes";
 import type { Cliente } from "@/types/api";
@@ -107,6 +107,7 @@ export default function WebClientes() {
   const itensPorPagina = 10;
   const buscaDebounceRef = useRef(false);
   const filtroInitRef = useRef(true);
+  const podeExcluirCliente = getAuthUserProfile() !== "FUNCIONARIO";
 
   const [form, setForm] = useState<Cliente>({ ...FORM_VAZIO });
 
@@ -456,15 +457,17 @@ export default function WebClientes() {
                       >
                         <EditIcon />
                       </button>
-                      <button
-                        type="button"
-                        className="page-clientes__acao page-clientes__acao--excluir"
-                        onClick={() => setClienteParaExcluir(c)}
-                        title="Excluir cliente"
-                        aria-label="Excluir cliente"
-                      >
-                        <TrashIcon />
-                      </button>
+                      {podeExcluirCliente && (
+                        <button
+                          type="button"
+                          className="page-clientes__acao page-clientes__acao--excluir"
+                          onClick={() => setClienteParaExcluir(c)}
+                          title="Excluir cliente"
+                          aria-label="Excluir cliente"
+                        >
+                          <TrashIcon />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import type { AxiosError } from "axios";
 import { api, getApiErrorMessage, normalizeListResponse } from "@/lib/api";
-import type { UsuarioPendente } from "@/types/api";
+import type { PerfilUsuario, UsuarioPendente } from "@/types/api";
 
 function formatarData(iso: string): string {
   if (!iso) return "—";
   const [y, m, d] = iso.split("T")[0].split("-");
   return `${d}/${m}/${y}`;
 }
+
+type PerfilAprovacao = Extract<PerfilUsuario, "RESPONSAVEL_FINANCEIRO" | "FUNCIONARIO">;
 
 type WebCadastrosPendentesProps = {
   /** Quando true, omite título (usado na página unificada Usuários) */
@@ -18,6 +20,7 @@ export default function WebCadastrosPendentes({ embedded = false }: WebCadastros
   const [itens, setItens] = useState<UsuarioPendente[]>([]);
   const [loading, setLoading] = useState(true);
   const [aprovandoId, setAprovandoId] = useState<string | null>(null);
+  const [perfisAprovacao, setPerfisAprovacao] = useState<Record<string, PerfilAprovacao>>({});
   const [erro, setErro] = useState<string | null>(null);
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
 
@@ -28,6 +31,13 @@ export default function WebCadastrosPendentes({ embedded = false }: WebCadastros
       const res = await api.get("/api/usuarios/pendentes");
       const lista = normalizeListResponse<UsuarioPendente>(res.data);
       setItens(lista);
+      setPerfisAprovacao((prev) => {
+        const next = { ...prev };
+        for (const u of lista) {
+          if (!next[u.usuarioId]) next[u.usuarioId] = "RESPONSAVEL_FINANCEIRO";
+        }
+        return next;
+      });
     } catch (e: unknown) {
       setErro(getApiErrorMessage(e, "Não foi possível carregar os cadastros pendentes."));
       setItens([]);
@@ -48,10 +58,11 @@ export default function WebCadastrosPendentes({ embedded = false }: WebCadastros
 
   async function aprovar(usuarioId: string) {
     if (!usuarioId || aprovandoId) return;
+    const perfil = perfisAprovacao[usuarioId] ?? "RESPONSAVEL_FINANCEIRO";
     setAprovandoId(usuarioId);
     setErro(null);
     try {
-      await api.patch(`/api/usuarios/${usuarioId}/aprovar`, {});
+      await api.patch(`/api/usuarios/${usuarioId}/aprovar?perfil=${encodeURIComponent(perfil)}`, {});
       setMensagemSucesso("Cadastro aprovado com sucesso.");
       await listar();
     } catch (e: unknown) {
@@ -87,6 +98,7 @@ export default function WebCadastrosPendentes({ embedded = false }: WebCadastros
                 <th>Login</th>
                 <th>Data de criação</th>
                 <th>Status</th>
+                <th>Perfil</th>
                 <th className="page-cadastros-pendentes__acao" scope="col">
                   <span className="page-cadastros-pendentes__acao-inner">Ação</span>
                 </th>
@@ -95,13 +107,13 @@ export default function WebCadastrosPendentes({ embedded = false }: WebCadastros
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="page-inadimplentes__vazio">
+                  <td colSpan={6} className="page-inadimplentes__vazio">
                     Carregando pendentes...
                   </td>
                 </tr>
               ) : itens.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="page-inadimplentes__vazio">
+                  <td colSpan={6} className="page-inadimplentes__vazio">
                     Nenhum cadastro pendente.
                   </td>
                 </tr>
@@ -114,6 +126,23 @@ export default function WebCadastrosPendentes({ embedded = false }: WebCadastros
                       <td>{u.login}</td>
                       <td>{formatarData(u.criadoEm)}</td>
                       <td>{u.statusUsuario}</td>
+                      <td>
+                        <select
+                          className="modal__input modal__select"
+                          value={perfisAprovacao[u.usuarioId] ?? "RESPONSAVEL_FINANCEIRO"}
+                          disabled={disabled || !!aprovandoId}
+                          onChange={(e) =>
+                            setPerfisAprovacao((prev) => ({
+                              ...prev,
+                              [u.usuarioId]: e.target.value as PerfilAprovacao,
+                            }))
+                          }
+                          aria-label={`Perfil para ${u.nome}`}
+                        >
+                          <option value="RESPONSAVEL_FINANCEIRO">Resp. financeiro</option>
+                          <option value="FUNCIONARIO">Funcionário</option>
+                        </select>
+                      </td>
                       <td className="page-cadastros-pendentes__acao">
                         <div className="page-cadastros-pendentes__acao-inner">
                           <button

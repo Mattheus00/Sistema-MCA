@@ -202,7 +202,7 @@ export default function Login() {
 
   function extrairPerfil(data: LoginResponse): PerfilUsuario | null {
     const bruto = data.perfil ?? data.role ?? data.usuario?.perfil ?? data.usuario?.role;
-    if (bruto === "PROPRIETARIA" || bruto === "RESPONSAVEL_FINANCEIRO") return bruto;
+    if (bruto === "PROPRIETARIA" || bruto === "RESPONSAVEL_FINANCEIRO" || bruto === "FUNCIONARIO") return bruto;
     return null;
   }
 
@@ -243,7 +243,7 @@ export default function Login() {
           },
           manterConectado
         );
-        navigate("/dashboard", { replace: true });
+        navigate(perfil === "FUNCIONARIO" ? "/clientes" : "/dashboard", { replace: true });
       } else {
         setErro("Resposta inválida do servidor (token não retornado).");
       }
@@ -639,7 +639,9 @@ export default function Login() {
           </p>
 
           {isMockEnabled() && (
-            <p className="page-login__mock-hint">Modo mock ativo: use qualquer login e senha para entrar.</p>
+            <p className="page-login__mock-hint">
+              Modo mock: proprietaria / financeiro / funcionario — senha 123456.
+            </p>
           )}
         </div>
 
