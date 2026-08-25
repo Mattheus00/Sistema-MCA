@@ -191,35 +191,41 @@ export default function Layout() {
     }
   }, [isMobile, mobileMenuOpen])
 
+  useEffect(() => {
+    function onResize() {
+      if (window.matchMedia(MOBILE_MAX_WIDTH_QUERY).matches) return
+      setMobileMenuOpen(false)
+    }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
   return (
     <div
       className={[
         'app-layout',
         sidebarHidden && !isMobile ? 'app-layout--sidebar-hidden' : '',
-        isMobile ? 'app-layout--mobile' : '',
         mobileMenuOpen ? 'app-layout--drawer-open' : '',
       ]
         .filter(Boolean)
         .join(' ')}
     >
-      {isMobile && (
-        <header className="admin-topbar">
-          <button
-            type="button"
-            className="admin-topbar__menu-btn"
-            onClick={() => setMobileMenuOpen((open) => !open)}
-            aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
-            aria-expanded={mobileMenuOpen}
-          >
-            <MenuIcon open={mobileMenuOpen} />
-          </button>
-          <div className="admin-topbar__brand">
-            <LogoIcon />
-            <span className="admin-topbar__titulo">SGI</span>
-          </div>
-        </header>
-      )}
-      {isMobile && mobileMenuOpen && (
+      <header className="admin-topbar">
+        <button
+          type="button"
+          className="admin-topbar__menu-btn"
+          onClick={() => setMobileMenuOpen((open) => !open)}
+          aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
+          aria-expanded={mobileMenuOpen}
+        >
+          <MenuIcon open={mobileMenuOpen} />
+        </button>
+        <div className="admin-topbar__brand">
+          <LogoIcon />
+          <span className="admin-topbar__titulo">SGI</span>
+        </div>
+      </header>
+      {mobileMenuOpen && (
         <button
           type="button"
           className="sidebar-backdrop"
@@ -249,7 +255,7 @@ export default function Layout() {
           <ChevronIcon direction="left" />
         </button>
       )}
-      <aside className={`sidebar ${isMobile ? 'sidebar--drawer' : ''}`}>
+      <aside className="sidebar sidebar--drawer">
         <Link to="/" className="sidebar-brand" aria-label="Ir para a página institucional">
           <div className="sidebar-brand__logo">
             <LogoIcon />
@@ -277,7 +283,9 @@ export default function Layout() {
               to={to}
               end={to === '/dashboard'}
               className={({ isActive }) => `sidebar-link ${isActive ? 'sidebar-link--active' : ''}`}
-              onClick={() => isMobile && setMobileMenuOpen(false)}
+              onClick={() => {
+                setMobileMenuOpen(false)
+              }}
             >
               <Icon />
               <span className="sidebar-link__label">{label}</span>

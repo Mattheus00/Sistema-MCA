@@ -6350,30 +6350,25 @@ select.modal__select {
   }
 
   .sidebar-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 130;
-    border: none;
-    padding: 0;
-    background: rgba(15, 23, 42, 0.45);
-    cursor: pointer;
+    display: none;
   }
 
   .app-layout {
     flex-direction: column;
   }
 
-  .app-layout--mobile .sidebar-handle {
-    display: none;
+  .sidebar-handle {
+    display: none !important;
   }
 
-  .app-layout--mobile.app-layout--sidebar-hidden .sidebar {
-    transform: none;
+  .app-layout--sidebar-hidden .sidebar {
+    transform: translateX(-100%);
     opacity: 1;
-    pointer-events: auto;
+    pointer-events: none;
   }
 
-  .sidebar {
+  .sidebar,
+  .sidebar--drawer {
     position: fixed;
     top: 0;
     left: 0;
@@ -6393,14 +6388,26 @@ select.modal__select {
     transform: translateX(-100%);
     transition: transform 0.25s ease-out;
     box-shadow: 4px 0 24px rgba(15, 23, 42, 0.12);
+    pointer-events: none;
+    visibility: hidden;
   }
 
-  .sidebar--drawer {
-    transform: translateX(-100%);
-  }
-
+  .app-layout--drawer-open .sidebar,
   .app-layout--drawer-open .sidebar--drawer {
     transform: translateX(0);
+    pointer-events: auto;
+    visibility: visible;
+  }
+
+  .app-layout--drawer-open .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 130;
+    border: none;
+    padding: 0;
+    background: rgba(15, 23, 42, 0.45);
+    cursor: pointer;
   }
 
   .main-wrapper {
