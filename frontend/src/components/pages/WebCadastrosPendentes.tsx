@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import type { AxiosError } from "axios";
 import { api, getApiErrorMessage, normalizeListResponse } from "@/lib/api";
 import type { PerfilUsuario, UsuarioPendente } from "@/types/api";
+import AdminItemCard from "@/components/AdminItemCard";
+import ResponsiveList from "@/components/ResponsiveList";
 
 function formatarData(iso: string): string {
   if (!iso) return "—";
@@ -90,80 +92,139 @@ export default function WebCadastrosPendentes({ embedded = false }: WebCadastros
       {mensagemSucesso && <p className="toast toast--sucesso">{mensagemSucesso}</p>}
 
       <section className="page-inadimplentes__tabela-secao">
-        <div className="page-inadimplentes__tabela-wrap">
-          <table className="page-inadimplentes__tabela">
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>Login</th>
-                <th>Data de criação</th>
-                <th>Status</th>
-                <th>Perfil</th>
-                <th className="page-cadastros-pendentes__acao" scope="col">
-                  <span className="page-cadastros-pendentes__acao-inner">Ação</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="page-inadimplentes__vazio">
-                    Carregando pendentes...
-                  </td>
-                </tr>
-              ) : itens.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="page-inadimplentes__vazio">
-                    Nenhum cadastro pendente.
-                  </td>
-                </tr>
-              ) : (
-                itens.map((u) => {
+        <ResponsiveList
+          desktop={
+            <div className="page-inadimplentes__tabela-wrap">
+              <table className="page-inadimplentes__tabela">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Login</th>
+                    <th>Data de criação</th>
+                    <th>Status</th>
+                    <th>Perfil</th>
+                    <th className="page-cadastros-pendentes__acao" scope="col">
+                      <span className="page-cadastros-pendentes__acao-inner">Ação</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={6} className="page-inadimplentes__vazio">
+                        Carregando pendentes...
+                      </td>
+                    </tr>
+                  ) : itens.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="page-inadimplentes__vazio">
+                        Nenhum cadastro pendente.
+                      </td>
+                    </tr>
+                  ) : (
+                    itens.map((u) => {
+                      const disabled = aprovandoId === u.usuarioId;
+                      return (
+                        <tr key={u.usuarioId}>
+                          <td>{u.nome}</td>
+                          <td>{u.login}</td>
+                          <td>{formatarData(u.criadoEm)}</td>
+                          <td>{u.statusUsuario}</td>
+                          <td>
+                            <select
+                              className="modal__input modal__select"
+                              value={perfisAprovacao[u.usuarioId] ?? "RESPONSAVEL_FINANCEIRO"}
+                              disabled={disabled || !!aprovandoId}
+                              onChange={(e) =>
+                                setPerfisAprovacao((prev) => ({
+                                  ...prev,
+                                  [u.usuarioId]: e.target.value as PerfilAprovacao,
+                                }))
+                              }
+                              aria-label={`Perfil para ${u.nome}`}
+                            >
+                              <option value="RESPONSAVEL_FINANCEIRO">Resp. financeiro</option>
+                              <option value="FUNCIONARIO">Funcionário</option>
+                            </select>
+                          </td>
+                          <td className="page-cadastros-pendentes__acao">
+                            <div className="page-cadastros-pendentes__acao-inner">
+                              <button
+                                type="button"
+                                className="btn btn--primary btn--small"
+                                disabled={disabled || !!aprovandoId}
+                                onClick={() => aprovar(u.usuarioId)}
+                                title="Aprova o cadastro para que o usuário possa acessar o sistema após aprovação."
+                                aria-label={`Aprovar cadastro de ${u.nome}`}
+                              >
+                                {disabled ? "Aprovando..." : "Aprovar"}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          }
+          mobile={
+            loading ? (
+              <p className="page-inadimplentes__vazio">Carregando pendentes...</p>
+            ) : itens.length === 0 ? (
+              <p className="page-inadimplentes__vazio">Nenhum cadastro pendente.</p>
+            ) : (
+              <ul className="admin-item-list">
+                {itens.map((u) => {
                   const disabled = aprovandoId === u.usuarioId;
                   return (
-                    <tr key={u.usuarioId}>
-                      <td>{u.nome}</td>
-                      <td>{u.login}</td>
-                      <td>{formatarData(u.criadoEm)}</td>
-                      <td>{u.statusUsuario}</td>
-                      <td>
-                        <select
-                          className="modal__input modal__select"
-                          value={perfisAprovacao[u.usuarioId] ?? "RESPONSAVEL_FINANCEIRO"}
-                          disabled={disabled || !!aprovandoId}
-                          onChange={(e) =>
-                            setPerfisAprovacao((prev) => ({
-                              ...prev,
-                              [u.usuarioId]: e.target.value as PerfilAprovacao,
-                            }))
-                          }
-                          aria-label={`Perfil para ${u.nome}`}
-                        >
-                          <option value="RESPONSAVEL_FINANCEIRO">Resp. financeiro</option>
-                          <option value="FUNCIONARIO">Funcionário</option>
-                        </select>
-                      </td>
-                      <td className="page-cadastros-pendentes__acao">
-                        <div className="page-cadastros-pendentes__acao-inner">
+                    <li key={u.usuarioId}>
+                      <AdminItemCard
+                        title={u.nome}
+                        meta={u.login}
+                        fields={[
+                          { label: "Status", value: u.statusUsuario },
+                          { label: "Criação", value: formatarData(u.criadoEm) },
+                          {
+                            label: "Perfil",
+                            value: (
+                              <select
+                                className="modal__input modal__select"
+                                value={perfisAprovacao[u.usuarioId] ?? "RESPONSAVEL_FINANCEIRO"}
+                                disabled={disabled || !!aprovandoId}
+                                onChange={(e) =>
+                                  setPerfisAprovacao((prev) => ({
+                                    ...prev,
+                                    [u.usuarioId]: e.target.value as PerfilAprovacao,
+                                  }))
+                                }
+                                aria-label={`Perfil para ${u.nome}`}
+                              >
+                                <option value="RESPONSAVEL_FINANCEIRO">Resp. financeiro</option>
+                                <option value="FUNCIONARIO">Funcionário</option>
+                              </select>
+                            ),
+                          },
+                        ]}
+                        actions={
                           <button
                             type="button"
                             className="btn btn--primary btn--small"
                             disabled={disabled || !!aprovandoId}
                             onClick={() => aprovar(u.usuarioId)}
-                            title="Aprova o cadastro para que o usuário possa acessar o sistema após aprovação."
-                            aria-label={`Aprovar cadastro de ${u.nome}`}
                           >
                             {disabled ? "Aprovando..." : "Aprovar"}
                           </button>
-                        </div>
-                      </td>
-                    </tr>
+                        }
+                      />
+                    </li>
                   );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                })}
+              </ul>
+            )
+          }
+        />
       </section>
     </div>
   );

@@ -21,6 +21,8 @@ import {
   truncarTexto,
 } from "@/lib/documentosClientesUtils";
 import type { Cliente, DocumentoCliente, ResumoDocumentosClientes, StatusDocumentoCliente, TipoDocumentoCliente } from "@/types/api";
+import AdminItemCard from "@/components/AdminItemCard";
+import ResponsiveList from "@/components/ResponsiveList";
 
 const TIPOS: TipoDocumentoCliente[] = ["COMPROVANTE", "NOTA_FISCAL", "CONTRATO", "DECLARACAO", "OUTRO"];
 const STATUS_CARDS: Array<{ status: StatusDocumentoCliente | ""; label: string; chave: keyof ResumoDocumentosClientes }> = [
@@ -358,81 +360,136 @@ export default function WebDocumentosClientes() {
         </button>
       </div>
 
-      <div className="page-documentos-clientes__tabela-wrap">
-        <table className="page-documentos-clientes__tabela">
-          <thead>
-            <tr>
-              <th>Enviado em</th>
-              <th>Cliente</th>
-              <th>Tipo</th>
-              <th>Arquivo</th>
-              <th>Observação</th>
-              <th>Status</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={7} className="page-documentos-clientes__vazio">
-                  Carregando…
-                </td>
-              </tr>
-            ) : documentos.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="page-documentos-clientes__vazio">
-                  Nenhum documento encontrado.
-                </td>
-              </tr>
-            ) : (
-              documentos.map((doc) => (
-                <tr key={doc.documentoId}>
-                  <td>{formatarDataDocumento(doc.enviadoEm)}</td>
-                  <td>
-                    <div className="page-documentos-clientes__cliente-celula">
-                      <strong>{doc.clienteNome ?? "—"}</strong>
-                      {doc.clienteCodigo ? <span>Cód. {doc.clienteCodigo}</span> : null}
-                    </div>
-                  </td>
-                  <td>{labelTipoDocumentoCliente(doc.tipo)}</td>
-                  <td>
-                    <span className="page-documentos-clientes__arquivo" title={doc.nomeOriginal}>
-                      {doc.nomeOriginal}
-                    </span>
-                    <small>{formatarTamanhoArquivo(doc.tamanhoBytes)}</small>
-                  </td>
-                  <td title={doc.observacaoCliente}>{truncarTexto(doc.observacaoCliente, 50)}</td>
-                  <td>
-                    <span className={`page-documentos-clientes__badge ${classeBadgeStatusDocumento(doc.status)}`}>
-                      {labelStatusDocumentoCliente(doc.status)}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="page-documentos-clientes__acoes-linha">
-                      <button type="button" className="btn btn--small btn--secondary" onClick={() => void abrirDetalhe(doc.documentoId)}>
-                        Ver
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn--small btn--secondary"
-                        onClick={async () => {
-                          try {
-                            await baixarArquivoDocumento(doc.documentoId, doc.nomeOriginal);
-                          } catch (e: unknown) {
-                            setErro(getApiErrorMessage(e, "Falha ao baixar o arquivo."));
-                          }
-                        }}
-                      >
-                        Baixar
-                      </button>
-                    </div>
-                  </td>
+      <ResponsiveList
+        desktop={
+          <div className="page-documentos-clientes__tabela-wrap">
+            <table className="page-documentos-clientes__tabela">
+              <thead>
+                <tr>
+                  <th>Enviado em</th>
+                  <th>Cliente</th>
+                  <th>Tipo</th>
+                  <th>Arquivo</th>
+                  <th>Observação</th>
+                  <th>Status</th>
+                  <th>Ações</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="page-documentos-clientes__vazio">
+                      Carregando…
+                    </td>
+                  </tr>
+                ) : documentos.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="page-documentos-clientes__vazio">
+                      Nenhum documento encontrado.
+                    </td>
+                  </tr>
+                ) : (
+                  documentos.map((doc) => (
+                    <tr key={doc.documentoId}>
+                      <td>{formatarDataDocumento(doc.enviadoEm)}</td>
+                      <td>
+                        <div className="page-documentos-clientes__cliente-celula">
+                          <strong>{doc.clienteNome ?? "—"}</strong>
+                          {doc.clienteCodigo ? <span>Cód. {doc.clienteCodigo}</span> : null}
+                        </div>
+                      </td>
+                      <td>{labelTipoDocumentoCliente(doc.tipo)}</td>
+                      <td>
+                        <span className="page-documentos-clientes__arquivo" title={doc.nomeOriginal}>
+                          {doc.nomeOriginal}
+                        </span>
+                        <small>{formatarTamanhoArquivo(doc.tamanhoBytes)}</small>
+                      </td>
+                      <td title={doc.observacaoCliente}>{truncarTexto(doc.observacaoCliente, 50)}</td>
+                      <td>
+                        <span className={`page-documentos-clientes__badge ${classeBadgeStatusDocumento(doc.status)}`}>
+                          {labelStatusDocumentoCliente(doc.status)}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="page-documentos-clientes__acoes-linha">
+                          <button type="button" className="btn btn--small btn--secondary" onClick={() => void abrirDetalhe(doc.documentoId)}>
+                            Ver
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn--small btn--secondary"
+                            onClick={async () => {
+                              try {
+                                await baixarArquivoDocumento(doc.documentoId, doc.nomeOriginal);
+                              } catch (e: unknown) {
+                                setErro(getApiErrorMessage(e, "Falha ao baixar o arquivo."));
+                              }
+                            }}
+                          >
+                            Baixar
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        }
+        mobile={
+          loading ? (
+            <p className="page-documentos-clientes__vazio">Carregando…</p>
+          ) : documentos.length === 0 ? (
+            <p className="page-documentos-clientes__vazio">Nenhum documento encontrado.</p>
+          ) : (
+            <ul className="admin-item-list">
+              {documentos.map((doc) => (
+                <li key={doc.documentoId}>
+                  <AdminItemCard
+                    title={doc.clienteNome ?? "—"}
+                    meta={doc.clienteCodigo ? `Cód. ${doc.clienteCodigo}` : formatarDataDocumento(doc.enviadoEm)}
+                    fields={[
+                      { label: "Tipo", value: labelTipoDocumentoCliente(doc.tipo) },
+                      { label: "Arquivo", value: doc.nomeOriginal },
+                      {
+                        label: "Status",
+                        value: (
+                          <span className={`page-documentos-clientes__badge ${classeBadgeStatusDocumento(doc.status)}`}>
+                            {labelStatusDocumentoCliente(doc.status)}
+                          </span>
+                        ),
+                      },
+                      { label: "Observação", value: truncarTexto(doc.observacaoCliente, 80) || "—" },
+                    ]}
+                    actions={
+                      <>
+                        <button type="button" className="btn btn--secondary btn--small" onClick={() => void abrirDetalhe(doc.documentoId)}>
+                          Ver
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn--secondary btn--small"
+                          onClick={async () => {
+                            try {
+                              await baixarArquivoDocumento(doc.documentoId, doc.nomeOriginal);
+                            } catch (e: unknown) {
+                              setErro(getApiErrorMessage(e, "Falha ao baixar o arquivo."));
+                            }
+                          }}
+                        >
+                          Baixar
+                        </button>
+                      </>
+                    }
+                  />
+                </li>
+              ))}
+            </ul>
+          )
+        }
+      />
 
       {totalPaginas > 1 && (
         <div className="page-documentos-clientes__paginacao">

@@ -7,6 +7,7 @@ import { normalizeClienteFromApi, normalizeInadimplenciaToApi } from "@/lib/apiN
 import { invalidateDashboard } from "@/lib/dashboardRefresh";
 import { formatCpfCnpj } from "@/lib/inadimplentesUtils";
 import type { Cliente } from "@/types/api";
+import ResponsiveList from "@/components/ResponsiveList";
 
 type ServicoResumo = {
   servicoId: string;
@@ -346,107 +347,195 @@ export default function WebInadimplentesRegistro() {
               </button>
             </div>
 
-            <div className="registro-inadimplencia__tabela-wrap">
-              <table className="registro-inadimplencia__tabela">
-                <thead>
-                  <tr>
-                    <th>Mês</th>
-                    <th>Ano</th>
-                    <th>Valor (R$)</th>
-                    <th className="registro-inadimplencia__th-acao">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {formRegistro.mensalidades.map((row, index) => (
-                    <Fragment key={row.rowId}>
+            <ResponsiveList
+              desktop={
+                <div className="registro-inadimplencia__tabela-wrap">
+                  <table className="registro-inadimplencia__tabela">
+                    <thead>
                       <tr>
-                        <td>
-                          <select
-                            value={row.mes}
-                            onChange={(e) => atualizarMensalidade(index, "mes", e.target.value)}
-                            className="registro-inadimplencia__select"
-                            aria-label={`Mês da linha ${index + 1}`}
-                          >
-                            {MESES.map((op) => (
-                              <option key={op.value} value={op.value}>
-                                {op.label}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td>
-                          <select
-                            value={row.ano}
-                            onChange={(e) => atualizarMensalidade(index, "ano", e.target.value)}
-                            className="registro-inadimplencia__select registro-inadimplencia__select--ano"
-                            aria-label={`Ano da linha ${index + 1}`}
-                          >
-                            {ANOS.map((a) => (
-                              <option key={a} value={a}>
-                                {a}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td>
-                          <div className="registro-inadimplencia__valor-cell">
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              autoComplete="off"
-                              placeholder="0,00"
-                              value={row.valorDigitado}
-                              onChange={(e) => atualizarMensalidade(index, "valorDigitado", e.target.value ?? "")}
-                              className="registro-inadimplencia__input registro-inadimplencia__input--valor"
-                              aria-label={`Valor da linha ${index + 1}`}
-                            />
-                            {!isMockEnabled() && servicos.length > 0 && (
+                        <th>Mês</th>
+                        <th>Ano</th>
+                        <th>Valor (R$)</th>
+                        <th className="registro-inadimplencia__th-acao">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {formRegistro.mensalidades.map((row, index) => (
+                        <Fragment key={row.rowId}>
+                          <tr>
+                            <td>
+                              <select
+                                value={row.mes}
+                                onChange={(e) => atualizarMensalidade(index, "mes", e.target.value)}
+                                className="registro-inadimplencia__select"
+                                aria-label={`Mês da linha ${index + 1}`}
+                              >
+                                {MESES.map((op) => (
+                                  <option key={op.value} value={op.value}>
+                                    {op.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                            <td>
+                              <select
+                                value={row.ano}
+                                onChange={(e) => atualizarMensalidade(index, "ano", e.target.value)}
+                                className="registro-inadimplencia__select registro-inadimplencia__select--ano"
+                                aria-label={`Ano da linha ${index + 1}`}
+                              >
+                                {ANOS.map((a) => (
+                                  <option key={a} value={a}>
+                                    {a}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                            <td>
+                              <div className="registro-inadimplencia__valor-cell">
+                                <input
+                                  type="text"
+                                  inputMode="decimal"
+                                  autoComplete="off"
+                                  placeholder="0,00"
+                                  value={row.valorDigitado}
+                                  onChange={(e) => atualizarMensalidade(index, "valorDigitado", e.target.value ?? "")}
+                                  className="registro-inadimplencia__input registro-inadimplencia__input--valor"
+                                  aria-label={`Valor da linha ${index + 1}`}
+                                />
+                                {!isMockEnabled() && servicos.length > 0 && (
+                                  <button
+                                    type="button"
+                                    className="registro-inadimplencia__btn-servicos"
+                                    onClick={() => abrirModalServicosParaValor(index)}
+                                    title="Somar valor a partir dos serviços cadastrados"
+                                    aria-label="Adicionar valor a partir dos serviços"
+                                  >
+                                    <LayersIcon />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                            <td>
                               <button
                                 type="button"
-                                className="registro-inadimplencia__btn-servicos"
-                                onClick={() => abrirModalServicosParaValor(index)}
-                                title="Somar valor a partir dos serviços cadastrados"
-                                aria-label="Adicionar valor a partir dos serviços"
+                                className="registro-inadimplencia__btn-remover"
+                                onClick={() => removerMensalidade(index)}
+                                disabled={formRegistro.mensalidades.length <= 1}
+                                aria-label="Remover período"
+                                title="Remover período"
                               >
-                                <LayersIcon />
+                                <TrashIcon />
                               </button>
-                            )}
-                          </div>
-                        </td>
-                        <td>
-                          <button
-                            type="button"
-                            className="registro-inadimplencia__btn-remover"
-                            onClick={() => removerMensalidade(index)}
-                            disabled={formRegistro.mensalidades.length <= 1}
-                            aria-label="Remover período"
-                            title="Remover período"
-                          >
-                            <TrashIcon />
-                          </button>
-                        </td>
-                      </tr>
-                      <tr className="registro-inadimplencia__linha-descricao">
-                        <td colSpan={4}>
-                          <label className="registro-inadimplencia__descricao-label" htmlFor={`descricao-${row.rowId}`}>
-                            Descrição do período
-                            <span className="registro-inadimplencia__descricao-opcional"> (opcional)</span>
+                            </td>
+                          </tr>
+                          <tr className="registro-inadimplencia__linha-descricao">
+                            <td colSpan={4}>
+                              <label className="registro-inadimplencia__descricao-label" htmlFor={`descricao-${row.rowId}`}>
+                                Descrição do período
+                                <span className="registro-inadimplencia__descricao-opcional"> (opcional)</span>
+                              </label>
+                              <input
+                                id={`descricao-${row.rowId}`}
+                                type="text"
+                                placeholder={`Ex.: Honorários contábeis de ${MESES.find((m) => m.value === row.mes)?.label ?? "referência"}/${row.ano}`}
+                                value={row.descricao}
+                                onChange={(e) => atualizarMensalidade(index, "descricao", e.target.value)}
+                                className="registro-inadimplencia__input registro-inadimplencia__input--descricao"
+                              />
+                            </td>
+                          </tr>
+                        </Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              }
+              mobile={
+                <ul className="admin-item-list">
+                  {formRegistro.mensalidades.map((row, index) => (
+                    <li key={row.rowId}>
+                      <article className="admin-item-card registro-inadimplencia__card-mobile">
+                        <div className="registro-inadimplencia__card-mobile-grid">
+                          <label>
+                            Mês
+                            <select
+                              value={row.mes}
+                              onChange={(e) => atualizarMensalidade(index, "mes", e.target.value)}
+                              className="registro-inadimplencia__select"
+                            >
+                              {MESES.map((op) => (
+                                <option key={op.value} value={op.value}>
+                                  {op.label}
+                                </option>
+                              ))}
+                            </select>
                           </label>
+                          <label>
+                            Ano
+                            <select
+                              value={row.ano}
+                              onChange={(e) => atualizarMensalidade(index, "ano", e.target.value)}
+                              className="registro-inadimplencia__select registro-inadimplencia__select--ano"
+                            >
+                              {ANOS.map((a) => (
+                                <option key={a} value={a}>
+                                  {a}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="registro-inadimplencia__card-mobile-valor">
+                            Valor (R$)
+                            <div className="registro-inadimplencia__valor-cell">
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                autoComplete="off"
+                                placeholder="0,00"
+                                value={row.valorDigitado}
+                                onChange={(e) => atualizarMensalidade(index, "valorDigitado", e.target.value ?? "")}
+                                className="registro-inadimplencia__input registro-inadimplencia__input--valor"
+                              />
+                              {!isMockEnabled() && servicos.length > 0 && (
+                                <button
+                                  type="button"
+                                  className="registro-inadimplencia__btn-servicos"
+                                  onClick={() => abrirModalServicosParaValor(index)}
+                                  title="Somar valor a partir dos serviços"
+                                  aria-label="Adicionar valor a partir dos serviços"
+                                >
+                                  <LayersIcon />
+                                </button>
+                              )}
+                            </div>
+                          </label>
+                        </div>
+                        <label className="registro-inadimplencia__descricao-label" htmlFor={`descricao-mobile-${row.rowId}`}>
+                          Descrição (opcional)
                           <input
-                            id={`descricao-${row.rowId}`}
+                            id={`descricao-mobile-${row.rowId}`}
                             type="text"
-                            placeholder={`Ex.: Honorários contábeis de ${MESES.find((m) => m.value === row.mes)?.label ?? "referência"}/${row.ano}`}
+                            placeholder={`Ex.: Honorários de ${MESES.find((m) => m.value === row.mes)?.label ?? "referência"}/${row.ano}`}
                             value={row.descricao}
                             onChange={(e) => atualizarMensalidade(index, "descricao", e.target.value)}
                             className="registro-inadimplencia__input registro-inadimplencia__input--descricao"
                           />
-                        </td>
-                      </tr>
-                    </Fragment>
+                        </label>
+                        <button
+                          type="button"
+                          className="btn btn--danger btn--small"
+                          onClick={() => removerMensalidade(index)}
+                          disabled={formRegistro.mensalidades.length <= 1}
+                        >
+                          Remover período
+                        </button>
+                      </article>
+                    </li>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </ul>
+              }
+            />
           </section>
         </div>
 

@@ -28,6 +28,8 @@ import {
 import { gerarAvisoPendenciaPdfBlob, gerarEBaixarAvisoPendenciaPdf } from "@/lib/cobrancaPdf";
 import { parseValorReais } from "@/lib/valorBrasil";
 import type { Cliente, Inadimplencia, NotificacaoCobrancaResponse } from "@/types/api";
+import AdminItemCard from "@/components/AdminItemCard";
+import ResponsiveList from "@/components/ResponsiveList";
 
 const ZOHO_MAIL_URL = "https://mail.zoho.com/zm/#mail/folder/sent";
 
@@ -489,18 +491,87 @@ export default function WebInadimplentesHonorarios() {
           </div>
         ) : (
           <>
-          <div className="page-inadimplentes__tabela-wrap page-inadimplentes-honorarios__tabela-wrap">
-            <table className="page-inadimplentes__tabela page-inadimplentes-honorarios__tabela">
-              <thead>
-                <tr>
-                  <th>Mês/Ano</th>
-                  <th>Descrição</th>
-                  <th className="page-inadimplentes__cell-num">Valor</th>
-                  <th>Status</th>
-                  <th className="page-inadimplentes__th-acao">Ação</th>
-                </tr>
-              </thead>
-              <tbody>
+          <ResponsiveList
+            desktop={
+              <div className="page-inadimplentes__tabela-wrap page-inadimplentes-honorarios__tabela-wrap">
+                <table className="page-inadimplentes__tabela page-inadimplentes-honorarios__tabela">
+                  <thead>
+                    <tr>
+                      <th>Mês/Ano</th>
+                      <th>Descrição</th>
+                      <th className="page-inadimplentes__cell-num">Valor</th>
+                      <th>Status</th>
+                      <th className="page-inadimplentes__th-acao">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {itensPaginaHonorarios.map((i) => {
+                      const key = i.id ?? `${i.vencimento}-${i.valor}`;
+                      const { valorTotal } = valoresHonorario(i);
+                      const status = statusPagamentoHonorario(i);
+                      const statusClass =
+                        status === "Pago"
+                          ? "page-inadimplentes-honorarios__status--pago"
+                          : status === "Parcial"
+                            ? "page-inadimplentes-honorarios__status--parcial"
+                            : "page-inadimplentes-honorarios__status--aberto";
+
+                      return (
+                        <tr key={key} className="page-inadimplentes-honorarios__linha">
+                          <td>{formatarMesAno(i.vencimento)}</td>
+                          <td className="page-inadimplentes-honorarios__descricao" title={i.descricao?.trim() || undefined}>
+                            {i.descricao?.trim() || "—"}
+                          </td>
+                          <td className="page-inadimplentes__cell-num">{formatarMoeda(valorTotal)}</td>
+                          <td>
+                            <span className={`page-inadimplentes-honorarios__status ${statusClass}`}>{status}</span>
+                          </td>
+                          <td>
+                            {isInadimplenciaEmAberto(i) ? (
+                              <div className="page-inadimplentes__acoes-detalhe page-inadimplentes-honorarios__acoes-linha">
+                                <button
+                                  type="button"
+                                  className="page-inadimplentes__btn-icone page-inadimplentes__btn-icone--confirmar"
+                                  onClick={() => i.id != null && abrirModalPagamento(i)}
+                                  disabled={i.id == null || valorTotal <= 0}
+                                  title="Registrar pagamento"
+                                  aria-label="Registrar pagamento"
+                                >
+                                  <CheckIcon />
+                                </button>
+                                <button
+                                  type="button"
+                                  className="page-inadimplentes__btn-icone page-inadimplentes__btn-icone--email"
+                                  onClick={() => setModalCobrancaCanal({ inadimplencia: i })}
+                                  title="Enviar cobrança"
+                                  aria-label="Enviar cobrança"
+                                >
+                                  <EmailSendIcon />
+                                </button>
+                                <button
+                                  type="button"
+                                  className="page-inadimplentes__btn-icone page-inadimplentes__btn-icone--cancelar"
+                                  onClick={() => setInadimplenciaParaCancelar({ item: i, nomeCliente })}
+                                  disabled={i.id == null}
+                                  title="Cancelar inadimplência"
+                                  aria-label="Cancelar inadimplência"
+                                >
+                                  <CancelIcon />
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="page-inadimplentes-honorarios__sem-acao">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            }
+            mobile={
+              <ul className="admin-item-list">
                 {itensPaginaHonorarios.map((i) => {
                   const key = i.id ?? `${i.vencimento}-${i.valor}`;
                   const { valorTotal } = valoresHonorario(i);
@@ -513,58 +584,55 @@ export default function WebInadimplentesHonorarios() {
                         : "page-inadimplentes-honorarios__status--aberto";
 
                   return (
-                      <tr key={key} className="page-inadimplentes-honorarios__linha">
-                        <td>{formatarMesAno(i.vencimento)}</td>
-                        <td className="page-inadimplentes-honorarios__descricao" title={i.descricao?.trim() || undefined}>
-                          {i.descricao?.trim() || "—"}
-                        </td>
-                        <td className="page-inadimplentes__cell-num">{formatarMoeda(valorTotal)}</td>
-                        <td>
-                          <span className={`page-inadimplentes-honorarios__status ${statusClass}`}>{status}</span>
-                        </td>
-                        <td>
-                          {isInadimplenciaEmAberto(i) ? (
-                            <div className="page-inadimplentes__acoes-detalhe page-inadimplentes-honorarios__acoes-linha">
+                    <li key={key}>
+                      <AdminItemCard
+                        title={formatarMesAno(i.vencimento)}
+                        meta={i.descricao?.trim() || undefined}
+                        value={formatarMoeda(valorTotal)}
+                        fields={[
+                          {
+                            label: "Status",
+                            value: (
+                              <span className={`page-inadimplentes-honorarios__status ${statusClass}`}>{status}</span>
+                            ),
+                          },
+                        ]}
+                        actions={
+                          isInadimplenciaEmAberto(i) ? (
+                            <>
                               <button
                                 type="button"
-                                className="page-inadimplentes__btn-icone page-inadimplentes__btn-icone--confirmar"
+                                className="btn btn--primary btn--small"
                                 onClick={() => i.id != null && abrirModalPagamento(i)}
                                 disabled={i.id == null || valorTotal <= 0}
-                                title="Registrar pagamento"
-                                aria-label="Registrar pagamento"
                               >
-                                <CheckIcon />
+                                Pagamento
                               </button>
                               <button
                                 type="button"
-                                className="page-inadimplentes__btn-icone page-inadimplentes__btn-icone--email"
+                                className="btn btn--secondary btn--small"
                                 onClick={() => setModalCobrancaCanal({ inadimplencia: i })}
-                                title="Enviar cobrança"
-                                aria-label="Enviar cobrança"
                               >
-                                <EmailSendIcon />
+                                Cobrança
                               </button>
                               <button
                                 type="button"
-                                className="page-inadimplentes__btn-icone page-inadimplentes__btn-icone--cancelar"
+                                className="btn btn--danger btn--small"
                                 onClick={() => setInadimplenciaParaCancelar({ item: i, nomeCliente })}
                                 disabled={i.id == null}
-                                title="Cancelar inadimplência"
-                                aria-label="Cancelar inadimplência"
                               >
-                                <CancelIcon />
+                                Cancelar
                               </button>
-                            </div>
-                          ) : (
-                            <span className="page-inadimplentes-honorarios__sem-acao">—</span>
-                          )}
-                        </td>
-                      </tr>
+                            </>
+                          ) : undefined
+                        }
+                      />
+                    </li>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
+              </ul>
+            }
+          />
           {itens.length > itensPorPagina && (
             <div className="page-inadimplentes__paginacao page-inadimplentes-honorarios__paginacao">
               <button

@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-do
 import { clearAuthSession, getAuthToken, getAuthUserDisplay, getAuthUserProfile, isMockEnabled } from '@/lib/api'
 import { obterContagemDocumentosNovos, DOCUMENTOS_CLIENTES_RESUMO_INVALIDATE_EVENT } from '@/lib/documentosClientesApi'
 import { iniciaisNome, labelPerfilUsuario } from '@/lib/dashboardUtils'
+import { MOBILE_MAX_WIDTH_QUERY, useMediaQuery } from '@/lib/useMediaQuery'
 
 function GridIcon() {
   return (
@@ -111,6 +112,8 @@ export default function Layout() {
   const userDisplay = getAuthUserDisplay() || 'Usuário'
   const userProfile = getAuthUserProfile()
   const [sidebarHidden, setSidebarHidden] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const isMobile = useMediaQuery(MOBILE_MAX_WIDTH_QUERY)
   const isProprietaria = userProfile === 'PROPRIETARIA'
   const isFuncionario = userProfile === 'FUNCIONARIO'
   const podeVerEnvioBoletos = userProfile === 'PROPRIETARIA' || userProfile === 'RESPONSAVEL_FINANCEIRO'
@@ -173,9 +176,58 @@ export default function Layout() {
     localStorage.setItem(SIDEBAR_HIDDEN_KEY, sidebarHidden ? '1' : '0')
   }, [sidebarHidden])
 
+  useEffect(() => {
+    setMobileMenuOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!isMobile) {
+      setMobileMenuOpen(false)
+      return
+    }
+    document.body.style.overflow = mobileMenuOpen ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isMobile, mobileMenuOpen])
+
   return (
-    <div className={`app-layout ${sidebarHidden ? 'app-layout--sidebar-hidden' : ''}`}>
-      {sidebarHidden && (
+    <div
+      className={[
+        'app-layout',
+        sidebarHidden && !isMobile ? 'app-layout--sidebar-hidden' : '',
+        isMobile ? 'app-layout--mobile' : '',
+        mobileMenuOpen ? 'app-layout--drawer-open' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      {isMobile && (
+        <header className="admin-topbar">
+          <button
+            type="button"
+            className="admin-topbar__menu-btn"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+            aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
+            aria-expanded={mobileMenuOpen}
+          >
+            <MenuIcon open={mobileMenuOpen} />
+          </button>
+          <div className="admin-topbar__brand">
+            <LogoIcon />
+            <span className="admin-topbar__titulo">SGI</span>
+          </div>
+        </header>
+      )}
+      {isMobile && mobileMenuOpen && (
+        <button
+          type="button"
+          className="sidebar-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+          aria-label="Fechar menu"
+        />
+      )}
+      {!isMobile && sidebarHidden && (
         <button
           type="button"
           className="sidebar-handle sidebar-handle--floating"
@@ -186,7 +238,7 @@ export default function Layout() {
           <ChevronIcon direction="right" />
         </button>
       )}
-      {!sidebarHidden && (
+      {!isMobile && !sidebarHidden && (
         <button
           type="button"
           className="sidebar-handle sidebar-handle--edge"
@@ -197,7 +249,7 @@ export default function Layout() {
           <ChevronIcon direction="left" />
         </button>
       )}
-      <aside className="sidebar">
+      <aside className={`sidebar ${isMobile ? 'sidebar--drawer' : ''}`}>
         <Link to="/" className="sidebar-brand" aria-label="Ir para a página institucional">
           <div className="sidebar-brand__logo">
             <LogoIcon />
@@ -225,6 +277,7 @@ export default function Layout() {
               to={to}
               end={to === '/dashboard'}
               className={({ isActive }) => `sidebar-link ${isActive ? 'sidebar-link--active' : ''}`}
+              onClick={() => isMobile && setMobileMenuOpen(false)}
             >
               <Icon />
               <span className="sidebar-link__label">{label}</span>
@@ -246,6 +299,25 @@ export default function Layout() {
         </main>
       </div>
     </div>
+  )
+}
+
+function MenuIcon({ open }: { open: boolean }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      {open ? (
+        <>
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </>
+      ) : (
+        <>
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </>
+      )}
+    </svg>
   )
 }
 
