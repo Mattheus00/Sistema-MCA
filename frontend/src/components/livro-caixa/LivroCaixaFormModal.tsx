@@ -6,6 +6,7 @@ import { formatarReaisParaInput, parseValorReais } from "@/lib/valorBrasil";
 import {
   FORMAS_PAGAMENTO,
   hojeIso,
+  isCategoriaHonorariosContabeis,
   labelFormaPagamento,
   labelStatusMovimentacao,
   labelTipoMovimentacao,
@@ -198,7 +199,7 @@ export default function LivroCaixaFormModal({
   }, [aberto]);
 
   useEffect(() => {
-    if (!form.clienteBusca.trim() || form.clienteId) {
+    if (!form.clienteBusca.trim() || form.clienteId || !isCategoriaHonorariosContabeis(form.categoriaId, categorias)) {
       setClientesSugestoes([]);
       return;
     }
@@ -215,12 +216,13 @@ export default function LivroCaixaFormModal({
       })();
     }, 300);
     return () => clearTimeout(timer);
-  }, [form.clienteBusca, form.clienteId]);
+  }, [form.clienteBusca, form.clienteId, form.categoriaId, categorias]);
 
   if (!aberto) return null;
 
   const categoriasFiltradas = categorias.filter((c) => c.tipo === form.tipo && c.ativa);
   const statusOpcoes = statusPermitidosPorTipo(form.tipo);
+  const exigeCliente = isCategoriaHonorariosContabeis(form.categoriaId, categorias);
   const titulo = modo === "criar" ? "Nova movimentação" : "Editar movimentação";
   const subtitulo = modo === "criar" ? "Preencha os dados da entrada ou saída" : "Atualize os dados da movimentação";
 
@@ -229,8 +231,21 @@ export default function LivroCaixaFormModal({
       ...f,
       tipo,
       categoriaId: "",
+      clienteId: "",
+      clienteBusca: "",
       status: statusPermitidosPorTipo(tipo)[0],
     }));
+  }
+
+  function atualizarCategoria(categoriaId: string) {
+    setForm((f) => {
+      const exige = isCategoriaHonorariosContabeis(categoriaId, categorias);
+      return {
+        ...f,
+        categoriaId,
+        ...(exige ? {} : { clienteId: "", clienteBusca: "" }),
+      };
+    });
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -251,6 +266,10 @@ export default function LivroCaixaFormModal({
     }
     if (!form.dataMovimentacao) {
       setErro("Informe a data da movimentação.");
+      return;
+    }
+    if (exigeCliente && !form.clienteId) {
+      setErro("Selecione o cliente para honorários contábeis.");
       return;
     }
     const payload: CriarMovimentacaoPayload = {
@@ -361,7 +380,7 @@ export default function LivroCaixaFormModal({
                 <select
                   className="lc-modal-form__input lc-modal-form__select"
                   value={form.categoriaId}
-                  onChange={(e) => setForm((f) => ({ ...f, categoriaId: e.target.value }))}
+                  onChange={(e) => atualizarCategoria(e.target.value)}
                   required
                 >
                   <option value="">Selecione...</option>
@@ -370,6 +389,51 @@ export default function LivroCaixaFormModal({
                   ))}
                 </select>
               </label>
+
+              {exigeCliente && (
+                <div className="lc-modal-form__campo lc-modal-form__campo--full lc-modal-form__busca-wrap">
+                  <Label required>Cliente</Label>
+                  <div className="lc-modal-form__busca">
+                    <span className="lc-modal-form__busca-icone"><IconBusca /></span>
+                    <input
+                      className="lc-modal-form__input"
+                      value={form.clienteBusca}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          clienteBusca: e.target.value,
+                          clienteId: "",
+                        }))
+                      }
+                      placeholder="Buscar cliente..."
+                      autoComplete="off"
+                      required={exigeCliente}
+                      aria-required="true"
+                    />
+                  </div>
+                  {clientesSugestoes.length > 0 && (
+                    <ul className="lc-modal-form__sugestoes">
+                      {clientesSugestoes.map((c) => (
+                        <li key={c.id}>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setForm((f) => ({
+                                ...f,
+                                clienteId: String(c.id),
+                                clienteBusca: c.nome,
+                              }))
+                            }
+                          >
+                            {c.nome}
+                            {c.codigo ? ` · Cód. ${c.codigo}` : null}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
 
               <label className="lc-modal-form__campo">
                 <Label required>Status</Label>
@@ -462,50 +526,10 @@ export default function LivroCaixaFormModal({
           <section className="lc-modal-form__secao">
             <h3 className="lc-modal-form__secao-titulo">
               <span className="lc-modal-form__secao-icone"><IconCliente /></span>
-              Cliente e observações
+              {form.tipo === "SAIDA" ? "Fornecedor e observações" : "Observações"}
             </h3>
             <div className="lc-modal-form__grid">
-              {form.tipo === "ENTRADA" ? (
-                <div className="lc-modal-form__campo lc-modal-form__campo--full lc-modal-form__busca-wrap">
-                  <Label>Cliente (opcional)</Label>
-                  <div className="lc-modal-form__busca">
-                    <span className="lc-modal-form__busca-icone"><IconBusca /></span>
-                    <input
-                      className="lc-modal-form__input"
-                      value={form.clienteBusca}
-                      onChange={(e) =>
-                        setForm((f) => ({
-                          ...f,
-                          clienteBusca: e.target.value,
-                          clienteId: "",
-                        }))
-                      }
-                      placeholder="Buscar cliente..."
-                      autoComplete="off"
-                    />
-                  </div>
-                  {clientesSugestoes.length > 0 && (
-                    <ul className="lc-modal-form__sugestoes">
-                      {clientesSugestoes.map((c) => (
-                        <li key={c.id}>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setForm((f) => ({
-                                ...f,
-                                clienteId: String(c.id),
-                                clienteBusca: c.nome,
-                              }))
-                            }
-                          >
-                            {c.nome}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ) : (
+              {form.tipo === "SAIDA" && (
                 <label className="lc-modal-form__campo lc-modal-form__campo--full">
                   <Label>Fornecedor</Label>
                   <input

@@ -34,7 +34,7 @@ const hoje = new Date().toISOString().slice(0, 10);
 
 export const mockLivroCaixaStore = {
   categorias: [
-    { id: "lc-cat-1", nome: "Honorários", tipo: "ENTRADA", ativa: true },
+    { id: "lc-cat-1", nome: "Honorários contábeis", tipo: "ENTRADA", ativa: true },
     { id: "lc-cat-2", nome: "Receitas diversas", tipo: "ENTRADA", ativa: true },
     { id: "lc-cat-3", nome: "Despesas operacionais", tipo: "SAIDA", ativa: true },
     { id: "lc-cat-4", nome: "Impostos", tipo: "SAIDA", ativa: true },
@@ -50,7 +50,7 @@ export const mockLivroCaixaStore = {
       descricao: "Honorários cliente Silva",
       valor: 2500,
       categoriaId: "lc-cat-1",
-      categoriaNome: "Honorários",
+      categoriaNome: "Honorários contábeis",
       formaPagamento: "PIX",
       status: "RECEBIDO",
       dataMovimentacao: hoje,

@@ -1,5 +1,15 @@
-import type { FormaPagamento, OrigemMovimentacao, StatusMovimentacao, TipoMovimentacao } from "@/types/livroCaixa";
+import type { CategoriaLivroCaixa, FormaPagamento, OrigemMovimentacao, StatusMovimentacao, TipoMovimentacao } from "@/types/livroCaixa";
 import { formatarMoeda } from "@/lib/inadimplentesUtils";
+
+/** Nome canônico da categoria que exige vínculo com cliente (identificação por nome, não por UUID). */
+export const NOME_CATEGORIA_HONORARIOS_CONTABEIS = "Honorários contábeis";
+
+export function isCategoriaHonorariosContabeis(categoriaId: string, categorias: CategoriaLivroCaixa[]): boolean {
+  if (!categoriaId) return false;
+  const cat = categorias.find((c) => c.id === categoriaId);
+  if (!cat || cat.tipo !== "ENTRADA") return false;
+  return cat.nome.trim().toLowerCase() === NOME_CATEGORIA_HONORARIOS_CONTABEIS.toLowerCase();
+}
 
 export type PeriodoRapido =
   | "HOJE"
