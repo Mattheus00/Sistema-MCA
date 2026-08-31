@@ -108,18 +108,13 @@ public class LivroCaixaMovimentacaoService {
                                                          String busca,
                                                          Pageable pageable) {
         staffAccessService.assertPodeAcessarLivroCaixa(usuarioId);
-        Page<LivroCaixaMovimentacao> page = movimentacaoRepository.buscarComFiltros(
-                tipo,
-                status,
-                categoriaId,
-                contaId,
-                clienteId,
-                formaPagamento,
-                dataInicio,
-                dataFim,
-                valorMin != null ? LivroCaixaSupport.reaisParaCentavos(valorMin) : null,
-                valorMax != null ? LivroCaixaSupport.reaisParaCentavos(valorMax) : null,
-                blankToNull(busca),
+        Page<LivroCaixaMovimentacao> page = movimentacaoRepository.findAll(
+                LivroCaixaMovimentacaoSpecs.filtrar(
+                        tipo, status, categoriaId, contaId, clienteId, formaPagamento,
+                        dataInicio, dataFim,
+                        valorMin != null ? LivroCaixaSupport.reaisParaCentavos(valorMin) : null,
+                        valorMax != null ? LivroCaixaSupport.reaisParaCentavos(valorMax) : null,
+                        blankToNull(busca)),
                 pageable);
         return page.map(this::toDto);
     }
@@ -375,9 +370,11 @@ public class LivroCaixaMovimentacaoService {
         LocalDate inicio = dataInicio != null ? dataInicio : YearMonth.now().atDay(1);
         LocalDate fim = dataFim != null ? dataFim : LocalDate.now();
 
-        Page<LivroCaixaMovimentacao> page = movimentacaoRepository.buscarComFiltros(
-                tipo, status, categoriaId, contaId, null, null,
-                inicio, fim, null, null, null, Pageable.unpaged());
+        Page<LivroCaixaMovimentacao> page = movimentacaoRepository.findAll(
+                LivroCaixaMovimentacaoSpecs.filtrar(
+                        tipo, status, categoriaId, contaId, null, null,
+                        inicio, fim, null, null, null),
+                Pageable.unpaged());
 
         BigDecimal entradas = BigDecimal.ZERO;
         BigDecimal saidas = BigDecimal.ZERO;
