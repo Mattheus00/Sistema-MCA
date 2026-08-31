@@ -9741,6 +9741,26 @@ select.modal__select {
   position: relative;
 }
 
+.lc-modal-form__combo {
+  position: relative;
+  z-index: 1;
+  border-radius: 999px;
+  background: #fff;
+  transition: border-radius 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.lc-modal-form__combo--aberta {
+  z-index: 40;
+  border-radius: 16px;
+  border: 1px solid var(--cor-principal);
+  box-shadow: 0 10px 28px rgba(164, 63, 155, 0.14);
+}
+
+.lc-modal-form__combo--selecionado:not(.lc-modal-form__combo--aberta) {
+  border: 1px solid rgba(34, 197, 94, 0.45);
+  background: rgba(34, 197, 94, 0.04);
+}
+
 .lc-modal-form__busca {
   position: relative;
   display: flex;
@@ -9748,18 +9768,43 @@ select.modal__select {
   border: 1px solid #e2e8f0;
   border-radius: 999px;
   background: #fff;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, border-radius 0.22s ease;
 }
 
-.lc-modal-form__busca--aberta,
-.lc-modal-form__busca:focus-within {
+.lc-modal-form__combo--aberta .lc-modal-form__busca {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  border-bottom: 1px solid #f1f5f9;
+  background: transparent;
+}
+
+.lc-modal-form__combo:not(.lc-modal-form__combo--aberta) .lc-modal-form__busca:focus-within {
   border-color: var(--cor-principal);
   box-shadow: 0 0 0 3px rgba(164, 63, 155, 0.12);
 }
 
-.lc-modal-form__busca--selecionado {
-  border-color: rgba(34, 197, 94, 0.45);
-  background: rgba(34, 197, 94, 0.04);
+.lc-modal-form__combo--selecionado:not(.lc-modal-form__combo--aberta) .lc-modal-form__busca {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.lc-modal-form__combo-panel {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.22s ease,
+    transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lc-modal-form__combo--aberta .lc-modal-form__combo-panel {
+  max-height: 240px;
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .lc-modal-form__busca-icone {
@@ -9778,6 +9823,10 @@ select.modal__select {
   padding-left: 40px;
   padding-right: 36px;
   box-shadow: none !important;
+}
+
+.lc-modal-form__combo--aberta .lc-modal-form__input--combo {
+  border-radius: 0;
 }
 
 .lc-modal-form__input--combo:focus {
@@ -9810,22 +9859,15 @@ select.modal__select {
 
 .lc-modal-form__sugestoes {
   list-style: none;
-  margin: 6px 0 0;
+  margin: 0;
   padding: 6px;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
   background: #fff;
-  max-height: 220px;
+  max-height: 228px;
   overflow-y: auto;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
-  position: absolute;
-  left: 0;
-  right: 0;
-  z-index: 20;
 }
 
 .lc-modal-form__sugestoes-status {
-  padding: 12px 14px;
+  padding: 14px 12px;
   font-size: 0.875rem;
   color: #64748b;
   text-align: center;
@@ -9842,17 +9884,20 @@ select.modal__select {
   font-size: 0.875rem;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .lc-modal-form__sugestoes button strong {
   color: #0f172a;
   font-weight: 600;
+  font-size: 0.8125rem;
+  line-height: 1.3;
 }
 
-.lc-modal-form__sugestoes button span {
+.lc-modal-form__sugestao-meta {
   font-size: 0.75rem;
   color: #64748b;
+  line-height: 1.3;
 }
 
 .lc-modal-form__sugestoes button:hover,

@@ -437,69 +437,77 @@ export default function LivroCaixaFormModal({
               </label>
 
               {exigeCliente && (
-                <div className="lc-modal-form__campo lc-modal-form__campo--full lc-modal-form__busca-wrap" ref={clienteComboRef}>
+                <div className="lc-modal-form__campo lc-modal-form__campo--full" ref={clienteComboRef}>
                   <Label required>Cliente</Label>
-                  <div className={`lc-modal-form__busca${clienteListaAberta ? " lc-modal-form__busca--aberta" : ""}${form.clienteId ? " lc-modal-form__busca--selecionado" : ""}`}>
-                    <span className="lc-modal-form__busca-icone"><IconBusca /></span>
-                    <input
-                      className="lc-modal-form__input lc-modal-form__input--combo"
-                      value={form.clienteBusca}
-                      onChange={(e) =>
-                        setForm((f) => ({
-                          ...f,
-                          clienteBusca: e.target.value,
-                          clienteId: "",
-                        }))
-                      }
-                      onFocus={() => {
-                        setClienteListaAberta(true);
-                        if (listaClientes.length === 0) void carregarClientes(form.clienteBusca);
-                      }}
-                      placeholder="Buscar cliente..."
-                      autoComplete="off"
-                      aria-required="true"
-                      aria-expanded={clienteListaAberta}
-                      aria-controls="lc-modal-clientes-lista"
-                      aria-autocomplete="list"
-                      role="combobox"
-                    />
-                    {form.clienteId && (
-                      <button
-                        type="button"
-                        className="lc-modal-form__busca-limpar"
-                        onClick={limparClienteSelecionado}
-                        aria-label="Limpar cliente selecionado"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                  {clienteListaAberta && (
-                    <ul id="lc-modal-clientes-lista" className="lc-modal-form__sugestoes" role="listbox">
-                      {carregandoClientes ? (
-                        <li className="lc-modal-form__sugestoes-status">Carregando clientes…</li>
-                      ) : listaClientes.length === 0 ? (
-                        <li className="lc-modal-form__sugestoes-status">Nenhum cliente encontrado.</li>
-                      ) : (
-                        listaClientes.map((c) => (
-                          <li key={c.id}>
-                            <button
-                              type="button"
-                              role="option"
-                              aria-selected={form.clienteId === String(c.id)}
-                              className={form.clienteId === String(c.id) ? "lc-modal-form__sugestao--ativa" : ""}
-                              onMouseDown={(e) => e.preventDefault()}
-                              onClick={() => selecionarCliente(c)}
-                            >
-                              <strong>{c.nome}</strong>
-                              {c.codigo ? <span>Cód. {c.codigo}</span> : null}
-                              {c.cpf ? <span>{c.cpf}</span> : null}
-                            </button>
-                          </li>
-                        ))
+                  <div
+                    className={`lc-modal-form__combo${clienteListaAberta ? " lc-modal-form__combo--aberta" : ""}${form.clienteId ? " lc-modal-form__combo--selecionado" : ""}`}
+                  >
+                    <div className="lc-modal-form__busca">
+                      <span className="lc-modal-form__busca-icone"><IconBusca /></span>
+                      <input
+                        className="lc-modal-form__input lc-modal-form__input--combo"
+                        value={form.clienteBusca}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            clienteBusca: e.target.value,
+                            clienteId: "",
+                          }))
+                        }
+                        onFocus={() => {
+                          setClienteListaAberta(true);
+                          if (listaClientes.length === 0) void carregarClientes(form.clienteBusca);
+                        }}
+                        placeholder="Buscar cliente..."
+                        autoComplete="off"
+                        aria-required="true"
+                        aria-expanded={clienteListaAberta}
+                        aria-controls="lc-modal-clientes-lista"
+                        aria-autocomplete="list"
+                        role="combobox"
+                      />
+                      {form.clienteId && (
+                        <button
+                          type="button"
+                          className="lc-modal-form__busca-limpar"
+                          onClick={limparClienteSelecionado}
+                          aria-label="Limpar cliente selecionado"
+                        >
+                          ×
+                        </button>
                       )}
-                    </ul>
-                  )}
+                    </div>
+
+                    <div className="lc-modal-form__combo-panel" aria-hidden={!clienteListaAberta}>
+                      <ul id="lc-modal-clientes-lista" className="lc-modal-form__sugestoes" role="listbox">
+                        {carregandoClientes ? (
+                          <li className="lc-modal-form__sugestoes-status">Carregando clientes…</li>
+                        ) : listaClientes.length === 0 ? (
+                          <li className="lc-modal-form__sugestoes-status">Nenhum cliente encontrado.</li>
+                        ) : (
+                          listaClientes.map((c) => (
+                            <li key={c.id}>
+                              <button
+                                type="button"
+                                role="option"
+                                aria-selected={form.clienteId === String(c.id)}
+                                className={form.clienteId === String(c.id) ? "lc-modal-form__sugestao--ativa" : ""}
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => selecionarCliente(c)}
+                              >
+                                <strong>{c.nome}</strong>
+                                <span className="lc-modal-form__sugestao-meta">
+                                  {c.codigo ? `Cód. ${c.codigo}` : null}
+                                  {c.codigo && c.cpf ? " · " : null}
+                                  {c.cpf ? c.cpf : null}
+                                </span>
+                              </button>
+                            </li>
+                          ))
+                        )}
+                      </ul>
+                    </div>
+                  </div>
                 </div>
               )}
 
