@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { api, normalizeListResponse } from "@/lib/api";
 import { normalizeClienteFromApi } from "@/lib/apiNormalizers";
@@ -178,11 +178,33 @@ export default function LivroCaixaFormModal({
 }: LivroCaixaFormModalProps) {
   const [form, setForm] = useState<FormMovimentacaoState>(formInicial());
   const [erro, setErro] = useState<string | null>(null);
-  const [clientesSugestoes, setClientesSugestoes] = useState<Cliente[]>([]);
+  const [listaClientes, setListaClientes] = useState<Cliente[]>([]);
+  const [clienteListaAberta, setClienteListaAberta] = useState(false);
+  const [carregandoClientes, setCarregandoClientes] = useState(false);
+  const clienteComboRef = useRef<HTMLDivElement>(null);
+
+  const carregarClientes = useCallback(async (termo: string) => {
+    setCarregandoClientes(true);
+    try {
+      const params: Record<string, string | number> = {
+        page: 0,
+        size: 50,
+        statusCliente: "ATIVO",
+      };
+      if (termo.trim()) params.termo = termo.trim();
+      const r = await api.get("/api/clientes", { params });
+      setListaClientes(normalizeListResponse<Record<string, unknown>>(r.data).map(normalizeClienteFromApi));
+    } catch {
+      setListaClientes([]);
+    } finally {
+      setCarregandoClientes(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (!aberto) return;
     setErro(null);
+    setClienteListaAberta(false);
     if (modo === "editar" && movimentacao) {
       setForm(formFromDetalhe(movimentacao));
     } else {
@@ -199,24 +221,28 @@ export default function LivroCaixaFormModal({
   }, [aberto]);
 
   useEffect(() => {
-    if (!form.clienteBusca.trim() || form.clienteId || !isCategoriaHonorariosContabeis(form.categoriaId, categorias)) {
-      setClientesSugestoes([]);
+    if (!aberto || !isCategoriaHonorariosContabeis(form.categoriaId, categorias)) {
+      setListaClientes([]);
+      setClienteListaAberta(false);
       return;
     }
+    const delay = form.clienteBusca.trim() ? 300 : 0;
     const timer = setTimeout(() => {
-      void (async () => {
-        try {
-          const r = await api.get("/api/clientes", {
-            params: { termo: form.clienteBusca.trim(), page: 0, size: 10, statusCliente: "ATIVO" },
-          });
-          setClientesSugestoes(normalizeListResponse<Record<string, unknown>>(r.data).map(normalizeClienteFromApi));
-        } catch {
-          setClientesSugestoes([]);
-        }
-      })();
-    }, 300);
+      void carregarClientes(form.clienteBusca);
+    }, delay);
     return () => clearTimeout(timer);
-  }, [form.clienteBusca, form.clienteId, form.categoriaId, categorias]);
+  }, [aberto, form.categoriaId, form.clienteBusca, categorias, carregarClientes]);
+
+  useEffect(() => {
+    if (!clienteListaAberta) return;
+    function handleClickFora(e: MouseEvent) {
+      if (clienteComboRef.current && !clienteComboRef.current.contains(e.target as Node)) {
+        setClienteListaAberta(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickFora);
+    return () => document.removeEventListener("mousedown", handleClickFora);
+  }, [clienteListaAberta]);
 
   if (!aberto) return null;
 
@@ -246,6 +272,26 @@ export default function LivroCaixaFormModal({
         ...(exige ? {} : { clienteId: "", clienteBusca: "" }),
       };
     });
+    if (isCategoriaHonorariosContabeis(categoriaId, categorias)) {
+      setClienteListaAberta(true);
+    } else {
+      setClienteListaAberta(false);
+    }
+  }
+
+  function selecionarCliente(cliente: Cliente) {
+    setForm((f) => ({
+      ...f,
+      clienteId: String(cliente.id),
+      clienteBusca: cliente.nome,
+    }));
+    setClienteListaAberta(false);
+  }
+
+  function limparClienteSelecionado() {
+    setForm((f) => ({ ...f, clienteId: "", clienteBusca: "" }));
+    setClienteListaAberta(true);
+    void carregarClientes("");
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -391,12 +437,12 @@ export default function LivroCaixaFormModal({
               </label>
 
               {exigeCliente && (
-                <div className="lc-modal-form__campo lc-modal-form__campo--full lc-modal-form__busca-wrap">
+                <div className="lc-modal-form__campo lc-modal-form__campo--full lc-modal-form__busca-wrap" ref={clienteComboRef}>
                   <Label required>Cliente</Label>
-                  <div className="lc-modal-form__busca">
+                  <div className={`lc-modal-form__busca${clienteListaAberta ? " lc-modal-form__busca--aberta" : ""}${form.clienteId ? " lc-modal-form__busca--selecionado" : ""}`}>
                     <span className="lc-modal-form__busca-icone"><IconBusca /></span>
                     <input
-                      className="lc-modal-form__input"
+                      className="lc-modal-form__input lc-modal-form__input--combo"
                       value={form.clienteBusca}
                       onChange={(e) =>
                         setForm((f) => ({
@@ -405,31 +451,53 @@ export default function LivroCaixaFormModal({
                           clienteId: "",
                         }))
                       }
+                      onFocus={() => {
+                        setClienteListaAberta(true);
+                        if (listaClientes.length === 0) void carregarClientes(form.clienteBusca);
+                      }}
                       placeholder="Buscar cliente..."
                       autoComplete="off"
-                      required={exigeCliente}
                       aria-required="true"
+                      aria-expanded={clienteListaAberta}
+                      aria-controls="lc-modal-clientes-lista"
+                      aria-autocomplete="list"
+                      role="combobox"
                     />
+                    {form.clienteId && (
+                      <button
+                        type="button"
+                        className="lc-modal-form__busca-limpar"
+                        onClick={limparClienteSelecionado}
+                        aria-label="Limpar cliente selecionado"
+                      >
+                        ×
+                      </button>
+                    )}
                   </div>
-                  {clientesSugestoes.length > 0 && (
-                    <ul className="lc-modal-form__sugestoes">
-                      {clientesSugestoes.map((c) => (
-                        <li key={c.id}>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setForm((f) => ({
-                                ...f,
-                                clienteId: String(c.id),
-                                clienteBusca: c.nome,
-                              }))
-                            }
-                          >
-                            {c.nome}
-                            {c.codigo ? ` · Cód. ${c.codigo}` : null}
-                          </button>
-                        </li>
-                      ))}
+                  {clienteListaAberta && (
+                    <ul id="lc-modal-clientes-lista" className="lc-modal-form__sugestoes" role="listbox">
+                      {carregandoClientes ? (
+                        <li className="lc-modal-form__sugestoes-status">Carregando clientes…</li>
+                      ) : listaClientes.length === 0 ? (
+                        <li className="lc-modal-form__sugestoes-status">Nenhum cliente encontrado.</li>
+                      ) : (
+                        listaClientes.map((c) => (
+                          <li key={c.id}>
+                            <button
+                              type="button"
+                              role="option"
+                              aria-selected={form.clienteId === String(c.id)}
+                              className={form.clienteId === String(c.id) ? "lc-modal-form__sugestao--ativa" : ""}
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => selecionarCliente(c)}
+                            >
+                              <strong>{c.nome}</strong>
+                              {c.codigo ? <span>Cód. {c.codigo}</span> : null}
+                              {c.cpf ? <span>{c.cpf}</span> : null}
+                            </button>
+                          </li>
+                        ))
+                      )}
                     </ul>
                   )}
                 </div>
