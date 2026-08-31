@@ -1,13 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ComponentType } from 'react'
 import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { clearAuthSession, getAuthToken, getAuthUserDisplay, getAuthUserProfile, isMockEnabled } from '@/lib/api'
 import { obterContagemDocumentosNovos, DOCUMENTOS_CLIENTES_RESUMO_INVALIDATE_EVENT } from '@/lib/documentosClientesApi'
 import { iniciaisNome, labelPerfilUsuario } from '@/lib/dashboardUtils'
-import { MOBILE_MAX_WIDTH_QUERY, useMediaQuery } from '@/lib/useMediaQuery'
+
+type NavItem = {
+  to: string
+  label: string
+  icon: ComponentType
+  badge?: string
+}
 
 function GridIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <rect x="3" y="3" width="7" height="7" rx="1" />
       <rect x="14" y="3" width="7" height="7" rx="1" />
       <rect x="14" y="14" width="7" height="7" rx="1" />
@@ -18,7 +24,7 @@ function GridIcon() {
 
 function PeopleIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -29,7 +35,7 @@ function PeopleIcon() {
 
 function AlertIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <circle cx="12" cy="12" r="10" />
       <line x1="12" y1="8" x2="12" y2="12" />
       <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -39,7 +45,7 @@ function AlertIcon() {
 
 function ChartIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <line x1="18" y1="20" x2="18" y2="10" />
       <line x1="12" y1="20" x2="12" y2="4" />
       <line x1="6" y1="20" x2="6" y2="14" />
@@ -49,7 +55,7 @@ function ChartIcon() {
 
 function ServicesIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <rect x="3" y="4" width="18" height="14" rx="2" />
       <path d="M3 10h18" />
       <path d="M9 16h6" />
@@ -59,7 +65,7 @@ function ServicesIcon() {
 
 function CalculatorIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <rect x="4" y="2" width="16" height="20" rx="2" />
       <path d="M8 6h8" />
       <path d="M8 10h1" />
@@ -76,7 +82,7 @@ function CalculatorIcon() {
 
 function EmailAttachIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
       <path d="M4 20h4" />
       <path d="M4 16v4" />
@@ -86,7 +92,7 @@ function EmailAttachIcon() {
 
 function UserIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
       <circle cx="12" cy="7" r="4" />
     </svg>
@@ -95,7 +101,7 @@ function UserIcon() {
 
 function DocumentosPortalIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
       <polyline points="14 2 14 8 20 8" />
       <path d="M12 18v-6" />
@@ -104,22 +110,53 @@ function DocumentosPortalIcon() {
   )
 }
 
+function WalletIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+      <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+      <path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z" />
+    </svg>
+  )
+}
+
+function NavPill({
+  to,
+  label,
+  icon: Icon,
+  badge,
+  onNavigate,
+}: NavItem & { onNavigate?: () => void }) {
+  return (
+    <NavLink
+      to={to}
+      end={to === '/dashboard'}
+      className={({ isActive }) => `app-nav-pill${isActive ? ' app-nav-pill--active' : ''}`}
+      onClick={onNavigate}
+    >
+      <span className="app-nav-pill__icon">
+        <Icon />
+      </span>
+      <span className="app-nav-pill__label">{label}</span>
+      {badge && <span className="app-nav-pill__badge">{badge}</span>}
+    </NavLink>
+  )
+}
+
 export default function Layout() {
   const navigate = useNavigate()
   const location = useLocation()
-  const SIDEBAR_HIDDEN_KEY = 'sgi_sidebar_hidden'
   const showSair = !isMockEnabled() && !!getAuthToken()
   const userDisplay = getAuthUserDisplay() || 'Usuário'
   const userProfile = getAuthUserProfile()
-  const [sidebarHidden, setSidebarHidden] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const isMobile = useMediaQuery(MOBILE_MAX_WIDTH_QUERY)
   const isProprietaria = userProfile === 'PROPRIETARIA'
   const isFuncionario = userProfile === 'FUNCIONARIO'
   const podeVerEnvioBoletos = userProfile === 'PROPRIETARIA' || userProfile === 'RESPONSAVEL_FINANCEIRO'
   const podeVerDocumentosPortal = podeVerEnvioBoletos
+  const podeVerLivroCaixa = podeVerEnvioBoletos
   const [badgeDocumentos, setBadgeDocumentos] = useState(0)
-  const navItems = isFuncionario
+  const navItems: NavItem[] = isFuncionario
     ? [
         { to: '/clientes', label: 'Clientes', icon: PeopleIcon },
         { to: '/inadimplentes', label: 'Inadimplentes', icon: AlertIcon },
@@ -131,7 +168,8 @@ export default function Layout() {
         { to: '/servicos', label: 'Serviços', icon: ServicesIcon },
         { to: '/reforma-tributaria', label: 'Simulador', icon: CalculatorIcon },
         { to: '/relatorios', label: 'Relatórios', icon: ChartIcon },
-        ...(podeVerEnvioBoletos ? [{ to: '/envio-boletos', label: 'Envio de boletos', icon: EmailAttachIcon, badge: 'Novo' as const }] : []),
+        ...(podeVerLivroCaixa ? [{ to: '/livro-caixa', label: 'Livro Caixa', icon: WalletIcon }] : []),
+        ...(podeVerEnvioBoletos ? [{ to: '/envio-boletos', label: 'Envio de boletos', icon: EmailAttachIcon, badge: 'Novo' }] : []),
         ...(podeVerDocumentosPortal
           ? [{
               to: '/documentos-clientes',
@@ -146,6 +184,10 @@ export default function Layout() {
   function handleSair() {
     clearAuthSession()
     navigate('/login', { replace: true })
+  }
+
+  function fecharMenuMobile() {
+    setMobileMenuOpen(false)
   }
 
   useEffect(() => {
@@ -167,140 +209,93 @@ export default function Layout() {
   }, [podeVerDocumentosPortal, location.pathname])
 
   useEffect(() => {
-    if (typeof localStorage === 'undefined') return
-    setSidebarHidden(localStorage.getItem(SIDEBAR_HIDDEN_KEY) === '1')
-  }, [])
-
-  useEffect(() => {
-    if (typeof localStorage === 'undefined') return
-    localStorage.setItem(SIDEBAR_HIDDEN_KEY, sidebarHidden ? '1' : '0')
-  }, [sidebarHidden])
-
-  useEffect(() => {
     setMobileMenuOpen(false)
   }, [location.pathname])
 
   useEffect(() => {
-    if (!isMobile) {
-      setMobileMenuOpen(false)
-      return
-    }
     document.body.style.overflow = mobileMenuOpen ? 'hidden' : ''
     return () => {
       document.body.style.overflow = ''
     }
-  }, [isMobile, mobileMenuOpen])
-
-  useEffect(() => {
-    function onResize() {
-      if (window.matchMedia(MOBILE_MAX_WIDTH_QUERY).matches) return
-      setMobileMenuOpen(false)
-    }
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [])
+  }, [mobileMenuOpen])
 
   return (
-    <div
-      className={[
-        'app-layout',
-        sidebarHidden && !isMobile ? 'app-layout--sidebar-hidden' : '',
-        mobileMenuOpen ? 'app-layout--drawer-open' : '',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-    >
-      <header className="admin-topbar">
-        <button
-          type="button"
-          className="admin-topbar__menu-btn"
-          onClick={() => setMobileMenuOpen((open) => !open)}
-          aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
-          aria-expanded={mobileMenuOpen}
-        >
-          <MenuIcon open={mobileMenuOpen} />
-        </button>
-        <div className="admin-topbar__brand">
-          <LogoIcon />
-          <span className="admin-topbar__titulo">SGI</span>
-        </div>
-      </header>
-      {mobileMenuOpen && (
-        <button
-          type="button"
-          className="sidebar-backdrop"
-          onClick={() => setMobileMenuOpen(false)}
-          aria-label="Fechar menu"
-        />
-      )}
-      {!isMobile && sidebarHidden && (
-        <button
-          type="button"
-          className="sidebar-handle sidebar-handle--floating"
-          onClick={() => setSidebarHidden(false)}
-          aria-label="Mostrar barra lateral"
-          title="Mostrar menu"
-        >
-          <ChevronIcon direction="right" />
-        </button>
-      )}
-      {!isMobile && !sidebarHidden && (
-        <button
-          type="button"
-          className="sidebar-handle sidebar-handle--edge"
-          onClick={() => setSidebarHidden(true)}
-          aria-label="Esconder barra lateral"
-          title="Esconder menu"
-        >
-          <ChevronIcon direction="left" />
-        </button>
-      )}
-      <aside className="sidebar sidebar--drawer">
-        <Link to="/" className="sidebar-brand" aria-label="Ir para a página institucional">
-          <div className="sidebar-brand__logo">
-            <LogoIcon />
-          </div>
-          <div className="sidebar-brand__textos">
-            <span className="sidebar-brand__titulo">Contabilidade Sao Judas Tadeu</span>
-            <span className="sidebar-brand__subtitulo">Sistema de Gerenciamento de Inadimplentes</span>
-          </div>
-        </Link>
-        <div className="sidebar-user" aria-label="Usuário logado">
-          <span className="sidebar-user__avatar" aria-hidden="true">
-            {iniciaisNome(userDisplay)}
-          </span>
-          <span className="sidebar-user__info">
-            <span className="sidebar-user__name" title={userDisplay}>
-              {userDisplay}
+    <div className={`app-layout${mobileMenuOpen ? ' app-layout--nav-open' : ''}`}>
+      <header className="app-header">
+        <div className="app-header__bar">
+          <button
+            type="button"
+            className="app-header__menu-btn"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+            aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
+            aria-expanded={mobileMenuOpen}
+          >
+            <MenuIcon open={mobileMenuOpen} />
+          </button>
+
+          <Link to="/" className="app-header__brand" aria-label="Contabilidade São Judas Tadeu — ir para página institucional">
+            <span className="app-header__brand-logo">
+              <LogoIcon />
             </span>
-            <span className="sidebar-user__role">{labelPerfilUsuario(userProfile)}</span>
-          </span>
-        </div>
-        <nav className="sidebar-nav" aria-label="Menu">
-          {navItems.map(({ to, label, icon: Icon, badge }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/dashboard'}
-              className={({ isActive }) => `sidebar-link ${isActive ? 'sidebar-link--active' : ''}`}
-              onClick={() => {
-                setMobileMenuOpen(false)
-              }}
-            >
-              <Icon />
-              <span className="sidebar-link__label">{label}</span>
-              {badge && <span className="sidebar-link__badge">{badge}</span>}
-            </NavLink>
-          ))}
-        </nav>
-        {showSair && (
-          <div className="sidebar-sair">
-            <button type="button" className="sidebar-sair__btn" onClick={handleSair}>
-              Sair
-            </button>
+          </Link>
+
+          <nav className="app-header__nav app-header__nav--desktop" aria-label="Menu principal">
+            {navItems.map((item) => (
+              <NavPill key={item.to} {...item} />
+            ))}
+          </nav>
+
+          <div className="app-header__actions">
+            <div className="app-header__user" aria-label="Usuário logado">
+              <span className="app-header__user-avatar" aria-hidden="true">
+                {iniciaisNome(userDisplay)}
+              </span>
+              <span className="app-header__user-info">
+                <span className="app-header__user-name" title={userDisplay}>
+                  {userDisplay}
+                </span>
+                <span className="app-header__user-role">{labelPerfilUsuario(userProfile)}</span>
+              </span>
+            </div>
+            {showSair && (
+              <button type="button" className="app-header__logout" onClick={handleSair}>
+                Sair
+              </button>
+            )}
           </div>
+        </div>
+
+        {mobileMenuOpen && (
+          <>
+            <button
+              type="button"
+              className="app-nav-backdrop"
+              onClick={fecharMenuMobile}
+              aria-label="Fechar menu"
+            />
+            <nav className="app-header__nav app-header__nav--mobile" aria-label="Menu principal mobile">
+              <div className="app-header__mobile-user">
+                <span className="app-header__user-avatar" aria-hidden="true">
+                  {iniciaisNome(userDisplay)}
+                </span>
+                <span className="app-header__user-info">
+                  <span className="app-header__user-name">{userDisplay}</span>
+                  <span className="app-header__user-role">{labelPerfilUsuario(userProfile)}</span>
+                </span>
+              </div>
+              {navItems.map((item) => (
+                <NavPill key={item.to} {...item} onNavigate={fecharMenuMobile} />
+              ))}
+              {showSair && (
+                <button type="button" className="app-header__logout app-header__logout--mobile" onClick={handleSair}>
+                  Sair
+                </button>
+              )}
+            </nav>
+          </>
         )}
-      </aside>
+      </header>
+
       <div className="main-wrapper">
         <main className="main-content">
           <Outlet />
@@ -329,18 +324,9 @@ function MenuIcon({ open }: { open: boolean }) {
   )
 }
 
-function ChevronIcon({ direction }: { direction: 'left' | 'right' }) {
-  const d = direction === 'left' ? 'M14 6l-6 6 6 6' : 'M10 6l6 6-6 6'
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d={d} />
-    </svg>
-  )
-}
-
 function LogoIcon() {
   return (
-    <svg width="36" height="36" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <circle cx="4" cy="28" r="4" fill="#A43F9B" />
       <circle cx="12" cy="28" r="4" fill="#A43F9B" />
       <circle cx="20" cy="28" r="4" fill="#A43F9B" />
