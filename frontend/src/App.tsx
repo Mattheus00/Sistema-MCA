@@ -20,6 +20,7 @@ import WebServicos from '@/components/pages/WebServicos'
 import WebReformaTributaria from '@/components/pages/WebReformaTributaria'
 import WebEnvioBoletos from '@/components/pages/WebEnvioBoletos'
 import WebDocumentosClientes from '@/components/pages/WebDocumentosClientes'
+import WebLivroCaixa from '@/components/pages/WebLivroCaixa'
 import WebCadastroUsuario from '@/components/pages/WebCadastroUsuario'
 import WebUsuarios from '@/components/pages/WebUsuarios'
 import Login from '@/components/pages/Login'
@@ -58,6 +59,10 @@ function App() {
             <Route path="/envio-boletos" element={<WebEnvioBoletos />} />
             <Route path="/documentos-clientes" element={<WebDocumentosClientes />} />
             <Route path="/reforma-tributaria" element={<WebReformaTributaria />} />
+          </Route>
+
+          <Route element={<ProtectedRoute onlyFinanceiro />}>
+            <Route path="/livro-caixa" element={<WebLivroCaixa />} />
           </Route>
 
           <Route element={<ProtectedRoute onlyProprietaria />}>

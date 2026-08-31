@@ -3,6 +3,8 @@ import { createPortal } from "react-dom";
 import { api, getApiErrorMessage, isMockEnabled, normalizeListResponse } from "@/lib/api";
 import { formatarReaisParaInput, parseValorReais } from "@/lib/valorBrasil";
 import { gerarHtmlRelatorioServicos } from "@/lib/relatorioServicos";
+import AdminItemCard from "@/components/AdminItemCard";
+import ResponsiveList from "@/components/ResponsiveList";
 
 type Servico = {
   id: string;
@@ -294,57 +296,86 @@ export default function WebServicos() {
       ) : servicosExibidos.length === 0 ? (
         <p className="page-servicos__vazio">Nenhum serviço cadastrado. Clique em &quot;Novo Serviço&quot; para adicionar.</p>
       ) : (
-        <div className="page-servicos__tabela-wrap">
-          <table className="page-servicos__tabela">
-            <thead>
-              <tr>
-                <th>Serviço</th>
-                <th>Valor</th>
-                <th className="page-servicos__th-acao">Ação</th>
-              </tr>
-            </thead>
-            <tbody>
+        <ResponsiveList
+          desktop={
+            <div className="page-servicos__tabela-wrap">
+              <table className="page-servicos__tabela">
+                <thead>
+                  <tr>
+                    <th>Serviço</th>
+                    <th>Valor</th>
+                    <th className="page-servicos__th-acao">Ação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {itensPagina.map((s) => (
+                    <tr key={s.id}>
+                      <td>
+                        <span title={[s.titulo, s.descricao].filter(Boolean).join(" — ")}>
+                          {s.titulo}
+                        </span>
+                      </td>
+                      <td title={s.valorPadrao != null ? `Valor padrão: R$ ${s.valorPadrao.toFixed(2)}` : undefined}>
+                        {s.valorPadrao != null
+                          ? s.valorPadrao.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+                          : "—"}
+                      </td>
+                      <td>
+                        <div className="page-servicos__acoes">
+                          <button
+                            type="button"
+                            className="page-servicos__acao page-servicos__acao--editar"
+                            onClick={() => abrirEditar(s)}
+                            title="Editar este serviço"
+                            aria-label="Editar este serviço"
+                          >
+                            <EditIcon />
+                          </button>
+                          <button
+                            type="button"
+                            className="page-servicos__acao page-servicos__acao--excluir"
+                            onClick={() => abrirConfirmarExclusao(s)}
+                            title="Excluir este serviço (desativar)"
+                            aria-label="Excluir este serviço"
+                          >
+                            <TrashIcon />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          }
+          mobile={
+            <ul className="admin-item-list">
               {itensPagina.map((s) => (
-                <tr key={s.id}>
-                  <td>
-                    <span
-                      title={[s.titulo, s.descricao].filter(Boolean).join(" — ")}
-                    >
-                      {s.titulo}
-                    </span>
-                  </td>
-                  <td title={s.valorPadrao != null ? `Valor padrão: R$ ${s.valorPadrao.toFixed(2)}` : undefined}>
-                    {s.valorPadrao != null
-                      ? s.valorPadrao.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-                      : "—"}
-                  </td>
-                  <td>
-                    <div className="page-servicos__acoes">
-                      <button
-                        type="button"
-                        className="page-servicos__acao page-servicos__acao--editar"
-                        onClick={() => abrirEditar(s)}
-                        title="Editar este serviço"
-                        aria-label="Editar este serviço"
-                      >
-                        <EditIcon />
-                      </button>
-                      <button
-                        type="button"
-                        className="page-servicos__acao page-servicos__acao--excluir"
-                        onClick={() => abrirConfirmarExclusao(s)}
-                        title="Excluir este serviço (desativar)"
-                        aria-label="Excluir este serviço"
-                      >
-                        <TrashIcon />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                <li key={s.id}>
+                  <AdminItemCard
+                    title={s.titulo}
+                    meta={s.descricao}
+                    value={
+                      s.valorPadrao != null
+                        ? s.valorPadrao.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+                        : "—"
+                    }
+                    actions={
+                      <>
+                        <button type="button" className="btn btn--secondary btn--small" onClick={() => abrirEditar(s)}>
+                          Editar
+                        </button>
+                        <button type="button" className="btn btn--danger btn--small" onClick={() => abrirConfirmarExclusao(s)}>
+                          Excluir
+                        </button>
+                      </>
+                    }
+                  />
+                </li>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </ul>
+          }
+        />
       )}
 
       {servicosExibidos.length > ITENS_POR_PAGINA && (

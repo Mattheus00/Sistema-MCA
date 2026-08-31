@@ -9,11 +9,15 @@ import {
   isInadimplenciaEmAberto,
 } from "@/lib/inadimplentesUtils";
 import type { Inadimplencia } from "@/types/api";
+import AdminItemCard from "@/components/AdminItemCard";
+import ResponsiveList from "@/components/ResponsiveList";
 
 export default function WebInadimplentes() {
   const navigate = useNavigate();
   const location = useLocation();
-  const podeAjustarJuros = getAuthUserProfile() !== "FUNCIONARIO";
+  const isFuncionario = getAuthUserProfile() === "FUNCIONARIO";
+  const podeAjustarJuros = !isFuncionario;
+  const podeVerResumo = !isFuncionario;
   const [itens, setItens] = useState<Inadimplencia[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
@@ -220,29 +224,31 @@ export default function WebInadimplentes() {
         )}
       </div>
 
-      <div className="page-inadimplentes__cards">
-        <div className="page-inadimplentes__card">
-          <span className="page-inadimplentes__card-label">
-            Total de inadimplentes
-            <InfoIcon />
-          </span>
-          <span className="page-inadimplentes__card-value">
-            {loading ? "—" : agrupadosPorCliente.length}
-          </span>
+      {podeVerResumo && (
+        <div className="page-inadimplentes__cards">
+          <div className="page-inadimplentes__card">
+            <span className="page-inadimplentes__card-label">
+              Total de inadimplentes
+              <InfoIcon />
+            </span>
+            <span className="page-inadimplentes__card-value">
+              {loading ? "—" : agrupadosPorCliente.length}
+            </span>
+          </div>
+          <div className="page-inadimplentes__card">
+            <span className="page-inadimplentes__card-label">Valor total em aberto</span>
+            <span className="page-inadimplentes__card-value">
+              {loading ? "—" : totalValor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+            </span>
+          </div>
+          <div className="page-inadimplentes__card">
+            <span className="page-inadimplentes__card-label">Média de atraso</span>
+            <span className="page-inadimplentes__card-value">
+              {loading ? "—" : `${mediaAtraso} dias`}
+            </span>
+          </div>
         </div>
-        <div className="page-inadimplentes__card">
-          <span className="page-inadimplentes__card-label">Valor total em aberto</span>
-          <span className="page-inadimplentes__card-value">
-            {loading ? "—" : totalValor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-          </span>
-        </div>
-        <div className="page-inadimplentes__card">
-          <span className="page-inadimplentes__card-label">Média de atraso</span>
-          <span className="page-inadimplentes__card-value">
-            {loading ? "—" : `${mediaAtraso} dias`}
-          </span>
-        </div>
-      </div>
+      )}
 
       <section className="page-inadimplentes__tabela-secao">
         <div className="page-inadimplentes__tabela-header">
@@ -259,60 +265,94 @@ export default function WebInadimplentes() {
             />
           </div>
         </div>
-        <div className="page-inadimplentes__tabela-wrap">
-          <table className="page-inadimplentes__tabela">
-            <thead>
-              <tr>
-                <th>
-                  <button type="button" className="page-inadimplentes__th" onClick={() => toggleOrdenacao("cliente")}>
-                    Cliente <SortIcon />
-                  </button>
-                </th>
-                <th>
-                  <button type="button" className="page-inadimplentes__th" onClick={() => toggleOrdenacao("valor")}>
-                    Valor <SortIcon />
-                  </button>
-                </th>
-                <th>
-                  <button type="button" className="page-inadimplentes__th" onClick={() => toggleOrdenacao("dias")}>
-                    Dias em atraso <SortIcon />
-                  </button>
-                </th>
-                <th className="page-inadimplentes__th-acao">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={4} className="page-inadimplentes__loading">Carregando...</td>
-                </tr>
-              ) : ordenados.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="page-inadimplentes__vazio">
-                    {termoBusca ? "Nenhum inadimplente encontrado para a busca." : "Nenhum inadimplente em aberto."}
-                  </td>
-                </tr>
-              ) : (
-                itensPaginaInad.map((d) => (
-                  <tr key={d.clienteId}>
-                    <td>{d.clienteNome}</td>
-                    <td>{d.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
-                    <td>{d.diasEmAtraso} dias</td>
-                    <td>
-                      <button
-                        type="button"
-                        className="btn btn--secondary btn--small page-inadimplentes__btn-meses"
-                        onClick={() => navigate(`/inadimplentes/${d.clienteId}/honorarios`)}
-                      >
-                        <EyeIcon /> Ver honorários
+        <ResponsiveList
+          desktop={
+            <div className="page-inadimplentes__tabela-wrap">
+              <table className="page-inadimplentes__tabela">
+                <thead>
+                  <tr>
+                    <th>
+                      <button type="button" className="page-inadimplentes__th" onClick={() => toggleOrdenacao("cliente")}>
+                        Cliente <SortIcon />
                       </button>
-                    </td>
+                    </th>
+                    <th>
+                      <button type="button" className="page-inadimplentes__th" onClick={() => toggleOrdenacao("valor")}>
+                        Valor <SortIcon />
+                      </button>
+                    </th>
+                    <th>
+                      <button type="button" className="page-inadimplentes__th" onClick={() => toggleOrdenacao("dias")}>
+                        Dias em atraso <SortIcon />
+                      </button>
+                    </th>
+                    <th className="page-inadimplentes__th-acao">Ações</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={4} className="page-inadimplentes__loading">Carregando...</td>
+                    </tr>
+                  ) : ordenados.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="page-inadimplentes__vazio">
+                        {termoBusca ? "Nenhum inadimplente encontrado para a busca." : "Nenhum inadimplente em aberto."}
+                      </td>
+                    </tr>
+                  ) : (
+                    itensPaginaInad.map((d) => (
+                      <tr key={d.clienteId}>
+                        <td>{d.clienteNome}</td>
+                        <td>{d.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
+                        <td>{d.diasEmAtraso} dias</td>
+                        <td>
+                          <button
+                            type="button"
+                            className="btn btn--secondary btn--small page-inadimplentes__btn-meses"
+                            onClick={() => navigate(`/inadimplentes/${d.clienteId}/honorarios`)}
+                          >
+                            <EyeIcon /> Ver honorários
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          }
+          mobile={
+            loading ? (
+              <p className="page-inadimplentes__vazio">Carregando...</p>
+            ) : ordenados.length === 0 ? (
+              <p className="page-inadimplentes__vazio">
+                {termoBusca ? "Nenhum inadimplente encontrado para a busca." : "Nenhum inadimplente em aberto."}
+              </p>
+            ) : (
+              <ul className="admin-item-list">
+                {itensPaginaInad.map((d) => (
+                  <li key={d.clienteId}>
+                    <AdminItemCard
+                      title={d.clienteNome}
+                      value={d.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                      fields={[{ label: "Dias em atraso", value: `${d.diasEmAtraso} dias` }]}
+                      actions={
+                        <button
+                          type="button"
+                          className="btn btn--secondary btn--small"
+                          onClick={() => navigate(`/inadimplentes/${d.clienteId}/honorarios`)}
+                        >
+                          Ver honorários
+                        </button>
+                      }
+                    />
+                  </li>
+                ))}
+              </ul>
+            )
+          }
+        />
       {ordenados.length > itensPorPagina && (
         <div className="page-inadimplentes__paginacao">
           <button

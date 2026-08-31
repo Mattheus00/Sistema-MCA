@@ -25,6 +25,7 @@ import type {
   DocumentoCliente,
   ResumoDocumentosClientes,
 } from "@/types/api";
+import { mockLivroCaixaGet, mockLivroCaixaMutate } from "@/lib/mockLivroCaixa";
 
 function idItemEnvioBoleto(item: ItemEnvioBoleto): string {
   return item.envioBoletoId || item.itemId;
@@ -629,6 +630,13 @@ function sincronizarDocumentosPortalParaStaff() {
 export function createMockClient() {
   return {
     get<T = unknown>(url: string, config?: { params?: Record<string, unknown> }) {
+      if (url.startsWith("/api/livro-caixa")) {
+        const params = config?.params ?? {};
+        const data = mockLivroCaixaGet(url, params);
+        if (data == null) return Promise.reject(new Error("Recurso Livro Caixa não encontrado."));
+        if (data instanceof Blob) return Promise.resolve({ data } as { data: T });
+        return Promise.resolve({ data } as { data: T });
+      }
       const matchDocsCliente = url.match(/^\/api\/clientes\/([\w-]+)\/documentos$/);
       if (matchDocsCliente) {
         const clienteId = matchDocsCliente[1];
@@ -1187,6 +1195,11 @@ export function createMockClient() {
     },
 
     post<T = unknown>(url: string, body: unknown) {
+      if (url.startsWith("/api/livro-caixa")) {
+        const data = mockLivroCaixaMutate("POST", url, body);
+        if (data == null) return Promise.reject(new Error("Não foi possível processar a requisição do Livro Caixa."));
+        return Promise.resolve({ data } as { data: T });
+      }
       if (url === "/api/portal/auth/login") {
         const payload = (body ?? {}) as { cpfCnpj?: string; senha?: string };
         const doc = String(payload.cpfCnpj ?? "").replace(/\D/g, "");
@@ -1583,6 +1596,11 @@ export function createMockClient() {
     },
 
     patch<T = unknown>(url: string, body: unknown) {
+      if (url.startsWith("/api/livro-caixa")) {
+        const data = mockLivroCaixaMutate("PATCH", url, body);
+        if (data == null) return Promise.reject(new Error("Não foi possível processar a requisição do Livro Caixa."));
+        return Promise.resolve({ data } as { data: T });
+      }
       const matchStatusDoc = url.match(/^\/api\/documentos-clientes\/([\w-]+)\/status$/);
       if (matchStatusDoc) {
         const docId = matchStatusDoc[1];
@@ -1733,6 +1751,15 @@ export function createMockClient() {
         };
         store.clientes[idx] = atualizado;
         return Promise.resolve({ data: atualizado } as { data: T });
+      }
+      return Promise.reject(new Error(`Mock: rota não encontrada: ${url}`));
+    },
+
+    put<T = unknown>(url: string, body: unknown) {
+      if (url.startsWith("/api/livro-caixa")) {
+        const data = mockLivroCaixaMutate("PUT", url, body);
+        if (data == null) return Promise.reject(new Error("Não foi possível processar a requisição do Livro Caixa."));
+        return Promise.resolve({ data } as { data: T });
       }
       return Promise.reject(new Error(`Mock: rota não encontrada: ${url}`));
     },

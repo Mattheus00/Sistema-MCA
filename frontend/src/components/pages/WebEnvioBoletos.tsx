@@ -41,6 +41,8 @@ import {
   todosItensSelecionaveis,
   validarArquivosPdf,
 } from "@/lib/envioBoletosUtils";
+import AdminItemCard from "@/components/AdminItemCard";
+import ResponsiveList from "@/components/ResponsiveList";
 import type { Cliente, ItemEnvioBoleto, LoteEnvioBoleto, LoteEnvioBoletoResumo, ResultadoEnvioItem, ResultadoEnvioLote } from "@/types/api";
 
 type AbaPrincipal = "novo" | "historico";
@@ -557,107 +559,179 @@ export default function WebEnvioBoletos() {
                 />
               </div>
 
-              <div className="page-envio-boletos__tabela-wrap page-envio-boletos__tabela-wrap--conferencia">
-                <table className="page-envio-boletos__tabela page-envio-boletos__tabela--conferencia">
-                  <thead>
-                    <tr>
-                      <th className="page-envio-boletos__th-check">
-                        <input
-                          type="checkbox"
-                          aria-label="Selecionar todos"
-                          checked={todosItensSelecionaveis(itens).length > 0 && todosItensSelecionaveis(itens).every((id) => selecionados.has(id))}
-                          onChange={toggleTodos}
-                        />
-                      </th>
-                      <th>Arquivo</th>
-                      <th>Cliente</th>
-                      <th>CPF/CNPJ</th>
-                      <th>E-mail</th>
-                      <th>Método</th>
-                      <th>Confiança</th>
-                      <th>Status</th>
-                      <th>Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {itens.length === 0 ? (
-                      <tr>
-                        <td colSpan={9} className="page-envio-boletos__vazio">
-                          Nenhum item no lote.
-                        </td>
-                      </tr>
-                    ) : (
-                      itens.map((item) => {
+              <ResponsiveList
+                desktop={
+                  <div className="page-envio-boletos__tabela-wrap page-envio-boletos__tabela-wrap--conferencia">
+                    <table className="page-envio-boletos__tabela page-envio-boletos__tabela--conferencia">
+                      <thead>
+                        <tr>
+                          <th className="page-envio-boletos__th-check">
+                            <input
+                              type="checkbox"
+                              aria-label="Selecionar todos"
+                              checked={todosItensSelecionaveis(itens).length > 0 && todosItensSelecionaveis(itens).every((id) => selecionados.has(id))}
+                              onChange={toggleTodos}
+                            />
+                          </th>
+                          <th>Arquivo</th>
+                          <th>Cliente</th>
+                          <th>CPF/CNPJ</th>
+                          <th>E-mail</th>
+                          <th>Método</th>
+                          <th>Confiança</th>
+                          <th>Status</th>
+                          <th>Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {itens.length === 0 ? (
+                          <tr>
+                            <td colSpan={9} className="page-envio-boletos__vazio">
+                              Nenhum item no lote.
+                            </td>
+                          </tr>
+                        ) : (
+                          itens.map((item) => {
+                            const indicador = indicadorStatusItem(item);
+                            const status = String(item.status ?? "").toUpperCase();
+                            const emailInfo = exibirEmailItem(item);
+                            const bloqueio = motivoBloqueioItem(item, lote?.validacao);
+                            const itemId = envioBoletoIdItem(item);
+                            return (
+                              <tr key={itemId} className={itemBloqueiaEnvio(item) ? "page-envio-boletos__linha--bloqueada" : ""}>
+                                <td>
+                                  <input
+                                    type="checkbox"
+                                    checked={selecionados.has(itemId)}
+                                    disabled={status === "IGNORADO"}
+                                    onChange={() => toggleItem(itemId)}
+                                    aria-label={`Selecionar ${item.nomeArquivoOriginal}`}
+                                  />
+                                </td>
+                                <td>
+                                  <div className="page-envio-boletos__arquivo-cell">
+                                    <span className="page-envio-boletos__pdf-icon" aria-hidden="true">
+                                      <PdfIcon />
+                                    </span>
+                                    <span className="page-envio-boletos__arquivo-nome-tabela" title={item.nomeArquivoOriginal}>
+                                      {item.nomeArquivoOriginal}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td>{item.clienteNome?.trim() || "—"}</td>
+                                <td>{exibirDocumento(item.documentoMascarado)}</td>
+                                <td>
+                                  <span className={emailInfo.ausente ? "page-envio-boletos__email-ausente" : ""}>
+                                    {emailInfo.texto}
+                                  </span>
+                                </td>
+                                <td>{labelMetodoIdentificacao(item.metodoIdentificacao)}</td>
+                                <td>{labelConfianca(item.confiancaIdentificacao)}</td>
+                                <td>
+                                  <span className={`page-envio-boletos__badge page-envio-boletos__badge--${indicador.cor}`}>
+                                    {indicador.texto}
+                                  </span>
+                                  {bloqueio && itemBloqueiaEnvio(item) && (
+                                    <div className="page-envio-boletos__bloqueio-item" title={bloqueio}>
+                                      {bloqueio}
+                                    </div>
+                                  )}
+                                </td>
+                                <td>
+                                  <div className="page-envio-boletos__acoes-linha">
+                                    <button type="button" className="page-envio-boletos__acao" title="Visualizar PDF" onClick={() => visualizarPdf(itemId)}>
+                                      <EyeIcon />
+                                      PDF
+                                    </button>
+                                    <button type="button" className="page-envio-boletos__acao" onClick={() => abrirModalCorrigir(item)}>
+                                      <EditIcon />
+                                      Corrigir
+                                    </button>
+                                    {status !== "IGNORADO" && (
+                                      <button type="button" className="page-envio-boletos__acao" onClick={() => patchItem(itemId, "ignorar")}>
+                                        <BanIcon />
+                                        Ignorar
+                                      </button>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                }
+                mobile={
+                  itens.length === 0 ? (
+                    <p className="page-envio-boletos__vazio">Nenhum item no lote.</p>
+                  ) : (
+                    <ul className="admin-item-list">
+                      {itens.map((item) => {
                         const indicador = indicadorStatusItem(item);
                         const status = String(item.status ?? "").toUpperCase();
                         const emailInfo = exibirEmailItem(item);
                         const bloqueio = motivoBloqueioItem(item, lote?.validacao);
                         const itemId = envioBoletoIdItem(item);
                         return (
-                          <tr key={itemId} className={itemBloqueiaEnvio(item) ? "page-envio-boletos__linha--bloqueada" : ""}>
-                            <td>
-                              <input
-                                type="checkbox"
-                                checked={selecionados.has(itemId)}
-                                disabled={status === "IGNORADO"}
-                                onChange={() => toggleItem(itemId)}
-                                aria-label={`Selecionar ${item.nomeArquivoOriginal}`}
-                              />
-                            </td>
-                            <td>
-                              <div className="page-envio-boletos__arquivo-cell">
-                                <span className="page-envio-boletos__pdf-icon" aria-hidden="true">
-                                  <PdfIcon />
-                                </span>
-                                <span className="page-envio-boletos__arquivo-nome-tabela" title={item.nomeArquivoOriginal}>
-                                  {item.nomeArquivoOriginal}
-                                </span>
-                              </div>
-                            </td>
-                            <td>{item.clienteNome?.trim() || "—"}</td>
-                            <td>{exibirDocumento(item.documentoMascarado)}</td>
-                            <td>
-                              <span className={emailInfo.ausente ? "page-envio-boletos__email-ausente" : ""}>
-                                {emailInfo.texto}
-                              </span>
-                            </td>
-                            <td>{labelMetodoIdentificacao(item.metodoIdentificacao)}</td>
-                            <td>{labelConfianca(item.confiancaIdentificacao)}</td>
-                            <td>
-                              <span className={`page-envio-boletos__badge page-envio-boletos__badge--${indicador.cor}`}>
-                                {indicador.texto}
-                              </span>
-                              {bloqueio && itemBloqueiaEnvio(item) && (
-                                <div className="page-envio-boletos__bloqueio-item" title={bloqueio}>
-                                  {bloqueio}
-                                </div>
-                              )}
-                            </td>
-                            <td>
-                              <div className="page-envio-boletos__acoes-linha">
-                                <button type="button" className="page-envio-boletos__acao" title="Visualizar PDF" onClick={() => visualizarPdf(itemId)}>
-                                  <EyeIcon />
-                                  PDF
-                                </button>
-                                <button type="button" className="page-envio-boletos__acao" onClick={() => abrirModalCorrigir(item)}>
-                                  <EditIcon />
-                                  Corrigir
-                                </button>
-                                {status !== "IGNORADO" && (
-                                  <button type="button" className="page-envio-boletos__acao" onClick={() => patchItem(itemId, "ignorar")}>
-                                    <BanIcon />
-                                    Ignorar
+                          <li key={itemId}>
+                            <AdminItemCard
+                              title={item.nomeArquivoOriginal}
+                              meta={item.clienteNome?.trim() || "—"}
+                              fields={[
+                                {
+                                  label: "Selecionar",
+                                  value: (
+                                    <input
+                                      type="checkbox"
+                                      checked={selecionados.has(itemId)}
+                                      disabled={status === "IGNORADO"}
+                                      onChange={() => toggleItem(itemId)}
+                                      aria-label={`Selecionar ${item.nomeArquivoOriginal}`}
+                                    />
+                                  ),
+                                },
+                                { label: "CPF/CNPJ", value: exibirDocumento(item.documentoMascarado) },
+                                { label: "E-mail", value: emailInfo.texto },
+                                { label: "Método", value: labelMetodoIdentificacao(item.metodoIdentificacao) },
+                                {
+                                  label: "Status",
+                                  value: (
+                                    <>
+                                      <span className={`page-envio-boletos__badge page-envio-boletos__badge--${indicador.cor}`}>
+                                        {indicador.texto}
+                                      </span>
+                                      {bloqueio && itemBloqueiaEnvio(item) ? (
+                                        <span className="page-envio-boletos__bloqueio-item">{bloqueio}</span>
+                                      ) : null}
+                                    </>
+                                  ),
+                                },
+                              ]}
+                              actions={
+                                <>
+                                  <button type="button" className="btn btn--secondary btn--small" onClick={() => visualizarPdf(itemId)}>
+                                    PDF
                                   </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
+                                  <button type="button" className="btn btn--secondary btn--small" onClick={() => abrirModalCorrigir(item)}>
+                                    Corrigir
+                                  </button>
+                                  {status !== "IGNORADO" && (
+                                    <button type="button" className="btn btn--danger btn--small" onClick={() => patchItem(itemId, "ignorar")}>
+                                      Ignorar
+                                    </button>
+                                  )}
+                                </>
+                              }
+                            />
+                          </li>
                         );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                      })}
+                    </ul>
+                  )
+                }
+              />
 
               {lote.validacao && !lote.validacao.podeEnviar && lote.validacao.bloqueios.length > 0 && (
                 <div className="page-envio-boletos__bloqueios" role="alert">
@@ -702,36 +776,65 @@ export default function WebEnvioBoletos() {
                 <ResumoCard label="Ignorados" valor={cards.ignorados} tipo="cinza" tooltip="Itens ignorados no lote." icon={<EyeOffIcon />} />
               </div>
 
-              <div className="page-envio-boletos__tabela-wrap">
-                <table className="page-envio-boletos__tabela">
-                  <thead>
-                    <tr>
-                      <th>Cliente</th>
-                      <th>E-mail</th>
-                      <th>Arquivo</th>
-                      <th>Status</th>
-                      <th>Erro</th>
-                      <th>Simulado</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+              <ResponsiveList
+                desktop={
+                  <div className="page-envio-boletos__tabela-wrap">
+                    <table className="page-envio-boletos__tabela">
+                      <thead>
+                        <tr>
+                          <th>Cliente</th>
+                          <th>E-mail</th>
+                          <th>Arquivo</th>
+                          <th>Status</th>
+                          <th>Erro</th>
+                          <th>Simulado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {itens.map((item) => (
+                          <tr key={item.itemId}>
+                            <td>{item.clienteNome?.trim() || "—"}</td>
+                            <td>{exibirDocumento(item.emailDestinatario)}</td>
+                            <td>{item.nomeArquivoOriginal}</td>
+                            <td>
+                              <span className={`page-envio-boletos__badge page-envio-boletos__badge--${indicadorStatusItem(item).cor}`}>
+                                {labelStatusItem(item.status)}
+                              </span>
+                            </td>
+                            <td>{item.erro?.trim() || "—"}</td>
+                            <td>{item.simulado ? "Sim" : "Não"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                }
+                mobile={
+                  <ul className="admin-item-list">
                     {itens.map((item) => (
-                      <tr key={item.itemId}>
-                        <td>{item.clienteNome?.trim() || "—"}</td>
-                        <td>{exibirDocumento(item.emailDestinatario)}</td>
-                        <td>{item.nomeArquivoOriginal}</td>
-                        <td>
-                          <span className={`page-envio-boletos__badge page-envio-boletos__badge--${indicadorStatusItem(item).cor}`}>
-                            {labelStatusItem(item.status)}
-                          </span>
-                        </td>
-                        <td>{item.erro?.trim() || "—"}</td>
-                        <td>{item.simulado ? "Sim" : "Não"}</td>
-                      </tr>
+                      <li key={item.itemId}>
+                        <AdminItemCard
+                          title={item.clienteNome?.trim() || "—"}
+                          meta={item.nomeArquivoOriginal}
+                          fields={[
+                            { label: "E-mail", value: exibirDocumento(item.emailDestinatario) },
+                            {
+                              label: "Status",
+                              value: (
+                                <span className={`page-envio-boletos__badge page-envio-boletos__badge--${indicadorStatusItem(item).cor}`}>
+                                  {labelStatusItem(item.status)}
+                                </span>
+                              ),
+                            },
+                            { label: "Erro", value: item.erro?.trim() || "—" },
+                            { label: "Simulado", value: item.simulado ? "Sim" : "Não" },
+                          ]}
+                        />
+                      </li>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </ul>
+                }
+              />
 
               <div className="page-envio-boletos__acoes-principais">
                 <button
@@ -803,54 +906,83 @@ export default function WebEnvioBoletos() {
 
           <p className="page-envio-boletos__historico-dica">Clique em um lote para ver os detalhes do envio por cliente.</p>
 
-          <div className="page-envio-boletos__tabela-wrap">
-            <table className="page-envio-boletos__tabela">
-              <thead>
-                <tr>
-                  <th>Data</th>
-                  <th>Status</th>
-                  <th>Itens</th>
-                  <th>Enviados</th>
-                  <th>Erros</th>
-                  <th>Criado por</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={6} className="page-envio-boletos__vazio">
-                      Carregando...
-                    </td>
-                  </tr>
-                ) : historico.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="page-envio-boletos__vazio">
-                      Nenhum lote encontrado.
-                    </td>
-                  </tr>
-                ) : (
-                  historico.map((h) => (
-                    <tr
-                      key={h.loteId}
-                      className="page-envio-boletos__linha-clicavel"
-                      title="Clique para ver detalhes"
-                      onClick={() => abrirDetalheHistorico(h.loteId)}
-                      onKeyDown={(e) => e.key === "Enter" && abrirDetalheHistorico(h.loteId)}
-                      tabIndex={0}
-                      role="button"
-                    >
-                      <td>{formatarDataHora(h.criadoEm)}</td>
-                      <td>{h.status}</td>
-                      <td>{h.totalItens ?? "—"}</td>
-                      <td>{h.enviados ?? "—"}</td>
-                      <td>{h.erros ?? "—"}</td>
-                      <td>{h.criadoPor?.trim() || "—"}</td>
+          <ResponsiveList
+            desktop={
+              <div className="page-envio-boletos__tabela-wrap">
+                <table className="page-envio-boletos__tabela">
+                  <thead>
+                    <tr>
+                      <th>Data</th>
+                      <th>Status</th>
+                      <th>Itens</th>
+                      <th>Enviados</th>
+                      <th>Erros</th>
+                      <th>Criado por</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      <tr>
+                        <td colSpan={6} className="page-envio-boletos__vazio">
+                          Carregando...
+                        </td>
+                      </tr>
+                    ) : historico.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="page-envio-boletos__vazio">
+                          Nenhum lote encontrado.
+                        </td>
+                      </tr>
+                    ) : (
+                      historico.map((h) => (
+                        <tr
+                          key={h.loteId}
+                          className="page-envio-boletos__linha-clicavel"
+                          title="Clique para ver detalhes"
+                          onClick={() => abrirDetalheHistorico(h.loteId)}
+                          onKeyDown={(e) => e.key === "Enter" && abrirDetalheHistorico(h.loteId)}
+                          tabIndex={0}
+                          role="button"
+                        >
+                          <td>{formatarDataHora(h.criadoEm)}</td>
+                          <td>{h.status}</td>
+                          <td>{h.totalItens ?? "—"}</td>
+                          <td>{h.enviados ?? "—"}</td>
+                          <td>{h.erros ?? "—"}</td>
+                          <td>{h.criadoPor?.trim() || "—"}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            }
+            mobile={
+              loading ? (
+                <p className="page-envio-boletos__vazio">Carregando...</p>
+              ) : historico.length === 0 ? (
+                <p className="page-envio-boletos__vazio">Nenhum lote encontrado.</p>
+              ) : (
+                <ul className="admin-item-list">
+                  {historico.map((h) => (
+                    <li key={h.loteId}>
+                      <AdminItemCard
+                        title={formatarDataHora(h.criadoEm)}
+                        meta={h.status}
+                        onClick={() => abrirDetalheHistorico(h.loteId)}
+                        fields={[
+                          { label: "Itens", value: h.totalItens ?? "—" },
+                          { label: "Enviados", value: h.enviados ?? "—" },
+                          { label: "Erros", value: h.erros ?? "—" },
+                          { label: "Criado por", value: h.criadoPor?.trim() || "—" },
+                        ]}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )
+            }
+          />
 
           <div className="page-envio-boletos__paginacao">
             <button

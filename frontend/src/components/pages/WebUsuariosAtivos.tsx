@@ -3,6 +3,8 @@ import { isAxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
 import { api, getApiErrorMessage, getAuthUserLogin, normalizeListResponse } from "@/lib/api";
 import type { UsuarioAtivo } from "@/types/api";
+import AdminItemCard from "@/components/AdminItemCard";
+import ResponsiveList from "@/components/ResponsiveList";
 
 function formatarData(iso: string): string {
   if (!iso) return "—";
@@ -117,79 +119,122 @@ export default function WebUsuariosAtivos({ embedded = false }: WebUsuariosAtivo
       {mensagemSucesso && <p className="toast toast--sucesso">{mensagemSucesso}</p>}
 
       <section className="page-inadimplentes__tabela-secao">
-        <div className="page-inadimplentes__tabela-wrap">
-          <table className="page-inadimplentes__tabela">
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>Telefone / Login</th>
-                <th>Perfil</th>
-                <th>Data de cadastro</th>
-                <th className="page-cadastros-pendentes__acao" scope="col">
-                  <span className="page-cadastros-pendentes__acao-inner">Ação</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="page-inadimplentes__vazio">
-                    Carregando…
-                  </td>
-                </tr>
-              ) : itens.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="page-inadimplentes__vazio">
-                    Nenhum usuário ativo no momento
-                  </td>
-                </tr>
-              ) : (
-                itens.map((u) => {
+        <ResponsiveList
+          desktop={
+            <div className="page-inadimplentes__tabela-wrap">
+              <table className="page-inadimplentes__tabela">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Telefone / Login</th>
+                    <th>Perfil</th>
+                    <th>Data de cadastro</th>
+                    <th className="page-cadastros-pendentes__acao" scope="col">
+                      <span className="page-cadastros-pendentes__acao-inner">Ação</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={5} className="page-inadimplentes__vazio">
+                        Carregando…
+                      </td>
+                    </tr>
+                  ) : itens.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="page-inadimplentes__vazio">
+                        Nenhum usuário ativo no momento
+                      </td>
+                    </tr>
+                  ) : (
+                    itens.map((u) => {
+                      const mostrarRevogar = podeExibirRevogar(u);
+                      const disabled = revogandoId === u.usuarioId;
+                      return (
+                        <tr key={u.usuarioId}>
+                          <td>{u.nome}</td>
+                          <td>
+                            <span className="page-usuarios-ativos__tel">{u.telefone?.trim() || "—"}</span>
+                            <span className="page-usuarios-ativos__sep" aria-hidden>
+                              {" "}
+                              /{" "}
+                            </span>
+                            <span className="page-usuarios-ativos__login">{u.login}</span>
+                          </td>
+                          <td>{labelPerfil(String(u.perfil))}</td>
+                          <td>{formatarData(u.criadoEm)}</td>
+                          <td className="page-cadastros-pendentes__acao">
+                            <div className="page-cadastros-pendentes__acao-inner">
+                              {mostrarRevogar ? (
+                                <button
+                                  type="button"
+                                  className="btn btn--danger btn--small"
+                                  disabled={disabled || !!revogandoId}
+                                  onClick={() => setConfirmar(u)}
+                                  title="Revoga o acesso deste usuário. Ele não poderá mais fazer login no sistema."
+                                  aria-label={`Revogar acesso de ${u.nome} (${u.login})`}
+                                >
+                                  {disabled ? "Revogando…" : "Revogar"}
+                                </button>
+                              ) : (
+                                <span
+                                  className="page-usuarios-ativos__nao-revogar"
+                                  title="Você não pode revogar o próprio acesso."
+                                >
+                                  —
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          }
+          mobile={
+            loading ? (
+              <p className="page-inadimplentes__vazio">Carregando…</p>
+            ) : itens.length === 0 ? (
+              <p className="page-inadimplentes__vazio">Nenhum usuário ativo no momento</p>
+            ) : (
+              <ul className="admin-item-list">
+                {itens.map((u) => {
                   const mostrarRevogar = podeExibirRevogar(u);
                   const disabled = revogandoId === u.usuarioId;
                   return (
-                    <tr key={u.usuarioId}>
-                      <td>{u.nome}</td>
-                      <td>
-                        <span className="page-usuarios-ativos__tel">{u.telefone?.trim() || "—"}</span>
-                        <span className="page-usuarios-ativos__sep" aria-hidden>
-                          {" "}
-                          /{" "}
-                        </span>
-                        <span className="page-usuarios-ativos__login">{u.login}</span>
-                      </td>
-                      <td>{labelPerfil(String(u.perfil))}</td>
-                      <td>{formatarData(u.criadoEm)}</td>
-                      <td className="page-cadastros-pendentes__acao">
-                        <div className="page-cadastros-pendentes__acao-inner">
-                          {mostrarRevogar ? (
+                    <li key={u.usuarioId}>
+                      <AdminItemCard
+                        title={u.nome}
+                        meta={u.login}
+                        fields={[
+                          { label: "Telefone", value: u.telefone?.trim() || "—" },
+                          { label: "Perfil", value: labelPerfil(String(u.perfil)) },
+                          { label: "Cadastro", value: formatarData(u.criadoEm) },
+                        ]}
+                        actions={
+                          mostrarRevogar ? (
                             <button
                               type="button"
                               className="btn btn--danger btn--small"
                               disabled={disabled || !!revogandoId}
                               onClick={() => setConfirmar(u)}
-                              title="Revoga o acesso deste usuário. Ele não poderá mais fazer login no sistema."
-                              aria-label={`Revogar acesso de ${u.nome} (${u.login})`}
                             >
                               {disabled ? "Revogando…" : "Revogar"}
                             </button>
-                          ) : (
-                            <span
-                              className="page-usuarios-ativos__nao-revogar"
-                              title="Você não pode revogar o próprio acesso."
-                            >
-                              —
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
+                          ) : undefined
+                        }
+                      />
+                    </li>
                   );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                })}
+              </ul>
+            )
+          }
+        />
       </section>
 
       {confirmar && (
