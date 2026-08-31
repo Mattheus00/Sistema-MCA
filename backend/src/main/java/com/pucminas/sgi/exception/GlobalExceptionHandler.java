@@ -106,8 +106,10 @@ public class GlobalExceptionHandler {
         String message = "Erro de banco de dados.";
         if (detail != null) {
             String d = detail.toLowerCase();
-            if (d.contains("documento_cliente") || d.contains("does not exist") || d.contains("undefined table")) {
+            if (d.contains("documento_cliente") && (d.contains("does not exist") || d.contains("undefined table"))) {
                 message = "Schema incompleto (documentos). Reinicie o backend para aplicar as tabelas ou contate o suporte.";
+            } else if (d.contains("could not determine data type of parameter")) {
+                message = "Erro de consulta no banco (filtros). Atualize o backend para a versão mais recente.";
             } else if (d.contains("not null") || d.contains("valor_comunicado")) {
                 message = "Falha ao gravar notificação de e-mail (constraint). Tente novamente após atualizar o backend.";
             } else if (detail.length() <= 220) {

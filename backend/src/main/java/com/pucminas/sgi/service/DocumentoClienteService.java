@@ -13,6 +13,7 @@ import com.pucminas.sgi.exception.ResourceNotFoundException;
 import com.pucminas.sgi.portal.PortalAccessGuard;
 import com.pucminas.sgi.repository.ClienteRepository;
 import com.pucminas.sgi.repository.DocumentoClienteRepository;
+import com.pucminas.sgi.repository.DocumentoClienteSpecs;
 import com.pucminas.sgi.repository.UsuarioRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,7 +95,9 @@ public class DocumentoClienteService {
                                                  StatusDocumentoCliente status,
                                                  TipoDocumentoCliente tipo,
                                                  Pageable pageable) {
-        return documentoRepository.buscar(clienteId, status, tipo, pageable).map(this::toDto);
+        return documentoRepository.findAll(
+                DocumentoClienteSpecs.filtrar(clienteId, status, tipo),
+                pageable).map(this::toDto);
     }
 
     @Transactional(readOnly = true)
