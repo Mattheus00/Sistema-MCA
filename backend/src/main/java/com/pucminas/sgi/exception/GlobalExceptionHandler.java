@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -75,9 +76,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
-        String message = "ID inválido. Use o UUID da dívida (ex.: o campo id retornado na listagem de inadimplentes).";
-        if (ex.getName() != null && ex.getName().equals("id") && request.getRequestURI() != null && request.getRequestURI().contains("inadimplentes")) {
+        String message = "Parâmetro inválido na requisição.";
+        if (ex.getName() != null && ex.getName().equals("status")) {
+            message = "Status inválido. Valores aceitos: RECEBIDO, EM_ANALISE, ARQUIVADO (ou ENVIADO como alias de RECEBIDO).";
+        } else if (ex.getName() != null && ex.getName().equals("id") && request.getRequestURI() != null && request.getRequestURI().contains("inadimplentes")) {
             message = "ID inválido para inadimplência. Use o UUID da dívida (campo id da listagem).";
+        } else if (ex.getRequiredType() != null && UUID.class.isAssignableFrom(ex.getRequiredType())) {
+            message = "ID inválido. Use o UUID retornado pela API.";
         }
         return buildResponse(HttpStatus.BAD_REQUEST, "Bad Request", message, request.getRequestURI());
     }

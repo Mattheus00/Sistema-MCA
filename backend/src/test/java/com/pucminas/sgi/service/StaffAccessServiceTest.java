@@ -76,6 +76,17 @@ class StaffAccessServiceTest {
     }
 
     @Test
+    @DisplayName("assertPodeAcessarRota: FUNCIONARIO recebe 403 no Livro Caixa")
+    void assertFuncionarioLivroCaixa403() {
+        when(usuarioRepository.findById(ID_FUNC)).thenReturn(Optional.of(
+                usuario(ID_FUNC, Perfil.FUNCIONARIO)));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> staffAccessService.assertPodeAcessarRota(ID_FUNC, "GET", "/api/livro-caixa/dashboard"));
+        assertEquals(403, ex.getStatusCode().value());
+    }
+
+    @Test
     @DisplayName("assertPodeAcessarRota: PROPRIETARIA nao e restringida")
     void assertProprietariaLivre() {
         when(usuarioRepository.findById(ID_PROP)).thenReturn(Optional.of(

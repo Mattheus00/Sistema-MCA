@@ -37,17 +37,20 @@ public class SchedulerService {
     private final ClienteRepository clienteRepository;
     private final DividaService dividaService;
     private final NotificationService notificationService;
+    private final LivroCaixaRecorrenciaService livroCaixaRecorrenciaService;
 
     public SchedulerService(AgendamentoNotificacaoRepository agendamentoRepository,
                             DividaRepository dividaRepository,
                             ClienteRepository clienteRepository,
                             DividaService dividaService,
-                            NotificationService notificationService) {
+                            NotificationService notificationService,
+                            LivroCaixaRecorrenciaService livroCaixaRecorrenciaService) {
         this.agendamentoRepository = agendamentoRepository;
         this.dividaRepository = dividaRepository;
         this.clienteRepository = clienteRepository;
         this.dividaService = dividaService;
         this.notificationService = notificationService;
+        this.livroCaixaRecorrenciaService = livroCaixaRecorrenciaService;
     }
 
     /**
@@ -119,6 +122,17 @@ public class SchedulerService {
             }
         } catch (Exception e) {
             log.error("Erro no job de retry de e-mails: {}", e.getMessage());
+        }
+    }
+
+    /** Gera lançamentos previstos de recorrências do Livro Caixa. */
+    @Scheduled(cron = "${scheduler.livro-caixa-recorrencias.cron:0 0 3 * * ?}")
+    public void gerarRecorrenciasLivroCaixa() {
+        if (!schedulerEnabled) return;
+        try {
+            livroCaixaRecorrenciaService.processarRecorrenciasVencidas();
+        } catch (Exception e) {
+            log.error("Erro ao gerar recorrências do Livro Caixa: {}", e.getMessage());
         }
     }
 }

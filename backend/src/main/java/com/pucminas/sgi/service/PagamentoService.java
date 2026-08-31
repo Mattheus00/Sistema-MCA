@@ -9,6 +9,7 @@ import com.pucminas.sgi.enums.StatusDivida;
 import com.pucminas.sgi.exception.BusinessRuleException;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
 import com.pucminas.sgi.event.ClienteStatusUpdateEvent;
+import com.pucminas.sgi.event.PagamentoRegistradoEvent;
 import com.pucminas.sgi.repository.DividaRepository;
 import com.pucminas.sgi.repository.PagamentoRepository;
 import com.pucminas.sgi.util.MoneyUtil;
@@ -84,6 +85,14 @@ public class PagamentoService {
         }
         dividaRepository.save(divida);
         eventPublisher.publishEvent(new ClienteStatusUpdateEvent(divida.getCliente().getClienteId()));
+        eventPublisher.publishEvent(new PagamentoRegistradoEvent(
+                p.getPagamentoId(),
+                divida.getDividaId(),
+                divida.getCliente().getClienteId(),
+                divida.getCliente().getNome(),
+                p.getValorPago(),
+                p.getDataPagamento(),
+                p.getMetodoPagamento()));
         log.info("Pagamento registrado: {} - dívida {}", p.getPagamentoId(), divida.getProtocolo());
         return ReciboDTO.builder()
                 .pagamentoId(p.getPagamentoId())

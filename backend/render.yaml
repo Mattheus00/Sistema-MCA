@@ -30,6 +30,8 @@ services:
         value: /var/data/boletos-temp
       - key: SGI_DOCUMENTOS_STORAGE_PATH
         value: /var/data/documentos-clientes
+      - key: SGI_LIVRO_CAIXA_STORAGE_PATH
+        value: /var/data/livro-caixa-anexos
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ALLOWED_ORIGINS

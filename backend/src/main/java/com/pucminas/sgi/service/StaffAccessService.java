@@ -81,6 +81,11 @@ public class StaffAccessService {
         return usuario;
     }
 
+    /** Livro Caixa: somente proprietária e responsável financeiro. */
+    public Usuario assertPodeAcessarLivroCaixa(UUID usuarioId) {
+        return assertPodeAcessoFinanceiroCompleto(usuarioId);
+    }
+
     public Usuario assertPodeAdmin(UUID usuarioId) {
         Usuario usuario = assertStaff(usuarioId);
         if (usuario.getPerfil() != Perfil.PROPRIETARIA) {

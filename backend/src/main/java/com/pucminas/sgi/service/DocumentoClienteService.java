@@ -148,16 +148,23 @@ public class DocumentoClienteService {
     @Transactional(readOnly = true)
     public ResumoDocumentosClientesDTO resumo() {
         try {
+            long recebidos = documentoRepository.countByStatus(StatusDocumentoCliente.RECEBIDO);
+            long emAnalise = documentoRepository.countByStatus(StatusDocumentoCliente.EM_ANALISE);
+            long arquivados = documentoRepository.countByStatus(StatusDocumentoCliente.ARQUIVADO);
             return ResumoDocumentosClientesDTO.builder()
-                    .recebidos(documentoRepository.countByStatus(StatusDocumentoCliente.RECEBIDO))
-                    .emAnalise(documentoRepository.countByStatus(StatusDocumentoCliente.EM_ANALISE))
-                    .arquivados(documentoRepository.countByStatus(StatusDocumentoCliente.ARQUIVADO))
+                    .recebidos(recebidos)
+                    .pendentes(recebidos)
+                    .novos(recebidos)
+                    .emAnalise(emAnalise)
+                    .arquivados(arquivados)
                     .build();
         } catch (RuntimeException e) {
             // Evita derrubar a home do escritório se a tabela ainda não existir no Postgres.
             log.warn("Falha ao montar resumo de documentos-clientes: {}", e.getMessage());
             return ResumoDocumentosClientesDTO.builder()
                     .recebidos(0L)
+                    .pendentes(0L)
+                    .novos(0L)
                     .emAnalise(0L)
                     .arquivados(0L)
                     .build();

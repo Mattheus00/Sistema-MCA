@@ -52,10 +52,11 @@ public class DocumentoClienteController {
     @Operation(summary = "Listar documentos de todos os clientes (filtros opcionais)")
     public ResponseEntity<Page<PortalDocumentoDTO>> listarTodos(
             @RequestParam(required = false) UUID clienteId,
-            @RequestParam(required = false) StatusDocumentoCliente status,
+            @RequestParam(required = false) String status,
             @RequestParam(required = false) TipoDocumentoCliente tipo,
             @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(documentoClienteService.listarStaff(clienteId, status, tipo, pageable));
+        StatusDocumentoCliente statusFiltro = StatusDocumentoCliente.fromQuery(status);
+        return ResponseEntity.ok(documentoClienteService.listarStaff(clienteId, statusFiltro, tipo, pageable));
     }
 
     @GetMapping("/api/documentos-clientes/{documentoId}")
