@@ -314,9 +314,9 @@ export async function obterResumoColaboradores(params: Pick<ListarTarefasParams,
     return list.map((item) => {
       const raw = item as Record<string, unknown>;
       return {
-        responsavelId: str(raw.responsavelId ?? raw.id),
+        responsavelId: str(raw.responsavelId ?? raw.usuarioId ?? raw.id),
         responsavelNome: str(raw.responsavelNome ?? raw.nome),
-        total: num(raw.total),
+        total: num(raw.totalTarefas ?? raw.total),
         emAberto: num(raw.emAberto),
         emAndamento: num(raw.emAndamento),
         atrasadas: num(raw.atrasadas),
