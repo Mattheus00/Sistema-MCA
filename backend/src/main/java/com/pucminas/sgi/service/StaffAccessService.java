@@ -86,6 +86,16 @@ public class StaffAccessService {
         return assertPodeAcessoFinanceiroCompleto(usuarioId);
     }
 
+    /** Gestão de Tarefas: todos os perfis de escritório ativos. */
+    public Usuario assertPodeAcessarTarefas(UUID usuarioId) {
+        return assertStaff(usuarioId);
+    }
+
+    /** Visão de equipe / atribuição a terceiros: proprietária e responsável financeiro. */
+    public boolean podeGerenciarEquipeTarefas(Usuario usuario) {
+        return usuario != null && PERFIS_FINANCEIRO_COMPLETO.contains(usuario.getPerfil());
+    }
+
     public Usuario assertPodeAdmin(UUID usuarioId) {
         Usuario usuario = assertStaff(usuarioId);
         if (usuario.getPerfil() != Perfil.PROPRIETARIA) {
@@ -156,6 +166,10 @@ public class StaffAccessService {
         if ("GET".equals(method) && (path.equals("/api/servicos") || path.equals("/api/servicos/todos")
                 || path.matches("/api/servicos/" + UUID_RE))) {
             return true;
+        }
+
+        if (path.equals("/api/tarefas") || path.startsWith("/api/tarefas/")) {
+            return Set.of("GET", "POST", "PUT", "PATCH", "DELETE").contains(method);
         }
 
         return false;

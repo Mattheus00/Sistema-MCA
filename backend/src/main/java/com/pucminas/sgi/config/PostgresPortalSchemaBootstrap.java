@@ -96,6 +96,7 @@ public class PostgresPortalSchemaBootstrap {
 
             log.info("Bootstrap de schema Postgres (portal/documentos/perfil) concluído.");
             ensureLivroCaixaSchema();
+            ensureTarefasSchema();
         } catch (Exception e) {
             log.error("Falha no bootstrap de schema Postgres: {}", e.getMessage(), e);
         }
@@ -203,6 +204,60 @@ public class PostgresPortalSchemaBootstrap {
             log.info("Bootstrap de schema Postgres (Livro Caixa) concluído.");
         } catch (Exception e) {
             log.error("Falha no bootstrap Livro Caixa Postgres: {}", e.getMessage(), e);
+        }
+    }
+
+    private void ensureTarefasSchema() {
+        try {
+            jdbc.execute("""
+                    CREATE TABLE IF NOT EXISTS tarefa (
+                        id UUID PRIMARY KEY,
+                        titulo VARCHAR(300) NOT NULL,
+                        descricao VARCHAR(4000),
+                        status VARCHAR(30) NOT NULL,
+                        prioridade VARCHAR(20) NOT NULL,
+                        responsavel_id UUID NOT NULL,
+                        criado_por_id UUID NOT NULL,
+                        data_inicio DATE,
+                        data_vencimento DATE,
+                        categoria VARCHAR(120),
+                        ordem_kanban INTEGER NOT NULL DEFAULT 0,
+                        observacoes VARCHAR(2000),
+                        concluido_em TIMESTAMP,
+                        criado_em TIMESTAMP NOT NULL,
+                        atualizado_em TIMESTAMP
+                    )
+                    """);
+            jdbc.execute("""
+                    CREATE TABLE IF NOT EXISTS tarefa_checklist (
+                        id UUID PRIMARY KEY,
+                        tarefa_id UUID NOT NULL,
+                        descricao VARCHAR(500) NOT NULL,
+                        concluido BOOLEAN NOT NULL DEFAULT FALSE,
+                        ordem INTEGER NOT NULL DEFAULT 0,
+                        criado_em TIMESTAMP NOT NULL,
+                        atualizado_em TIMESTAMP
+                    )
+                    """);
+            jdbc.execute("""
+                    CREATE TABLE IF NOT EXISTS tarefa_historico (
+                        id UUID PRIMARY KEY,
+                        tarefa_id UUID NOT NULL,
+                        usuario_id UUID,
+                        acao VARCHAR(80) NOT NULL,
+                        descricao VARCHAR(1000) NOT NULL,
+                        criado_em TIMESTAMP NOT NULL
+                    )
+                    """);
+            jdbc.execute("CREATE INDEX IF NOT EXISTS idx_tarefa_responsavel ON tarefa(responsavel_id)");
+            jdbc.execute("CREATE INDEX IF NOT EXISTS idx_tarefa_status ON tarefa(status)");
+            jdbc.execute("CREATE INDEX IF NOT EXISTS idx_tarefa_prioridade ON tarefa(prioridade)");
+            jdbc.execute("CREATE INDEX IF NOT EXISTS idx_tarefa_vencimento ON tarefa(data_vencimento)");
+            jdbc.execute("CREATE INDEX IF NOT EXISTS idx_tarefa_checklist_tarefa ON tarefa_checklist(tarefa_id)");
+            jdbc.execute("CREATE INDEX IF NOT EXISTS idx_tarefa_historico_tarefa ON tarefa_historico(tarefa_id)");
+            log.info("Bootstrap de schema Postgres (Gestão de Tarefas) concluído.");
+        } catch (Exception e) {
+            log.error("Falha no bootstrap Gestão de Tarefas Postgres: {}", e.getMessage(), e);
         }
     }
 }
