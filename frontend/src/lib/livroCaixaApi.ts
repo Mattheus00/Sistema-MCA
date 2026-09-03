@@ -111,39 +111,78 @@ export function normalizeMovimentacaoFromApi(raw: Record<string, unknown>): Movi
 }
 
 export function normalizeMovimentacaoDetalheFromApi(raw: Record<string, unknown>): MovimentacaoDetalhe {
-  const base = normalizeMovimentacaoFromApi(raw);
-  const anexosRaw = Array.isArray(raw.anexos) ? raw.anexos : [];
-  const historicoRaw = Array.isArray(raw.historico) ? raw.historico : Array.isArray(raw.historicoAlteracoes) ? raw.historicoAlteracoes : [];
+  // GET /movimentacoes/{id} retorna { movimentacao, anexos, historico }
+  const nested =
+    raw.movimentacao && typeof raw.movimentacao === "object"
+      ? (raw.movimentacao as Record<string, unknown>)
+      : raw;
+  const base = normalizeMovimentacaoFromApi(nested);
+
+  const anexosFonte = Array.isArray(raw.anexos)
+    ? raw.anexos
+    : Array.isArray(nested.anexos)
+      ? nested.anexos
+      : [];
+  const historicoFonte = Array.isArray(raw.historico)
+    ? raw.historico
+    : Array.isArray(raw.historicoAlteracoes)
+      ? raw.historicoAlteracoes
+      : Array.isArray(nested.historico)
+        ? nested.historico
+        : [];
+
   return {
     ...base,
-    clienteId: raw.clienteId != null ? String(raw.clienteId) : undefined,
-    clienteNome: raw.clienteNome != null ? String(raw.clienteNome) : undefined,
-    contaId: raw.contaId != null ? String(raw.contaId) : undefined,
-    contaNome: raw.contaNome != null ? String(raw.contaNome) : undefined,
-    observacao: raw.observacao != null ? String(raw.observacao) : undefined,
-    fornecedor: raw.fornecedor != null ? String(raw.fornecedor) : undefined,
-    origem: asOrigemMovimentacao(raw.origem),
-    criadoEm: raw.criadoEm != null ? String(raw.criadoEm) : undefined,
-    atualizadoEm: raw.atualizadoEm != null ? String(raw.atualizadoEm) : undefined,
-    anexos: anexosRaw.map((a) => {
+    clienteId: nested.clienteId != null ? String(nested.clienteId) : undefined,
+    clienteNome: nested.clienteNome != null ? String(nested.clienteNome) : undefined,
+    contaId: nested.contaId != null ? String(nested.contaId) : undefined,
+    contaNome: nested.contaNome != null ? String(nested.contaNome) : undefined,
+    observacao: nested.observacao != null ? String(nested.observacao) : undefined,
+    fornecedor: nested.fornecedor != null ? String(nested.fornecedor) : undefined,
+    origem: asOrigemMovimentacao(nested.origem),
+    criadoEm: nested.criadoEm != null ? String(nested.criadoEm) : undefined,
+    atualizadoEm: nested.atualizadoEm != null ? String(nested.atualizadoEm) : undefined,
+    anexos: anexosFonte.map((a) => {
       const item = a as Record<string, unknown>;
       const anexoId = item.id ?? item.anexoId;
       return {
         id: anexoId != null ? String(anexoId) : "",
-        nomeArquivo: str(item.nomeArquivo ?? item.nome),
+        nomeArquivo: str(item.nomeArquivo ?? item.nomeOriginal ?? item.nome),
         tamanhoBytes: item.tamanhoBytes != null ? num(item.tamanhoBytes) : undefined,
         contentType: item.contentType != null ? String(item.contentType) : undefined,
-        enviadoEm: item.enviadoEm != null ? String(item.enviadoEm) : undefined,
+        enviadoEm:
+          item.enviadoEm != null
+            ? String(item.enviadoEm)
+            : item.criadoEm != null
+              ? String(item.criadoEm)
+              : undefined,
       };
     }),
-    historico: historicoRaw.map((h) => {
+    historico: historicoFonte.map((h) => {
       const item = h as Record<string, unknown>;
+      const campo = item.campo != null ? String(item.campo) : "";
+      const de = item.valorAnterior != null ? String(item.valorAnterior) : "";
+      const para = item.valorNovo != null ? String(item.valorNovo) : "";
+      const acao =
+        item.acao != null
+          ? String(item.acao)
+          : item.tipo != null
+            ? String(item.tipo)
+            : campo || "Alteração";
+      const detalhes =
+        item.detalhes != null
+          ? String(item.detalhes)
+          : item.descricao != null
+            ? String(item.descricao)
+            : de || para
+              ? `${de || "—"} → ${para || "—"}`
+              : undefined;
       return {
         id: item.id != null ? String(item.id) : undefined,
-        dataHora: str(item.dataHora ?? item.data),
+        dataHora: str(item.dataHora ?? item.data ?? item.criadoEm),
         usuario: item.usuario != null ? String(item.usuario) : undefined,
-        acao: str(item.acao ?? item.tipo),
-        detalhes: item.detalhes != null ? String(item.detalhes) : item.descricao != null ? String(item.descricao) : undefined,
+        acao,
+        detalhes,
       };
     }),
   };
@@ -314,8 +353,8 @@ export async function atualizarMovimentacao(id: string, payload: AtualizarMovime
 
 export async function receberMovimentacao(id: string, payload: ReceberPagarPayload): Promise<MovimentacaoDetalhe> {
   try {
-    const r = await api.patch(`${BASE}/movimentacoes/${id}/receber`, payload);
-    return normalizeMovimentacaoDetalheFromApi(r.data as Record<string, unknown>);
+    await api.patch(`${BASE}/movimentacoes/${id}/receber`, payload);
+    return obterMovimentacao(id);
   } catch (e: unknown) {
     throw new Error(getApiErrorMessage(e, "Não foi possível registrar o recebimento."));
   }
@@ -323,8 +362,8 @@ export async function receberMovimentacao(id: string, payload: ReceberPagarPaylo
 
 export async function pagarMovimentacao(id: string, payload: ReceberPagarPayload): Promise<MovimentacaoDetalhe> {
   try {
-    const r = await api.patch(`${BASE}/movimentacoes/${id}/pagar`, payload);
-    return normalizeMovimentacaoDetalheFromApi(r.data as Record<string, unknown>);
+    await api.patch(`${BASE}/movimentacoes/${id}/pagar`, payload);
+    return obterMovimentacao(id);
   } catch (e: unknown) {
     throw new Error(getApiErrorMessage(e, "Não foi possível registrar o pagamento."));
   }
@@ -332,8 +371,8 @@ export async function pagarMovimentacao(id: string, payload: ReceberPagarPayload
 
 export async function cancelarMovimentacao(id: string): Promise<MovimentacaoDetalhe> {
   try {
-    const r = await api.patch(`${BASE}/movimentacoes/${id}/cancelar`);
-    return normalizeMovimentacaoDetalheFromApi(r.data as Record<string, unknown>);
+    await api.patch(`${BASE}/movimentacoes/${id}/cancelar`);
+    return obterMovimentacao(id);
   } catch (e: unknown) {
     throw new Error(getApiErrorMessage(e, "Não foi possível cancelar a movimentação."));
   }
@@ -433,10 +472,10 @@ export async function enviarAnexoMovimentacao(movimentacaoId: string, arquivo: F
   try {
     const form = new FormData();
     form.append("arquivo", arquivo);
-    const r = await api.post(`${BASE}/movimentacoes/${movimentacaoId}/anexos`, form, {
+    await api.post(`${BASE}/movimentacoes/${movimentacaoId}/anexos`, form, {
       headers: { "Content-Type": "multipart/form-data" },
     });
-    return normalizeMovimentacaoDetalheFromApi(r.data as Record<string, unknown>);
+    return obterMovimentacao(movimentacaoId);
   } catch (e: unknown) {
     throw new Error(getApiErrorMessage(e, "Não foi possível enviar o anexo."));
   }
