@@ -9334,14 +9334,22 @@ select.modal__select {
 .livro-caixa__badge {
   display: inline-flex;
   align-items: center;
-  align-self: flex-start;
-  padding: 3px 10px;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0.25rem 0.625rem;
   border-radius: 999px;
   font-size: 0.6875rem;
   font-weight: 600;
-  line-height: 1.25;
+  line-height: 1.2;
   white-space: nowrap;
-  height: fit-content;
+  width: max-content;
+  max-width: max-content;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  vertical-align: middle;
   background: #f1f5f9;
   color: #475569;
 }
@@ -10004,6 +10012,18 @@ select.modal__select {
   margin-bottom: 16px;
 }
 
+.livro-caixa__detalhe-info {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.livro-caixa__detalhe-status {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  display: block;
+  line-height: 1;
+}
+
 .livro-caixa__detalhe-tipo {
   font-size: 0.75rem;
   text-transform: uppercase;
@@ -10012,10 +10032,24 @@ select.modal__select {
   margin: 0 0 4px;
 }
 
+.livro-caixa__detalhe-titulo {
+  font-size: 1.375rem;
+  font-weight: 700;
+  margin: 0;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
 .livro-caixa__detalhe-valor {
   font-size: 1.5rem;
   font-weight: 700;
   margin: 8px 0 0;
+}
+
+.livro-caixa__tabela td .livro-caixa__badge,
+.admin-item-card__grid-item dd .livro-caixa__badge {
+  display: inline-flex;
+  vertical-align: middle;
 }
 
 .livro-caixa__detalhe-grid {

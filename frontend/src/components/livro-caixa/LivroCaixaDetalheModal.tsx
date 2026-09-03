@@ -123,14 +123,16 @@ export default function LivroCaixaDetalheModal({
     <div className="modal-overlay" onClick={() => !acaoLoading && onFechar()}>
       <div className="modal modal--cadastro livro-caixa__modal-detalhe" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
         <div className="livro-caixa__detalhe-head">
-          <div>
+          <div className="livro-caixa__detalhe-info">
             <p className="livro-caixa__detalhe-tipo">{labelTipoMovimentacao(movimentacao.tipo)}</p>
-            <h2 className="modal__titulo">{movimentacao.descricao}</h2>
+            <h2 className="livro-caixa__detalhe-titulo">{movimentacao.descricao}</h2>
             <p className={`livro-caixa__detalhe-valor ${classeValorMovimentacao(movimentacao.tipo)}`}>
               {formatarValorMovimentacao(movimentacao.tipo, movimentacao.valor)}
             </p>
           </div>
-          <span className={classeBadgeStatus(movimentacao.status)}>{labelStatusMovimentacao(movimentacao.status)}</span>
+          <div className="livro-caixa__detalhe-status">
+            <span className={classeBadgeStatus(movimentacao.status)}>{labelStatusMovimentacao(movimentacao.status)}</span>
+          </div>
         </div>
 
         {carregando && <p className="livro-caixa__loading-inline">Atualizando…</p>}
