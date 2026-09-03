@@ -276,12 +276,14 @@ export default function WebTarefas() {
         </p>
       )}
 
+      {modo !== "calendario" && (
       <div className="dash-metrics tarefas__metrics">
         <MetricCard icon={<IconAberto />} label="Em aberto" value={String(indicadores?.emAberto ?? 0)} loading={loadingIndicadores} iconTone="purple" />
         <MetricCard icon={<IconAndamento />} label="Em andamento" value={String(indicadores?.emAndamento ?? 0)} loading={loadingIndicadores} iconTone="money" />
         <MetricCard icon={<IconAtraso />} label="Atrasadas" value={String(indicadores?.atrasadas ?? 0)} loading={loadingIndicadores} iconTone="alert" hintTone="danger" />
         <MetricCard icon={<IconConcluido />} label="Concluídas na semana" value={String(indicadores?.concluidasNaSemana ?? 0)} loading={loadingIndicadores} iconTone="wallet" />
       </div>
+      )}
 
       <div className="tarefas__toolbar">
         {isGestor && (

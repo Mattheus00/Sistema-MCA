@@ -10741,72 +10741,189 @@ select.modal__select {
   gap: 8px;
 }
 
-.tarefas-calendario__nav {
+.tarefas-cal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tarefas-cal__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tarefas-cal__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  color: #334155;
+}
+
+.tarefas-cal__chip--azul { background: #eff6ff; border-color: #dbeafe; color: #1d4ed8; }
+.tarefas-cal__chip--vermelho { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+.tarefas-cal__chip--verde { background: #ecfdf5; border-color: #bbf7d0; color: #15803d; }
+.tarefas-cal__chip--roxo { background: #f3e8ff; border-color: #e9d5ff; color: var(--cor-principal); }
+
+.tarefas-cal__toolbar {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 14px;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.tarefas-calendario__nav h3 {
+.tarefas-cal__nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tarefas-cal__nav h3 {
   margin: 0;
-  font-size: 1.125rem;
-  text-transform: capitalize;
   min-width: 180px;
   text-align: center;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  color: #0f172a;
 }
 
-.tarefas-calendario__semana {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-  margin-bottom: 6px;
-  font-size: 0.75rem;
+.tarefas-cal__nav-btn,
+.tarefas-cal__hoje {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #334155;
+  cursor: pointer;
+}
+
+.tarefas-cal__nav-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+.tarefas-cal__hoje {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--cor-principal);
+  border-color: #e9d5ff;
+  background: #faf5ff;
+}
+
+.tarefas-cal__nav-btn:hover,
+.tarefas-cal__hoje:hover {
+  background: #f8fafc;
+}
+
+.tarefas-cal__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 16px;
+  align-items: start;
+}
+
+.tarefas-cal__board {
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #e8edf3;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.tarefas-cal__semana {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  background: #fafbfc;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.tarefas-cal__semana span {
+  padding: 10px 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
   text-align: center;
 }
 
-.tarefas-calendario__grid {
+.tarefas-cal__grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
-.tarefas-calendario__dia {
-  min-height: 100px;
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  background: #fff;
+.tarefas-cal__dia {
+  min-height: 108px;
   padding: 8px;
+  border-right: 1px solid #eef2f7;
+  border-bottom: 1px solid #eef2f7;
+  background: #fff;
+  cursor: pointer;
 }
 
-.tarefas-calendario__dia--vazio {
-  background: transparent;
-  border-color: transparent;
+.tarefas-cal__dia:nth-child(7n) {
+  border-right: none;
 }
 
-.tarefas-calendario__num {
+.tarefas-cal__dia.is-fora {
+  background: #fcfcfd;
+}
+
+.tarefas-cal__dia.is-fora .tarefas-cal__num {
+  color: #cbd5e1;
+}
+
+.tarefas-cal__dia.is-hoje,
+.tarefas-cal__dia.is-sel {
+  background: #faf5ff;
+}
+
+.tarefas-cal__dia.is-hoje {
+  box-shadow: inset 0 0 0 1.5px rgba(164, 63, 155, 0.35);
+}
+
+.tarefas-cal__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--text-secondary);
+  color: #475569;
 }
 
-.tarefas-calendario__itens {
+.tarefas-cal__num.is-hoje {
+  border-radius: 50%;
+  background: var(--cor-principal);
+  color: #fff;
+}
+
+.tarefas-cal__itens {
   display: flex;
   flex-direction: column;
   gap: 4px;
   margin-top: 6px;
 }
 
-.tarefas-calendario__item {
-  border: none;
+.tarefas-cal__item {
+  border: 1px solid #eef2f7;
   border-left: 3px solid #64748b;
-  background: #f8fafc;
+  background: #fff;
   border-radius: 6px;
   padding: 4px 6px;
   font-size: 0.6875rem;
+  font-weight: 600;
+  color: #0f172a;
   text-align: left;
   cursor: pointer;
   overflow: hidden;
@@ -10814,14 +10931,151 @@ select.modal__select {
   white-space: nowrap;
 }
 
-.tarefas-calendario__item--atrasada {
+.tarefas-cal__item.is-atrasada {
   background: #fef2f2;
   color: #b91c1c;
 }
 
-.tarefas-calendario__mais {
+.tarefas-cal__item.is-feita {
+  color: #64748b;
+  text-decoration: line-through;
+}
+
+.tarefas-cal__mais {
+  border: none;
+  background: none;
+  padding: 0;
   font-size: 0.6875rem;
-  color: var(--text-secondary);
+  font-weight: 600;
+  color: #2563eb;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tarefas-cal__side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #fff;
+  border: 1px solid #e8edf3;
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.tarefas-cal__side h4 {
+  margin: 0 0 10px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.tarefas-cal__side ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tarefas-cal__side-item {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  border: none;
+  border-bottom: 1px solid #f8fafc;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tarefas-cal__side-item:last-child {
+  border-bottom: none;
+}
+
+.tarefas-cal__side-item div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tarefas-cal__side-item small {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+}
+
+.tarefas-cal__side-item strong {
+  font-size: 0.8125rem;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.tarefas-cal__side-item span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.tarefas-cal__side-item.is-atrasada strong,
+.tarefas-cal__side-item.is-atrasada small {
+  color: #b91c1c;
+}
+
+.tarefas-cal__avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #f3e8ff;
+  color: var(--cor-principal);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-style: normal;
+}
+
+.tarefas-cal__vazio {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #94a3b8;
+}
+
+.tarefas-cal__legenda ul {
+  gap: 6px;
+}
+
+.tarefas-cal__legenda li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.tarefas-cal__legenda .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-red { background: #dc2626; }
+.dot-orange { background: #ea580c; }
+.dot-blue { background: #2563eb; }
+.dot-purple { background: #7c3aed; }
+.dot-green { background: #16a34a; }
+
+@media (max-width: 1100px) {
+  .tarefas-cal__layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ========== Modal Nova / Editar tarefa ========== */
@@ -11750,11 +12004,17 @@ select.modal__select {
     grid-template-columns: 1fr;
   }
 
-  .tarefas-calendario__dia {
+  .tarefas-cal__dia {
     min-height: 72px;
+    padding: 6px;
   }
 
-  .tarefas-calendario__item {
+  .tarefas-cal__item {
     font-size: 0.625rem;
+  }
+
+  .tarefas-cal__nav h3 {
+    min-width: 0;
+    font-size: 0.9375rem;
   }
 }

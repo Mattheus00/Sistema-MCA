@@ -137,3 +137,23 @@ export function isoDataLocal(d: Date): string {
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
+
+export function corFaixaCalendario(tarefa: { status: StatusTarefa; prioridade: PrioridadeTarefa; atrasada: boolean }): string {
+  if (tarefa.status === "CONCLUIDO") return "#16a34a";
+  if (tarefa.atrasada) return "#dc2626";
+  if (tarefa.status === "EM_ANDAMENTO") return "#ea580c";
+  if (tarefa.status === "EM_REVISAO") return "#7c3aed";
+  if (tarefa.prioridade === "ALTA") return "#dc2626";
+  return "#2563eb";
+}
+
+export function labelRelativoPrazo(iso?: string | null, agora = new Date()): string {
+  if (!iso) return "Sem prazo";
+  const dia = iso.split("T")[0];
+  const hoje = isoDataLocal(agora);
+  const amanhaDate = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() + 1);
+  const amanha = isoDataLocal(amanhaDate);
+  if (dia === hoje) return "Hoje";
+  if (dia === amanha) return "Amanhã";
+  return formatarDataTarefa(iso);
+}
