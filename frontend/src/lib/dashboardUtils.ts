@@ -202,6 +202,20 @@ export type AtividadeDashboard = {
   valor?: number;
 };
 
+/** Valor exibido na atividade: em pagamentos usa o recebido, não o saldo restante (que fica 0). */
+function valorParaAtividade(item: Inadimplencia, pago: boolean): number {
+  const pags = item.pagamentos ?? [];
+  if (pags.length > 0) {
+    const soma = pags.reduce((s, p) => s + (Number(p.valorPago) || 0), 0);
+    if (soma > 0) return soma;
+  }
+  if (pago) {
+    if ((item.valorOriginal ?? 0) > 0) return item.valorOriginal!;
+    if ((item.valorDevedor ?? 0) > 0) return item.valorDevedor!;
+  }
+  return item.valor ?? 0;
+}
+
 export function mapInadimplenciasParaAtividades(itens: Inadimplencia[]): AtividadeDashboard[] {
   return [...itens]
     .sort((a, b) => {
@@ -218,9 +232,37 @@ export function mapInadimplenciasParaAtividades(itens: Inadimplencia[]): Ativida
         descricao: `${item.clienteNome ?? `Cliente #${item.clienteId}`} · Venc. ${formatarDataDashboard(item.vencimento)}`,
         dataHora: item.updatedAt ?? item.createdAt,
         status: pago ? "Confirmado" : "Em aberto",
-        valor: item.valor,
+        valor: valorParaAtividade(item, pago),
       };
     });
+}
+
+/** Completa valor de pagamentos confirmados quando a listagem veio com saldo 0 e sem histórico embutido. */
+export async function enriquecerValoresAtividades(
+  atividades: AtividadeDashboard[],
+  buscarPagamentos: (dividaId: string) => Promise<{ valorPago: number }[]>
+): Promise<AtividadeDashboard[]> {
+  const precisaIds = atividades
+    .filter((a) => a.status === "Confirmado" && !(a.valor != null && a.valor > 0) && a.id)
+    .map((a) => a.id);
+
+  if (precisaIds.length === 0) return atividades;
+
+  const valores = new Map<string, number>();
+  await Promise.all(
+    precisaIds.map(async (id) => {
+      try {
+        const pags = await buscarPagamentos(id);
+        const soma = pags.reduce((s, p) => s + (Number(p.valorPago) || 0), 0);
+        if (soma > 0) valores.set(id, soma);
+      } catch {
+        /* ignora — mantém valor atual */
+      }
+    })
+  );
+
+  if (valores.size === 0) return atividades;
+  return atividades.map((a) => (valores.has(a.id) ? { ...a, valor: valores.get(a.id) } : a));
 }
 
 export function primeiroDiaMes(date = new Date()): string {

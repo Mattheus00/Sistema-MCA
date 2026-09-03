@@ -10389,13 +10389,15 @@ select.modal__select {
 .tarefas-kanban__scroll {
   display: flex;
   gap: 12px;
+  width: 100%;
   overflow-x: auto;
   padding-bottom: 8px;
   -webkit-overflow-scrolling: touch;
 }
 
 .tarefas-kanban__coluna {
-  flex: 0 0 280px;
+  flex: 1 1 0;
+  min-width: 220px;
   min-height: 420px;
   max-height: calc(100vh - 280px);
   display: flex;
@@ -10473,62 +10475,61 @@ select.modal__select {
 
 .tarefas-card {
   background: #fff;
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  padding: 12px;
+  border: 1px solid #ece6f2;
+  border-radius: 18px;
+  padding: 12px 14px 10px;
   cursor: grab;
+  box-shadow: 0 1px 2px rgba(124, 58, 237, 0.04), 0 8px 22px rgba(15, 23, 42, 0.04);
   transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .tarefas-card:hover {
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.1);
+  border-color: #e0d4ee;
 }
 
 .tarefas-card--atrasada {
-  border-color: rgba(220, 38, 38, 0.35);
-  background: #fff7f7;
+  border-color: rgba(220, 38, 38, 0.28);
 }
 
-.tarefas-card__topo {
+.tarefas-card__icons {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.tarefas-card__check {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: #f3e8ff;
+  color: var(--cor-principal);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tarefas-card__menu {
+  color: #94a3b8;
+  display: inline-flex;
 }
 
 .tarefas-card__titulo {
-  margin: 0;
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.35;
+  margin: 0 0 10px;
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.25;
+  word-break: break-word;
 }
 
-.tarefas-card__atrasada {
-  flex-shrink: 0;
-  font-size: 0.625rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #b91c1c;
-  background: #fee2e2;
-  padding: 2px 7px;
-  border-radius: 999px;
-}
-
-.tarefas-card__desc {
-  margin: 6px 0 0;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  line-height: 1.4;
-}
-
-.tarefas-card__meta {
+.tarefas-card__tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
-  margin-top: 10px;
+  margin-bottom: 12px;
 }
 
 .tarefas-card__avatar {
@@ -10544,51 +10545,131 @@ select.modal__select {
   justify-content: center;
 }
 
-.tarefas-card__categoria {
+.tarefas-card__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.tarefas-card__pill i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.tarefas-card__pill--prio-baixa { background: #eff6ff; color: #1d4ed8; }
+.tarefas-card__pill--prio-media { background: #fff1e6; color: #c2410c; }
+.tarefas-card__pill--prio-alta { background: #fef2f2; color: #b91c1c; }
+
+.tarefas-card__pill--st-a_fazer { background: #eef2f7; color: #334155; }
+.tarefas-card__pill--st-em_andamento { background: #ffedd5; color: #c2410c; }
+.tarefas-card__pill--st-em_revisao { background: #f3e8ff; color: #7c3aed; }
+.tarefas-card__pill--st-concluido { background: #dcfce7; color: #166534; }
+
+.tarefas-card__atrasada {
   font-size: 0.6875rem;
-  color: #64748b;
-  background: #f1f5f9;
-  padding: 2px 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #b91c1c;
+  background: #fee2e2;
+  padding: 4px 8px;
   border-radius: 999px;
 }
 
-.tarefas-card__rodape {
-  display: flex;
-  justify-content: space-between;
+.tarefas-card__footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
-  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
 }
 
-.tarefas-card__prazo {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-}
-
-.tarefas-card__checklist {
+.tarefas-card__foot-item {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  color: var(--cor-principal);
 }
 
-.tarefas-card__checklist-bar {
-  width: 56px;
-  height: 5px;
-  border-radius: 999px;
-  background: #e2e8f0;
-  overflow: hidden;
+.tarefas-card__foot-item:nth-child(2) {
+  padding-left: 8px;
+  border-left: 1px solid #eef2f7;
 }
 
-.tarefas-card__checklist-bar span {
-  display: block;
-  height: 100%;
-  background: var(--cor-principal);
+.tarefas-card__foot-item div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
-.tarefas-card__checklist em {
-  font-style: normal;
+.tarefas-card__foot-item small {
   font-size: 0.6875rem;
-  color: #64748b;
+  color: #94a3b8;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tarefas-card__foot-item strong {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tarefas-card__foot-item strong.is-atrasado {
+  color: #b91c1c;
+}
+
+.tarefas-card__ring {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.tarefas-card__ring svg {
+  transform: rotate(-90deg);
+}
+
+.tarefas-card__ring-track,
+.tarefas-card__ring-fill {
+  fill: none;
+  stroke-width: 3.5;
+}
+
+.tarefas-card__ring-track {
+  stroke: #e2e8f0;
+}
+
+.tarefas-card__ring-fill {
+  stroke: var(--cor-principal);
+  stroke-linecap: round;
+}
+
+.tarefas-card__ring span {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #334155;
 }
 
 .tarefas__badge-prioridade,

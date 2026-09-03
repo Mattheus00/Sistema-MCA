@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { api, fetchAllInadimplentes } from "@/lib/api";
+import { api, fetchAllInadimplentes, normalizeListResponse } from "@/lib/api";
 import {
+  normalizePagamentoInadimplenciaFromApi,
   normalizeResumoFinanceiroFromApi,
   normalizeResumoRelatorioFromApi,
 } from "@/lib/apiNormalizers";
@@ -9,6 +10,7 @@ import { DASHBOARD_INVALIDATE_EVENT } from "@/lib/dashboardRefresh";
 import {
   calcularEvolucaoValorAberto,
   contarClientesInadimplentes,
+  enriquecerValoresAtividades,
   mapAgingParaFaixas,
   mapInadimplenciasParaAtividades,
   somarBaixadoCancelado,
@@ -168,6 +170,8 @@ export function useDashboardData(
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, [location.pathname, carregar]);
 
+  const [atividades, setAtividades] = useState<AtividadeDashboard[]>([]);
+
   const totalClientes = state.resumo?.totalClientes ?? 0;
   const clientesInadimplentes = contarClientesInadimplentes(state.inadimplentes);
   const percentualInadimplentes =
@@ -176,9 +180,31 @@ export function useDashboardData(
   const pagamentosRecebidos =
     state.resumoFinanceiro?.totalRecebido ?? state.resumo?.totalPago ?? null;
 
-  const evolucao: PontoEvolucao[] = calcularEvolucaoValorAberto(state.inadimplentes, periodoEvolucao);
-  const faixasInadimplencia: FaixaInadimplenciaUi[] = mapAgingParaFaixas(state.aging);
-  const atividades: AtividadeDashboard[] = mapInadimplenciasParaAtividades(state.inadimplentes);
+  const evolucao: PontoEvolucao[] = useMemo(
+    () => calcularEvolucaoValorAberto(state.inadimplentes, periodoEvolucao),
+    [state.inadimplentes, periodoEvolucao]
+  );
+  const faixasInadimplencia: FaixaInadimplenciaUi[] = useMemo(
+    () => mapAgingParaFaixas(state.aging),
+    [state.aging]
+  );
+
+  useEffect(() => {
+    const base = mapInadimplenciasParaAtividades(state.inadimplentes);
+    setAtividades(base);
+    let ativo = true;
+    void enriquecerValoresAtividades(base, async (dividaId) => {
+      const r = await api.get(`/api/pagamentos/divida/${dividaId}`);
+      return normalizeListResponse<Record<string, unknown>>(r.data).map((raw) =>
+        normalizePagamentoInadimplenciaFromApi(raw)
+      );
+    }).then((enriquecidas) => {
+      if (ativo) setAtividades(enriquecidas);
+    });
+    return () => {
+      ativo = false;
+    };
+  }, [state.inadimplentes]);
 
   const montante = {
     aReceber: state.resumoChart?.totalEmAberto ?? 0,
