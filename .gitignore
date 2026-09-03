@@ -2,8 +2,12 @@
 backend/target/
 backend/src/main/resources/application-local.properties
 backend/data/*.db
+backend/data/*.db-*
+backend/data/*.db.corrupt*
+backend/data/*.bak
 !backend/data/.gitkeep
 backend/data/boletos-temp/
+backend/data/documentos-clientes/
 backend/data/.clientes-relatorio-hash
 
 Codigo/Backend/target/
@@ -14,6 +18,16 @@ Codigo/Backend/data/*.db
 /Backend/
 !backend/
 !backend/**
+
+# Reaplicar ignores de dados locais (a negação !backend/** acima reabilita tudo).
+backend/data/*.db
+backend/data/*.db-*
+backend/data/*.db.corrupt*
+backend/data/*.bak
+!backend/data/.gitkeep
+backend/data/boletos-temp/
+backend/data/documentos-clientes/
+backend/data/.clientes-relatorio-hash
 
 # Arquivos temporários
 Backend.zip
