@@ -21,6 +21,7 @@ import WebReformaTributaria from '@/components/pages/WebReformaTributaria'
 import WebEnvioBoletos from '@/components/pages/WebEnvioBoletos'
 import WebDocumentosClientes from '@/components/pages/WebDocumentosClientes'
 import WebLivroCaixa from '@/components/pages/WebLivroCaixa'
+import WebTarefas from '@/components/pages/WebTarefas'
 import WebCadastroUsuario from '@/components/pages/WebCadastroUsuario'
 import WebUsuarios from '@/components/pages/WebUsuarios'
 import Login from '@/components/pages/Login'
@@ -51,6 +52,7 @@ function App() {
           <Route path="/inadimplentes" element={<WebInadimplentes />} />
           <Route path="/inadimplentes/registrar" element={<WebInadimplentesRegistro />} />
           <Route path="/inadimplentes/:clienteId/honorarios" element={<WebInadimplentesHonorarios />} />
+          <Route path="/tarefas" element={<WebTarefas />} />
 
           <Route element={<ProtectedRoute denyFuncionario />}>
             <Route path="/dashboard" element={<Dashboard />} />

@@ -1,7 +1,6 @@
 import { useEffect, useState, type ComponentType } from 'react'
 import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { clearAuthSession, getAuthToken, getAuthUserDisplay, getAuthUserProfile, isMockEnabled } from '@/lib/api'
-import { obterContagemDocumentosNovos, DOCUMENTOS_CLIENTES_RESUMO_INVALIDATE_EVENT } from '@/lib/documentosClientesApi'
 import { iniciaisNome, labelPerfilUsuario } from '@/lib/dashboardUtils'
 
 type NavItem = {
@@ -99,23 +98,21 @@ function UserIcon() {
   )
 }
 
-function DocumentosPortalIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
-      <path d="M12 18v-6" />
-      <path d="M9 15h6" />
-    </svg>
-  )
-}
-
 function WalletIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
       <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
       <path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z" />
+    </svg>
+  )
+}
+
+function ChecklistIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 11l3 3L22 4" />
+      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
     </svg>
   )
 }
@@ -153,31 +150,23 @@ export default function Layout() {
   const isProprietaria = userProfile === 'PROPRIETARIA'
   const isFuncionario = userProfile === 'FUNCIONARIO'
   const podeVerEnvioBoletos = userProfile === 'PROPRIETARIA' || userProfile === 'RESPONSAVEL_FINANCEIRO'
-  const podeVerDocumentosPortal = podeVerEnvioBoletos
   const podeVerLivroCaixa = podeVerEnvioBoletos
-  const [badgeDocumentos, setBadgeDocumentos] = useState(0)
   const navItems: NavItem[] = isFuncionario
     ? [
         { to: '/clientes', label: 'Clientes', icon: PeopleIcon },
         { to: '/inadimplentes', label: 'Inadimplentes', icon: AlertIcon },
+        { to: '/tarefas', label: 'Tarefas', icon: ChecklistIcon },
       ]
     : [
         { to: '/dashboard', label: 'Dashboard', icon: GridIcon },
         { to: '/clientes', label: 'Clientes', icon: PeopleIcon },
         { to: '/inadimplentes', label: 'Inadimplentes', icon: AlertIcon },
+        { to: '/tarefas', label: 'Tarefas', icon: ChecklistIcon },
         { to: '/servicos', label: 'Serviços', icon: ServicesIcon },
         { to: '/reforma-tributaria', label: 'Simulador', icon: CalculatorIcon },
         { to: '/relatorios', label: 'Relatórios', icon: ChartIcon },
         ...(podeVerLivroCaixa ? [{ to: '/livro-caixa', label: 'Livro Caixa', icon: WalletIcon }] : []),
-        ...(podeVerEnvioBoletos ? [{ to: '/envio-boletos', label: 'Envio de boletos', icon: EmailAttachIcon, badge: 'Novo' }] : []),
-        ...(podeVerDocumentosPortal
-          ? [{
-              to: '/documentos-clientes',
-              label: 'Documentos do portal',
-              icon: DocumentosPortalIcon,
-              badge: badgeDocumentos > 0 ? String(badgeDocumentos > 9 ? '9+' : badgeDocumentos) : undefined,
-            }]
-          : []),
+        ...(podeVerEnvioBoletos ? [{ to: '/envio-boletos', label: 'Envio de boletos', icon: EmailAttachIcon }] : []),
         ...(isProprietaria ? [{ to: '/usuarios', label: 'Usuários', icon: UserIcon }] : []),
       ]
 
@@ -189,24 +178,6 @@ export default function Layout() {
   function fecharMenuMobile() {
     setMobileMenuOpen(false)
   }
-
-  useEffect(() => {
-    if (!podeVerDocumentosPortal) return
-    let ativo = true
-    function atualizarBadge() {
-      obterContagemDocumentosNovos()
-        .then((n) => {
-          if (ativo) setBadgeDocumentos(n)
-        })
-        .catch(() => {})
-    }
-    atualizarBadge()
-    window.addEventListener(DOCUMENTOS_CLIENTES_RESUMO_INVALIDATE_EVENT, atualizarBadge)
-    return () => {
-      ativo = false
-      window.removeEventListener(DOCUMENTOS_CLIENTES_RESUMO_INVALIDATE_EVENT, atualizarBadge)
-    }
-  }, [podeVerDocumentosPortal, location.pathname])
 
   useEffect(() => {
     setMobileMenuOpen(false)
