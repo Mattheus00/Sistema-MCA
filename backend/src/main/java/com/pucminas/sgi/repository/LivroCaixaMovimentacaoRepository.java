@@ -54,6 +54,21 @@ public interface LivroCaixaMovimentacaoRepository extends JpaRepository<LivroCai
             @Param("inicio") LocalDate inicio,
             @Param("fim") LocalDate fim);
 
+    /**
+     * Soma do mês pela data da movimentação (inclui previsto e realizado).
+     * Usa COALESCE(dataPagamento, dataMovimentacao) para realizados sem data de pagamento.
+     */
+    @Query("""
+            SELECT COALESCE(SUM(m.valorCentavos), 0) FROM LivroCaixaMovimentacao m
+            WHERE m.tipo = :tipo AND m.status IN :statuses
+              AND COALESCE(m.dataPagamento, m.dataMovimentacao) BETWEEN :inicio AND :fim
+            """)
+    BigDecimal somarNoPeriodoPorDataEfetiva(
+            @Param("tipo") LivroCaixaTipoMovimentacao tipo,
+            @Param("statuses") List<LivroCaixaStatusMovimentacao> statuses,
+            @Param("inicio") LocalDate inicio,
+            @Param("fim") LocalDate fim);
+
     @Query("""
             SELECT m FROM LivroCaixaMovimentacao m
             WHERE m.status IN :statuses

@@ -28,6 +28,10 @@ public class LivroCaixaMovimentacaoService {
             List.of(LivroCaixaStatusMovimentacao.RECEBIDO);
     private static final List<LivroCaixaStatusMovimentacao> STATUS_SAIDA_REALIZADO =
             List.of(LivroCaixaStatusMovimentacao.PAGO);
+    private static final List<LivroCaixaStatusMovimentacao> STATUS_ENTRADA_MES =
+            List.of(LivroCaixaStatusMovimentacao.RECEBIDO, LivroCaixaStatusMovimentacao.PREVISTO);
+    private static final List<LivroCaixaStatusMovimentacao> STATUS_SAIDA_MES =
+            List.of(LivroCaixaStatusMovimentacao.PAGO, LivroCaixaStatusMovimentacao.PREVISTO);
 
     private final LivroCaixaMovimentacaoRepository movimentacaoRepository;
     private final LivroCaixaHistoricoRepository historicoRepository;
@@ -79,10 +83,10 @@ public class LivroCaixaMovimentacaoService {
         BigDecimal saldoRealizadoCentavos = entradasRealizadas.subtract(saidasRealizadas);
         BigDecimal saldoPrevistoCentavos = saldoRealizadoCentavos.add(entradasPrevistas).subtract(saidasPrevistas);
 
-        BigDecimal entradasMesCentavos = movimentacaoRepository.somarRealizadoNoPeriodo(
-                LivroCaixaTipoMovimentacao.ENTRADA, STATUS_ENTRADA_REALIZADO, inicioMes, fimMes);
-        BigDecimal saidasMesCentavos = movimentacaoRepository.somarRealizadoNoPeriodo(
-                LivroCaixaTipoMovimentacao.SAIDA, STATUS_SAIDA_REALIZADO, inicioMes, fimMes);
+        BigDecimal entradasMesCentavos = movimentacaoRepository.somarNoPeriodoPorDataEfetiva(
+                LivroCaixaTipoMovimentacao.ENTRADA, STATUS_ENTRADA_MES, inicioMes, fimMes);
+        BigDecimal saidasMesCentavos = movimentacaoRepository.somarNoPeriodoPorDataEfetiva(
+                LivroCaixaTipoMovimentacao.SAIDA, STATUS_SAIDA_MES, inicioMes, fimMes);
 
         return LivroCaixaDashboardDTO.builder()
                 .saldoRealizado(LivroCaixaSupport.centavosParaReais(saldoRealizadoCentavos))
@@ -434,6 +438,12 @@ public class LivroCaixaMovimentacaoService {
         mov.setDataVencimento(dto.getDataVencimento());
         mov.setDataPagamento(dto.getDataPagamento());
         mov.setStatus(dto.getStatus());
+        // Realizados precisam de data de pagamento para bater com saldos/relatórios do mês.
+        if ((dto.getStatus() == LivroCaixaStatusMovimentacao.RECEBIDO
+                || dto.getStatus() == LivroCaixaStatusMovimentacao.PAGO)
+                && mov.getDataPagamento() == null) {
+            mov.setDataPagamento(dto.getDataMovimentacao() != null ? dto.getDataMovimentacao() : LocalDate.now());
+        }
         mov.setFormaPagamento(dto.getFormaPagamento());
         mov.setObservacao(dto.getObservacao());
         mov.setFornecedor(dto.getFornecedor());
