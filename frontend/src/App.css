@@ -9332,11 +9332,16 @@ select.modal__select {
 }
 
 .livro-caixa__badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
   padding: 3px 10px;
   border-radius: 999px;
   font-size: 0.6875rem;
   font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+  height: fit-content;
   background: #f1f5f9;
   color: #475569;
 }
@@ -9994,6 +9999,7 @@ select.modal__select {
 .livro-caixa__detalhe-head {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   gap: 12px;
   margin-bottom: 16px;
 }
