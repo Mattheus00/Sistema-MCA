@@ -235,37 +235,37 @@ export default function Layout() {
             )}
           </div>
         </div>
-
-        {mobileMenuOpen && (
-          <>
-            <button
-              type="button"
-              className="app-nav-backdrop"
-              onClick={fecharMenuMobile}
-              aria-label="Fechar menu"
-            />
-            <nav className="app-header__nav app-header__nav--mobile" aria-label="Menu principal mobile">
-              <div className="app-header__mobile-user">
-                <span className="app-header__user-avatar" aria-hidden="true">
-                  {iniciaisNome(userDisplay)}
-                </span>
-                <span className="app-header__user-info">
-                  <span className="app-header__user-name">{userDisplay}</span>
-                  <span className="app-header__user-role">{labelPerfilUsuario(userProfile)}</span>
-                </span>
-              </div>
-              {navItems.map((item) => (
-                <NavPill key={item.to} {...item} onNavigate={fecharMenuMobile} />
-              ))}
-              {showSair && (
-                <button type="button" className="app-header__logout app-header__logout--mobile" onClick={handleSair}>
-                  Sair
-                </button>
-              )}
-            </nav>
-          </>
-        )}
       </header>
+
+      {mobileMenuOpen && (
+        <>
+          <button
+            type="button"
+            className="app-nav-backdrop"
+            onClick={fecharMenuMobile}
+            aria-label="Fechar menu"
+          />
+          <nav className="app-header__nav app-header__nav--mobile" aria-label="Menu principal mobile">
+            <div className="app-header__mobile-user">
+              <span className="app-header__user-avatar" aria-hidden="true">
+                {iniciaisNome(userDisplay)}
+              </span>
+              <span className="app-header__user-info">
+                <span className="app-header__user-name">{userDisplay}</span>
+                <span className="app-header__user-role">{labelPerfilUsuario(userProfile)}</span>
+              </span>
+            </div>
+            {navItems.map((item) => (
+              <NavPill key={item.to} {...item} onNavigate={fecharMenuMobile} />
+            ))}
+            {showSair && (
+              <button type="button" className="app-header__logout app-header__logout--mobile" onClick={handleSair}>
+                Sair
+              </button>
+            )}
+          </nav>
+        </>
+      )}
 
       <div className="main-wrapper">
         <main className="main-content">

@@ -232,9 +232,43 @@ export function normalizeContaFromApi(raw: Record<string, unknown>): ContaLivroC
 
 export function normalizeAnaliseFromApi(raw: unknown): AnaliseLivroCaixa {
   const data = (raw ?? {}) as Record<string, unknown>;
-  const mensal = Array.isArray(data.entradasSaidasMensal) ? data.entradasSaidasMensal : [];
+  // API: entradasSaidasMensais; mock/legado: entradasSaidasMensal
+  const mensal = Array.isArray(data.entradasSaidasMensais)
+    ? data.entradasSaidasMensais
+    : Array.isArray(data.entradasSaidasMensal)
+      ? data.entradasSaidasMensal
+      : [];
   const despesas = Array.isArray(data.despesasPorCategoria) ? data.despesasPorCategoria : [];
-  const fluxo = (data.fluxoCaixa ?? {}) as Record<string, unknown>;
+
+  let fluxoCaixa = {
+    saldoInicial: 0,
+    totalEntradas: 0,
+    totalSaidas: 0,
+    saldoFinal: 0,
+  };
+  // API: fluxoCaixa é lista mensal; mock/legado: objeto resumo
+  if (Array.isArray(data.fluxoCaixa)) {
+    const itens = data.fluxoCaixa as Record<string, unknown>[];
+    if (itens.length > 0) {
+      const primeiro = itens[0];
+      const ultimo = itens[itens.length - 1];
+      fluxoCaixa = {
+        saldoInicial: num(primeiro.saldoInicial),
+        totalEntradas: itens.reduce((s, i) => s + num(i.entradas ?? i.totalEntradas), 0),
+        totalSaidas: itens.reduce((s, i) => s + num(i.saidas ?? i.totalSaidas), 0),
+        saldoFinal: num(ultimo.saldoFinal),
+      };
+    }
+  } else {
+    const fluxo = (data.fluxoCaixa ?? {}) as Record<string, unknown>;
+    fluxoCaixa = {
+      saldoInicial: num(fluxo.saldoInicial),
+      totalEntradas: num(fluxo.totalEntradas ?? fluxo.entradas),
+      totalSaidas: num(fluxo.totalSaidas ?? fluxo.saidas),
+      saldoFinal: num(fluxo.saldoFinal),
+    };
+  }
+
   return {
     entradasSaidasMensal: mensal.map((m) => {
       const item = m as Record<string, unknown>;
@@ -248,16 +282,11 @@ export function normalizeAnaliseFromApi(raw: unknown): AnaliseLivroCaixa {
       const item = d as Record<string, unknown>;
       return {
         categoriaId: str(item.categoriaId ?? item.id),
-        categoriaNome: str(item.categoriaNome ?? item.nome),
+        categoriaNome: str(item.categoriaNome ?? item.categoria ?? item.nome) || "Sem categoria",
         valor: num(item.valor),
       };
     }),
-    fluxoCaixa: {
-      saldoInicial: num(fluxo.saldoInicial),
-      totalEntradas: num(fluxo.totalEntradas),
-      totalSaidas: num(fluxo.totalSaidas),
-      saldoFinal: num(fluxo.saldoFinal),
-    },
+    fluxoCaixa,
   };
 }
 

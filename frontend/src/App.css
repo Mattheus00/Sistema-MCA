@@ -1,4 +1,4 @@
-﻿/* Layout â€“ Soft Light + Glassmorphism */
+/* Layout â€“ Soft Light + Glassmorphism */
 .app-layout {
   display: flex;
   flex-direction: column;
@@ -6285,7 +6285,7 @@ select.modal__select {
     margin-left: auto;
   }
 
-  .app-header__user-info {
+  .app-header__actions .app-header__user-info {
     display: none;
   }
 
@@ -6295,19 +6295,26 @@ select.modal__select {
     background: transparent;
   }
 
-  .app-header__logout {
+  .app-header__actions .app-header__logout {
     display: none;
   }
 
   .app-nav-backdrop {
     display: block;
     position: fixed;
-    inset: 0;
+    top: calc(56px + env(safe-area-inset-top, 0px));
+    left: 0;
+    right: 0;
+    bottom: 0;
     z-index: 130;
     border: none;
     padding: 0;
     background: rgba(15, 23, 42, 0.45);
     cursor: pointer;
+  }
+
+  .app-layout--nav-open .app-header {
+    z-index: 150;
   }
 
   .app-header__nav--mobile {
@@ -6322,6 +6329,7 @@ select.modal__select {
     bottom: 0;
     z-index: 140;
     padding: 16px;
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
     background: #fff;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
@@ -6336,6 +6344,14 @@ select.modal__select {
     border-radius: 14px;
     background: #f8fafc;
     border: 1px solid var(--glass-border);
+  }
+
+  .app-header__mobile-user .app-header__user-info {
+    display: flex;
+  }
+
+  .app-header__mobile-user .app-header__user-name {
+    max-width: none;
   }
 
   .app-header__nav--mobile .app-nav-pill {
@@ -6357,6 +6373,7 @@ select.modal__select {
   .main-content {
     padding: 16px 12px;
     min-height: 0;
+    overflow-x: hidden;
   }
 
   .dashboard {
@@ -9975,6 +9992,17 @@ select.modal__select {
     grid-template-columns: 1fr;
   }
 
+  .lc-modal-form__footer {
+    flex-wrap: wrap;
+  }
+
+  .lc-modal-form__footer .lc-modal-form__btn,
+  .lc-modal-form__footer .btn {
+    flex: 1 1 auto;
+    min-height: 44px;
+    justify-content: center;
+  }
+
   .lc-modal-form__tipo-grupo {
     grid-template-columns: 1fr;
   }
@@ -10219,8 +10247,76 @@ select.modal__select {
 }
 
 @media (max-width: 768px) {
+  .livro-caixa {
+    padding-bottom: 24px;
+  }
+
+  .livro-caixa__head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .livro-caixa__titulo {
+    font-size: 1.375rem;
+  }
+
+  .livro-caixa__subtitulo {
+    font-size: 0.875rem;
+  }
+
+  .livro-caixa__head-acoes {
+    width: 100%;
+  }
+
+  .livro-caixa__head-acoes .btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 44px;
+  }
+
   .livro-caixa__saldo-duplo {
     grid-template-columns: 1fr;
+  }
+
+  .livro-caixa__abas {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 6px;
+    padding-bottom: 10px;
+    scrollbar-width: none;
+  }
+
+  .livro-caixa__abas::-webkit-scrollbar {
+    display: none;
+  }
+
+  .livro-caixa__aba {
+    flex: 0 0 auto;
+    min-height: 40px;
+    padding: 10px 14px;
+  }
+
+  .livro-caixa__filtros-avancados {
+    grid-template-columns: 1fr;
+  }
+
+  .livro-caixa__filtros-rapidos {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .livro-caixa__filtros-rapidos::-webkit-scrollbar {
+    display: none;
+  }
+
+  .livro-caixa__chip {
+    flex: 0 0 auto;
+    min-height: 40px;
   }
 
   .livro-caixa__analise-grid {
@@ -10228,6 +10324,45 @@ select.modal__select {
   }
 
   .livro-caixa__detalhe-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .livro-caixa__relatorio-resumo {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .livro-caixa__paginacao {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .livro-caixa__paginacao div {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .livro-caixa__paginacao .btn {
+    min-height: 44px;
+    flex: 1;
+  }
+
+  .livro-caixa .admin-item-card__acoes .btn--link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--glass-border);
+    background: #fff;
+    color: var(--cor-principal);
+    text-decoration: none;
+    font-weight: 600;
+  }
+}
+
+@media (max-width: 480px) {
+  .livro-caixa__relatorio-resumo {
     grid-template-columns: 1fr;
   }
 }
@@ -12040,21 +12175,117 @@ select.modal__select {
 }
 
 @media (max-width: 768px) {
+  .tarefas__head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .tarefas__titulo {
+    font-size: 1.375rem;
+  }
+
+  .tarefas__subtitulo {
+    font-size: 0.875rem;
+  }
+
+  .tarefas__head .btn {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .tarefas__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .tarefas__toggle,
+  .tarefas__modos {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .tarefas__toggle::-webkit-scrollbar,
+  .tarefas__modos::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tarefas__toggle button,
+  .tarefas__modos button {
+    flex: 1 1 auto;
+    min-height: 40px;
+    white-space: nowrap;
+  }
+
   .tarefas__filtros {
     grid-template-columns: 1fr;
   }
 
-  .tarefas-cal__dia {
-    min-height: 72px;
-    padding: 6px;
+  .tarefas-kanban__coluna {
+    flex: 0 0 78vw;
+    min-width: 260px;
+    max-width: 320px;
+    min-height: 360px;
+    max-height: calc(100vh - 220px);
   }
 
-  .tarefas-cal__item {
-    font-size: 0.625rem;
+  .tarefas-cal__chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .tarefas-cal__chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tarefas-cal__chip {
+    flex: 0 0 auto;
+  }
+
+  .tarefas-cal__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .tarefas-cal__nav {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .tarefas-cal__nav-btn,
+  .tarefas-cal__hoje {
+    min-width: 44px;
+    min-height: 44px;
   }
 
   .tarefas-cal__nav h3 {
     min-width: 0;
     font-size: 0.9375rem;
+  }
+
+  .tarefas-cal__dia {
+    min-height: 56px;
+    padding: 4px;
+  }
+
+  .tarefas-cal__itens,
+  .tarefas-cal__mais {
+    display: none;
+  }
+
+  .tarefas-cal__num {
+    margin: 0 auto;
+  }
+
+  .dash-metric__value {
+    white-space: normal;
+    word-break: break-word;
   }
 }

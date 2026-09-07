@@ -313,10 +313,12 @@ export default function WebLivroCaixa() {
     })) ?? [];
 
   const dadosPizza =
-    analise?.despesasPorCategoria.map((d) => ({
-      name: d.categoriaNome,
-      value: d.valor,
-    })) ?? [];
+    analise?.despesasPorCategoria
+      .filter((d) => d.valor > 0)
+      .map((d) => ({
+        name: d.categoriaNome,
+        value: d.valor,
+      })) ?? [];
 
   return (
     <div className="livro-caixa">
@@ -575,17 +577,21 @@ export default function WebLivroCaixa() {
               <section className="dash-card dash-card--chart">
                 <h2 className="dash-card__title">Entradas x saídas mensal</h2>
                 <div className="livro-caixa__chart-bar">
-                  <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={dadosBarra}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="mes" tick={{ fontSize: 12, fill: "#64748b" }} />
-                      <YAxis tick={{ fontSize: 12, fill: "#64748b" }} tickFormatter={(v) => Number(v).toLocaleString("pt-BR", { notation: "compact" })} />
-                      <Tooltip formatter={(v: number) => formatarMoeda(v)} />
-                      <Legend />
-                      <Bar dataKey="Entradas" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="Saídas" fill="#f97316" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {dadosBarra.length === 0 ? (
+                    <p className="livro-caixa__vazio">Sem movimentações realizadas no período.</p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={280}>
+                      <BarChart data={dadosBarra}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <XAxis dataKey="mes" tick={{ fontSize: 12, fill: "#64748b" }} />
+                        <YAxis tick={{ fontSize: 12, fill: "#64748b" }} tickFormatter={(v) => Number(v).toLocaleString("pt-BR", { notation: "compact" })} />
+                        <Tooltip formatter={(v: number) => formatarMoeda(v)} />
+                        <Legend />
+                        <Bar dataKey="Entradas" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="Saídas" fill="#f97316" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </section>
 
@@ -655,36 +661,60 @@ export default function WebLivroCaixa() {
                 </section>
               )}
 
-              <div className="livro-caixa__tabela-wrap">
-                <table className="livro-caixa__tabela">
-                  <thead>
-                    <tr>
-                      <th>Data</th>
-                      <th>Descrição</th>
-                      <th>Categoria</th>
-                      <th>Tipo</th>
-                      <th>Valor</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {relatorio.movimentacoes.length === 0 ? (
-                      <tr><td colSpan={6} className="livro-caixa__vazio">Sem movimentações no período.</td></tr>
-                    ) : (
-                      relatorio.movimentacoes.map((m) => (
-                        <tr key={m.id}>
-                          <td>{formatarDataLivroCaixa(m.dataMovimentacao)}</td>
-                          <td>{m.descricao}</td>
-                          <td>{m.categoriaNome ?? "—"}</td>
-                          <td>{labelTipoMovimentacao(m.tipo)}</td>
-                          <td className={classeValorMovimentacao(m.tipo)}>{formatarValorMovimentacao(m.tipo, m.valor)}</td>
-                          <td>{labelStatusMovimentacao(m.status)}</td>
+              <ResponsiveList
+                desktop={
+                  <div className="livro-caixa__tabela-wrap">
+                    <table className="livro-caixa__tabela">
+                      <thead>
+                        <tr>
+                          <th>Data</th>
+                          <th>Descrição</th>
+                          <th>Categoria</th>
+                          <th>Tipo</th>
+                          <th>Valor</th>
+                          <th>Status</th>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                      </thead>
+                      <tbody>
+                        {relatorio.movimentacoes.length === 0 ? (
+                          <tr><td colSpan={6} className="livro-caixa__vazio">Sem movimentações no período.</td></tr>
+                        ) : (
+                          relatorio.movimentacoes.map((m) => (
+                            <tr key={m.id}>
+                              <td>{formatarDataLivroCaixa(m.dataMovimentacao)}</td>
+                              <td>{m.descricao}</td>
+                              <td>{m.categoriaNome ?? "—"}</td>
+                              <td>{labelTipoMovimentacao(m.tipo)}</td>
+                              <td className={classeValorMovimentacao(m.tipo)}>{formatarValorMovimentacao(m.tipo, m.valor)}</td>
+                              <td>{labelStatusMovimentacao(m.status)}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                }
+                mobile={
+                  relatorio.movimentacoes.length === 0 ? (
+                    <p className="livro-caixa__vazio">Sem movimentações no período.</p>
+                  ) : (
+                    <div className="admin-item-list">
+                      {relatorio.movimentacoes.map((m) => (
+                        <AdminItemCard
+                          key={m.id}
+                          title={m.descricao}
+                          meta={`${formatarDataLivroCaixa(m.dataMovimentacao)} · ${labelTipoMovimentacao(m.tipo)}`}
+                          value={<span className={classeValorMovimentacao(m.tipo)}>{formatarValorMovimentacao(m.tipo, m.valor)}</span>}
+                          fields={[
+                            { label: "Categoria", value: m.categoriaNome ?? "—" },
+                            { label: "Status", value: <span className={classeBadgeStatus(m.status)}>{labelStatusMovimentacao(m.status)}</span> },
+                          ]}
+                        />
+                      ))}
+                    </div>
+                  )
+                }
+              />
             </>
           ) : (
             <p className="livro-caixa__vazio">Selecione um período válido.</p>
