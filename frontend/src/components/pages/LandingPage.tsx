@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import "@/styles.css";
 
@@ -7,12 +7,6 @@ const NAV_LINKS: { href: string; label: string }[] = [
   { href: "#solucoes", label: "Soluções" },
   { href: "#como-funciona", label: "Como funciona" },
   { href: "#contato", label: "Contato" },
-];
-
-const HERO_CARDS: { title: string; subtitle?: string; metric?: string }[] = [
-  { title: "Atendimento estratégico", subtitle: "Decisões com base em dados" },
-  { title: "Rotina em dia", subtitle: "Obrigações acompanhadas de perto" },
-  { title: "Satisfação", metric: "98%", subtitle: "Clientes que recomendam" },
 ];
 
 const STATS: { value: string; label: string }[] = [
@@ -116,13 +110,28 @@ const SOLUCOES_ICONS: Record<string, ReactNode> = {
   building: <IconBuilding />,
 };
 
+function IconCheck() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path d="m5 12 4 4L19 6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function revealDelay(index: number): CSSProperties {
+  return { "--reveal-delay": `${index * 90}ms` } as CSSProperties;
+}
+
 export default function LandingPage() {
+  const landingRef = useRef<HTMLDivElement>(null);
+  const menuToggleRef = useRef<HTMLButtonElement>(null);
   const [navOpen, setNavOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     document.title = "Contabilidade São Judas Tadeu";
     const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -130,17 +139,64 @@ export default function LandingPage() {
   useEffect(() => {
     if (navOpen) document.body.classList.add("landing-nav-open");
     else document.body.classList.remove("landing-nav-open");
-    return () => document.body.classList.remove("landing-nav-open");
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && navOpen) {
+        setNavOpen(false);
+        menuToggleRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.classList.remove("landing-nav-open");
+      document.removeEventListener("keydown", onKeyDown);
+    };
   }, [navOpen]);
+
+  useEffect(() => {
+    const root = landingRef.current;
+    if (!root || !("IntersectionObserver" in window)) return;
+
+    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let observer: IntersectionObserver | undefined;
+
+    const observeSections = () => {
+      observer?.disconnect();
+      root.classList.toggle("landing-motion", !motionPreference.matches);
+      if (motionPreference.matches) return;
+
+      observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("is-visible");
+              observer?.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.12, rootMargin: "0px 0px -24px 0px" },
+      );
+      root.querySelectorAll("[data-reveal]").forEach((element) => observer?.observe(element));
+    };
+
+    observeSections();
+    motionPreference.addEventListener("change", observeSections);
+    return () => {
+      observer?.disconnect();
+      motionPreference.removeEventListener("change", observeSections);
+      root.classList.remove("landing-motion");
+    };
+  }, []);
 
   function scrollToId(id: string) {
     setNavOpen(false);
     const el = document.querySelector(id);
-    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el?.scrollIntoView({ behavior: reduceMotion ? "instant" : "smooth", block: "start" });
   }
 
   return (
-    <div className="landing">
+    <div className="landing" ref={landingRef}>
       <header className={`landing-header ${scrolled ? "landing-header--scrolled" : ""}`}>
         <div className="landing-header__inner">
           <a
@@ -156,9 +212,10 @@ export default function LandingPage() {
           </a>
 
           <button
+            ref={menuToggleRef}
             type="button"
             className="landing-nav__toggle"
-            aria-label="Abrir menu"
+            aria-label={navOpen ? "Fechar menu" : "Abrir menu"}
             aria-expanded={navOpen}
             aria-controls="landing-nav"
             onClick={() => setNavOpen((o) => !o)}
@@ -204,14 +261,16 @@ export default function LandingPage() {
         <section id="inicio" className="landing-hero">
           <div className="landing-hero__bg" aria-hidden />
           <div className="landing-container landing-hero__grid">
-            <div className="landing-hero__content landing-reveal">
-              <p className="landing-eyebrow">Escritório de contabilidade</p>
-              <h1 className="landing-hero__title">Assessoria contábil moderna para empresas que querem crescer com tranquilidade.</h1>
-              <p className="landing-hero__lead">
+            <div className="landing-hero__content">
+              <p className="landing-eyebrow" data-reveal><span className="landing-eyebrow__line" aria-hidden="true" />Escritório de contabilidade</p>
+              <h1 className="landing-hero__title" data-reveal style={revealDelay(1)}>
+                Assessoria contábil moderna para empresas que querem <span>crescer com tranquilidade.</span>
+              </h1>
+              <p className="landing-hero__lead" data-reveal style={revealDelay(2)}>
                 Organização fiscal, contábil e trabalhista para você focar no que importa. Menos improviso, mais previsibilidade
                 e suporte de quem acompanha o seu negócio de perto.
               </p>
-              <div className="landing-hero__ctas">
+              <div className="landing-hero__ctas" data-reveal style={revealDelay(3)}>
                 <button type="button" className="landing-btn landing-btn--primary landing-btn--lg" onClick={() => scrollToId("#solucoes")}>
                   Conhecer soluções
                 </button>
@@ -219,25 +278,49 @@ export default function LandingPage() {
                   Saber mais
                 </button>
               </div>
+              <div className="landing-hero__signature" data-reveal style={revealDelay(4)}>
+                <span className="landing-hero__signature-icon"><IconPeople /></span>
+                <span>Atendimento próximo.<br /><strong>Em cada etapa do seu negócio.</strong></span>
+              </div>
             </div>
-            <div className="landing-hero__aside">
-              {HERO_CARDS.map((c, i) => (
-                <div key={c.title} className="landing-hero-card landing-reveal" style={{ animationDelay: `${0.1 + i * 0.08}s` }}>
-                  {c.metric ? (
-                    <span className="landing-hero-card__metric">{c.metric}</span>
-                  ) : null}
-                  <h3 className="landing-hero-card__title">{c.title}</h3>
-                  {c.subtitle ? <p className="landing-hero-card__text">{c.subtitle}</p> : null}
+            <div className="landing-hero__aside" data-reveal style={revealDelay(2)}>
+              <div className="landing-growth">
+                <div className="landing-growth__topline">
+                  <span>Clareza para<br /><strong>crescer.</strong></span>
                 </div>
-              ))}
+                <div className="landing-growth__art" aria-hidden="true">
+                  <div className="landing-growth__orbit landing-growth__orbit--outer" />
+                  <div className="landing-growth__orbit landing-growth__orbit--inner" />
+                  <div className="landing-growth__bars">
+                    {[0, 1, 2, 3, 4].map((bar) => <span key={bar} style={{ "--bar-index": bar } as CSSProperties} />)}
+                  </div>
+                  <svg className="landing-growth__curve" viewBox="0 0 400 280" fill="none">
+                    <path className="landing-growth__curve-line" d="M25 236C88 234 108 171 175 164S271 144 341 38" pathLength="1" />
+                    <path className="landing-growth__curve-tip" d="m319 42 25-9 3 26" />
+                  </svg>
+                </div>
+              </div>
+              <div className="landing-floating landing-floating--strategy">
+                <span className="landing-floating__icon"><IconChart /></span>
+                <div><h2>Atendimento estratégico</h2><p>Decisões com base em dados</p></div>
+              </div>
+              <div className="landing-floating landing-floating--routine">
+                <span className="landing-floating__icon landing-floating__icon--check"><IconCheck /></span>
+                <div><h2>Rotina em dia</h2><p>Obrigações acompanhadas de perto</p></div>
+              </div>
+              <div className="landing-floating landing-floating--satisfaction">
+                <div className="landing-satisfaction__ring"><span>98<small>%</small></span></div>
+                <div><h2>Satisfação</h2><p>Clientes que<br />recomendam</p></div>
+              </div>
             </div>
           </div>
+          <div className="landing-container landing-hero__bottom" aria-hidden="true"><span>Confiança que acompanha o seu crescimento</span><span className="landing-scroll-cue">Explore <span>↓</span></span></div>
         </section>
 
         <section className="landing-stats" aria-label="Números">
           <div className="landing-container landing-stats__grid">
             {STATS.map((s, i) => (
-              <div key={s.label} className="landing-stat landing-reveal" style={{ animationDelay: `${i * 0.06}s` }}>
+              <div key={s.label} className="landing-stat" data-reveal style={revealDelay(i)}>
                 <span className="landing-stat__value">{s.value}</span>
                 <span className="landing-stat__label">{s.label}</span>
               </div>
@@ -245,39 +328,50 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="sobre" className="landing-section landing-section--muted">
-          <div className="landing-container">
-            <div className="landing-section__head landing-reveal">
-              <h2 className="landing-section__title">Sobre nós</h2>
-              <p className="landing-section__intro">
-                Somos parceiros de empresas que precisam de organização, suporte próximo e respostas objetivas. Nosso papel é dar
-                clareza na rotina fiscal, contábil e trabalhista, para que você tome decisões com segurança.
-              </p>
+        <section id="sobre" className="landing-section landing-about">
+          <div className="landing-container landing-about__grid">
+            <div className="landing-about__visual" data-reveal>
+              <div className="landing-about__rings" aria-hidden="true"><span /><span /><span /></div>
+              <span className="landing-about__label">Contabilidade São Judas Tadeu</span>
+              <div className="landing-about__experience"><span>+20</span><p>anos de experiência</p></div>
+              <div className="landing-about__note"><span className="landing-about__spark" aria-hidden="true">✳</span><p>Atendimento próximo<br /><strong>e humanizado.</strong></p></div>
             </div>
-            <ul className="landing-list landing-reveal">
-              {SOBRE_DESTAQUES.map((item) => (
-                <li key={item} className="landing-list__item">
-                  <span className="landing-list__check" aria-hidden>
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2">
-                      <path d="M20 6L9 17l-5-5" />
-                    </svg>
-                  </span>
-                  {item}
-                </li>
-              ))}
-            </ul>
+            <div className="landing-about__content">
+              <div className="landing-section__head" data-reveal>
+                <p className="landing-eyebrow"><span className="landing-section__index">01 /</span> Sobre nós</p>
+                <h2 className="landing-section__title">Ao lado da sua empresa.<br /><span>De verdade.</span></h2>
+                <p className="landing-section__intro">
+                  Somos parceiros de empresas que precisam de organização, suporte próximo e respostas objetivas. Nosso papel é dar
+                  clareza na rotina fiscal, contábil e trabalhista, para que você tome decisões com segurança.
+                </p>
+              </div>
+              <ul className="landing-list">
+                {SOBRE_DESTAQUES.map((item, i) => (
+                  <li key={item} className="landing-list__item" data-reveal style={revealDelay(i)}>
+                    <span className="landing-list__check" aria-hidden>
+                      <IconCheck />
+                    </span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </section>
 
-        <section id="solucoes" className="landing-section">
+        <section id="solucoes" className="landing-section landing-section--muted">
           <div className="landing-container">
-            <div className="landing-section__head landing-reveal">
-              <h2 className="landing-section__title">Soluções</h2>
-              <p className="landing-section__subtitle">O que podemos fazer pelo seu negócio</p>
+            <div className="landing-section__head landing-section__head--split" data-reveal>
+              <div>
+                <p className="landing-eyebrow"><span className="landing-section__index">02 /</span> Soluções</p>
+                <h2 className="landing-section__title">O que podemos fazer<br /><span>pelo seu negócio.</span></h2>
+              </div>
+              <p className="landing-section__subtitle">Rotina contábil, fiscal e trabalhista integrada para você focar no que importa.</p>
             </div>
             <div className="landing-cards">
-              {SOLUCOES.map((s) => (
-                <article key={s.titulo} className="landing-card landing-reveal">
+              {SOLUCOES.map((s, i) => (
+                <article key={s.titulo} className="landing-card" data-reveal style={revealDelay(i)}>
+                  <span className="landing-card__number" aria-hidden="true">0{i + 1}</span>
                   <div className="landing-card__icon">{SOLUCOES_ICONS[s.icon]}</div>
                   <h3 className="landing-card__title">{s.titulo}</h3>
                   <p className="landing-card__text">{s.desc}</p>
@@ -287,16 +381,17 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="como-funciona" className="landing-section landing-section--muted">
+        <section id="como-funciona" className="landing-section landing-process">
           <div className="landing-container">
-            <div className="landing-section__head landing-reveal">
-              <h2 className="landing-section__title">Como funciona</h2>
+            <div className="landing-section__head landing-section__head--center" data-reveal>
+              <p className="landing-eyebrow"><span className="landing-section__index">03 /</span> Como funciona</p>
+              <h2 className="landing-section__title">Um caminho simples.<br /><span>Um acompanhamento próximo.</span></h2>
               <p className="landing-section__subtitle">Três etapas para alinhar expectativas e entregar resultados</p>
             </div>
             <ol className="landing-steps">
               {COMO_FUNCIONA.map((step, i) => (
-                <li key={step.passo} className="landing-step landing-reveal" style={{ animationDelay: `${i * 0.07}s` }}>
-                  <span className="landing-step__num">{step.passo}</span>
+                <li key={step.passo} className="landing-step" data-reveal style={revealDelay(i)}>
+                  <span className="landing-step__num">0{step.passo}</span>
                   <div>
                     <h3 className="landing-step__title">{step.titulo}</h3>
                     <p className="landing-step__text">{step.texto}</p>
@@ -308,21 +403,27 @@ export default function LandingPage() {
         </section>
 
         <section id="contato" className="landing-cta">
-          <div className="landing-container landing-cta__inner landing-reveal">
-            <h2 className="landing-cta__title">Pronto para organizar a sua contabilidade?</h2>
-            <p className="landing-cta__text">Fale com o escritório e receba uma proposta alinhada à realidade da sua empresa.</p>
-            <div className="landing-cta__btns">
-              <a
-                className="landing-btn landing-btn--light landing-btn--lg"
-                href={URL_WHATSAPP_ESCRITORIO}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Falar com o escritório
-              </a>
-              <button type="button" className="landing-btn landing-btn--outline landing-btn--lg landing-btn--on-dark" onClick={() => scrollToId("#inicio")}>
-                Voltar ao topo
-              </button>
+          <div className="landing-container">
+            <div className="landing-cta__panel" data-reveal>
+              <div className="landing-cta__rings" aria-hidden="true"><span /><span /><span /></div>
+              <div className="landing-cta__inner">
+                <p className="landing-eyebrow">Vamos conversar</p>
+                <h2 className="landing-cta__title">Pronto para organizar a sua contabilidade?</h2>
+                <p className="landing-cta__text">Fale com o escritório e receba uma proposta alinhada à realidade da sua empresa.</p>
+                <div className="landing-cta__btns">
+                  <a
+                    className="landing-btn landing-btn--light landing-btn--lg"
+                    href={URL_WHATSAPP_ESCRITORIO}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Falar com o escritório
+                  </a>
+                  <button type="button" className="landing-btn landing-btn--outline landing-btn--lg landing-btn--on-dark" onClick={() => scrollToId("#inicio")}>
+                    Voltar ao topo
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -330,16 +431,17 @@ export default function LandingPage() {
 
       <footer className="landing-footer">
         <div className="landing-container landing-footer__inner">
+          <div className="landing-logo landing-footer__brand"><span className="landing-logo__main">CONTABILIDADE</span><span className="landing-logo__sub">São Judas Tadeu</span></div>
+          <div className="landing-footer__links">
+            <Link to="/portal/login" className="landing-footer__link">Área do Cliente</Link>
+            <Link to="/login" className="landing-footer__link">Acesso do funcionário</Link>
+          </div>
+        </div>
+        <div className="landing-container landing-footer__legal">
           <p>
             MCA-Serviços Contábeis Ltda - CNPJ 07.797.964/0001-51 | MCA-Serviços Contábeis Ltda •{" "}
             {new Date().getFullYear()} Todos os Direitos Reservados.
           </p>
-          <Link to="/portal/login" className="landing-footer__link">
-            Área do Cliente
-          </Link>
-          <Link to="/login" className="landing-footer__link">
-            Acesso do funcionário
-          </Link>
         </div>
       </footer>
     </div>
