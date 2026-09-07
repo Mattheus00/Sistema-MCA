@@ -1,8 +1,9 @@
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, getApiErrorMessage, isMockEnabled, isRememberMePreferred, setAuthSession } from "@/lib/api";
 import type { LoginResponse, PerfilUsuario } from "@/types/api";
 import type { AxiosError } from "axios";
+import "@/styles/login.css";
 
 const MSG_RECUPERACAO_CONTATO =
   "Para redefinir sua senha, entre em contato com a proprietária do escritório.";
@@ -39,6 +40,32 @@ function LogoIcon({ color = "var(--cor-principal)" }: { color?: string }) {
       <circle cx="20" cy="12" r="4" fill={color} />
       <circle cx="28" cy="12" r="4" fill={color} />
       <circle cx="28" cy="4" r="4" fill={color} />
+    </svg>
+  );
+}
+
+function LoginArtwork() {
+  return (
+    <svg className="page-login__art" viewBox="0 0 600 600" fill="none" aria-hidden="true" focusable="false">
+      <g className="page-login__art-rings">
+        {[90, 135, 180, 225, 270, 315].map((radius) => (
+          <circle key={radius} cx="365" cy="340" r={radius} />
+        ))}
+      </g>
+      <g className="page-login__art-dots">
+        <circle cx="118" cy="537" r="7" />
+        <circle cx="153" cy="519" r="10" />
+        <circle cx="195" cy="505" r="13" />
+        <circle cx="240" cy="484" r="17" />
+        <circle cx="289" cy="455" r="22" />
+        <circle cx="335" cy="410" r="30" />
+        <circle cx="366" cy="345" r="22" />
+        <circle cx="375" cy="286" r="17" />
+        <circle cx="382" cy="234" r="13" />
+        <circle cx="389" cy="189" r="10" />
+        <circle cx="397" cy="147" r="8" />
+        <circle cx="405" cy="104" r="7" />
+      </g>
     </svg>
   );
 }
@@ -141,14 +168,17 @@ function CampoSenha({
   visivel,
   onToggleVisivel,
 }: CampoSenhaProps) {
+  const inputId = useId();
+
   return (
     <div className="page-login__field">
-      <label className="page-login__label">{label}</label>
+      <label className="page-login__label" htmlFor={inputId}>{label}</label>
       <div className="page-login__input-wrap page-login__input-wrap--senha">
       <span className="page-login__input-icon" aria-hidden="true">
         <LockIcon />
       </span>
       <input
+        id={inputId}
         type={visivel ? "text" : "password"}
         autoComplete={autoComplete}
         placeholder={placeholder}
@@ -414,8 +444,8 @@ export default function Login() {
 
   return (
     <div className="page-login">
-      <aside className="page-login__hero" aria-hidden="true">
-        <div className="page-login__hero-overlay" />
+      <aside className="page-login__hero">
+        <LoginArtwork />
         <div className="page-login__hero-inner">
           <div className="page-login__hero-brand">
             <LogoIcon color="#fff" />
@@ -426,7 +456,7 @@ export default function Login() {
           </div>
 
           <div className="page-login__hero-content">
-            <h2 className="page-login__hero-title">Gestão inteligente. Resultados reais.</h2>
+            <h2 className="page-login__hero-title">Gestão inteligente.<span>Resultados reais.</span></h2>
             <p className="page-login__hero-text">
               Gerencie inadimplentes, envie boletos e acompanhe seus recebimentos de forma simples e eficiente.
             </p>
@@ -437,21 +467,21 @@ export default function Login() {
               <span className="page-login__feature-icon"><ChartFeatureIcon /></span>
               <div>
                 <strong>Acompanhamento completo</strong>
-                <p>Tenha visão total da sua carteira e dos recebimentos.</p>
+                <p>Visão clara da sua carteira e dos recebimentos.</p>
               </div>
             </li>
             <li>
               <span className="page-login__feature-icon"><MailFeatureIcon /></span>
               <div>
                 <strong>Envio de boletos por e-mail</strong>
-                <p>Mais agilidade e praticidade para você e seus clientes.</p>
+                <p>Mais agilidade na rotina e no atendimento.</p>
               </div>
             </li>
             <li>
               <span className="page-login__feature-icon"><ShieldFeatureIcon /></span>
               <div>
                 <strong>Segurança e confiabilidade</strong>
-                <p>Seus dados protegidos com as melhores práticas do mercado.</p>
+                <p>Cuidado com seus dados em cada acesso.</p>
               </div>
             </li>
           </ul>
@@ -459,7 +489,7 @@ export default function Login() {
       </aside>
 
       <main className="page-login__main">
-        <div className="page-login__card">
+        <div className="page-login__form-panel">
           <header className="page-login__card-brand">
             <LogoIcon />
             <div>
@@ -467,6 +497,8 @@ export default function Login() {
               <span>Sistema de Gerenciamento de Inadimplentes</span>
             </div>
           </header>
+
+          <p className="page-login__eyebrow">Área do funcionário</p>
 
           {mostrandoLogin ? (
             <>
@@ -480,8 +512,8 @@ export default function Login() {
             </>
           )}
 
-          {erro && <p className="page-login__erro">{erro}</p>}
-          {mensagemSucesso && <p className="page-login__sucesso">{mensagemSucesso}</p>}
+          {erro && <p className="page-login__erro" role="alert">{erro}</p>}
+          {mensagemSucesso && <p className="page-login__sucesso" role="status">{mensagemSucesso}</p>}
 
           {mostrandoLogin ? (
             <form onSubmit={handleSubmit} className="page-login__form">
@@ -539,7 +571,7 @@ export default function Login() {
               </div>
 
               <button type="submit" className="page-login__btn" disabled={loading}>
-                {loading ? "Entrando…" : "Entrar →"}
+                {loading ? "Entrando…" : <>Entrar <span className="page-login__btn-arrow" aria-hidden="true">→</span></>}
               </button>
             </form>
           ) : (
@@ -597,7 +629,7 @@ export default function Login() {
               />
 
               <button type="submit" className="page-login__btn" disabled={loading}>
-                {loading ? "Cadastrando…" : "Cadastrar →"}
+                {loading ? "Cadastrando…" : <>Cadastrar <span className="page-login__btn-arrow" aria-hidden="true">→</span></>}
               </button>
             </form>
           )}
