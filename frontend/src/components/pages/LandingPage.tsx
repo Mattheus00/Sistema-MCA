@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import "@/styles.css";
 
 const NAV_LINKS: { href: string; label: string }[] = [
-  { href: "#sobre", label: "Sobre nós" },
+  { href: "#sobre", label: "Quem somos" },
   { href: "#solucoes", label: "Soluções" },
   { href: "#como-funciona", label: "Como funciona" },
   { href: "#contato", label: "Contato" },
@@ -15,11 +15,13 @@ const STATS: { value: string; label: string }[] = [
   { value: "+130", label: "empresas ativas" },
 ];
 
-const SOBRE_DESTAQUES: string[] = [
-  "Atendimento próximo e humanizado",
-  "Suporte para pequenas e médias empresas",
-  "Rotina contábil, fiscal e trabalhista integrada",
-  "Comunicação simples para decisões rápidas",
+const QUEM_ATENDEMOS: string[] = [
+  "Pequenos, médios e grandes empresários",
+  "Profissionais autônomos",
+  "Produtores rurais",
+  "Associações e cooperativas",
+  "Segmentos de serviços públicos",
+  "Pessoas físicas",
 ];
 
 const SOLUCOES: { titulo: string; desc: string; icon: string }[] = [
@@ -328,33 +330,65 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="sobre" className="landing-section landing-about">
-          <div className="landing-container landing-about__grid">
-            <div className="landing-about__visual" data-reveal>
-              <div className="landing-about__rings" aria-hidden="true"><span /><span /><span /></div>
-              <span className="landing-about__label">Contabilidade São Judas Tadeu</span>
-              <div className="landing-about__experience"><span>+20</span><p>anos de experiência</p></div>
-              <div className="landing-about__note"><span className="landing-about__spark" aria-hidden="true">✳</span><p>Atendimento próximo<br /><strong>e humanizado.</strong></p></div>
-            </div>
-            <div className="landing-about__content">
-              <div className="landing-section__head" data-reveal>
-                <p className="landing-eyebrow"><span className="landing-section__index">01 /</span> Sobre nós</p>
-                <h2 className="landing-section__title">Ao lado da sua empresa.<br /><span>De verdade.</span></h2>
-                <p className="landing-section__intro">
-                  Somos parceiros de empresas que precisam de organização, suporte próximo e respostas objetivas. Nosso papel é dar
-                  clareza na rotina fiscal, contábil e trabalhista, para que você tome decisões com segurança.
+        <section id="sobre" className="landing-section landing-about" aria-labelledby="quem-somos-titulo">
+          <div className="landing-container">
+            <div className="landing-about__grid">
+              <div className="landing-about__visual" data-reveal>
+                <div className="landing-about__rings" aria-hidden="true"><span /><span /><span /></div>
+                <span className="landing-about__label">Contabilidade São Judas Tadeu</span>
+                <div className="landing-about__experience">
+                  <span>+20</span>
+                  <p>anos sob a liderança<br />de Cláudia Pereira e Silva</p>
+                </div>
+                <div className="landing-about__note">
+                  <span className="landing-about__spark" aria-hidden="true">✳</span>
+                  <p>Uma história construída em<br /><strong>Conceição do Mato Dentro.</strong></p>
+                </div>
+              </div>
+              <div className="landing-about__content">
+                <div className="landing-section__head" data-reveal>
+                  <p className="landing-eyebrow"><span className="landing-section__index">01 /</span> Nossa história</p>
+                  <h2 id="quem-somos-titulo" className="landing-section__title">Quem somos</h2>
+                  <p className="landing-about__lead">Dedicação à contabilidade.<br /><span>Compromisso com as pessoas.</span></p>
+                </div>
+                <div className="landing-about__story">
+                  <p data-reveal>
+                    A Contabilidade São Judas Tadeu nasceu como um pequeno escritório de Lúcio dos Santos, com a missão de
+                    oferecer suporte financeiro e contábil a pequenos empresários e profissionais autônomos de Conceição do Mato Dentro.
+                  </p>
+                  <p data-reveal>
+                    Em 2003, Cláudia Pereira e Silva enxergou o potencial do escritório e iniciou as negociações para sua
+                    aquisição. Itabirana e vinda de uma família ligada à contabilidade, Cláudia acumula quase 30 anos de
+                    atuação na área e está à frente do escritório há mais de duas décadas.
+                  </p>
+                  <p data-reveal>
+                    Com dedicação e uma visão voltada à solução de problemas, o escritório ampliou sua estrutura e sua
+                    atuação na cidade e na região. Hoje, conta com 10 colaboradores que compartilham o compromisso de
+                    facilitar a vida financeira dos clientes, com organização, ética e seriedade.
+                  </p>
+                </div>
+                <p className="landing-about__commitment" data-reveal>
+                  O aprendizado contínuo e a busca por melhorias fazem parte dessa trajetória, acompanhando a evolução
+                  da contabilidade para ajudar empresas e profissionais a alcançarem seus objetivos.
                 </p>
               </div>
-              <ul className="landing-list">
-                {SOBRE_DESTAQUES.map((item, i) => (
-                  <li key={item} className="landing-list__item" data-reveal style={revealDelay(i)}>
-                    <span className="landing-list__check" aria-hidden>
-                      <IconCheck />
-                    </span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
+            </div>
+            <div className="landing-about__audience" data-reveal>
+              <div className="landing-about__audience-heading">
+                <p className="landing-eyebrow">Quem atendemos</p>
+                <h3>Ao lado de quem faz<br /><span>a nossa região crescer.</span></h3>
+              </div>
+              <div className="landing-about__audience-content">
+                <ul className="landing-about__audience-list" aria-label="Públicos atendidos">
+                  {QUEM_ATENDEMOS.map((item) => (
+                    <li key={item}><IconCheck />{item}</li>
+                  ))}
+                </ul>
+                <p>
+                  Também atuamos como certificadora digital e auxiliamos a população na declaração do Imposto de Renda
+                  e na emissão de guias de contribuição previdenciária, impostos e tributos.
+                </p>
+              </div>
             </div>
           </div>
         </section>
