@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { listarClientes } from "@/lib/clientesApi";
 import { formatarReaisParaInput, parseValorReais } from "@/lib/valorBrasil";
 import { STATUS_CLIENTE, STATUS_MOVIMENTACAO, TIPO_MOVIMENTACAO } from "@/lib/constants/status";
@@ -273,13 +274,7 @@ export default function LivroCaixaFormModal({
     }
   }, [aberto, modo, movimentacao]);
 
-  useEffect(() => {
-    if (!aberto) return;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [aberto]);
+  useBodyScrollLock(aberto);
 
   useEffect(() => {
     if (!aberto || !isCategoriaHonorariosContabeis(form.categoriaId, categorias)) {

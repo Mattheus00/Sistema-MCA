@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import {
   atualizarCategoria,
   atualizarConta,
@@ -36,17 +37,15 @@ export default function LivroCaixaCadastrosModal({
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
+  useBodyScrollLock(aberto);
+
   useEffect(() => {
     if (!aberto) return;
-    document.body.style.overflow = "hidden";
     setErro(null);
     setEditCatId(null);
     setEditContaId(null);
     setNomeCat("");
     setNomeConta("");
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [aberto]);
 
   if (!aberto) return null;

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import {
   baixarAnexoMovimentacao,
   cancelarMovimentacao,
@@ -48,17 +49,15 @@ export default function LivroCaixaDetalheModal({
   const [contaId, setContaId] = useState("");
   const inputAnexo = useRef<HTMLInputElement>(null);
 
+  useBodyScrollLock(!!movimentacao);
+
   useEffect(() => {
     if (!movimentacao) return;
-    document.body.style.overflow = "hidden";
     setErro(null);
     setMostrarReceberPagar(false);
     setDataPagamento(hojeIso());
     setFormaPagamento(movimentacao.formaPagamento ?? "");
     setContaId(movimentacao.contaId ?? "");
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [movimentacao]);
 
   if (!movimentacao) return null;
