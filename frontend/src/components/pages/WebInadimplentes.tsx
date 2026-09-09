@@ -6,8 +6,8 @@ import { listarInadimplentes, obterConfigJuros, salvarConfigJuros } from "@/lib/
 import { invalidateDashboard } from "@/lib/dashboardRefresh";
 import { diasEmAtraso, isInadimplenciaEmAberto } from "@/lib/inadimplentesUtils";
 import type { Inadimplencia } from "@/types/api";
-import AdminItemCard from "@/components/AdminItemCard";
-import ResponsiveList from "@/components/ResponsiveList";
+import AdminItemCard from "@/components/ui/AdminItemCard";
+import ResponsiveList from "@/components/ui/ResponsiveList";
 
 export default function WebInadimplentes() {
   const navigate = useNavigate();

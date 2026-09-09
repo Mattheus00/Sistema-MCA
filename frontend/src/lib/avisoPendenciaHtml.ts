@@ -1,10 +1,6 @@
 import type { Inadimplencia } from "@/types/api";
-import {
-  formatarData,
-  formatarMesAno,
-  formatarMoeda,
-  saldoDevedorItem,
-} from "@/lib/inadimplentesUtils";
+import { saldoDevedorItem } from "@/lib/inadimplentesUtils";
+import { formatarData, formatarMesAno, formatarMoeda } from "@/lib/valorBrasil";
 import { buildPixQrCodeImageUrl, getPixCobrancaInfo } from "@/lib/mailtoCobranca";
 
 export const EMPRESA_COBRANCA = {

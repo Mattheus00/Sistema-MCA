@@ -1,7 +1,14 @@
 import type { ModoVisualizacaoTarefas, PrioridadeTarefa, StatusTarefa } from "@/types/tarefas";
 import { iniciaisNome } from "@/lib/dashboardUtils";
+import { formatarData } from "@/lib/valorBrasil";
+import { STATUS_TAREFA } from "@/lib/constants/status";
 
-export const STATUS_KANBAN: StatusTarefa[] = ["A_FAZER", "EM_ANDAMENTO", "EM_REVISAO", "CONCLUIDO"];
+export const STATUS_KANBAN: StatusTarefa[] = [
+  STATUS_TAREFA.A_FAZER,
+  STATUS_TAREFA.EM_ANDAMENTO,
+  STATUS_TAREFA.EM_REVISAO,
+  STATUS_TAREFA.CONCLUIDO,
+];
 
 export const MODO_TAREFAS_STORAGE_KEY = "sgi_tarefas_modo_visualizacao";
 
@@ -79,10 +86,7 @@ export function corPrioridadeCalendario(prioridade: PrioridadeTarefa): string {
 }
 
 export function formatarDataTarefa(iso?: string | null): string {
-  if (!iso) return "—";
-  const [y, m, d] = iso.split("T")[0].split("-");
-  if (!y || !m || !d) return iso;
-  return `${d}/${m}/${y}`;
+  return formatarData(iso);
 }
 
 export function truncarTexto(texto: string | undefined, max = 90): string {

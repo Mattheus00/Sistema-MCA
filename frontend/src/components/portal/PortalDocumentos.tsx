@@ -7,11 +7,11 @@ import {
   uploadDocumento,
 } from "@/lib/portalApi";
 import {
-  formatarDataPortal,
   labelStatusDocumento,
   labelTipoDocumento,
   classeBadgeStatusDocumentoPortal,
 } from "@/lib/portalUtils";
+import { formatarData } from "@/lib/valorBrasil";
 import type { PortalDivida, PortalDocumento, TipoDocumentoCliente } from "@/types/api";
 
 const TIPOS: { value: TipoDocumentoCliente; label: string }[] = [
@@ -222,7 +222,7 @@ export default function PortalDocumentos() {
                       </span>
                     </div>
                     <p className="portal-item-card__meta-linha">
-                      Enviado em {formatarDataPortal(doc.criadoEm)}
+                      Enviado em {formatarData(doc.criadoEm)}
                     </p>
                     {doc.observacao?.trim() ? (
                       <p className="portal-doc-observacao">
@@ -234,7 +234,7 @@ export default function PortalDocumentos() {
                         <p className="portal-doc-resposta__titulo">Resposta do escritório</p>
                         <p className="portal-doc-resposta__texto">{doc.respostaEscritorio}</p>
                         <p className="portal-doc-resposta__meta">
-                          {formatarDataPortal(doc.respondidoEm)}
+                          {formatarData(doc.respondidoEm)}
                           {doc.respondidoPorNome ? ` · ${doc.respondidoPorNome}` : ""}
                         </p>
                       </div>
@@ -275,7 +275,7 @@ export default function PortalDocumentos() {
                             {labelStatusDocumento(doc.status)}
                           </span>
                         </td>
-                        <td>{formatarDataPortal(doc.criadoEm)}</td>
+                        <td>{formatarData(doc.criadoEm)}</td>
                         <td className="portal-doc-observacao-celula">
                           {doc.observacao?.trim() || "—"}
                         </td>
@@ -286,7 +286,7 @@ export default function PortalDocumentos() {
                                 {doc.respostaEscritorio}
                               </p>
                               <p className="portal-doc-resposta-celula__meta">
-                                {formatarDataPortal(doc.respondidoEm)}
+                                {formatarData(doc.respondidoEm)}
                                 {doc.respondidoPorNome ? ` · ${doc.respondidoPorNome}` : ""}
                               </p>
                             </>

@@ -5,7 +5,8 @@ import type {
   StatusMovimentacao,
   TipoMovimentacao,
 } from "@/types/livroCaixa";
-import { formatarMoeda } from "@/lib/inadimplentesUtils";
+import { formatarData, formatarValorMovimentacao } from "@/lib/valorBrasil";
+import { STATUS_MOVIMENTACAO, TIPO_MOVIMENTACAO } from "@/lib/constants/status";
 
 /** Nome canônico da categoria que exige vínculo com cliente (identificação por nome, não por UUID). */
 export const NOME_CATEGORIA_HONORARIOS_CONTABEIS = "Honorários contábeis";
@@ -51,9 +52,7 @@ export function hojeIso(): string {
 }
 
 export function formatarDataLivroCaixa(iso?: string | null): string {
-  if (!iso) return "—";
-  const [y, m, d] = iso.split("T")[0].split("-");
-  return `${d}/${m}/${y}`;
+  return formatarData(iso);
 }
 
 export function formatarMesLabel(mes: string): string {
@@ -156,19 +155,18 @@ export function classeValorMovimentacao(tipo: TipoMovimentacao): string {
   return tipo === "ENTRADA" ? "livro-caixa__valor--entrada" : "livro-caixa__valor--saida";
 }
 
-export function formatarValorMovimentacao(tipo: TipoMovimentacao, valor: number): string {
-  const prefixo = tipo === "ENTRADA" ? "+" : "−";
-  return `${prefixo} ${formatarMoeda(Math.abs(valor))}`;
-}
+export { formatarValorMovimentacao };
 
 export function statusPermitidosPorTipo(tipo: TipoMovimentacao): StatusMovimentacao[] {
-  return tipo === "ENTRADA"
-    ? ["PREVISTO", "RECEBIDO", "CANCELADO"]
-    : ["PREVISTO", "PAGO", "CANCELADO"];
+  return tipo === TIPO_MOVIMENTACAO.ENTRADA
+    ? [STATUS_MOVIMENTACAO.PREVISTO, STATUS_MOVIMENTACAO.RECEBIDO, STATUS_MOVIMENTACAO.CANCELADO]
+    : [STATUS_MOVIMENTACAO.PREVISTO, STATUS_MOVIMENTACAO.PAGO, STATUS_MOVIMENTACAO.CANCELADO];
 }
 
 export function statusEfetivado(tipo: TipoMovimentacao): StatusMovimentacao {
-  return tipo === "ENTRADA" ? "RECEBIDO" : "PAGO";
+  return tipo === TIPO_MOVIMENTACAO.ENTRADA
+    ? STATUS_MOVIMENTACAO.RECEBIDO
+    : STATUS_MOVIMENTACAO.PAGO;
 }
 
 export function calcularPeriodoRapido(periodo: PeriodoRapido): {
@@ -217,8 +215,10 @@ export function paramsFiltroRapido(filtro: FiltroRapidoMovimentacao): {
   tipo?: TipoMovimentacao;
   status?: StatusMovimentacao;
 } {
-  if (filtro === "A_PAGAR") return { tipo: "SAIDA", status: "PREVISTO" };
-  if (filtro === "A_RECEBER") return { tipo: "ENTRADA", status: "PREVISTO" };
+  if (filtro === "A_PAGAR")
+    return { tipo: TIPO_MOVIMENTACAO.SAIDA, status: STATUS_MOVIMENTACAO.PREVISTO };
+  if (filtro === "A_RECEBER")
+    return { tipo: TIPO_MOVIMENTACAO.ENTRADA, status: STATUS_MOVIMENTACAO.PREVISTO };
   return {};
 }
 

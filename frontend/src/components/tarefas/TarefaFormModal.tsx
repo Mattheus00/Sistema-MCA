@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { getAuthUserDisplay } from "@/lib/api";
 import { listarClientes } from "@/lib/clientesApi";
+import { STATUS_CLIENTE, STATUS_TAREFA } from "@/lib/constants/status";
 import { labelPrioridadeTarefa, labelStatusTarefa, STATUS_KANBAN } from "@/lib/tarefasUtils";
 import type { Cliente } from "@/types/api";
 import type {
@@ -67,7 +68,7 @@ function formFromTarefa(t: TarefaDetalhe): FormState {
     titulo: t.titulo,
     descricao: t.descricao ?? "",
     responsavelId: t.responsavelId ?? "",
-    status: t.status === "BACKLOG" ? "A_FAZER" : t.status,
+    status: t.status === STATUS_TAREFA.BACKLOG ? STATUS_TAREFA.A_FAZER : t.status,
     prioridade: t.prioridade,
     clienteId: clienteNome ? `__atual__:${clienteNome}` : "",
     clienteBusca: clienteNome,
@@ -193,7 +194,7 @@ export default function TarefaFormModal({
         await listarClientes({
           page: 0,
           size: 50,
-          statusCliente: "ATIVO",
+          statusCliente: STATUS_CLIENTE.ATIVO,
           termo: termo.trim() || undefined,
         }),
       );

@@ -9,11 +9,10 @@ import {
 import { getPortalClientName } from "@/lib/portalSession";
 import {
   diasAtrasoPortal,
-  formatarDataPortal,
-  formatarMoedaPortal,
   labelStatusDividaPortal,
   statusDividaPortalClass,
 } from "@/lib/portalUtils";
+import { formatarData, formatarMoeda } from "@/lib/valorBrasil";
 import type { PortalDivida } from "@/types/api";
 
 const NAV_ITENS = [
@@ -185,11 +184,11 @@ export default function PortalLayout() {
                                 {divida.descricao ?? "Dívida em aberto"}
                               </p>
                               <p className="portal-topbar__notif-item-valor">
-                                {formatarMoedaPortal(divida.valorDevedor)}
+                                {formatarMoeda(divida.valorDevedor)}
                               </p>
                             </div>
                             <div className="portal-topbar__notif-item-meta">
-                              <span>Vence em {formatarDataPortal(divida.vencimento)}</span>
+                              <span>Vence em {formatarData(divida.vencimento)}</span>
                               <span
                                 className={statusDividaPortalClass(
                                   divida.status,

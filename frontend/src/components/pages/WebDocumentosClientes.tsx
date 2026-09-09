@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { getApiErrorMessage } from "@/lib/api";
 import { listarClientes } from "@/lib/clientesApi";
+import { STATUS_CLIENTE, STATUS_DOCUMENTO } from "@/lib/constants/status";
 import {
   abrirArquivoDocumento,
   atualizarStatusDocumento,
@@ -27,8 +28,8 @@ import type {
   StatusDocumentoCliente,
   TipoDocumentoCliente,
 } from "@/types/api";
-import AdminItemCard from "@/components/AdminItemCard";
-import ResponsiveList from "@/components/ResponsiveList";
+import AdminItemCard from "@/components/ui/AdminItemCard";
+import ResponsiveList from "@/components/ui/ResponsiveList";
 
 const TIPOS: TipoDocumentoCliente[] = [
   "COMPROVANTE",
@@ -42,10 +43,10 @@ const STATUS_CARDS: Array<{
   label: string;
   chave: keyof ResumoDocumentosClientes;
 }> = [
-  { status: "ENVIADO", label: "Novos", chave: "pendentes" },
-  { status: "RECEBIDO", label: "Recebidos", chave: "recebidos" },
-  { status: "EM_ANALISE", label: "Em análise", chave: "emAnalise" },
-  { status: "ARQUIVADO", label: "Arquivados", chave: "arquivados" },
+  { status: STATUS_DOCUMENTO.ENVIADO, label: "Novos", chave: "pendentes" },
+  { status: STATUS_DOCUMENTO.RECEBIDO, label: "Recebidos", chave: "recebidos" },
+  { status: STATUS_DOCUMENTO.EM_ANALISE, label: "Em análise", chave: "emAnalise" },
+  { status: STATUS_DOCUMENTO.ARQUIVADO, label: "Arquivados", chave: "arquivados" },
 ];
 
 export default function WebDocumentosClientes() {
@@ -65,7 +66,9 @@ export default function WebDocumentosClientes() {
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
   const [detalhe, setDetalhe] = useState<DocumentoCliente | null>(null);
   const [respostaTexto, setRespostaTexto] = useState("");
-  const [statusDetalhe, setStatusDetalhe] = useState<StatusDocumentoCliente>("RECEBIDO");
+  const [statusDetalhe, setStatusDetalhe] = useState<StatusDocumentoCliente>(
+    STATUS_DOCUMENTO.RECEBIDO,
+  );
   const [carregandoDetalhe, setCarregandoDetalhe] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [feedbackModal, setFeedbackModal] = useState<{
@@ -139,7 +142,7 @@ export default function WebDocumentosClientes() {
             termo: clienteBusca.trim(),
             page: 0,
             size: 20,
-            statusCliente: "ATIVO",
+            statusCliente: STATUS_CLIENTE.ATIVO,
           });
           setClientesSugestoes(list);
         } catch {
@@ -717,9 +720,9 @@ export default function WebDocumentosClientes() {
                         setFeedbackModal(null);
                       }}
                     >
-                      <option value="RECEBIDO">Recebido</option>
-                      <option value="EM_ANALISE">Em análise</option>
-                      <option value="ARQUIVADO">Arquivado</option>
+                      <option value={STATUS_DOCUMENTO.RECEBIDO}>Recebido</option>
+                      <option value={STATUS_DOCUMENTO.EM_ANALISE}>Em análise</option>
+                      <option value={STATUS_DOCUMENTO.ARQUIVADO}>Arquivado</option>
                     </select>
                   </div>
 

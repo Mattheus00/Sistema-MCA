@@ -1,5 +1,5 @@
-import AdminItemCard from "@/components/AdminItemCard";
-import ResponsiveList from "@/components/ResponsiveList";
+import AdminItemCard from "@/components/ui/AdminItemCard";
+import ResponsiveList from "@/components/ui/ResponsiveList";
 import {
   classePrioridadeTarefa,
   classeStatusTarefa,

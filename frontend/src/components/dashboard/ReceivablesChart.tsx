@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { DonutChart } from "@/components/DonutChart";
+import { DonutChart } from "@/components/ui/DonutChart";
 import type { PeriodoChart } from "@/hooks/useDashboardData";
 
 const OPCOES: { valor: PeriodoChart; rotulo: string }[] = [

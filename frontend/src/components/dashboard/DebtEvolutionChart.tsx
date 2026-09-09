@@ -8,7 +8,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { formatarMoedaDashboard } from "@/lib/dashboardUtils";
+import { formatarMoeda } from "@/lib/valorBrasil";
 import type { PontoEvolucao } from "@/types/dashboard";
 import type { PeriodoEvolucao } from "@/hooks/useDashboardData";
 
@@ -90,7 +90,7 @@ export function DebtEvolutionChart({
                 }
               />
               <Tooltip
-                formatter={(value: number) => [formatarMoedaDashboard(value), "Total acumulado"]}
+                formatter={(value: number) => [formatarMoeda(value), "Total acumulado"]}
                 labelFormatter={(label) => `Até ${label}`}
               />
               <Area

@@ -6,6 +6,7 @@ import {
   valorCentavosParaReais,
 } from "@/lib/sicoobApi";
 import { formatarData, formatarMoeda } from "@/lib/inadimplentesUtils";
+import { STATUS_COBRANCA_SICOOB, statusEh } from "@/lib/constants/status";
 import type { CobrancaSicoob, SicoobStatus } from "@/types/api";
 
 type Props = {
@@ -27,11 +28,10 @@ async function copiarTexto(texto: string): Promise<boolean> {
 }
 
 function statusLabel(status: string): string {
-  const s = status.toUpperCase();
-  if (s === "PENDENTE") return "Pendente";
-  if (s === "PAGO") return "Pago";
-  if (s === "ERRO") return "Erro";
-  if (s === "ESGOTADO") return "Esgotado";
+  if (statusEh(status, STATUS_COBRANCA_SICOOB.PENDENTE)) return "Pendente";
+  if (statusEh(status, STATUS_COBRANCA_SICOOB.PAGO)) return "Pago";
+  if (statusEh(status, STATUS_COBRANCA_SICOOB.ERRO)) return "Erro";
+  if (statusEh(status, "ESGOTADO")) return "Esgotado";
   return status;
 }
 

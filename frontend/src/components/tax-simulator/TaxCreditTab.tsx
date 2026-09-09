@@ -1,12 +1,7 @@
 import { useState } from "react";
 import { validarCreditoTributo } from "@/lib/tributosApi";
-import { parseValorReais } from "@/lib/valorBrasil";
-import {
-  formatarMoeda,
-  parsePercentInput,
-  profileToApiCategory,
-  simulateTaxCredit,
-} from "@/lib/taxSimulator";
+import { formatarMoeda, parseValorReais } from "@/lib/valorBrasil";
+import { parsePercentInput, profileToApiCategory, simulateTaxCredit } from "@/lib/taxSimulator";
 
 type TaxCreditTabProps = {
   onError: (msg: string | null) => void;

@@ -9,7 +9,7 @@ import { listarServicos } from "@/lib/servicosApi";
 import { invalidateDashboard } from "@/lib/dashboardRefresh";
 import { formatCpfCnpj } from "@/lib/inadimplentesUtils";
 import type { Cliente, ServicoResumo } from "@/types/api";
-import ResponsiveList from "@/components/ResponsiveList";
+import ResponsiveList from "@/components/ui/ResponsiveList";
 
 type MensalidadeRow = {
   rowId: number;

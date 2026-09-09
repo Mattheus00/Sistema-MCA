@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { fetchPortalDivida, getApiErrorMessage } from "@/lib/portalApi";
-import { diasAtrasoPortal, formatarDataPortal, formatarMoedaPortal } from "@/lib/portalUtils";
+import { diasAtrasoPortal } from "@/lib/portalUtils";
+import { formatarData, formatarMoeda } from "@/lib/valorBrasil";
 import type { PortalDividaDetalhe } from "@/types/api";
 
 export default function PortalDividaDetalhe() {
@@ -60,11 +61,11 @@ export default function PortalDividaDetalhe() {
       <div className="portal-detalhe-grid">
         <div className="portal-detalhe-item">
           <span className="portal-detalhe-label">Vencimento</span>
-          <strong>{formatarDataPortal(divida.vencimento)}</strong>
+          <strong>{formatarData(divida.vencimento)}</strong>
         </div>
         <div className="portal-detalhe-item">
           <span className="portal-detalhe-label">Valor devedor</span>
-          <strong>{formatarMoedaPortal(divida.valorDevedor)}</strong>
+          <strong>{formatarMoeda(divida.valorDevedor)}</strong>
         </div>
         <div className="portal-detalhe-item">
           <span className="portal-detalhe-label">Status</span>
@@ -77,13 +78,13 @@ export default function PortalDividaDetalhe() {
         {divida.valorOriginal != null && (
           <div className="portal-detalhe-item">
             <span className="portal-detalhe-label">Valor original</span>
-            <strong>{formatarMoedaPortal(divida.valorOriginal)}</strong>
+            <strong>{formatarMoeda(divida.valorOriginal)}</strong>
           </div>
         )}
         {divida.juros != null && divida.juros > 0 && (
           <div className="portal-detalhe-item">
             <span className="portal-detalhe-label">Juros</span>
-            <strong>{formatarMoedaPortal(divida.juros)}</strong>
+            <strong>{formatarMoeda(divida.juros)}</strong>
           </div>
         )}
       </div>
@@ -100,11 +101,11 @@ export default function PortalDividaDetalhe() {
                   <dl className="portal-item-card__grid">
                     <div>
                       <dt>Data</dt>
-                      <dd>{formatarDataPortal(p.dataPagamento)}</dd>
+                      <dd>{formatarData(p.dataPagamento)}</dd>
                     </div>
                     <div>
                       <dt>Valor</dt>
-                      <dd>{formatarMoedaPortal(p.valor)}</dd>
+                      <dd>{formatarMoeda(p.valor)}</dd>
                     </div>
                     <div>
                       <dt>Método</dt>
@@ -126,8 +127,8 @@ export default function PortalDividaDetalhe() {
                 <tbody>
                   {pagamentos.map((p, i) => (
                     <tr key={p.id ?? i}>
-                      <td>{formatarDataPortal(p.dataPagamento)}</td>
-                      <td>{formatarMoedaPortal(p.valor)}</td>
+                      <td>{formatarData(p.dataPagamento)}</td>
+                      <td>{formatarMoeda(p.valor)}</td>
                       <td>{p.metodo ?? "—"}</td>
                     </tr>
                   ))}

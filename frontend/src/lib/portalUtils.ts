@@ -1,5 +1,7 @@
 /** Utilitários compartilhados da Área do Cliente. */
 
+import { formatarData, formatarMoeda } from "@/lib/valorBrasil";
+
 export function onlyDigitsCpfCnpj(value: string): string {
   return value.replace(/\D/g, "").slice(0, 14);
 }
@@ -21,15 +23,11 @@ export function maskCpfCnpj(value: string): string {
 }
 
 export function formatarMoedaPortal(valor: number | null | undefined): string {
-  if (valor == null || !Number.isFinite(valor)) return "—";
-  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return formatarMoeda(valor);
 }
 
 export function formatarDataPortal(iso: string | undefined): string {
-  if (!iso) return "—";
-  const [y, m, d] = iso.split("T")[0].split("-");
-  if (!y || !m || !d) return iso;
-  return `${d}/${m}/${y}`;
+  return formatarData(iso);
 }
 
 const MESES_EXTENSO = [

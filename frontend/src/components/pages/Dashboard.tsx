@@ -8,12 +8,8 @@ import { MetricCard } from "@/components/dashboard/MetricCard";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { RecentActivities } from "@/components/dashboard/RecentActivities";
 import { ReceivablesChart } from "@/components/dashboard/ReceivablesChart";
-import {
-  primeiroDiaMes,
-  hojeIso,
-  formatarMoedaDashboard,
-  formatarPercentualDashboard,
-} from "@/lib/dashboardUtils";
+import { formatarMoeda } from "@/lib/valorBrasil";
+import { formatarPercentualDashboard, hojeIso, primeiroDiaMes } from "@/lib/dashboardUtils";
 import {
   useDashboardData,
   type PeriodoChart,
@@ -91,14 +87,14 @@ export default function Dashboard() {
         <MetricCard
           icon={<MoneyIcon />}
           label="Valor total em aberto"
-          value={valorEmAberto != null ? formatarMoedaDashboard(valorEmAberto) : "—"}
+          value={valorEmAberto != null ? formatarMoeda(valorEmAberto) : "—"}
           loading={loading}
           iconTone="money"
         />
         <MetricCard
           icon={<WalletIcon />}
           label="Pagamentos recebidos"
-          value={pagamentosRecebidos != null ? formatarMoedaDashboard(pagamentosRecebidos) : "—"}
+          value={pagamentosRecebidos != null ? formatarMoeda(pagamentosRecebidos) : "—"}
           hint={
             dataInicio && dataFim
               ? `Período: ${dataInicio.split("-").reverse().join("/")} a ${dataFim.split("-").reverse().join("/")}`

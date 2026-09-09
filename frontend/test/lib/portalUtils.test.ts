@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { maskCpfCnpj, onlyDigitsCpfCnpj, formatarMoedaPortal } from "@/lib/portalUtils";
+import { maskCpfCnpj, onlyDigitsCpfCnpj } from "@/lib/portalUtils";
+import { formatarMoeda } from "@/lib/valorBrasil";
 
 describe("portalUtils", () => {
   it("mascara CPF", () => {
@@ -11,6 +12,6 @@ describe("portalUtils", () => {
   });
 
   it("formata moeda em pt-BR", () => {
-    expect(formatarMoedaPortal(1500)).toContain("1.500");
+    expect(formatarMoeda(1500)).toContain("1.500");
   });
 });

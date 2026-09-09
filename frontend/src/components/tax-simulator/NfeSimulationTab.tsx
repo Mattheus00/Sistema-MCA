@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { parseValorReais } from "@/lib/valorBrasil";
-import { formatarMoeda, parsePercentInput, simulateNfe } from "@/lib/taxSimulator";
+import { formatarMoeda, parseValorReais } from "@/lib/valorBrasil";
+import { parsePercentInput, simulateNfe } from "@/lib/taxSimulator";
 
 function maskCnpjLocal(value: string): string {
   const n = value.replace(/\D/g, "").slice(0, 14);

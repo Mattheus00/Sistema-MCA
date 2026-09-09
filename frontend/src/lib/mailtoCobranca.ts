@@ -1,16 +1,5 @@
 import type { Inadimplencia } from "@/types/api";
-
-function formatarMesAno(iso: string): string {
-  if (!iso) return "—";
-  const [y, m] = iso.split("T")[0].split("-");
-  return `${m}/${y}`;
-}
-
-function formatarData(iso: string): string {
-  if (!iso) return "—";
-  const [y, m, d] = iso.split("T")[0].split("-");
-  return `${d}/${m}/${y}`;
-}
+import { formatarData, formatarMesAno } from "@/lib/valorBrasil";
 
 function protocolo(id: string | number | undefined, vencimento: string): string {
   const d = (vencimento || "").split("T")[0].replace(/-/g, "");

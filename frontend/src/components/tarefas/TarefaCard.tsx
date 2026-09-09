@@ -1,3 +1,4 @@
+import { STATUS_TAREFA } from "@/lib/constants/status";
 import type { PrioridadeTarefa, StatusTarefa, TarefaResumo } from "@/types/tarefas";
 import {
   formatarDataTarefa,
@@ -15,7 +16,7 @@ type TarefaCardProps = {
 };
 
 function statusExibido(status: StatusTarefa): StatusTarefa {
-  return status === "BACKLOG" ? "A_FAZER" : status;
+  return status === STATUS_TAREFA.BACKLOG ? STATUS_TAREFA.A_FAZER : status;
 }
 
 function classePontoPrioridade(prioridade: PrioridadeTarefa): string {

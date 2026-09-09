@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
-import { formatarDataHoraDashboard, formatarMoedaDashboard } from "@/lib/dashboardUtils";
+import { formatarDataHora, formatarMoeda } from "@/lib/valorBrasil";
 import type { AtividadeDashboard } from "@/types/dashboard";
-import AdminItemCard from "@/components/AdminItemCard";
-import ResponsiveList from "@/components/ResponsiveList";
+import AdminItemCard from "@/components/ui/AdminItemCard";
+import ResponsiveList from "@/components/ui/ResponsiveList";
 
 type RecentActivitiesProps = {
   atividades: AtividadeDashboard[];
@@ -50,7 +50,7 @@ export function RecentActivities({ atividades, loading }: RecentActivitiesProps)
                         <strong className="dash-activities-table__titulo">{a.titulo}</strong>
                         <span className="dash-activities-table__desc">{a.descricao}</span>
                       </td>
-                      <td>{formatarDataHoraDashboard(a.dataHora)}</td>
+                      <td>{formatarDataHora(a.dataHora)}</td>
                       <td>
                         <span
                           className={`dash-status-badge ${
@@ -63,7 +63,7 @@ export function RecentActivities({ atividades, loading }: RecentActivitiesProps)
                         </span>
                       </td>
                       <td className="dash-activities-table__valor">
-                        {a.valor != null ? formatarMoedaDashboard(a.valor) : "—"}
+                        {a.valor != null ? formatarMoeda(a.valor) : "—"}
                       </td>
                     </tr>
                   ))}
@@ -78,9 +78,9 @@ export function RecentActivities({ atividades, loading }: RecentActivitiesProps)
                   <AdminItemCard
                     title={a.titulo}
                     meta={a.descricao}
-                    value={a.valor != null ? formatarMoedaDashboard(a.valor) : undefined}
+                    value={a.valor != null ? formatarMoeda(a.valor) : undefined}
                     fields={[
-                      { label: "Data", value: formatarDataHoraDashboard(a.dataHora) },
+                      { label: "Data", value: formatarDataHora(a.dataHora) },
                       {
                         label: "Status",
                         value: (

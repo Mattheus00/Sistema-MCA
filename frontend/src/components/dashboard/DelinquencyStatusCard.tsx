@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { formatarMoedaDashboard, formatarPercentualDashboard } from "@/lib/dashboardUtils";
+import { formatarMoeda } from "@/lib/valorBrasil";
+import { formatarPercentualDashboard } from "@/lib/dashboardUtils";
 import type { FaixaInadimplenciaUi } from "@/types/dashboard";
 
 type DelinquencyStatusCardProps = {
@@ -31,7 +32,7 @@ export function DelinquencyStatusCard({ faixas, loading }: DelinquencyStatusCard
                   aria-hidden="true"
                 />
                 <span className="dash-aging__rotulo">{faixa.rotulo}</span>
-                <span className="dash-aging__valor">{formatarMoedaDashboard(faixa.valor)}</span>
+                <span className="dash-aging__valor">{formatarMoeda(faixa.valor)}</span>
                 <span className="dash-aging__pct">
                   {formatarPercentualDashboard(faixa.percentual)}
                 </span>

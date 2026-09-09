@@ -2,15 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import type { AxiosError } from "axios";
 import { getApiErrorMessage } from "@/lib/api";
 import { aprovarUsuario, listarUsuariosPendentes } from "@/lib/usuariosApi";
+import { formatarData } from "@/lib/valorBrasil";
 import type { PerfilUsuario, UsuarioPendente } from "@/types/api";
-import AdminItemCard from "@/components/AdminItemCard";
-import ResponsiveList from "@/components/ResponsiveList";
-
-function formatarData(iso: string): string {
-  if (!iso) return "—";
-  const [y, m, d] = iso.split("T")[0].split("-");
-  return `${d}/${m}/${y}`;
-}
+import AdminItemCard from "@/components/ui/AdminItemCard";
+import ResponsiveList from "@/components/ui/ResponsiveList";
 
 type PerfilAprovacao = Extract<PerfilUsuario, "RESPONSAVEL_FINANCEIRO" | "FUNCIONARIO">;
 

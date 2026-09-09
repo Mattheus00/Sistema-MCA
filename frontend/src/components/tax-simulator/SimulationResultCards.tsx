@@ -1,4 +1,5 @@
-import { formatarMoeda, formatarPercentual } from "@/lib/taxSimulator";
+import { formatarMoeda } from "@/lib/valorBrasil";
+import { formatarPercentual } from "@/lib/taxSimulator";
 import type { QuickSimulationResult } from "@/types/taxSimulator";
 
 type SimulationResultCardsProps = {

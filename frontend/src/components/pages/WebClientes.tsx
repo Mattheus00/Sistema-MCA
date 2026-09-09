@@ -8,9 +8,10 @@ import {
   listarTodosClientes,
 } from "@/lib/clientesApi";
 import { exportarRelatorioClientesExcel } from "@/lib/relatorioClientes";
+import { STATUS_CLIENTE } from "@/lib/constants/status";
 import type { Cliente } from "@/types/api";
-import AdminItemCard from "@/components/AdminItemCard";
-import ResponsiveList from "@/components/ResponsiveList";
+import AdminItemCard from "@/components/ui/AdminItemCard";
+import ResponsiveList from "@/components/ui/ResponsiveList";
 
 function formatCpf(cpf: string | undefined): string {
   if (!cpf) return "—";
@@ -60,7 +61,7 @@ const FORM_VAZIO: Cliente = {
   situacao: "Ativo",
 };
 
-type FiltroSituacaoCliente = "ATIVO" | "INATIVO";
+type FiltroSituacaoCliente = typeof STATUS_CLIENTE.ATIVO | typeof STATUS_CLIENTE.INATIVO;
 
 /** Filtro local apenas para modo mock (API real já filtra com `busca`). */
 function filtrarClientesPorTermoMock(lista: Cliente[], termo?: string): Cliente[] {
@@ -104,7 +105,7 @@ export default function WebClientes() {
   const [erro, setErro] = useState<string | null>(null);
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
-  const [filtroSituacao, setFiltroSituacao] = useState<FiltroSituacaoCliente>("ATIVO");
+  const [filtroSituacao, setFiltroSituacao] = useState<FiltroSituacaoCliente>(STATUS_CLIENTE.ATIVO);
   const [modalAberto, setModalAberto] = useState(false);
   const [clienteEmEdicao, setClienteEmEdicao] = useState<Cliente | null>(null);
   const [clienteParaExcluir, setClienteParaExcluir] = useState<Cliente | null>(null);
@@ -289,7 +290,7 @@ export default function WebClientes() {
     setErro(null);
     exportarRelatorioClientesExcel(ordenados, {
       busca,
-      situacao: filtroSituacao === "INATIVO" ? "inativo" : "ativo",
+      situacao: filtroSituacao === STATUS_CLIENTE.INATIVO ? "inativo" : "ativo",
     });
     setMensagemSucesso("Relatório exportado. Abra o arquivo no Excel.");
   }
@@ -337,8 +338,8 @@ export default function WebClientes() {
         >
           {(
             [
-              { valor: "ATIVO" as const, rotulo: "Ativos" },
-              { valor: "INATIVO" as const, rotulo: "Inativos" },
+              { valor: STATUS_CLIENTE.ATIVO, rotulo: "Ativos" },
+              { valor: STATUS_CLIENTE.INATIVO, rotulo: "Inativos" },
             ] as const
           ).map(({ valor, rotulo }) => (
             <button
@@ -405,7 +406,7 @@ export default function WebClientes() {
                 ) : ordenados.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="page-clientes__vazio">
-                      {filtroSituacao === "INATIVO"
+                      {filtroSituacao === STATUS_CLIENTE.INATIVO
                         ? "Nenhum cliente inativo encontrado."
                         : "Nenhum cliente ativo encontrado."}
                     </td>
@@ -454,7 +455,7 @@ export default function WebClientes() {
             <p className="page-clientes__vazio">Carregando...</p>
           ) : ordenados.length === 0 ? (
             <p className="page-clientes__vazio">
-              {filtroSituacao === "INATIVO"
+              {filtroSituacao === STATUS_CLIENTE.INATIVO
                 ? "Nenhum cliente inativo encontrado."
                 : "Nenhum cliente ativo encontrado."}
             </p>

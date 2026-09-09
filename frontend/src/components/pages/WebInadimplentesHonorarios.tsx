@@ -16,7 +16,6 @@ import {
   diasEmAtraso,
   formatarData,
   formatarMesAno,
-  formatarMoeda,
   formatCpfCnpj,
   isInadimplenciaCancelada,
   isInadimplenciaEmAberto,
@@ -24,6 +23,8 @@ import {
   statusPagamentoHonorario,
   valoresHonorario,
 } from "@/lib/inadimplentesUtils";
+import { formatarMoeda, parseValorReais } from "@/lib/valorBrasil";
+import { STATUS_DIVIDA_FRONT, STATUS_ENVIO, statusEh } from "@/lib/constants/status";
 import {
   buildWhatsAppCobrancaUrl,
   copyCobrancaEmailToClipboard,
@@ -31,10 +32,9 @@ import {
   openWhatsAppCobranca,
 } from "@/lib/mailtoCobranca";
 import { gerarAvisoPendenciaPdfBlob, gerarEBaixarAvisoPendenciaPdf } from "@/lib/cobrancaPdf";
-import { parseValorReais } from "@/lib/valorBrasil";
 import type { Cliente, Inadimplencia } from "@/types/api";
-import AdminItemCard from "@/components/AdminItemCard";
-import ResponsiveList from "@/components/ResponsiveList";
+import AdminItemCard from "@/components/ui/AdminItemCard";
+import ResponsiveList from "@/components/ui/ResponsiveList";
 
 const ZOHO_MAIL_URL = "https://mail.zoho.com/zm/#mail/folder/sent";
 
@@ -379,8 +379,7 @@ export default function WebInadimplentesHonorarios() {
     try {
       const { blob, filename } = await gerarAvisoPendenciaPdfBlob(emAberto, nomeCliente);
       const data = await enviarAvisoPendencia(clienteId, blob, filename);
-      const status = String(data?.statusEnvio ?? "").toUpperCase();
-      if (status === "ENVIADO") {
+      if (statusEh(data?.statusEnvio, STATUS_ENVIO.ENVIADO)) {
         setModalPdfConsolidado(false);
         setMensagemSucesso(`Aviso enviado para ${data.emailDestino ?? email}.`);
       } else {
@@ -528,7 +527,7 @@ export default function WebInadimplentesHonorarios() {
                         const { valorTotal } = valoresHonorario(i);
                         const status = statusPagamentoHonorario(i);
                         const statusClass =
-                          status === "Pago"
+                          status === STATUS_DIVIDA_FRONT.PAGO
                             ? "page-inadimplentes-honorarios__status--pago"
                             : status === "Parcial"
                               ? "page-inadimplentes-honorarios__status--parcial"
@@ -606,7 +605,7 @@ export default function WebInadimplentesHonorarios() {
                     const { valorTotal } = valoresHonorario(i);
                     const status = statusPagamentoHonorario(i);
                     const statusClass =
-                      status === "Pago"
+                      status === STATUS_DIVIDA_FRONT.PAGO
                         ? "page-inadimplentes-honorarios__status--pago"
                         : status === "Parcial"
                           ? "page-inadimplentes-honorarios__status--parcial"

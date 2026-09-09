@@ -10,6 +10,10 @@ import type {
   ResumoFinanceiro,
 } from "@/types/api";
 import { mesReferenciaPagamentoRecebido } from "@/lib/apiNormalizers";
+import {
+  formatarData as formatarDataBr,
+  formatarMoeda as formatarMoedaBr,
+} from "@/lib/valorBrasil";
 
 export type RelatorioAbaId =
   "ranking" | "extrato" | "inadimplencia" | "pagamentos" | "aging" | "efetividade";
@@ -42,15 +46,11 @@ const TITULOS: Record<RelatorioAbaId, string> = {
 };
 
 function formatarData(s: string) {
-  if (!s) return "—";
-  const d = new Date(s);
-  if (Number.isNaN(d.getTime())) return s;
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return formatarDataBr(s, { modo: "instant" });
 }
 
 function formatarMoeda(n: number | null | undefined) {
-  const valor = typeof n === "number" && Number.isFinite(n) ? n : 0;
-  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return formatarMoedaBr(n, { nuloComoZero: true });
 }
 
 function formatarPercentual(n: number | null | undefined, casas = 1) {

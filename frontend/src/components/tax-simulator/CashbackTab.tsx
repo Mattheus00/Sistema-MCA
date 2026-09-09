@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { getApiErrorMessage } from "@/lib/api";
 import { calcularCashback } from "@/lib/tributosApi";
-import { parseValorReais } from "@/lib/valorBrasil";
-import { formatarMoeda } from "@/lib/taxSimulator";
+import { formatarMoeda, parseValorReais } from "@/lib/valorBrasil";
 
 type CashbackTabProps = {
   onError: (msg: string | null) => void;

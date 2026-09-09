@@ -6,8 +6,10 @@
 import { api, extractPageMeta, isMockEnabled, normalizeListResponse } from "@/lib/api";
 import { normalizeClienteFromApi, normalizeClienteToApi } from "@/lib/apiNormalizers";
 import type { Cliente } from "@/types/api";
+import { STATUS_CLIENTE } from "@/lib/constants/status";
 
-export type StatusClienteFiltro = "ATIVO" | "INATIVO" | "INADIMPLENTE";
+export type StatusClienteFiltro =
+  typeof STATUS_CLIENTE.ATIVO | typeof STATUS_CLIENTE.INATIVO | typeof STATUS_CLIENTE.INADIMPLENTE;
 
 /** Parâmetros aceitos por GET /api/clientes (Page<ClienteResponseDTO>). */
 export type ListarClientesParams = {

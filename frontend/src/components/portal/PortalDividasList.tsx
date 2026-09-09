@@ -1,12 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchPortalDividas, getApiErrorMessage } from "@/lib/portalApi";
-import {
-  diasAtrasoPortal,
-  formatarDataPortal,
-  formatarMoedaPortal,
-  labelStatusDividaPortal,
-} from "@/lib/portalUtils";
+import { diasAtrasoPortal, labelStatusDividaPortal } from "@/lib/portalUtils";
+import { formatarData, formatarMoeda } from "@/lib/valorBrasil";
 import type { PortalDivida } from "@/types/api";
 
 export default function PortalDividasList() {
@@ -82,8 +78,8 @@ export default function PortalDividasList() {
                       <tr key={d.id}>
                         <td>{d.protocolo ?? "—"}</td>
                         <td>{d.descricao ?? "—"}</td>
-                        <td>{formatarDataPortal(d.vencimento)}</td>
-                        <td>{formatarMoedaPortal(d.valorDevedor)}</td>
+                        <td>{formatarData(d.vencimento)}</td>
+                        <td>{formatarMoeda(d.valorDevedor)}</td>
                         <td>{labelStatusDividaPortal(d.status, d.vencimento)}</td>
                         <td>{atraso > 0 ? `${atraso} dias` : "—"}</td>
                         <td>
@@ -113,12 +109,12 @@ function DividaCard({ divida: d }: { divida: PortalDivida }) {
           <p className="portal-item-card__titulo">{d.descricao ?? "Dívida"}</p>
           {d.protocolo && <p className="portal-item-card__meta-linha">Protocolo {d.protocolo}</p>}
         </div>
-        <p className="portal-item-card__valor">{formatarMoedaPortal(d.valorDevedor)}</p>
+        <p className="portal-item-card__valor">{formatarMoeda(d.valorDevedor)}</p>
       </div>
       <dl className="portal-item-card__grid">
         <div>
           <dt>Vencimento</dt>
-          <dd>{formatarDataPortal(d.vencimento)}</dd>
+          <dd>{formatarData(d.vencimento)}</dd>
         </div>
         <div>
           <dt>Status</dt>

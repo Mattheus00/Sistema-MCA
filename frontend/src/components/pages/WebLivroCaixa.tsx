@@ -12,13 +12,14 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import AdminItemCard from "@/components/AdminItemCard";
-import ResponsiveList from "@/components/ResponsiveList";
+import AdminItemCard from "@/components/ui/AdminItemCard";
+import ResponsiveList from "@/components/ui/ResponsiveList";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import LivroCaixaCadastrosModal from "@/components/livro-caixa/LivroCaixaCadastrosModal";
 import LivroCaixaDetalheModal from "@/components/livro-caixa/LivroCaixaDetalheModal";
 import LivroCaixaFormModal from "@/components/livro-caixa/LivroCaixaFormModal";
-import { formatarMoedaDashboard } from "@/lib/dashboardUtils";
+import { formatarMoeda } from "@/lib/valorBrasil";
+import { STATUS_MOVIMENTACAO, TIPO_MOVIMENTACAO } from "@/lib/constants/status";
 import {
   LIVRO_CAIXA_INVALIDATE_EVENT,
   atualizarMovimentacao,
@@ -48,7 +49,6 @@ import {
   type FiltroRapidoMovimentacao,
   type PeriodoRapido,
 } from "@/lib/livroCaixaUtils";
-import { formatarMoeda } from "@/lib/inadimplentesUtils";
 import type {
   CategoriaLivroCaixa,
   ContaLivroCaixa,
@@ -412,10 +412,8 @@ export default function WebLivroCaixa() {
         <MetricCard
           icon={<WalletIcon />}
           label="Saldo realizado"
-          value={dashboard ? formatarMoedaDashboard(dashboard.saldoRealizado) : "—"}
-          hint={
-            dashboard ? `Previsto: ${formatarMoedaDashboard(dashboard.saldoPrevisto)}` : undefined
-          }
+          value={dashboard ? formatarMoeda(dashboard.saldoRealizado) : "—"}
+          hint={dashboard ? `Previsto: ${formatarMoeda(dashboard.saldoPrevisto)}` : undefined}
           hintTone="success"
           loading={loadingDashboard}
           iconTone="wallet"
@@ -423,14 +421,14 @@ export default function WebLivroCaixa() {
         <MetricCard
           icon={<ArrowUpIcon />}
           label="Entradas do mês"
-          value={dashboard ? formatarMoedaDashboard(dashboard.entradasMes) : "—"}
+          value={dashboard ? formatarMoeda(dashboard.entradasMes) : "—"}
           loading={loadingDashboard}
           iconTone="money"
         />
         <MetricCard
           icon={<ArrowDownIcon />}
           label="Saídas do mês"
-          value={dashboard ? formatarMoedaDashboard(dashboard.saidasMes) : "—"}
+          value={dashboard ? formatarMoeda(dashboard.saidasMes) : "—"}
           hintTone="warning"
           loading={loadingDashboard}
           iconTone="alert"
@@ -438,7 +436,7 @@ export default function WebLivroCaixa() {
         <MetricCard
           icon={<ChartIcon />}
           label="Resultado do mês"
-          value={dashboard ? formatarMoedaDashboard(dashboard.resultadoMes) : "—"}
+          value={dashboard ? formatarMoeda(dashboard.resultadoMes) : "—"}
           loading={loadingDashboard}
           iconTone="purple"
         />
@@ -554,8 +552,8 @@ export default function WebLivroCaixa() {
                 }}
               >
                 <option value="">Tipo</option>
-                <option value="ENTRADA">Entrada</option>
-                <option value="SAIDA">Saída</option>
+                <option value={TIPO_MOVIMENTACAO.ENTRADA}>Entrada</option>
+                <option value={TIPO_MOVIMENTACAO.SAIDA}>Saída</option>
               </select>
               <select
                 className="modal__input"
@@ -567,10 +565,10 @@ export default function WebLivroCaixa() {
                 }}
               >
                 <option value="">Status</option>
-                <option value="PREVISTO">Previsto</option>
-                <option value="RECEBIDO">Recebido</option>
-                <option value="PAGO">Pago</option>
-                <option value="CANCELADO">Cancelado</option>
+                <option value={STATUS_MOVIMENTACAO.PREVISTO}>Previsto</option>
+                <option value={STATUS_MOVIMENTACAO.RECEBIDO}>Recebido</option>
+                <option value={STATUS_MOVIMENTACAO.PAGO}>Pago</option>
+                <option value={STATUS_MOVIMENTACAO.CANCELADO}>Cancelado</option>
               </select>
               <select
                 className="modal__input"

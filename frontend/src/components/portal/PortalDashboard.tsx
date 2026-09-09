@@ -3,14 +3,13 @@ import { Link } from "react-router-dom";
 import { fetchPortalDividas, fetchPortalResumo, getApiErrorMessage } from "@/lib/portalApi";
 import {
   diasParaVencimento,
-  formatarDataPortal,
   formatarDataPortalExtenso,
-  formatarMoedaPortal,
   labelStatusDividaPortal,
   obterProximoVencimento,
   ordenarDividasRecentes,
   statusDividaPortalClass,
 } from "@/lib/portalUtils";
+import { formatarData, formatarMoeda } from "@/lib/valorBrasil";
 import type { PortalDivida, PortalResumo } from "@/types/api";
 
 export default function PortalDashboard() {
@@ -96,7 +95,7 @@ export default function PortalDashboard() {
               </span>
               <span className="portal-metric__label">Saldo devedor total</span>
             </div>
-            <p className="portal-metric__valor">{formatarMoedaPortal(resumo?.saldoDevedorTotal)}</p>
+            <p className="portal-metric__valor">{formatarMoeda(resumo?.saldoDevedorTotal)}</p>
             <div className="portal-metric__decor" aria-hidden="true" />
           </article>
 
@@ -147,7 +146,7 @@ export default function PortalDashboard() {
                   {formatarDataPortalExtenso(proximo.vencimento)}
                 </p>
                 <p className="portal-proximo__descricao">{proximo.descricao ?? "Dívida"}</p>
-                <p className="portal-proximo__valor">{formatarMoedaPortal(proximo.valorDevedor)}</p>
+                <p className="portal-proximo__valor">{formatarMoeda(proximo.valorDevedor)}</p>
                 {diasProximo != null && diasProximo >= 0 && (
                   <>
                     <p className="portal-proximo__prazo">
@@ -189,14 +188,14 @@ export default function PortalDashboard() {
                     <Link to={`/portal/dividas/${d.id}`} className="portal-recentes__item">
                       <div className="portal-recentes__info">
                         <p className="portal-recentes__titulo">{d.descricao ?? "Dívida"}</p>
-                        <p className="portal-recentes__data">{formatarDataPortal(d.vencimento)}</p>
+                        <p className="portal-recentes__data">{formatarData(d.vencimento)}</p>
                       </div>
                       <div className="portal-recentes__direita">
                         <span className={statusDividaPortalClass(d.status, d.vencimento)}>
                           {labelStatusDividaPortal(d.status, d.vencimento)}
                         </span>
                         <span className="portal-recentes__valor">
-                          {formatarMoedaPortal(d.valorDevedor)}
+                          {formatarMoeda(d.valorDevedor)}
                         </span>
                         <IconSeta />
                       </div>

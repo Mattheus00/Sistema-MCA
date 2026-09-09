@@ -8,6 +8,7 @@ import {
   desativarCategoria,
   desativarConta,
 } from "@/lib/livroCaixaApi";
+import { TIPO_MOVIMENTACAO } from "@/lib/constants/status";
 import { labelTipoMovimentacao } from "@/lib/livroCaixaUtils";
 import type { CategoriaLivroCaixa, ContaLivroCaixa, TipoMovimentacao } from "@/types/livroCaixa";
 
@@ -28,7 +29,7 @@ export default function LivroCaixaCadastrosModal({
 }: LivroCaixaCadastrosModalProps) {
   const [aba, setAba] = useState<"categorias" | "contas">("categorias");
   const [nomeCat, setNomeCat] = useState("");
-  const [tipoCat, setTipoCat] = useState<TipoMovimentacao>("SAIDA");
+  const [tipoCat, setTipoCat] = useState<TipoMovimentacao>(TIPO_MOVIMENTACAO.SAIDA);
   const [nomeConta, setNomeConta] = useState("");
   const [editCatId, setEditCatId] = useState<string | null>(null);
   const [editContaId, setEditContaId] = useState<string | null>(null);
@@ -163,8 +164,8 @@ export default function LivroCaixaCadastrosModal({
                 value={tipoCat}
                 onChange={(e) => setTipoCat(e.target.value as TipoMovimentacao)}
               >
-                <option value="ENTRADA">Entrada</option>
-                <option value="SAIDA">Saída</option>
+                <option value={TIPO_MOVIMENTACAO.ENTRADA}>Entrada</option>
+                <option value={TIPO_MOVIMENTACAO.SAIDA}>Saída</option>
               </select>
               <button
                 type="button"

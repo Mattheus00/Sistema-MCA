@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { listarClientes } from "@/lib/clientesApi";
 import { formatarReaisParaInput, parseValorReais } from "@/lib/valorBrasil";
+import { STATUS_CLIENTE, STATUS_MOVIMENTACAO, TIPO_MOVIMENTACAO } from "@/lib/constants/status";
 import {
   FORMAS_PAGAMENTO,
   hojeIso,
@@ -41,7 +42,7 @@ export type FormMovimentacaoState = {
 
 function formInicial(): FormMovimentacaoState {
   return {
-    tipo: "ENTRADA",
+    tipo: TIPO_MOVIMENTACAO.ENTRADA,
     descricao: "",
     valorInput: "",
     categoriaId: "",
@@ -50,7 +51,7 @@ function formInicial(): FormMovimentacaoState {
     dataMovimentacao: hojeIso(),
     dataVencimento: "",
     dataPagamento: "",
-    status: "PREVISTO",
+    status: STATUS_MOVIMENTACAO.PREVISTO,
     formaPagamento: "",
     contaId: "",
     observacao: "",
@@ -250,7 +251,7 @@ export default function LivroCaixaFormModal({
         await listarClientes({
           page: 0,
           size: 50,
-          statusCliente: "ATIVO",
+          statusCliente: STATUS_CLIENTE.ATIVO,
           termo: termo.trim() || undefined,
         }),
       );
@@ -466,21 +467,21 @@ export default function LivroCaixaFormModal({
                 >
                   <button
                     type="button"
-                    className={`lc-modal-form__tipo-btn lc-modal-form__tipo-btn--entrada${form.tipo === "ENTRADA" ? " lc-modal-form__tipo-btn--ativa" : ""}`}
-                    onClick={() => atualizarTipo("ENTRADA")}
-                    aria-pressed={form.tipo === "ENTRADA"}
+                    className={`lc-modal-form__tipo-btn lc-modal-form__tipo-btn--entrada${form.tipo === TIPO_MOVIMENTACAO.ENTRADA ? " lc-modal-form__tipo-btn--ativa" : ""}`}
+                    onClick={() => atualizarTipo(TIPO_MOVIMENTACAO.ENTRADA)}
+                    aria-pressed={form.tipo === TIPO_MOVIMENTACAO.ENTRADA}
                   >
                     <IconEntrada />
-                    {labelTipoMovimentacao("ENTRADA")}
+                    {labelTipoMovimentacao(TIPO_MOVIMENTACAO.ENTRADA)}
                   </button>
                   <button
                     type="button"
-                    className={`lc-modal-form__tipo-btn lc-modal-form__tipo-btn--saida${form.tipo === "SAIDA" ? " lc-modal-form__tipo-btn--ativa" : ""}`}
-                    onClick={() => atualizarTipo("SAIDA")}
-                    aria-pressed={form.tipo === "SAIDA"}
+                    className={`lc-modal-form__tipo-btn lc-modal-form__tipo-btn--saida${form.tipo === TIPO_MOVIMENTACAO.SAIDA ? " lc-modal-form__tipo-btn--ativa" : ""}`}
+                    onClick={() => atualizarTipo(TIPO_MOVIMENTACAO.SAIDA)}
+                    aria-pressed={form.tipo === TIPO_MOVIMENTACAO.SAIDA}
                   >
                     <IconSaida />
-                    {labelTipoMovimentacao("SAIDA")}
+                    {labelTipoMovimentacao(TIPO_MOVIMENTACAO.SAIDA)}
                   </button>
                 </div>
               </div>
@@ -731,10 +732,10 @@ export default function LivroCaixaFormModal({
               <span className="lc-modal-form__secao-icone">
                 <IconCliente />
               </span>
-              {form.tipo === "SAIDA" ? "Fornecedor e observações" : "Observações"}
+              {form.tipo === TIPO_MOVIMENTACAO.SAIDA ? "Fornecedor e observações" : "Observações"}
             </h3>
             <div className="lc-modal-form__grid">
-              {form.tipo === "SAIDA" && (
+              {form.tipo === TIPO_MOVIMENTACAO.SAIDA && (
                 <label className="lc-modal-form__campo lc-modal-form__campo--full">
                   <Label>Fornecedor</Label>
                   <input

@@ -1,4 +1,4 @@
-import { parseValorReais } from "@/lib/valorBrasil";
+import { formatarMoeda, parseValorReais } from "@/lib/valorBrasil";
 import type {
   NfeSimulationInput,
   NfeSimulationResult,
@@ -84,14 +84,7 @@ export function parsePercentInput(value: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-export function formatarMoeda(valor: number): string {
-  return valor.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
+export { formatarMoeda };
 
 export function formatarPercentual(valor: number, casas = 2): string {
   return `${valor.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas })}%`;

@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { calcularTributo } from "@/lib/tributosApi";
-import { parseValorReais } from "@/lib/valorBrasil";
+import { formatarMoeda, parseValorReais } from "@/lib/valorBrasil";
 import {
-  formatarMoeda,
   formatarPercentual,
   parsePercentInput,
   profileToApiCategory,

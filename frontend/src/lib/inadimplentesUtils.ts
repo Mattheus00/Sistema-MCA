@@ -1,4 +1,7 @@
 import type { Inadimplencia, PagamentoInadimplencia } from "@/types/api";
+import { statusEh } from "@/lib/constants/status";
+
+export { formatarData, formatarMesAno, formatarMoeda } from "@/lib/valorBrasil";
 
 export function ordenarPagamentosPorData(
   pagamentos: PagamentoInadimplencia[],
@@ -10,18 +13,6 @@ export function ordenarPagamentosPorData(
     if (c !== 0) return c;
     return (a.criadoEm ?? "").localeCompare(b.criadoEm ?? "");
   });
-}
-
-export function formatarData(iso: string): string {
-  if (!iso) return "—";
-  const [y, m, d] = iso.split("T")[0].split("-");
-  return `${d}/${m}/${y}`;
-}
-
-export function formatarMesAno(iso: string): string {
-  if (!iso) return "—";
-  const [y, m] = iso.split("T")[0].split("-");
-  return `${m}/${y}`;
 }
 
 export function diasEmAtraso(vencimento: string): number {
@@ -42,8 +33,7 @@ export function formatCpfCnpj(cpf: string | undefined): string {
 }
 
 export function isInadimplenciaEmAberto(i: Inadimplencia): boolean {
-  const s = String(i.status ?? "EmAberto").toLowerCase();
-  return s !== "pago" && s !== "quitada" && s !== "cancelado" && s !== "cancelada";
+  return !statusEh(i.status ?? "EmAberto", "PAGO", "QUITADA", "QUITADO", "CANCELADO", "CANCELADA");
 }
 
 export function statusPagamentoHonorario(i: Inadimplencia): "Pago" | "Parcial" | "Em aberto" {
@@ -54,8 +44,7 @@ export function statusPagamentoHonorario(i: Inadimplencia): "Pago" | "Parcial" |
 }
 
 export function isInadimplenciaCancelada(i: Inadimplencia): boolean {
-  const s = String(i.status ?? "").toLowerCase();
-  return s === "cancelado" || s === "cancelada";
+  return statusEh(i.status, "CANCELADO", "CANCELADA");
 }
 
 export function saldoDevedorItem(i: Inadimplencia): number {
@@ -81,8 +70,4 @@ export function valoresHonorario(i: Inadimplencia) {
         : 0;
   const valorTotal = totalDaApi > 0 ? totalDaApi : valorOriginal + juros;
   return { valorOriginal, juros, valorTotal };
-}
-
-export function formatarMoeda(valor: number): string {
-  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }

@@ -47,6 +47,10 @@ import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import Paper from "@mui/material/Paper";
+import {
+  formatarData as formatarDataBr,
+  formatarMoeda as formatarMoedaBr,
+} from "@/lib/valorBrasil";
 
 const ABAS = [
   { id: "ranking", label: "Ranking Devedores" },
@@ -60,14 +64,11 @@ const ABAS = [
 type AbaId = (typeof ABAS)[number]["id"];
 
 function formatarData(s: string) {
-  if (!s) return "—";
-  const d = new Date(s);
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return formatarDataBr(s, { modo: "instant" });
 }
 
 function formatarMoeda(n: number | null | undefined) {
-  const valor = typeof n === "number" && Number.isFinite(n) ? n : 0;
-  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return formatarMoedaBr(n, { nuloComoZero: true });
 }
 
 function formatarPercentual(n: number | null | undefined, casas = 1) {

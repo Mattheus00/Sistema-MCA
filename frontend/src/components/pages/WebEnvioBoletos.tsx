@@ -35,8 +35,8 @@ import {
   todosItensSelecionaveis,
   validarArquivosPdf,
 } from "@/lib/envioBoletosUtils";
-import AdminItemCard from "@/components/AdminItemCard";
-import ResponsiveList from "@/components/ResponsiveList";
+import AdminItemCard from "@/components/ui/AdminItemCard";
+import ResponsiveList from "@/components/ui/ResponsiveList";
 import type {
   Cliente,
   ItemEnvioBoleto,
@@ -45,22 +45,16 @@ import type {
   ResultadoEnvioItem,
   ResultadoEnvioLote,
 } from "@/types/api";
+import { formatarDataHora } from "@/lib/valorBrasil";
+import {
+  STATUS_CLIENTE,
+  STATUS_ITEM_ENVIO,
+  STATUS_LOTE_ENVIO,
+  statusEh,
+} from "@/lib/constants/status";
 
 type AbaPrincipal = "novo" | "historico";
 type EtapaNovo = "upload" | "conferencia" | "resultado";
-
-function formatarDataHora(iso: string | undefined): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 export default function WebEnvioBoletos() {
   const [aba, setAba] = useState<AbaPrincipal>("novo");
@@ -99,8 +93,8 @@ export default function WebEnvioBoletos() {
   const resumoConfirmacao = useMemo(() => {
     const selecionadosLista = itens.filter((item) => selecionados.has(envioBoletoIdItem(item)));
     const prontos = itensElegiveisEnvio(itens, selecionados);
-    const duplicados = selecionadosLista.filter(
-      (item) => String(item.status ?? "").toUpperCase() === "DUPLICADO",
+    const duplicados = selecionadosLista.filter((item) =>
+      statusEh(item.status, STATUS_ITEM_ENVIO.DUPLICADO),
     ).length;
     return {
       selecionados: selecionadosLista.length,
@@ -230,7 +224,7 @@ export default function WebEnvioBoletos() {
       const list = await listarClientes({
         page: 0,
         size: 50,
-        statusCliente: "ATIVO",
+        statusCliente: STATUS_CLIENTE.ATIVO,
         busca: termo?.trim() || undefined,
       });
       setClientes(list);
@@ -331,7 +325,7 @@ export default function WebEnvioBoletos() {
   useEffect(() => {
     if (!lote?.itens) return;
     const prontos = lote.itens
-      .filter((i) => String(i.status ?? "").toUpperCase() === "PRONTO_PARA_ENVIO")
+      .filter((i) => statusEh(i.status, STATUS_ITEM_ENVIO.PRONTO_PARA_ENVIO))
       .map((i) => i.envioBoletoId)
       .filter(Boolean);
     setSelecionados(new Set(prontos));
@@ -667,7 +661,7 @@ export default function WebEnvioBoletos() {
                                   <input
                                     type="checkbox"
                                     checked={selecionados.has(itemId)}
-                                    disabled={status === "IGNORADO"}
+                                    disabled={status === STATUS_ITEM_ENVIO.IGNORADO}
                                     onChange={() => toggleItem(itemId)}
                                     aria-label={`Selecionar ${item.nomeArquivoOriginal}`}
                                   />
@@ -778,7 +772,7 @@ export default function WebEnvioBoletos() {
                                     <input
                                       type="checkbox"
                                       checked={selecionados.has(itemId)}
-                                      disabled={status === "IGNORADO"}
+                                      disabled={status === STATUS_ITEM_ENVIO.IGNORADO}
                                       onChange={() => toggleItem(itemId)}
                                       aria-label={`Selecionar ${item.nomeArquivoOriginal}`}
                                     />
@@ -1043,10 +1037,10 @@ export default function WebEnvioBoletos() {
               aria-label="Status"
             >
               <option value="">Todos os status</option>
-              <option value="CONCLUIDO">Concluído</option>
-              <option value="CONFERENCIA">Conferência</option>
-              <option value="ENVIANDO">Enviando</option>
-              <option value="CANCELADO">Cancelado</option>
+              <option value={STATUS_LOTE_ENVIO.CONCLUIDO}>Concluído</option>
+              <option value={STATUS_LOTE_ENVIO.CONFERENCIA}>Conferência</option>
+              <option value={STATUS_LOTE_ENVIO.ENVIANDO}>Enviando</option>
+              <option value={STATUS_LOTE_ENVIO.CANCELADO}>Cancelado</option>
             </select>
             <button
               type="button"

@@ -20,6 +20,7 @@ import {
   labelStatusMovimentacao,
   labelTipoMovimentacao,
 } from "@/lib/livroCaixaUtils";
+import { STATUS_MOVIMENTACAO, TIPO_MOVIMENTACAO } from "@/lib/constants/status";
 import type { ContaLivroCaixa, FormaPagamento, MovimentacaoDetalhe } from "@/types/livroCaixa";
 
 type LivroCaixaDetalheModalProps = {
@@ -62,9 +63,13 @@ export default function LivroCaixaDetalheModal({
 
   if (!movimentacao) return null;
 
-  const podeReceber = movimentacao.tipo === "ENTRADA" && movimentacao.status === "PREVISTO";
-  const podePagar = movimentacao.tipo === "SAIDA" && movimentacao.status === "PREVISTO";
-  const podeCancelar = movimentacao.status === "PREVISTO";
+  const podeReceber =
+    movimentacao.tipo === TIPO_MOVIMENTACAO.ENTRADA &&
+    movimentacao.status === STATUS_MOVIMENTACAO.PREVISTO;
+  const podePagar =
+    movimentacao.tipo === TIPO_MOVIMENTACAO.SAIDA &&
+    movimentacao.status === STATUS_MOVIMENTACAO.PREVISTO;
+  const podeCancelar = movimentacao.status === STATUS_MOVIMENTACAO.PREVISTO;
 
   async function executarReceberPagar() {
     if (!movimentacao) return;
@@ -77,7 +82,7 @@ export default function LivroCaixaDetalheModal({
         ...(contaId ? { contaId } : {}),
       };
       const atualizado =
-        movimentacao.tipo === "ENTRADA"
+        movimentacao.tipo === TIPO_MOVIMENTACAO.ENTRADA
           ? await receberMovimentacao(movimentacao.id, payload)
           : await pagarMovimentacao(movimentacao.id, payload);
       onAtualizado(atualizado);
@@ -264,7 +269,9 @@ export default function LivroCaixaDetalheModal({
         {mostrarReceberPagar && (podeReceber || podePagar) && (
           <div className="livro-caixa__receber-pagar">
             <h3>
-              {movimentacao.tipo === "ENTRADA" ? "Registrar recebimento" : "Registrar pagamento"}
+              {movimentacao.tipo === TIPO_MOVIMENTACAO.ENTRADA
+                ? "Registrar recebimento"
+                : "Registrar pagamento"}
             </h3>
             <div className="modal__grid">
               <label className="modal__campo">
@@ -366,7 +373,7 @@ export default function LivroCaixaDetalheModal({
               onClick={() => setMostrarReceberPagar(true)}
               disabled={acaoLoading}
             >
-              {movimentacao.tipo === "ENTRADA" ? "Receber" : "Pagar"}
+              {movimentacao.tipo === TIPO_MOVIMENTACAO.ENTRADA ? "Receber" : "Pagar"}
             </button>
           )}
         </div>

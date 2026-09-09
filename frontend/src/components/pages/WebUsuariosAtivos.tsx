@@ -3,15 +3,10 @@ import { isAxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
 import { getApiErrorMessage, getAuthUserLogin } from "@/lib/api";
 import { listarUsuariosAtivos, revogarUsuario } from "@/lib/usuariosApi";
+import { formatarData } from "@/lib/valorBrasil";
 import type { UsuarioAtivo } from "@/types/api";
-import AdminItemCard from "@/components/AdminItemCard";
-import ResponsiveList from "@/components/ResponsiveList";
-
-function formatarData(iso: string): string {
-  if (!iso) return "—";
-  const [y, m, d] = iso.split("T")[0].split("-");
-  return `${d}/${m}/${y}`;
-}
+import AdminItemCard from "@/components/ui/AdminItemCard";
+import ResponsiveList from "@/components/ui/ResponsiveList";
 
 function labelPerfil(perfil: string): string {
   if (perfil === "PROPRIETARIA") return "Proprietária";

@@ -4,8 +4,8 @@ import { getApiErrorMessage, isMockEnabled } from "@/lib/api";
 import { atualizarServico, criarServico, listarTodosServicos } from "@/lib/servicosApi";
 import { formatarReaisParaInput, parseValorReais } from "@/lib/valorBrasil";
 import { gerarHtmlRelatorioServicos } from "@/lib/relatorioServicos";
-import AdminItemCard from "@/components/AdminItemCard";
-import ResponsiveList from "@/components/ResponsiveList";
+import AdminItemCard from "@/components/ui/AdminItemCard";
+import ResponsiveList from "@/components/ui/ResponsiveList";
 
 type Servico = {
   id: string;

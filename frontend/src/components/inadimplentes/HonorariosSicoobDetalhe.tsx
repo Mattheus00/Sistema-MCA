@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { listarPagamentosDivida, listarPagamentosPorQuery } from "@/lib/inadimplentesApi";
 import { formatarData, formatarMoeda, ordenarPagamentosPorData } from "@/lib/inadimplentesUtils";
+import { formatarDataHora } from "@/lib/valorBrasil";
+import {
+  STATUS_COBRANCA_SICOOB,
+  METODO_PAGAMENTO,
+  statusEh,
+  statusNormalizado,
+} from "@/lib/constants/status";
 import { listarCobrancasPorDivida } from "@/lib/sicoobApi";
 import type { CobrancaSicoob, PagamentoInadimplencia } from "@/types/api";
 
@@ -12,37 +19,23 @@ type Props = {
   onPagamentoConfirmado: () => void;
 };
 
-function formatarDataHora(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return formatarData(iso);
-  return d.toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 function badgeCobranca(c: CobrancaSicoob) {
-  const s = String(c.status).toUpperCase();
-  if (s === "PENDENTE") {
+  if (statusEh(c.status, STATUS_COBRANCA_SICOOB.PENDENTE)) {
     return (
       <span className="honorarios-sicoob__badge honorarios-sicoob__badge--pendente">
         Aguardando pagamento
       </span>
     );
   }
-  if (s === "PAGO") {
+  if (statusEh(c.status, STATUS_COBRANCA_SICOOB.PAGO)) {
     return (
       <span className="honorarios-sicoob__badge honorarios-sicoob__badge--pago">
         Pagamento confirmado
-        {c.pagoEm ? ` · ${formatarDataHora(c.pagoEm)}` : ""}
+        {c.pagoEm ? ` · ${formatarDataHora(c.pagoEm, { fallbackData: true })}` : ""}
       </span>
     );
   }
-  if (s === "ERRO") {
+  if (statusEh(c.status, STATUS_COBRANCA_SICOOB.ERRO)) {
     return (
       <span
         className="honorarios-sicoob__badge honorarios-sicoob__badge--erro"
@@ -52,7 +45,7 @@ function badgeCobranca(c: CobrancaSicoob) {
       </span>
     );
   }
-  if (s === "CANCELADO") {
+  if (statusEh(c.status, STATUS_COBRANCA_SICOOB.CANCELADO)) {
     return (
       <span className="honorarios-sicoob__badge honorarios-sicoob__badge--cancelado">
         Cancelado
@@ -99,9 +92,13 @@ export default function HonorariosSicoobDetalhe({
 
         for (const c of cobs) {
           const id = c.cobrancaId;
-          const atual = String(c.status).toUpperCase();
+          const atual = statusNormalizado(c.status);
           const anterior = statusAnteriorRef.current[id];
-          if (anterior === "PENDENTE" && atual === "PAGO" && !notificouPagoRef.current.has(id)) {
+          if (
+            statusEh(anterior, STATUS_COBRANCA_SICOOB.PENDENTE) &&
+            statusEh(atual, STATUS_COBRANCA_SICOOB.PAGO) &&
+            !notificouPagoRef.current.has(id)
+          ) {
             notificouPagoRef.current.add(id);
             onConfirmadoRef.current();
           }
@@ -123,7 +120,7 @@ export default function HonorariosSicoobDetalhe({
     void carregar();
   }, [carregar]);
 
-  const temPendente = cobrancas.some((c) => String(c.status).toUpperCase() === "PENDENTE");
+  const temPendente = cobrancas.some((c) => statusEh(c.status, STATUS_COBRANCA_SICOOB.PENDENTE));
 
   useEffect(() => {
     if (!temPendente) return;
@@ -153,7 +150,7 @@ export default function HonorariosSicoobDetalhe({
               <li key={c.cobrancaId} className="honorarios-sicoob__item-cobranca">
                 <span className="honorarios-sicoob__tipo">{c.tipo}</span>
                 {badgeCobranca(c)}
-                {temPendente && String(c.status).toUpperCase() === "PENDENTE" && (
+                {temPendente && statusEh(c.status, STATUS_COBRANCA_SICOOB.PENDENTE) && (
                   <span className="honorarios-sicoob__polling" aria-live="polite">
                     Verificando pagamento…
                   </span>
@@ -181,7 +178,7 @@ export default function HonorariosSicoobDetalhe({
             </thead>
             <tbody>
               {listaPagamentos.map((p) => {
-                const pixSicoob = String(p.metodoPagamento ?? "").toUpperCase() === "PIX_SICOOB";
+                const pixSicoob = statusEh(p.metodoPagamento, METODO_PAGAMENTO.PIX_SICOOB);
                 return (
                   <tr key={p.pagamentoId ?? `${p.dataPagamento}-${p.valorPago}`}>
                     <td>{formatarData(p.dataPagamento)}</td>

@@ -1,28 +1,16 @@
 import type { AgingRelatorio, Inadimplencia } from "@/types/api";
 import type { AtividadeDashboard, FaixaInadimplenciaUi, PontoEvolucao } from "@/types/dashboard";
 import { isInadimplenciaEmAberto, saldoDevedorItem } from "@/lib/inadimplentesUtils";
+import { formatarData, formatarDataHora, formatarMoeda } from "@/lib/valorBrasil";
+import { STATUS_DIVIDA, STATUS_DIVIDA_FRONT, statusEh } from "@/lib/constants/status";
 
-const MOEDA = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const PERCENT = new Intl.NumberFormat("pt-BR", {
   minimumFractionDigits: 1,
   maximumFractionDigits: 1,
 });
-const DATA = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-});
-const DATA_HORA = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
 
 export function formatarMoedaDashboard(valor: number | null | undefined): string {
-  if (valor == null || !Number.isFinite(valor)) return "—";
-  return MOEDA.format(valor);
+  return formatarMoeda(valor);
 }
 
 export function formatarPercentualDashboard(valor: number | null | undefined): string {
@@ -31,17 +19,11 @@ export function formatarPercentualDashboard(valor: number | null | undefined): s
 }
 
 export function formatarDataDashboard(iso: string | undefined): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return DATA.format(d);
+  return formatarData(iso, { modo: "instant" });
 }
 
 export function formatarDataHoraDashboard(iso: string | undefined): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return DATA_HORA.format(d);
+  return formatarDataHora(iso);
 }
 
 export function iniciaisNome(nome: string): string {
@@ -59,8 +41,13 @@ export function labelPerfilUsuario(perfil: string | null): string {
 }
 
 export function isDividaEmAberto(status: string | undefined): boolean {
-  const s = (status ?? "EmAberto").toUpperCase();
-  return s === "EMABERTO" || s === "EM_ABERTO" || s === "PARCIAL" || s === "ACORDO";
+  return statusEh(
+    status ?? STATUS_DIVIDA_FRONT.EM_ABERTO,
+    STATUS_DIVIDA.EM_ABERTO,
+    "EMABERTO",
+    STATUS_DIVIDA.PARCIAL,
+    STATUS_DIVIDA_FRONT.ACORDO,
+  );
 }
 
 export function contarClientesInadimplentes(itens: Inadimplencia[]): number {
@@ -74,8 +61,7 @@ export function contarClientesInadimplentes(itens: Inadimplencia[]): number {
 export function somarBaixadoCancelado(itens: Inadimplencia[]): number {
   return itens
     .filter((i) => {
-      const s = (i.status ?? "").toUpperCase();
-      return s === "ACORDO";
+      return statusEh(i.status, STATUS_DIVIDA_FRONT.ACORDO);
     })
     .reduce((acc, i) => acc + (i.valor ?? 0), 0);
 }
@@ -216,7 +202,7 @@ export function mapInadimplenciasParaAtividades(itens: Inadimplencia[]): Ativida
     })
     .slice(0, 10)
     .map((item) => {
-      const pago = (item.status ?? "").toUpperCase() === "PAGO";
+      const pago = statusEh(item.status, STATUS_DIVIDA_FRONT.PAGO);
       return {
         id: item.id ?? `${item.clienteId}-${item.vencimento}`,
         titulo: pago ? "Pagamento registrado" : "Inadimplência em aberto",

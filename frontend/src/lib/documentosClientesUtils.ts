@@ -1,11 +1,13 @@
 import type { StatusDocumentoCliente, TipoDocumentoCliente } from "@/types/api";
+import { formatarData } from "@/lib/valorBrasil";
+import { STATUS_DOCUMENTO } from "@/lib/constants/status";
 
 export function labelStatusDocumentoCliente(status: StatusDocumentoCliente | string): string {
   const map: Record<string, string> = {
-    ENVIADO: "Novo",
-    RECEBIDO: "Recebido",
-    EM_ANALISE: "Em análise",
-    ARQUIVADO: "Arquivado",
+    [STATUS_DOCUMENTO.ENVIADO]: "Novo",
+    [STATUS_DOCUMENTO.RECEBIDO]: "Recebido",
+    [STATUS_DOCUMENTO.EM_ANALISE]: "Em análise",
+    [STATUS_DOCUMENTO.ARQUIVADO]: "Arquivado",
   };
   return map[String(status).toUpperCase()] ?? String(status);
 }
@@ -43,8 +45,5 @@ export function truncarTexto(texto: string | undefined, max = 60): string {
 }
 
 export function formatarDataDocumento(iso: string | undefined): string {
-  if (!iso) return "—";
-  const [y, m, d] = iso.split("T")[0].split("-");
-  if (!y || !m || !d) return iso;
-  return `${d}/${m}/${y}`;
+  return formatarData(iso);
 }
