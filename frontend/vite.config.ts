@@ -13,6 +13,17 @@ export default defineConfig({
     globals: true,
     include: ["test/**/*.test.ts", "test/**/*.test.tsx"],
     setupFiles: ["test/setup.ts"],
+    coverage: {
+      provider: "v8",
+      // Apenas `src/lib` entra no denominador da meta de linhas (>= 60%).
+      include: ["src/lib/**/*.ts"],
+      // Mocks inflariam o denominador sem testes unitários equivalentes.
+      exclude: ["src/lib/mockApi.ts", "src/lib/mockLivroCaixa.ts"],
+      reporter: ["text", "html"],
+      thresholds: {
+        lines: 60,
+      },
+    },
   },
   resolve: {
     alias: {
