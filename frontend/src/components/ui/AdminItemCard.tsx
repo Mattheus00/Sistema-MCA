@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { onActivateKeyDown } from "@/lib/keyboardActivate";
 
 export type AdminItemCardField = {
   label: string;
@@ -24,11 +25,13 @@ export default function AdminItemCard({
   className = "",
   onClick,
 }: AdminItemCardProps) {
+  const Tag = onClick ? "div" : "article";
+
   return (
-    <article
+    <Tag
       className={`admin-item-card ${onClick ? "admin-item-card--clickable" : ""} ${className}`.trim()}
       onClick={onClick}
-      onKeyDown={onClick ? (e) => e.key === "Enter" && onClick() : undefined}
+      onKeyDown={onClick ? (e) => onActivateKeyDown(e, onClick) : undefined}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
     >
@@ -50,6 +53,6 @@ export default function AdminItemCard({
         </dl>
       )}
       {actions && <div className="admin-item-card__acoes">{actions}</div>}
-    </article>
+    </Tag>
   );
 }

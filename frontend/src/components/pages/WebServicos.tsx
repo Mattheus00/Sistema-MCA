@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
+import ModalOverlay from "@/components/ui/ModalOverlay";
 import { getApiErrorMessage, isMockEnabled } from "@/lib/api";
 import { atualizarServico, criarServico, listarTodosServicos } from "@/lib/servicosApi";
 import { formatarReaisParaInput, parseValorReais } from "@/lib/valorBrasil";
@@ -103,6 +104,10 @@ export default function WebServicos() {
   const [valor, setValor] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
+  const idBase = useId();
+  const idNomeServico = `${idBase}-nome`;
+  const idValorServico = `${idBase}-valor`;
+  const idDescricaoServico = `${idBase}-descricao`;
 
   async function listar() {
     if (isMockEnabled()) {
@@ -426,8 +431,8 @@ export default function WebServicos() {
 
       {servicoParaExcluir &&
         createPortal(
-          <div className="modal-overlay" onClick={() => setServicoParaExcluir(null)}>
-            <div className="modal modal--confirmar-exclusao" onClick={(e) => e.stopPropagation()}>
+          <ModalOverlay onDismiss={() => setServicoParaExcluir(null)}>
+            <div className="modal modal--confirmar-exclusao">
               <h2 className="modal__titulo">Excluir serviço?</h2>
               <p className="modal__texto-confirmacao">
                 Tem certeza que deseja excluir o serviço{" "}
@@ -447,24 +452,30 @@ export default function WebServicos() {
                 </button>
               </div>
             </div>
-          </div>,
+          </ModalOverlay>,
           document.body,
         )}
 
       {modalAberto && (
-        <div className="modal-overlay" onClick={fecharModal}>
-          <div className="modal modal--cadastro" onClick={(e) => e.stopPropagation()}>
+        <ModalOverlay onDismiss={fecharModal}>
+          <div className="modal modal--cadastro">
             <h2 className="modal__titulo">{editando ? "Editar Serviço" : "Novo Serviço"}</h2>
             <div className="modal__grid">
-              <label className="modal__label modal__label--required">Nome do serviço</label>
+              <label className="modal__label modal__label--required" htmlFor={idNomeServico}>
+                Nome do serviço
+              </label>
               <input
+                id={idNomeServico}
                 className="modal__input modal__input--full"
                 placeholder="Ex.: Consultoria contábil, Abertura de empresa..."
                 value={titulo}
                 onChange={(e) => setTitulo(e.target.value)}
               />
-              <label className="modal__label">Valor padrão (R$)</label>
+              <label className="modal__label" htmlFor={idValorServico}>
+                Valor padrão (R$)
+              </label>
               <input
+                id={idValorServico}
                 type="text"
                 inputMode="decimal"
                 className="modal__input modal__input--full"
@@ -472,8 +483,11 @@ export default function WebServicos() {
                 value={valor}
                 onChange={(e) => setValor(e.target.value)}
               />
-              <label className="modal__label">Descrição</label>
+              <label className="modal__label" htmlFor={idDescricaoServico}>
+                Descrição
+              </label>
               <textarea
+                id={idDescricaoServico}
                 className="modal__input modal__input--full"
                 placeholder="Detalhes do serviço, escopo, observações..."
                 value={descricao}
@@ -501,7 +515,7 @@ export default function WebServicos() {
               </button>
             </div>
           </div>
-        </div>
+        </ModalOverlay>
       )}
     </div>
   );

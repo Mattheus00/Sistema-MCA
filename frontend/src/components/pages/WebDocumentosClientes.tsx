@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import ModalOverlay from "@/components/ui/ModalOverlay";
 import { getApiErrorMessage } from "@/lib/api";
 import { listarClientes } from "@/lib/clientesApi";
 import { STATUS_CLIENTE, STATUS_DOCUMENTO } from "@/lib/constants/status";
@@ -576,17 +577,12 @@ export default function WebDocumentosClientes() {
 
       {detalhe &&
         createPortal(
-          <div
-            className="modal-overlay modal-overlay--blur"
-            role="presentation"
-            onClick={fecharDetalhe}
-          >
+          <ModalOverlay className="modal-overlay modal-overlay--blur" onDismiss={fecharDetalhe}>
             <div
               className="modal modal--largo page-documentos-clientes__modal"
               role="dialog"
               aria-modal="true"
               aria-labelledby="modal-doc-titulo"
-              onClick={(e) => e.stopPropagation()}
             >
               <header className="page-documentos-clientes__modal-head">
                 <div>
@@ -748,7 +744,7 @@ export default function WebDocumentosClientes() {
                 </section>
               </div>
             </div>
-          </div>,
+          </ModalOverlay>,
           document.body,
         )}
     </div>

@@ -1,5 +1,6 @@
 import { useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
+import ModalOverlay from "@/components/ui/ModalOverlay";
 import {
   adicionarChecklistItem,
   removerChecklistItem,
@@ -165,14 +166,8 @@ export default function TarefaDetalheModal({
   }
 
   const modal = (
-    <div className="modal-overlay" onClick={() => !busy && onFechar()}>
-      <div
-        className="tarefas-detalhe"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={tituloId}
-      >
+    <ModalOverlay onDismiss={() => !busy && onFechar()} dismissDisabled={busy}>
+      <div className="tarefas-detalhe" role="dialog" aria-modal="true" aria-labelledby={tituloId}>
         <header className="tarefas-detalhe__header">
           <div className="tarefas-detalhe__header-main">
             <div className="tarefas-detalhe__badges">
@@ -366,7 +361,7 @@ export default function TarefaDetalheModal({
           </button>
         </footer>
       </div>
-    </div>
+    </ModalOverlay>
   );
 
   return createPortal(modal, document.body);

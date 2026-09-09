@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 import { createPortal } from "react-dom";
+import ModalOverlay from "@/components/ui/ModalOverlay";
 import { CloseIcon, RefreshIcon, SaveIcon, UserIcon } from "@/components/clientes/ClientesIcons";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { FORM_VAZIO, maskCelular, maskCpfCnpj } from "@/hooks/clientesTypes";
@@ -27,10 +28,8 @@ export default function ClienteFormModal({
   useBodyScrollLock(true);
 
   return createPortal(
-    <div
-      className="modal-overlay"
-      role="presentation"
-      onClick={() => {
+    <ModalOverlay
+      onDismiss={() => {
         setModalAberto(false);
         setClienteEmEdicao(null);
       }}
@@ -40,7 +39,6 @@ export default function ClienteFormModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-cliente-titulo"
-        onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
@@ -257,7 +255,7 @@ export default function ClienteFormModal({
           </div>
         </footer>
       </div>
-    </div>,
+    </ModalOverlay>,
     document.body,
   );
 }

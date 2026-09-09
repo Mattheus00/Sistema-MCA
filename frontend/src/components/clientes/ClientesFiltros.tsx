@@ -25,6 +25,7 @@ export default function ClientesFiltros({
         <input
           type="text"
           placeholder="Buscar por código, nome ou CPF/CNPJ..."
+          aria-label="Buscar por código, nome ou CPF/CNPJ"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
           className="page-clientes__input"

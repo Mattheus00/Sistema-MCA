@@ -1,4 +1,5 @@
 import { STATUS_TAREFA } from "@/lib/constants/status";
+import { onActivateKeyDown } from "@/lib/keyboardActivate";
 import type { PrioridadeTarefa, StatusTarefa, TarefaResumo } from "@/types/tarefas";
 import {
   formatarDataTarefa,
@@ -121,14 +122,14 @@ export default function TarefaCard({ tarefa, draggable, onClick, onDragStart }: 
   const iniciais = iniciaisResponsavel(tarefa.responsavelNome);
 
   return (
-    <article
+    <div
       className={`tarefas-card${tarefa.atrasada ? " tarefas-card--atrasada" : ""}`}
       draggable={draggable}
       onDragStart={draggable ? (e) => onDragStart?.(e, tarefa) : undefined}
       onClick={onClick}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
-      onKeyDown={onClick ? (e) => e.key === "Enter" && onClick() : undefined}
+      onKeyDown={onClick ? (e) => onActivateKeyDown(e, onClick) : undefined}
     >
       <div className="tarefas-card__icons">
         <span className="tarefas-card__check" aria-hidden="true">
@@ -175,6 +176,6 @@ export default function TarefaCard({ tarefa, draggable, onClick, onDragStart }: 
         </div>
         <ProgressoCircular concluidos={tarefa.checklistConcluidos} total={tarefa.checklistTotal} />
       </footer>
-    </article>
+    </div>
   );
 }

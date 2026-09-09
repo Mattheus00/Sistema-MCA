@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { getApiErrorMessage } from "@/lib/api";
 import { cadastrarUsuario } from "@/lib/usuariosApi";
 import type { CadastroUsuarioPayload } from "@/types/api";
@@ -31,6 +31,14 @@ export default function WebCadastroUsuario() {
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState(false);
   const [loading, setLoading] = useState(false);
+  const idBase = useId();
+  const idNome = `${idBase}-nome`;
+  const idEmail = `${idBase}-email`;
+  const idTel1 = `${idBase}-tel1`;
+  const idTel2 = `${idBase}-tel2`;
+  const idFuncao = `${idBase}-funcao`;
+  const idPermissao = `${idBase}-permissao`;
+  const idPlanta = `${idBase}-planta`;
   const [form, setForm] = useState<CadastroUsuarioPayload & { confirmarSenha?: string }>({
     nome: "",
     email: "",
@@ -136,8 +144,11 @@ export default function WebCadastroUsuario() {
 
         <div className="page-cadastro-usuario__row page-cadastro-usuario__row--toggle">
           <div className="page-cadastro-usuario__field">
-            <label className="modal__label">Nome do usuário *</label>
+            <label className="modal__label" htmlFor={idNome}>
+              Nome do usuário *
+            </label>
             <input
+              id={idNome}
               type="text"
               placeholder="Digitar"
               value={form.nome}
@@ -161,8 +172,11 @@ export default function WebCadastroUsuario() {
           </div>
         </div>
 
-        <label className="modal__label">Email *</label>
+        <label className="modal__label" htmlFor={idEmail}>
+          Email *
+        </label>
         <input
+          id={idEmail}
           type="email"
           placeholder="Digitar"
           value={form.email}
@@ -175,8 +189,11 @@ export default function WebCadastroUsuario() {
 
         <div className="page-cadastro-usuario__row page-cadastro-usuario__row--two">
           <div className="page-cadastro-usuario__field">
-            <label className="modal__label">Telefone 1 *</label>
+            <label className="modal__label" htmlFor={idTel1}>
+              Telefone 1 *
+            </label>
             <input
+              id={idTel1}
               type="tel"
               placeholder="Digitar"
               value={form.telefone1}
@@ -186,8 +203,11 @@ export default function WebCadastroUsuario() {
             />
           </div>
           <div className="page-cadastro-usuario__field">
-            <label className="modal__label">Telefone 2</label>
+            <label className="modal__label" htmlFor={idTel2}>
+              Telefone 2
+            </label>
             <input
+              id={idTel2}
               type="tel"
               placeholder="Digitar"
               value={form.telefone2}
@@ -198,8 +218,11 @@ export default function WebCadastroUsuario() {
           </div>
         </div>
 
-        <label className="modal__label">Função *</label>
+        <label className="modal__label" htmlFor={idFuncao}>
+          Função *
+        </label>
         <select
+          id={idFuncao}
           value={form.funcao}
           onChange={(e) => setForm({ ...form, funcao: e.target.value })}
           className="modal__input modal__select"
@@ -214,8 +237,11 @@ export default function WebCadastroUsuario() {
 
         <div className="page-cadastro-usuario__row page-cadastro-usuario__row--two">
           <div className="page-cadastro-usuario__field">
-            <label className="modal__label">Permissão *</label>
+            <label className="modal__label" htmlFor={idPermissao}>
+              Permissão *
+            </label>
             <select
+              id={idPermissao}
               value={form.permissao}
               onChange={(e) => setForm({ ...form, permissao: e.target.value })}
               className="modal__input modal__select"
@@ -229,9 +255,12 @@ export default function WebCadastroUsuario() {
             </select>
           </div>
           <div className="page-cadastro-usuario__field page-cadastro-usuario__field--with-add">
-            <label className="modal__label">Planta *</label>
+            <label className="modal__label" htmlFor={idPlanta}>
+              Planta *
+            </label>
             <div className="page-cadastro-usuario__input-add">
               <select
+                id={idPlanta}
                 value={form.planta}
                 onChange={(e) => setForm({ ...form, planta: e.target.value })}
                 className="modal__input modal__select"

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import ConfirmacaoModal from "@/components/ui/ConfirmacaoModal";
+import ModalOverlay from "@/components/ui/ModalOverlay";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import {
   atualizarCategoria,
@@ -36,6 +38,11 @@ export default function LivroCaixaCadastrosModal({
   const [editContaId, setEditContaId] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [confirmacao, setConfirmacao] = useState<null | {
+    id: string;
+    mensagem: string;
+    tipo: "categoria" | "conta";
+  }>(null);
 
   useBodyScrollLock(aberto);
 
@@ -90,24 +97,22 @@ export default function LivroCaixaCadastrosModal({
     }
   }
 
-  async function desativarCat(id: string) {
-    if (!window.confirm("Desativar esta categoria?")) return;
-    setSalvando(true);
-    try {
-      await desativarCategoria(id);
-      onAtualizado();
-    } catch (e: unknown) {
-      setErro(e instanceof Error ? e.message : "Erro ao desativar.");
-    } finally {
-      setSalvando(false);
-    }
+  function desativarCat(id: string) {
+    setConfirmacao({ id, mensagem: "Desativar esta categoria?", tipo: "categoria" });
   }
 
-  async function desativarC(id: string) {
-    if (!window.confirm("Desativar esta conta?")) return;
+  function desativarC(id: string) {
+    setConfirmacao({ id, mensagem: "Desativar esta conta?", tipo: "conta" });
+  }
+
+  async function confirmarDesativar() {
+    if (!confirmacao) return;
+    const { id, tipo } = confirmacao;
+    setConfirmacao(null);
     setSalvando(true);
     try {
-      await desativarConta(id);
+      if (tipo === "categoria") await desativarCategoria(id);
+      else await desativarConta(id);
       onAtualizado();
     } catch (e: unknown) {
       setErro(e instanceof Error ? e.message : "Erro ao desativar.");
@@ -117,10 +122,9 @@ export default function LivroCaixaCadastrosModal({
   }
 
   const modal = (
-    <div className="modal-overlay" onClick={() => !salvando && onFechar()}>
+    <ModalOverlay onDismiss={() => !salvando && onFechar()} dismissDisabled={salvando}>
       <div
         className="modal modal--cadastro livro-caixa__modal-cadastros"
-        onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
       >
@@ -155,11 +159,13 @@ export default function LivroCaixaCadastrosModal({
               <input
                 className="modal__input"
                 placeholder="Nome da categoria"
+                aria-label="Nome da categoria"
                 value={nomeCat}
                 onChange={(e) => setNomeCat(e.target.value)}
               />
               <select
                 className="modal__input"
+                aria-label="Tipo da categoria"
                 value={tipoCat}
                 onChange={(e) => setTipoCat(e.target.value as TipoMovimentacao)}
               >
@@ -216,6 +222,7 @@ export default function LivroCaixaCadastrosModal({
               <input
                 className="modal__input"
                 placeholder="Nome da conta"
+                aria-label="Nome da conta"
                 value={nomeConta}
                 onChange={(e) => setNomeConta(e.target.value)}
               />
@@ -274,8 +281,19 @@ export default function LivroCaixaCadastrosModal({
           </button>
         </div>
       </div>
-    </div>
+    </ModalOverlay>
   );
 
-  return createPortal(modal, document.body);
+  return (
+    <>
+      {createPortal(modal, document.body)}
+      {confirmacao && (
+        <ConfirmacaoModal
+          mensagem={confirmacao.mensagem}
+          onCancelar={() => setConfirmacao(null)}
+          onConfirmar={() => void confirmarDesativar()}
+        />
+      )}
+    </>
+  );
 }

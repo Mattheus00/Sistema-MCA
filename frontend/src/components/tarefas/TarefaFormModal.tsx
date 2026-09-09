@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import ModalOverlay from "@/components/ui/ModalOverlay";
 import { getAuthUserDisplay } from "@/lib/api";
 import { listarClientes } from "@/lib/clientesApi";
 import { STATUS_CLIENTE, STATUS_TAREFA } from "@/lib/constants/status";
@@ -359,14 +360,8 @@ export default function TarefaFormModal({
   }
 
   const modal = (
-    <div className="modal-overlay" onClick={() => !salvando && onFechar()}>
-      <div
-        className="tarefas-form"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={tituloId}
-      >
+    <ModalOverlay onDismiss={() => !salvando && onFechar()} dismissDisabled={salvando}>
+      <div className="tarefas-form" role="dialog" aria-modal="true" aria-labelledby={tituloId}>
         <header className="tarefas-form__header">
           <div>
             <h2 id={tituloId} className="tarefas-form__titulo">
@@ -407,7 +402,6 @@ export default function TarefaFormModal({
                     value={form.titulo}
                     onChange={(e) => atualizarCampo("titulo", e.target.value)}
                     placeholder="Ex.: Validar proposta do cliente"
-                    autoFocus
                   />
                   {erros.titulo && <span className="tarefas-form__erro-campo">{erros.titulo}</span>}
                 </label>
@@ -727,7 +721,7 @@ export default function TarefaFormModal({
           </footer>
         </form>
       </div>
-    </div>
+    </ModalOverlay>
   );
 
   return createPortal(modal, document.body);

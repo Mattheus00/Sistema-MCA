@@ -1,4 +1,5 @@
 import { createPortal } from "react-dom";
+import ModalOverlay from "@/components/ui/ModalOverlay";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { formatarMesAno } from "@/lib/inadimplentesUtils";
 import type { InadimplenciaParaCancelar } from "@/hooks/honorariosClienteTypes";
@@ -17,8 +18,8 @@ export default function ModalCancelarHonorario({
   useBodyScrollLock(true);
 
   return createPortal(
-    <div className="modal-overlay" onClick={onFechar}>
-      <div className="modal modal--confirmar-exclusao" onClick={(e) => e.stopPropagation()}>
+    <ModalOverlay onDismiss={onFechar}>
+      <div className="modal modal--confirmar-exclusao" role="dialog" aria-modal="true">
         <h2 className="modal__titulo">Apagar inadimplência?</h2>
         <p className="modal__texto-confirmacao">
           Tem certeza que deseja apagar a inadimplência do mês{" "}
@@ -34,7 +35,7 @@ export default function ModalCancelarHonorario({
           </button>
         </div>
       </div>
-    </div>,
+    </ModalOverlay>,
     document.body,
   );
 }

@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import { createPortal } from "react-dom";
 import { CheckIcon } from "@/components/inadimplentes/HonorariosIcons";
+import ModalOverlay from "@/components/ui/ModalOverlay";
 import ModalPagamentoParcial from "@/components/inadimplentes/ModalPagamentoParcial";
 import ModalPagamentoResumo from "@/components/inadimplentes/ModalPagamentoResumo";
 import ModalPagamentoTotal from "@/components/inadimplentes/ModalPagamentoTotal";
@@ -36,10 +37,9 @@ export default function ModalPagamento({
       : null;
 
   return createPortal(
-    <div className="modal-overlay" onClick={() => !salvandoPagamento && setModalPagamento(null)}>
+    <ModalOverlay onDismiss={() => setModalPagamento(null)} dismissDisabled={salvandoPagamento}>
       <div
         className="modal modal--pagamento modal-pagamento-registro"
-        onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-pagamento-titulo"
@@ -171,7 +171,7 @@ export default function ModalPagamento({
           />
         </div>
       </div>
-    </div>,
+    </ModalOverlay>,
     document.body,
   );
 }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import ModalOverlay from "@/components/ui/ModalOverlay";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { listarClientes } from "@/lib/clientesApi";
 import { formatarReaisParaInput, parseValorReais } from "@/lib/valorBrasil";
@@ -400,10 +401,9 @@ export default function LivroCaixaFormModal({
   }
 
   const modal = (
-    <div className="modal-overlay" onClick={() => !salvando && onFechar()}>
+    <ModalOverlay onDismiss={() => !salvando && onFechar()} dismissDisabled={salvando}>
       <div
         className="lc-modal-form"
-        onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="lc-modal-form-titulo"
@@ -774,7 +774,7 @@ export default function LivroCaixaFormModal({
           </footer>
         </form>
       </div>
-    </div>
+    </ModalOverlay>
   );
 
   return createPortal(modal, document.body);

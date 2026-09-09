@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
+import ModalOverlay from "@/components/ui/ModalOverlay";
 import { getApiErrorMessage, isMockEnabled } from "@/lib/api";
 import { parseValorReais } from "@/lib/valorBrasil";
 import { listarClientes } from "@/lib/clientesApi";
@@ -289,9 +290,11 @@ export default function WebInadimplentesRegistro() {
                 }}
                 onBlur={() => setTimeout(() => setClienteDropdownAberto(false), 150)}
                 className="registro-inadimplencia__input"
+                role="combobox"
                 aria-expanded={clienteDropdownAberto}
                 aria-haspopup="listbox"
                 aria-controls="cliente-listbox-registro"
+                aria-autocomplete="list"
               />
               {clienteDropdownAberto && (
                 <ul
@@ -623,11 +626,8 @@ export default function WebInadimplentesRegistro() {
 
       {modalServicosValorRowIndex !== null &&
         createPortal(
-          <div className="modal-overlay" onClick={() => setModalServicosValorRowIndex(null)}>
-            <div
-              className="modal modal--cadastro modal--servicos-valor"
-              onClick={(e) => e.stopPropagation()}
-            >
+          <ModalOverlay onDismiss={() => setModalServicosValorRowIndex(null)}>
+            <div className="modal modal--cadastro modal--servicos-valor">
               <h2 className="modal__titulo">Selecionar serviços</h2>
               <p className="modal__servicos-valor-desc">
                 Marque os serviços prestados. O valor será somado e aplicado ao período selecionado.
@@ -717,7 +717,7 @@ export default function WebInadimplentesRegistro() {
                 </button>
               </div>
             </div>
-          </div>,
+          </ModalOverlay>,
           document.body,
         )}
     </div>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { onActivateKeyDown } from "@/lib/keyboardActivate";
 import {
   corFaixaCalendario,
   diasNoMes,
@@ -210,7 +211,12 @@ export default function TarefasCalendario({
                   <div
                     key={c.iso}
                     className={`tarefas-cal__dia${c.foraDoMes ? " is-fora" : ""}${ehHoje ? " is-hoje" : ""}${selecionado ? " is-sel" : ""}`}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={selecionado}
+                    aria-label={c.iso}
                     onClick={() => setDiaSelecionado(c.iso)}
+                    onKeyDown={(e) => onActivateKeyDown(e, () => setDiaSelecionado(c.iso))}
                   >
                     <span className={`tarefas-cal__num${ehHoje ? " is-hoje" : ""}`}>{c.dia}</span>
                     <div className="tarefas-cal__itens">

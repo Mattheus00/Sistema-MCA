@@ -202,7 +202,7 @@ export default function SicoobCobrancaPanel({
 
           {emitida.tipo === "PIX" && emitida.pixCopiaECola && (
             <div className="sicoob-panel__campo">
-              <label className="sicoob-panel__label">Pix copia e cola</label>
+              <p className="sicoob-panel__label">Pix copia e cola</p>
               <div className="sicoob-panel__campo-row">
                 <code className="sicoob-panel__code">{emitida.pixCopiaECola}</code>
                 <button
@@ -220,7 +220,7 @@ export default function SicoobCobrancaPanel({
             <>
               {emitida.boletoLinhaDigitavel && (
                 <div className="sicoob-panel__campo">
-                  <label className="sicoob-panel__label">Linha digitável</label>
+                  <p className="sicoob-panel__label">Linha digitável</p>
                   <div className="sicoob-panel__campo-row">
                     <code className="sicoob-panel__code">{emitida.boletoLinhaDigitavel}</code>
                     <button
@@ -235,7 +235,7 @@ export default function SicoobCobrancaPanel({
               )}
               {emitida.boletoCodigoBarras && (
                 <div className="sicoob-panel__campo">
-                  <label className="sicoob-panel__label">Código de barras</label>
+                  <p className="sicoob-panel__label">Código de barras</p>
                   <div className="sicoob-panel__campo-row">
                     <code className="sicoob-panel__code">{emitida.boletoCodigoBarras}</code>
                     <button

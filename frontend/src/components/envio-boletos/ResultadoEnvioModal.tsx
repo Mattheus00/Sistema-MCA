@@ -1,4 +1,5 @@
 import { createPortal } from "react-dom";
+import ModalOverlay from "@/components/ui/ModalOverlay";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { getApiErrorMessage } from "@/lib/api";
 import { baixarRelatorioCsv } from "@/lib/envioBoletosApi";
@@ -72,13 +73,12 @@ export default function ResultadoEnvioModal({
   useBodyScrollLock(true);
 
   return createPortal(
-    <div className="modal-overlay" role="presentation" onClick={() => setResultadoHistorico(null)}>
+    <ModalOverlay onDismiss={() => setResultadoHistorico(null)}>
       <div
         className="modal modal--largo"
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-historico-titulo"
-        onClick={(e) => e.stopPropagation()}
       >
         <h2 id="modal-historico-titulo" className="modal__titulo">
           Detalhe do lote
@@ -133,7 +133,7 @@ export default function ResultadoEnvioModal({
           </button>
         </div>
       </div>
-    </div>,
+    </ModalOverlay>,
     document.body,
   );
 }

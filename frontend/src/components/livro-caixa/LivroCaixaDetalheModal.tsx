@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import ConfirmacaoModal from "@/components/ui/ConfirmacaoModal";
+import ModalOverlay from "@/components/ui/ModalOverlay";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import {
   baixarAnexoMovimentacao,
@@ -44,6 +46,7 @@ export default function LivroCaixaDetalheModal({
   const [acaoLoading, setAcaoLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [mostrarReceberPagar, setMostrarReceberPagar] = useState(false);
+  const [confirmarCancelar, setConfirmarCancelar] = useState(false);
   const [dataPagamento, setDataPagamento] = useState(hojeIso());
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento | "">("");
   const [contaId, setContaId] = useState("");
@@ -55,6 +58,7 @@ export default function LivroCaixaDetalheModal({
     if (!movimentacao) return;
     setErro(null);
     setMostrarReceberPagar(false);
+    setConfirmarCancelar(false);
     setDataPagamento(hojeIso());
     setFormaPagamento(movimentacao.formaPagamento ?? "");
     setContaId(movimentacao.contaId ?? "");
@@ -94,7 +98,8 @@ export default function LivroCaixaDetalheModal({
   }
 
   async function executarCancelar() {
-    if (!movimentacao || !window.confirm("Cancelar esta movimentação?")) return;
+    if (!movimentacao) return;
+    setConfirmarCancelar(false);
     setAcaoLoading(true);
     setErro(null);
     try {
@@ -124,10 +129,9 @@ export default function LivroCaixaDetalheModal({
   }
 
   const modal = (
-    <div className="modal-overlay" onClick={() => !acaoLoading && onFechar()}>
+    <ModalOverlay onDismiss={() => !acaoLoading && onFechar()} dismissDisabled={acaoLoading}>
       <div
         className="modal modal--cadastro livro-caixa__modal-detalhe"
-        onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
       >
@@ -359,7 +363,7 @@ export default function LivroCaixaDetalheModal({
             <button
               type="button"
               className="btn btn--secondary"
-              onClick={() => void executarCancelar()}
+              onClick={() => setConfirmarCancelar(true)}
               disabled={acaoLoading}
             >
               Cancelar movimentação
@@ -377,8 +381,19 @@ export default function LivroCaixaDetalheModal({
           )}
         </div>
       </div>
-    </div>
+    </ModalOverlay>
   );
 
-  return createPortal(modal, document.body);
+  return (
+    <>
+      {createPortal(modal, document.body)}
+      {confirmarCancelar && (
+        <ConfirmacaoModal
+          mensagem="Cancelar esta movimentação?"
+          onCancelar={() => setConfirmarCancelar(false)}
+          onConfirmar={() => void executarCancelar()}
+        />
+      )}
+    </>
+  );
 }

@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 import { createPortal } from "react-dom";
+import ModalOverlay from "@/components/ui/ModalOverlay";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import type { Cliente } from "@/types/api";
 
@@ -17,8 +18,8 @@ export default function ModalExcluirCliente({
   useBodyScrollLock(true);
 
   return createPortal(
-    <div className="modal-overlay" onClick={() => setClienteParaExcluir(null)}>
-      <div className="modal modal--confirmar-exclusao" onClick={(e) => e.stopPropagation()}>
+    <ModalOverlay onDismiss={() => setClienteParaExcluir(null)}>
+      <div className="modal modal--confirmar-exclusao">
         <h2 className="modal__titulo">Excluir cliente?</h2>
         <p className="modal__texto-confirmacao">
           Tem certeza que deseja excluir o cliente{" "}
@@ -45,7 +46,7 @@ export default function ModalExcluirCliente({
           </button>
         </div>
       </div>
-    </div>,
+    </ModalOverlay>,
     document.body,
   );
 }

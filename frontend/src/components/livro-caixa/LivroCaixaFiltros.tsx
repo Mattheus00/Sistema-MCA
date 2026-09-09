@@ -1,3 +1,4 @@
+import { useId } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { AbaLivroCaixa } from "@/hooks/livroCaixaTypes";
 import { STATUS_MOVIMENTACAO, TIPO_MOVIMENTACAO } from "@/lib/constants/status";
@@ -79,6 +80,10 @@ export default function LivroCaixaFiltros({
   busca,
   setBusca,
 }: LivroCaixaFiltrosProps) {
+  const idBase = useId();
+  const idDataInicio = `${idBase}-inicio`;
+  const idDataFim = `${idBase}-fim`;
+
   return (
     <>
       <div className="livro-caixa__periodos">
@@ -96,18 +101,20 @@ export default function LivroCaixaFiltros({
 
       {periodoRapido === "PERSONALIZADO" && (
         <div className="livro-caixa__periodo-custom">
-          <label>
+          <label htmlFor={idDataInicio}>
             De
             <input
+              id={idDataInicio}
               type="date"
               className="modal__input"
               value={dataInicio}
               onChange={(e) => setDataInicio(e.target.value)}
             />
           </label>
-          <label>
+          <label htmlFor={idDataFim}>
             Até
             <input
+              id={idDataFim}
               type="date"
               className="modal__input"
               value={dataFim}
@@ -170,6 +177,7 @@ export default function LivroCaixaFiltros({
             <div className="livro-caixa__filtros-avancados">
               <select
                 className="modal__input"
+                aria-label="Tipo"
                 value={tipoFiltro}
                 onChange={(e) => {
                   setTipoFiltro(e.target.value as TipoMovimentacao | "");
@@ -183,6 +191,7 @@ export default function LivroCaixaFiltros({
               </select>
               <select
                 className="modal__input"
+                aria-label="Status"
                 value={statusFiltro}
                 onChange={(e) => {
                   setStatusFiltro(e.target.value as StatusMovimentacao | "");
@@ -198,6 +207,7 @@ export default function LivroCaixaFiltros({
               </select>
               <select
                 className="modal__input"
+                aria-label="Categoria"
                 value={categoriaFiltro}
                 onChange={(e) => {
                   setCategoriaFiltro(e.target.value);
@@ -215,6 +225,7 @@ export default function LivroCaixaFiltros({
               </select>
               <select
                 className="modal__input"
+                aria-label="Conta"
                 value={contaFiltro}
                 onChange={(e) => {
                   setContaFiltro(e.target.value);
@@ -232,6 +243,7 @@ export default function LivroCaixaFiltros({
               </select>
               <select
                 className="modal__input"
+                aria-label="Forma pagamento"
                 value={formaFiltro}
                 onChange={(e) => {
                   setFormaFiltro(e.target.value as FormaPagamento | "");
@@ -248,6 +260,7 @@ export default function LivroCaixaFiltros({
               <input
                 className="modal__input"
                 placeholder="Buscar descrição…"
+                aria-label="Buscar descrição"
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && setPagina(0)}

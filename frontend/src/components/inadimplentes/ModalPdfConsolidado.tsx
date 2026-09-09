@@ -1,5 +1,6 @@
 import { createPortal } from "react-dom";
 import { DownloadPdfIcon, EmailSendIcon } from "@/components/inadimplentes/HonorariosIcons";
+import ModalOverlay from "@/components/ui/ModalOverlay";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 type ModalPdfConsolidadoProps = {
@@ -24,8 +25,8 @@ export default function ModalPdfConsolidado({
   useBodyScrollLock(true);
 
   return createPortal(
-    <div className="modal-overlay" onClick={fecharModalPdfConsolidado}>
-      <div className="modal modal--cadastro modal--pagamento" onClick={(e) => e.stopPropagation()}>
+    <ModalOverlay onDismiss={fecharModalPdfConsolidado}>
+      <div className="modal modal--cadastro modal--pagamento">
         <p className="modal__eyebrow">AVISO DE PENDÊNCIA</p>
         <h2 className="modal__titulo">{nomeCliente}</h2>
         <p className="modal__texto-confirmacao modal__label--full">
@@ -87,7 +88,7 @@ export default function ModalPdfConsolidado({
           </button>
         </div>
       </div>
-    </div>,
+    </ModalOverlay>,
     document.body,
   );
 }

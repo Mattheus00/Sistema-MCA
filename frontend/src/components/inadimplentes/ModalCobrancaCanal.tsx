@@ -1,6 +1,7 @@
 import { createPortal } from "react-dom";
 import { EmailSendIcon } from "@/components/inadimplentes/HonorariosIcons";
 import { WhatsAppIcon } from "@/components/inadimplentes/IconeWhatsApp";
+import ModalOverlay from "@/components/ui/ModalOverlay";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { formatarData, formatarMesAno } from "@/lib/inadimplentesUtils";
 import { normalizeTelefoneParaWhatsApp } from "@/lib/mailtoCobranca";
@@ -30,8 +31,8 @@ export default function ModalCobrancaCanal({
   useBodyScrollLock(true);
 
   return createPortal(
-    <div className="modal-overlay" onClick={fecharModalCobrancaCanal}>
-      <div className="modal modal--cadastro modal--pagamento" onClick={(e) => e.stopPropagation()}>
+    <ModalOverlay onDismiss={fecharModalCobrancaCanal}>
+      <div className="modal modal--cadastro modal--pagamento">
         <p className="modal__eyebrow">ENVIAR COBRANÇA</p>
         <h2 className="modal__titulo">{nomeCliente}</h2>
         <p className="modal__texto-confirmacao modal__label--full">
@@ -99,7 +100,7 @@ export default function ModalCobrancaCanal({
           </button>
         </div>
       </div>
-    </div>,
+    </ModalOverlay>,
     document.body,
   );
 }

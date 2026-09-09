@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
+import ModalOverlay from "@/components/ui/ModalOverlay";
 import { getApiErrorMessage, getAuthUserLogin } from "@/lib/api";
 import { listarUsuariosAtivos, revogarUsuario } from "@/lib/usuariosApi";
 import { formatarData } from "@/lib/valorBrasil";
@@ -237,14 +238,9 @@ export default function WebUsuariosAtivos({ embedded = false }: WebUsuariosAtivo
       </section>
 
       {confirmar && (
-        <div
-          className="modal-overlay"
-          onClick={() => !revogandoId && setConfirmar(null)}
-          role="presentation"
-        >
+        <ModalOverlay onDismiss={() => setConfirmar(null)} dismissDisabled={!!revogandoId}>
           <div
             className="modal modal--confirmar-exclusao"
-            onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
             aria-labelledby="modal-revogar-titulo"
@@ -277,7 +273,7 @@ export default function WebUsuariosAtivos({ embedded = false }: WebUsuariosAtivo
               </button>
             </div>
           </div>
-        </div>
+        </ModalOverlay>
       )}
     </div>
   );

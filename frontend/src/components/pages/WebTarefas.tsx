@@ -410,12 +410,14 @@ export default function WebTarefas() {
         <input
           className="modal__input"
           placeholder="Buscar tarefas…"
+          aria-label="Buscar tarefas"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && aplicarBusca()}
         />
         <select
           className="modal__input"
+          aria-label="Prioridade"
           value={prioridadeFiltro}
           onChange={(e) => {
             setPrioridadeFiltro(e.target.value as PrioridadeTarefa | "");
@@ -431,6 +433,7 @@ export default function WebTarefas() {
         </select>
         <select
           className="modal__input"
+          aria-label="Status"
           value={statusFiltro}
           onChange={(e) => {
             setStatusFiltro(e.target.value as StatusTarefa | "");
@@ -447,6 +450,7 @@ export default function WebTarefas() {
         <input
           className="modal__input"
           placeholder="Cliente"
+          aria-label="Cliente"
           value={categoriaFiltro}
           onChange={(e) => {
             setCategoriaFiltro(e.target.value);
@@ -456,6 +460,7 @@ export default function WebTarefas() {
         {isGestor && visaoEquipe && (
           <select
             className="modal__input"
+            aria-label="Responsável"
             value={responsavelId}
             onChange={(e) => {
               setResponsavelId(e.target.value);

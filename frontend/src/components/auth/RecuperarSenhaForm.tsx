@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import CampoSenha from "@/components/auth/CampoSenha";
 import { UserIcon } from "@/components/auth/LoginIcons";
+import ModalOverlay from "@/components/ui/ModalOverlay";
 import {
   getMensagemErroRecuperacao,
   isProducaoApi,
@@ -115,8 +116,11 @@ export default function RecuperarSenhaForm({
   }
 
   return (
-    <div className="modal-overlay page-login__recuperacao-overlay" onClick={fecharRecuperacaoSenha}>
-      <div className="modal page-login__recuperacao-modal" onClick={(e) => e.stopPropagation()}>
+    <ModalOverlay
+      className="modal-overlay page-login__recuperacao-overlay"
+      onDismiss={fecharRecuperacaoSenha}
+    >
+      <div className="modal page-login__recuperacao-modal">
         <h2 className="modal__titulo">Recuperar senha</h2>
         {passoRecuperacao !== "contato" && passoRecuperacao !== 3 && (
           <p className="page-login__recuperacao-step">Passo {passoRecuperacao} de 2</p>
@@ -228,6 +232,6 @@ export default function RecuperarSenhaForm({
           </div>
         )}
       </div>
-    </div>
+    </ModalOverlay>
   );
 }

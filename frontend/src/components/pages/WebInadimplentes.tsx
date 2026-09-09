@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useLocation } from "react-router-dom";
+import ModalOverlay from "@/components/ui/ModalOverlay";
 import { getApiErrorMessage, getAuthUserProfile } from "@/lib/api";
 import { listarInadimplentes, obterConfigJuros, salvarConfigJuros } from "@/lib/inadimplentesApi";
 import { invalidateDashboard } from "@/lib/dashboardRefresh";
@@ -419,17 +420,15 @@ export default function WebInadimplentes() {
 
       {modalAjustarJurosAberto &&
         createPortal(
-          <div
-            className="modal-overlay"
-            role="presentation"
-            onClick={() => !loadingJurosGlobal && setModalAjustarJurosAberto(false)}
+          <ModalOverlay
+            onDismiss={() => setModalAjustarJurosAberto(false)}
+            dismissDisabled={loadingJurosGlobal}
           >
             <div
               className="modal modal-juros"
               role="dialog"
               aria-modal="true"
               aria-labelledby="modal-juros-titulo"
-              onClick={(e) => e.stopPropagation()}
             >
               <button
                 type="button"
@@ -578,7 +577,7 @@ export default function WebInadimplentes() {
                 </div>
               </div>
             </div>
-          </div>,
+          </ModalOverlay>,
           document.body,
         )}
     </div>

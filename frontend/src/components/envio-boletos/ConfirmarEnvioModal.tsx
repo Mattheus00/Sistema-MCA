@@ -1,4 +1,5 @@
 import { createPortal } from "react-dom";
+import ModalOverlay from "@/components/ui/ModalOverlay";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import {
   AlertTriangleIcon,
@@ -29,17 +30,16 @@ export default function ConfirmarEnvioModal({
   useBodyScrollLock(true);
 
   return createPortal(
-    <div
+    <ModalOverlay
       className="modal-overlay modal-overlay--blur"
-      role="presentation"
-      onClick={() => !loading && setModalConfirmarEnvio(false)}
+      onDismiss={() => setModalConfirmarEnvio(false)}
+      dismissDisabled={loading}
     >
       <div
         className="modal modal-envio-confirmacao"
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-envio-titulo"
-        onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
@@ -141,7 +141,7 @@ export default function ConfirmarEnvioModal({
           </button>
         </footer>
       </div>
-    </div>,
+    </ModalOverlay>,
     document.body,
   );
 }

@@ -1,4 +1,5 @@
 import { createPortal } from "react-dom";
+import ModalOverlay from "@/components/ui/ModalOverlay";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import type { Cliente, ItemEnvioBoleto } from "@/types/api";
 
@@ -32,14 +33,8 @@ export default function CorrigirItemModal({
   useBodyScrollLock(true);
 
   return createPortal(
-    <div className="modal-overlay" role="presentation" onClick={() => setItemCorrigir(null)}>
-      <div
-        className="modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-cliente-titulo"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <ModalOverlay onDismiss={() => setItemCorrigir(null)}>
+      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-cliente-titulo">
         <h2 id="modal-cliente-titulo" className="modal__titulo">
           Corrigir cliente
         </h2>
@@ -98,7 +93,7 @@ export default function CorrigirItemModal({
           </button>
         </div>
       </div>
-    </div>,
+    </ModalOverlay>,
     document.body,
   );
 }

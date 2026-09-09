@@ -208,6 +208,25 @@
   overflow-y: auto;
 }
 
+.modal-overlay__dismiss {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.modal-overlay__dismiss:disabled {
+  cursor: default;
+}
+
+.modal-overlay > :not(.modal-overlay__dismiss) {
+  position: relative;
+  z-index: 1;
+}
+
 .modal-overlay > .modal {
   margin: auto;
   flex-shrink: 0;
