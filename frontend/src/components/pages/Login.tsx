@@ -1,6 +1,12 @@
 import { useId, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api, getApiErrorMessage, isMockEnabled, isRememberMePreferred, setAuthSession } from "@/lib/api";
+import {
+  api,
+  getApiErrorMessage,
+  isMockEnabled,
+  isRememberMePreferred,
+  setAuthSession,
+} from "@/lib/api";
 import type { LoginResponse, PerfilUsuario } from "@/types/api";
 import type { AxiosError } from "axios";
 import "@/styles/login.css";
@@ -29,7 +35,14 @@ type PassoRecuperacao = 1 | 2 | 3 | "contato";
 /** Mesmo ícone do logo da sidebar (Layout) */
 function LogoIcon({ color = "var(--cor-principal)" }: { color?: string }) {
   return (
-    <svg width="40" height="40" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <svg
+      width="40"
+      height="40"
+      viewBox="0 0 32 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
       <circle cx="4" cy="28" r="4" fill={color} />
       <circle cx="12" cy="28" r="4" fill={color} />
       <circle cx="20" cy="28" r="4" fill={color} />
@@ -46,7 +59,13 @@ function LogoIcon({ color = "var(--cor-principal)" }: { color?: string }) {
 
 function LoginArtwork() {
   return (
-    <svg className="page-login__art" viewBox="0 0 600 600" fill="none" aria-hidden="true" focusable="false">
+    <svg
+      className="page-login__art"
+      viewBox="0 0 600 600"
+      fill="none"
+      aria-hidden="true"
+      focusable="false"
+    >
       <g className="page-login__art-rings">
         {[90, 135, 180, 225, 270, 315].map((radius) => (
           <circle key={radius} cx="365" cy="340" r={radius} />
@@ -72,7 +91,15 @@ function LoginArtwork() {
 
 function ChartFeatureIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path d="M3 3v18h18" />
       <path d="M7 16v-5" />
       <path d="M12 16V8" />
@@ -83,7 +110,15 @@ function ChartFeatureIcon() {
 
 function MailFeatureIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <rect x="2" y="4" width="20" height="16" rx="2" />
       <path d="m2 7 10 7 10-7" />
     </svg>
@@ -92,7 +127,15 @@ function MailFeatureIcon() {
 
 function ShieldFeatureIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
     </svg>
   );
@@ -100,7 +143,15 @@ function ShieldFeatureIcon() {
 
 function SecureIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <rect x="3" y="11" width="18" height="11" rx="2" />
       <path d="M7 11V7a5 5 0 0 1 10 0v4" />
     </svg>
@@ -109,7 +160,17 @@ function SecureIcon() {
 
 function UserIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
       <circle cx="12" cy="7" r="4" />
     </svg>
@@ -118,7 +179,17 @@ function UserIcon() {
 
 function LockIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
       <path d="M7 11V7a5 5 0 0 1 10 0v4" />
     </svg>
@@ -127,7 +198,17 @@ function LockIcon() {
 
 function EyeIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
       <circle cx="12" cy="12" r="3" />
     </svg>
@@ -136,7 +217,17 @@ function EyeIcon() {
 
 function EyeOffIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
       <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
       <path d="M1 1l22 22" />
@@ -172,32 +263,34 @@ function CampoSenha({
 
   return (
     <div className="page-login__field">
-      <label className="page-login__label" htmlFor={inputId}>{label}</label>
+      <label className="page-login__label" htmlFor={inputId}>
+        {label}
+      </label>
       <div className="page-login__input-wrap page-login__input-wrap--senha">
-      <span className="page-login__input-icon" aria-hidden="true">
-        <LockIcon />
-      </span>
-      <input
-        id={inputId}
-        type={visivel ? "text" : "password"}
-        autoComplete={autoComplete}
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="page-login__input"
-        disabled={disabled}
-        aria-label={ariaLabel}
-      />
-      <button
-        type="button"
-        className="page-login__toggle-senha"
-        onClick={onToggleVisivel}
-        disabled={disabled}
-        aria-label={visivel ? "Ocultar senha" : "Mostrar senha"}
-        aria-pressed={visivel}
-      >
-        {visivel ? <EyeOffIcon /> : <EyeIcon />}
-      </button>
+        <span className="page-login__input-icon" aria-hidden="true">
+          <LockIcon />
+        </span>
+        <input
+          id={inputId}
+          type={visivel ? "text" : "password"}
+          autoComplete={autoComplete}
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="page-login__input"
+          disabled={disabled}
+          aria-label={ariaLabel}
+        />
+        <button
+          type="button"
+          className="page-login__toggle-senha"
+          onClick={onToggleVisivel}
+          disabled={disabled}
+          aria-label={visivel ? "Ocultar senha" : "Mostrar senha"}
+          aria-pressed={visivel}
+        >
+          {visivel ? <EyeOffIcon /> : <EyeIcon />}
+        </button>
       </div>
     </div>
   );
@@ -232,7 +325,8 @@ export default function Login() {
 
   function extrairPerfil(data: LoginResponse): PerfilUsuario | null {
     const bruto = data.perfil ?? data.role ?? data.usuario?.perfil ?? data.usuario?.role;
-    if (bruto === "PROPRIETARIA" || bruto === "RESPONSAVEL_FINANCEIRO" || bruto === "FUNCIONARIO") return bruto;
+    if (bruto === "PROPRIETARIA" || bruto === "RESPONSAVEL_FINANCEIRO" || bruto === "FUNCIONARIO")
+      return bruto;
     return null;
   }
 
@@ -271,7 +365,7 @@ export default function Login() {
             login: loginTrimmed,
             profile: perfil,
           },
-          manterConectado
+          manterConectado,
         );
         navigate(perfil === "FUNCIONARIO" ? "/clientes" : "/dashboard", { replace: true });
       } else {
@@ -316,12 +410,19 @@ export default function Login() {
         login: loginTrim,
         senha: senhaCadastro,
       });
-      setMensagemSucesso("Cadastro realizado com sucesso. Aguarde aprovação da proprietária para acessar o sistema.");
+      setMensagemSucesso(
+        "Cadastro realizado com sucesso. Aguarde aprovação da proprietária para acessar o sistema.",
+      );
       setModo("login");
       setLogin(loginTrim);
       setSenha("");
     } catch (e: unknown) {
-      setErro(getApiErrorMessage(e, "Não foi possível realizar o cadastro. Verifique os dados e tente novamente."));
+      setErro(
+        getApiErrorMessage(
+          e,
+          "Não foi possível realizar o cadastro. Verifique os dados e tente novamente.",
+        ),
+      );
     } finally {
       setLoading(false);
     }
@@ -393,9 +494,12 @@ export default function Login() {
         setPassoRecuperacao(2);
         return;
       }
-      const res = await api.post<{ encontrado?: boolean; login?: string; nome?: string }>("/api/auth/validar-login-recuperacao", {
-        login: loginTrim,
-      });
+      const res = await api.post<{ encontrado?: boolean; login?: string; nome?: string }>(
+        "/api/auth/validar-login-recuperacao",
+        {
+          login: loginTrim,
+        },
+      );
       if (!res.data?.encontrado) {
         setErroRecuperacao("Usuário não encontrado");
         return;
@@ -456,29 +560,38 @@ export default function Login() {
           </div>
 
           <div className="page-login__hero-content">
-            <h2 className="page-login__hero-title">Gestão inteligente.<span>Resultados reais.</span></h2>
+            <h2 className="page-login__hero-title">
+              Gestão inteligente.<span>Resultados reais.</span>
+            </h2>
             <p className="page-login__hero-text">
-              Gerencie inadimplentes, envie boletos e acompanhe seus recebimentos de forma simples e eficiente.
+              Gerencie inadimplentes, envie boletos e acompanhe seus recebimentos de forma simples e
+              eficiente.
             </p>
           </div>
 
           <ul className="page-login__features">
             <li>
-              <span className="page-login__feature-icon"><ChartFeatureIcon /></span>
+              <span className="page-login__feature-icon">
+                <ChartFeatureIcon />
+              </span>
               <div>
                 <strong>Acompanhamento completo</strong>
                 <p>Visão clara da sua carteira e dos recebimentos.</p>
               </div>
             </li>
             <li>
-              <span className="page-login__feature-icon"><MailFeatureIcon /></span>
+              <span className="page-login__feature-icon">
+                <MailFeatureIcon />
+              </span>
               <div>
                 <strong>Envio de boletos por e-mail</strong>
                 <p>Mais agilidade na rotina e no atendimento.</p>
               </div>
             </li>
             <li>
-              <span className="page-login__feature-icon"><ShieldFeatureIcon /></span>
+              <span className="page-login__feature-icon">
+                <ShieldFeatureIcon />
+              </span>
               <div>
                 <strong>Segurança e confiabilidade</strong>
                 <p>Cuidado com seus dados em cada acesso.</p>
@@ -508,17 +621,29 @@ export default function Login() {
           ) : (
             <>
               <h1 className="page-login__welcome">Criar conta</h1>
-              <p className="page-login__subtitle">Preencha seus dados para solicitar acesso ao sistema</p>
+              <p className="page-login__subtitle">
+                Preencha seus dados para solicitar acesso ao sistema
+              </p>
             </>
           )}
 
-          {erro && <p className="page-login__erro" role="alert">{erro}</p>}
-          {mensagemSucesso && <p className="page-login__sucesso" role="status">{mensagemSucesso}</p>}
+          {erro && (
+            <p className="page-login__erro" role="alert">
+              {erro}
+            </p>
+          )}
+          {mensagemSucesso && (
+            <p className="page-login__sucesso" role="status">
+              {mensagemSucesso}
+            </p>
+          )}
 
           {mostrandoLogin ? (
             <form onSubmit={handleSubmit} className="page-login__form">
               <div className="page-login__field">
-                <label className="page-login__label" htmlFor="login-usuario">Usuário</label>
+                <label className="page-login__label" htmlFor="login-usuario">
+                  Usuário
+                </label>
                 <div className="page-login__input-wrap">
                   <span className="page-login__input-icon" aria-hidden="true">
                     <UserIcon />
@@ -571,13 +696,24 @@ export default function Login() {
               </div>
 
               <button type="submit" className="page-login__btn" disabled={loading}>
-                {loading ? "Entrando…" : <>Entrar <span className="page-login__btn-arrow" aria-hidden="true">→</span></>}
+                {loading ? (
+                  "Entrando…"
+                ) : (
+                  <>
+                    Entrar{" "}
+                    <span className="page-login__btn-arrow" aria-hidden="true">
+                      →
+                    </span>
+                  </>
+                )}
               </button>
             </form>
           ) : (
             <form onSubmit={handleSignup} className="page-login__form">
               <div className="page-login__field">
-                <label className="page-login__label" htmlFor="signup-nome">Nome completo</label>
+                <label className="page-login__label" htmlFor="signup-nome">
+                  Nome completo
+                </label>
                 <div className="page-login__input-wrap">
                   <span className="page-login__input-icon" aria-hidden="true">
                     <UserIcon />
@@ -597,7 +733,9 @@ export default function Login() {
               </div>
 
               <div className="page-login__field">
-                <label className="page-login__label" htmlFor="signup-login">Usuário</label>
+                <label className="page-login__label" htmlFor="signup-login">
+                  Usuário
+                </label>
                 <div className="page-login__input-wrap">
                   <span className="page-login__input-icon" aria-hidden="true">
                     <UserIcon />
@@ -629,7 +767,16 @@ export default function Login() {
               />
 
               <button type="submit" className="page-login__btn" disabled={loading}>
-                {loading ? "Cadastrando…" : <>Cadastrar <span className="page-login__btn-arrow" aria-hidden="true">→</span></>}
+                {loading ? (
+                  "Cadastrando…"
+                ) : (
+                  <>
+                    Cadastrar{" "}
+                    <span className="page-login__btn-arrow" aria-hidden="true">
+                      →
+                    </span>
+                  </>
+                )}
               </button>
             </form>
           )}
@@ -684,7 +831,10 @@ export default function Login() {
       </main>
 
       {modalRecuperacaoAberto && (
-        <div className="modal-overlay page-login__recuperacao-overlay" onClick={fecharRecuperacaoSenha}>
+        <div
+          className="modal-overlay page-login__recuperacao-overlay"
+          onClick={fecharRecuperacaoSenha}
+        >
           <div className="modal page-login__recuperacao-modal" onClick={(e) => e.stopPropagation()}>
             <h2 className="modal__titulo">Recuperar senha</h2>
             {passoRecuperacao !== "contato" && passoRecuperacao !== 3 && (
@@ -698,7 +848,11 @@ export default function Login() {
                   <p className="page-login__recuperacao-helper">{MSG_RECUPERACAO_CONTATO}</p>
                 )}
                 <div className="modal__botoes">
-                  <button type="button" className="btn btn--primary" onClick={fecharRecuperacaoSenha}>
+                  <button
+                    type="button"
+                    className="btn btn--primary"
+                    onClick={fecharRecuperacaoSenha}
+                  >
                     Fechar
                   </button>
                 </div>
@@ -723,7 +877,12 @@ export default function Login() {
                   />
                 </div>
                 <div className="modal__botoes">
-                  <button type="button" className="btn btn--secondary" onClick={fecharRecuperacaoSenha} disabled={loadingRecuperacao}>
+                  <button
+                    type="button"
+                    className="btn btn--secondary"
+                    onClick={fecharRecuperacaoSenha}
+                    disabled={loadingRecuperacao}
+                  >
                     Cancelar
                   </button>
                   <button type="submit" className="btn btn--primary" disabled={loadingRecuperacao}>
@@ -736,7 +895,8 @@ export default function Login() {
             {passoRecuperacao === 2 && (
               <form className="page-login__form" onSubmit={redefinirSenhaRecuperacao}>
                 <p className="page-login__recuperacao-helper">
-                  Login encontrado{nomeRecuperacao ? ` para ${nomeRecuperacao}` : ""}. Defina sua nova senha.
+                  Login encontrado{nomeRecuperacao ? ` para ${nomeRecuperacao}` : ""}. Defina sua
+                  nova senha.
                 </p>
                 <CampoSenha
                   label="Nova senha"
@@ -761,7 +921,12 @@ export default function Login() {
                   onToggleVisivel={() => setMostrarConfirmarSenhaRecuperacao((v) => !v)}
                 />
                 <div className="modal__botoes">
-                  <button type="button" className="btn btn--secondary" onClick={() => setPassoRecuperacao(1)} disabled={loadingRecuperacao}>
+                  <button
+                    type="button"
+                    className="btn btn--secondary"
+                    onClick={() => setPassoRecuperacao(1)}
+                    disabled={loadingRecuperacao}
+                  >
                     Voltar
                   </button>
                   <button type="submit" className="btn btn--primary" disabled={loadingRecuperacao}>
@@ -775,7 +940,11 @@ export default function Login() {
               <div className="page-login__recuperacao-sucesso">
                 <p className="page-login__sucesso">Senha alterada com sucesso.</p>
                 <div className="modal__botoes">
-                  <button type="button" className="btn btn--primary" onClick={concluirRecuperacaoSenha}>
+                  <button
+                    type="button"
+                    className="btn btn--primary"
+                    onClick={concluirRecuperacaoSenha}
+                  >
                     Voltar para login
                   </button>
                 </div>

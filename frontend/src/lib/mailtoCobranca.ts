@@ -57,7 +57,7 @@ const GMAIL_COMPOSE_BASE = "https://mail.google.com/mail/u/2/?view=cm&fs=1";
 function getCobrancaParams(
   item: Inadimplencia,
   nomeCliente: string,
-  emailCliente?: string
+  emailCliente?: string,
 ): { to: string; subjectEncoded: string; bodyEncoded: string } {
   const mesAno = formatarMesAno(item.vencimento);
   const valor = (item.valor ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -82,7 +82,7 @@ function getCobrancaParams(
   ];
   const bodyRaw = linhasBody.join("\n");
   const bodyEncoded = encodeURIComponent(
-    bodyRaw.length > MAX_BODY_LENGTH ? bodyRaw.slice(0, MAX_BODY_LENGTH) + "..." : bodyRaw
+    bodyRaw.length > MAX_BODY_LENGTH ? bodyRaw.slice(0, MAX_BODY_LENGTH) + "..." : bodyRaw,
   );
   const to = (emailCliente || "").trim();
   return { to, subjectEncoded, bodyEncoded };
@@ -92,7 +92,7 @@ function getCobrancaParams(
 export function buildCobrancaMensagemTexto(
   item: Inadimplencia,
   nomeCliente: string,
-  linkPagamentoUrl?: string | null
+  linkPagamentoUrl?: string | null,
 ): string {
   const mesAno = formatarMesAno(item.vencimento);
   const valor = (item.valor ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -147,7 +147,7 @@ export function buildWhatsAppCobrancaUrl(
   item: Inadimplencia,
   nomeCliente: string,
   telefoneCliente?: string | null,
-  linkPagamentoUrl?: string | null
+  linkPagamentoUrl?: string | null,
 ): string {
   const phone = normalizeTelefoneParaWhatsApp(telefoneCliente);
   const text = encodeURIComponent(buildCobrancaMensagemTexto(item, nomeCliente, linkPagamentoUrl));
@@ -177,7 +177,7 @@ function escapeHtml(s: string): string {
 export function buildCobrancaEmailHtml(
   item: Inadimplencia,
   nomeCliente: string,
-  linkPagamentoUrl?: string | null
+  linkPagamentoUrl?: string | null,
 ): string {
   const mesAno = formatarMesAno(item.vencimento);
   const valor = (item.valor ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -210,7 +210,9 @@ export function buildCobrancaEmailHtml(
     `<p style="margin:0 0 8px;font-size:14px;color:#333;"><strong>Vencimento:</strong> <span style="color:${COR_VENCIMENTO};font-weight:bold;">${escapeHtml(vencimento)}</span></p>` +
     `<p style="margin:0 0 8px;font-size:14px;color:#333;"><strong>Juros:</strong> <span style="color:${COR_PRINCIPAL};font-weight:bold;">${escapeHtml(juros)}</span></p>` +
     `<p style="margin:0;font-size:14px;color:#333;"><strong>Valor:</strong> <span style="color:${COR_PRINCIPAL};font-weight:bold;">${escapeHtml(valor)}</span></p>` +
-    (descricao ? `<p style="margin:12px 0 0;font-size:14px;color:#333;"><strong>Descrição:</strong> ${escapeHtml(descricao)}</p>` : "") +
+    (descricao
+      ? `<p style="margin:12px 0 0;font-size:14px;color:#333;"><strong>Descrição:</strong> ${escapeHtml(descricao)}</p>`
+      : "") +
     "</div>" +
     (linkPagamento
       ? `<div style="background:#f8fafc;border-left:4px solid ${COR_PRINCIPAL};padding:16px 20px;margin:0 0 20px;">` +
@@ -242,7 +244,7 @@ export function buildCobrancaEmailHtml(
 export async function copyCobrancaEmailToClipboard(
   item: Inadimplencia,
   nomeCliente: string,
-  linkPagamentoUrl?: string | null
+  linkPagamentoUrl?: string | null,
 ): Promise<boolean> {
   const html = buildCobrancaEmailHtml(item, nomeCliente, linkPagamentoUrl);
   const plain = buildCobrancaMensagemTexto(item, nomeCliente, linkPagamentoUrl);
@@ -271,7 +273,7 @@ export async function copyCobrancaEmailToClipboard(
 export function buildMailtoCobrancaUrl(
   item: Inadimplencia,
   nomeCliente: string,
-  emailCliente?: string
+  emailCliente?: string,
 ): string {
   const { to, subjectEncoded, bodyEncoded } = getCobrancaParams(item, nomeCliente, emailCliente);
   return to
@@ -287,7 +289,7 @@ export function buildGmailComposeUrl(
   item: Inadimplencia,
   nomeCliente: string,
   emailCliente?: string,
-  semCorpo?: boolean
+  semCorpo?: boolean,
 ): string {
   const { to, subjectEncoded, bodyEncoded } = getCobrancaParams(item, nomeCliente, emailCliente);
   const params = new URLSearchParams({ su: decodeURIComponent(subjectEncoded) });

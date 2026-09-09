@@ -68,7 +68,11 @@ export default function TarefasLista({
                     return (
                       <tr key={t.id} className={t.atrasada ? "tarefas-lista__linha--atrasada" : ""}>
                         <td>
-                          <button type="button" className="tarefas-lista__link" onClick={() => onAbrir(t.id)}>
+                          <button
+                            type="button"
+                            className="tarefas-lista__link"
+                            onClick={() => onAbrir(t.id)}
+                          >
                             <strong>{t.titulo}</strong>
                           </button>
                           {t.atrasada && <span className="tarefas-card__atrasada">Atrasada</span>}
@@ -76,10 +80,14 @@ export default function TarefasLista({
                         <td>{t.responsavelNome ?? "—"}</td>
                         <td>{t.categoria ?? "—"}</td>
                         <td>
-                          <span className={classePrioridadeTarefa(t.prioridade)}>{labelPrioridadeTarefa(t.prioridade)}</span>
+                          <span className={classePrioridadeTarefa(t.prioridade)}>
+                            {labelPrioridadeTarefa(t.prioridade)}
+                          </span>
                         </td>
                         <td>
-                          <span className={classeStatusTarefa(t.status)}>{labelStatusTarefa(t.status)}</span>
+                          <span className={classeStatusTarefa(t.status)}>
+                            {labelStatusTarefa(t.status)}
+                          </span>
                         </td>
                         <td>{formatarDataTarefa(t.dataVencimento)}</td>
                         <td>
@@ -93,10 +101,18 @@ export default function TarefasLista({
                         </td>
                         <td>
                           <div className="tarefas-lista__acoes">
-                            <button type="button" className="btn btn--link" onClick={() => onAbrir(t.id)}>
+                            <button
+                              type="button"
+                              className="btn btn--link"
+                              onClick={() => onAbrir(t.id)}
+                            >
                               Ver
                             </button>
-                            <button type="button" className="btn btn--link" onClick={() => onEditar(t.id)}>
+                            <button
+                              type="button"
+                              className="btn btn--link"
+                              onClick={() => onEditar(t.id)}
+                            >
                               Editar
                             </button>
                           </div>
@@ -120,22 +136,42 @@ export default function TarefasLista({
                 key={t.id}
                 title={t.titulo}
                 meta={t.responsavelNome}
-                value={<span className={classePrioridadeTarefa(t.prioridade)}>{labelPrioridadeTarefa(t.prioridade)}</span>}
+                value={
+                  <span className={classePrioridadeTarefa(t.prioridade)}>
+                    {labelPrioridadeTarefa(t.prioridade)}
+                  </span>
+                }
                 fields={[
-                  { label: "Status", value: <span className={classeStatusTarefa(t.status)}>{labelStatusTarefa(t.status)}</span> },
+                  {
+                    label: "Status",
+                    value: (
+                      <span className={classeStatusTarefa(t.status)}>
+                        {labelStatusTarefa(t.status)}
+                      </span>
+                    ),
+                  },
                   { label: "Cliente", value: t.categoria ?? "—" },
                   { label: "Prazo", value: formatarDataTarefa(t.dataVencimento) },
                   {
                     label: "Progresso",
-                    value: t.checklistTotal > 0 ? `${t.checklistConcluidos}/${t.checklistTotal}` : "—",
+                    value:
+                      t.checklistTotal > 0 ? `${t.checklistConcluidos}/${t.checklistTotal}` : "—",
                   },
                 ]}
                 actions={
                   <>
-                    <button type="button" className="btn btn--secondary btn--sm" onClick={() => onAbrir(t.id)}>
+                    <button
+                      type="button"
+                      className="btn btn--secondary btn--sm"
+                      onClick={() => onAbrir(t.id)}
+                    >
                       Ver
                     </button>
-                    <button type="button" className="btn btn--primary btn--sm" onClick={() => onEditar(t.id)}>
+                    <button
+                      type="button"
+                      className="btn btn--primary btn--sm"
+                      onClick={() => onEditar(t.id)}
+                    >
                       Editar
                     </button>
                   </>
@@ -150,7 +186,12 @@ export default function TarefasLista({
       <div className="tarefas__paginacao">
         <span>{totalElementos} tarefa(s)</span>
         <div>
-          <button type="button" className="btn btn--secondary" disabled={pagina <= 0 || loading} onClick={() => onPaginaChange(pagina - 1)}>
+          <button
+            type="button"
+            className="btn btn--secondary"
+            disabled={pagina <= 0 || loading}
+            onClick={() => onPaginaChange(pagina - 1)}
+          >
             Anterior
           </button>
           <span>

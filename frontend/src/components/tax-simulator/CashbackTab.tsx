@@ -41,17 +41,32 @@ export default function CashbackTab({ onError }: CashbackTabProps) {
   return (
     <div className="tax-sim__card">
       <h2 className="tax-sim__card-title">Cashback CBS</h2>
-      <p className="tax-sim__card-desc">Estimativa de devolução de CBS (ex.: programas de cashback).</p>
+      <p className="tax-sim__card-desc">
+        Estimativa de devolução de CBS (ex.: programas de cashback).
+      </p>
       <div className="tax-sim__fields">
         <label className="tax-sim__label">
           Valor da compra (R$)
-          <input className="tax-sim__input" value={valorCompra} onChange={(e) => setValorCompra(e.target.value)} />
+          <input
+            className="tax-sim__input"
+            value={valorCompra}
+            onChange={(e) => setValorCompra(e.target.value)}
+          />
         </label>
         <label className="tax-sim__label">
           Percentual de devolução (%)
-          <input className="tax-sim__input" value={percentual} onChange={(e) => setPercentual(e.target.value)} />
+          <input
+            className="tax-sim__input"
+            value={percentual}
+            onChange={(e) => setPercentual(e.target.value)}
+          />
         </label>
-        <button type="button" className="btn btn--primary tax-sim__btn" onClick={() => void calcular()} disabled={loading}>
+        <button
+          type="button"
+          className="btn btn--primary tax-sim__btn"
+          onClick={() => void calcular()}
+          disabled={loading}
+        >
           {loading ? "Calculando…" : "Calcular cashback"}
         </button>
       </div>

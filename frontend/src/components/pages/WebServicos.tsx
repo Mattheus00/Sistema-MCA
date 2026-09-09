@@ -28,7 +28,8 @@ function carregarServicosLocal(): Servico[] {
       titulo: String((s as Servico).titulo ?? ""),
       descricao: (s as Servico).descricao ? String((s as Servico).descricao) : undefined,
       ativo: true,
-      valorPadrao: typeof (s as Servico).valorPadrao === "number" ? (s as Servico).valorPadrao : null,
+      valorPadrao:
+        typeof (s as Servico).valorPadrao === "number" ? (s as Servico).valorPadrao : null,
     }));
   } catch {
     return [];
@@ -71,7 +72,7 @@ function imprimirRelatorioServicos(servicos: { titulo: string; valorPadrao?: num
   <script>
     window.onload = function() { window.print(); };
     window.onafterprint = function() { window.close(); };
-  <\/script>
+  </script>
 </body>
 </html>`;
   const blob = new Blob([doc], { type: "text/html;charset=utf-8" });
@@ -151,7 +152,7 @@ export default function WebServicos() {
   const paginaAtual = Math.min(pagina, totalPaginas);
   const itensPagina = servicosExibidos.slice(
     (paginaAtual - 1) * ITENS_POR_PAGINA,
-    paginaAtual * ITENS_POR_PAGINA
+    paginaAtual * ITENS_POR_PAGINA,
   );
 
   useEffect(() => {
@@ -196,9 +197,14 @@ export default function WebServicos() {
         setServicos((lista) =>
           lista.map((s) =>
             s.id === editando.id
-              ? { ...s, titulo: titulo.trim(), descricao: descricao.trim() || undefined, valorPadrao: valorParaMock }
-              : s
-          )
+              ? {
+                  ...s,
+                  titulo: titulo.trim(),
+                  descricao: descricao.trim() || undefined,
+                  valorPadrao: valorParaMock,
+                }
+              : s,
+          ),
         );
       } else {
         const novo: Servico = {
@@ -265,7 +271,9 @@ export default function WebServicos() {
       <div className="page-servicos__header">
         <div>
           <h1 className="page-servicos__title">Serviços do Escritório</h1>
-          <p className="page-servicos__subtitle">Cadastre, edite e exclua os serviços oferecidos pelo escritório.</p>
+          <p className="page-servicos__subtitle">
+            Cadastre, edite e exclua os serviços oferecidos pelo escritório.
+          </p>
         </div>
         <div className="page-servicos__header-acoes">
           <button
@@ -294,7 +302,9 @@ export default function WebServicos() {
       {loading ? (
         <p className="page-servicos__vazio">Carregando serviços...</p>
       ) : servicosExibidos.length === 0 ? (
-        <p className="page-servicos__vazio">Nenhum serviço cadastrado. Clique em &quot;Novo Serviço&quot; para adicionar.</p>
+        <p className="page-servicos__vazio">
+          Nenhum serviço cadastrado. Clique em &quot;Novo Serviço&quot; para adicionar.
+        </p>
       ) : (
         <ResponsiveList
           desktop={
@@ -315,9 +325,18 @@ export default function WebServicos() {
                           {s.titulo}
                         </span>
                       </td>
-                      <td title={s.valorPadrao != null ? `Valor padrão: R$ ${s.valorPadrao.toFixed(2)}` : undefined}>
+                      <td
+                        title={
+                          s.valorPadrao != null
+                            ? `Valor padrão: R$ ${s.valorPadrao.toFixed(2)}`
+                            : undefined
+                        }
+                      >
                         {s.valorPadrao != null
-                          ? s.valorPadrao.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+                          ? s.valorPadrao.toLocaleString("pt-BR", {
+                              style: "currency",
+                              currency: "BRL",
+                            })
                           : "—"}
                       </td>
                       <td>
@@ -357,15 +376,26 @@ export default function WebServicos() {
                     meta={s.descricao}
                     value={
                       s.valorPadrao != null
-                        ? s.valorPadrao.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+                        ? s.valorPadrao.toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })
                         : "—"
                     }
                     actions={
                       <>
-                        <button type="button" className="btn btn--secondary btn--small" onClick={() => abrirEditar(s)}>
+                        <button
+                          type="button"
+                          className="btn btn--secondary btn--small"
+                          onClick={() => abrirEditar(s)}
+                        >
                           Editar
                         </button>
-                        <button type="button" className="btn btn--danger btn--small" onClick={() => abrirConfirmarExclusao(s)}>
+                        <button
+                          type="button"
+                          className="btn btn--danger btn--small"
+                          onClick={() => abrirConfirmarExclusao(s)}
+                        >
                           Excluir
                         </button>
                       </>
@@ -389,7 +419,8 @@ export default function WebServicos() {
             Anterior
           </button>
           <span className="page-servicos__paginacao-info">
-            Página {paginaAtual} de {totalPaginas} ({servicosExibidos.length} serviço{servicosExibidos.length !== 1 ? "s" : ""})
+            Página {paginaAtual} de {totalPaginas} ({servicosExibidos.length} serviço
+            {servicosExibidos.length !== 1 ? "s" : ""})
           </span>
           <button
             type="button"
@@ -408,23 +439,25 @@ export default function WebServicos() {
             <div className="modal modal--confirmar-exclusao" onClick={(e) => e.stopPropagation()}>
               <h2 className="modal__titulo">Excluir serviço?</h2>
               <p className="modal__texto-confirmacao">
-                Tem certeza que deseja excluir o serviço <strong>{servicoParaExcluir.titulo}</strong>? O serviço será desativado e não aparecerá mais na lista.
+                Tem certeza que deseja excluir o serviço{" "}
+                <strong>{servicoParaExcluir.titulo}</strong>? O serviço será desativado e não
+                aparecerá mais na lista.
               </p>
               <div className="modal__botoes">
-                <button type="button" className="btn btn--secondary" onClick={() => setServicoParaExcluir(null)}>
-                  Cancelar
-                </button>
                 <button
                   type="button"
-                  className="btn btn--danger"
-                  onClick={confirmarExclusao}
+                  className="btn btn--secondary"
+                  onClick={() => setServicoParaExcluir(null)}
                 >
+                  Cancelar
+                </button>
+                <button type="button" className="btn btn--danger" onClick={confirmarExclusao}>
                   Excluir
                 </button>
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
 
       {modalAberto && (
@@ -459,10 +492,20 @@ export default function WebServicos() {
             </div>
             {erro && <p className="page-servicos__erro">{erro}</p>}
             <div className="modal__botoes">
-              <button type="button" className="btn btn--secondary" onClick={fecharModal} disabled={salvando}>
+              <button
+                type="button"
+                className="btn btn--secondary"
+                onClick={fecharModal}
+                disabled={salvando}
+              >
                 Cancelar
               </button>
-              <button type="button" className="btn btn--primary" onClick={salvar} disabled={salvando}>
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={salvar}
+                disabled={salvando}
+              >
                 {salvando ? "Salvando…" : "Salvar"}
               </button>
             </div>
@@ -475,7 +518,14 @@ export default function WebServicos() {
 
 function PlusIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
@@ -484,7 +534,14 @@ function PlusIcon() {
 
 function DownloadIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="7 10 12 15 17 10" />
       <line x1="12" y1="15" x2="12" y2="3" />
@@ -494,7 +551,14 @@ function DownloadIcon() {
 
 function EditIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
     </svg>
@@ -503,7 +567,14 @@ function EditIcon() {
 
 function TrashIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <polyline points="3 6 5 6 21 6" />
       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
       <line x1="10" y1="11" x2="10" y2="17" />

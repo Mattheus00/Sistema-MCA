@@ -33,8 +33,18 @@ export function formatarDataPortal(iso: string | undefined): string {
 }
 
 const MESES_EXTENSO = [
-  "janeiro", "fevereiro", "março", "abril", "maio", "junho",
-  "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+  "janeiro",
+  "fevereiro",
+  "março",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
 ];
 
 export function formatarDataPortalExtenso(iso: string | undefined): string {
@@ -81,8 +91,12 @@ export function statusDividaPortalClass(status: string | undefined, vencimento?:
   return "portal-status portal-status--aberta";
 }
 
-export function obterProximoVencimento<T extends { vencimento?: string; status?: string }>(dividas: T[]): T | null {
-  const abertas = dividas.filter((d) => labelStatusDividaPortal(d.status, d.vencimento) !== "Quitada");
+export function obterProximoVencimento<T extends { vencimento?: string; status?: string }>(
+  dividas: T[],
+): T | null {
+  const abertas = dividas.filter(
+    (d) => labelStatusDividaPortal(d.status, d.vencimento) !== "Quitada",
+  );
   if (!abertas.length) return null;
   const ordenadas = [...abertas].sort((a, b) => {
     const da = parseDataPortal(a.vencimento)?.getTime() ?? Number.MAX_SAFE_INTEGER;
@@ -93,7 +107,10 @@ export function obterProximoVencimento<T extends { vencimento?: string; status?:
   return futuras[0] ?? ordenadas[0];
 }
 
-export function ordenarDividasRecentes<T extends { vencimento?: string }>(dividas: T[], limite = 3): T[] {
+export function ordenarDividasRecentes<T extends { vencimento?: string }>(
+  dividas: T[],
+  limite = 3,
+): T[] {
   return [...dividas]
     .sort((a, b) => {
       const da = parseDataPortal(a.vencimento)?.getTime() ?? 0;

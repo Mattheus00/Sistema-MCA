@@ -1,10 +1,19 @@
-import type { CategoriaLivroCaixa, FormaPagamento, OrigemMovimentacao, StatusMovimentacao, TipoMovimentacao } from "@/types/livroCaixa";
+import type {
+  CategoriaLivroCaixa,
+  FormaPagamento,
+  OrigemMovimentacao,
+  StatusMovimentacao,
+  TipoMovimentacao,
+} from "@/types/livroCaixa";
 import { formatarMoeda } from "@/lib/inadimplentesUtils";
 
 /** Nome canônico da categoria que exige vínculo com cliente (identificação por nome, não por UUID). */
 export const NOME_CATEGORIA_HONORARIOS_CONTABEIS = "Honorários contábeis";
 
-export function isCategoriaHonorariosContabeis(categoriaId: string, categorias: CategoriaLivroCaixa[]): boolean {
+export function isCategoriaHonorariosContabeis(
+  categoriaId: string,
+  categorias: CategoriaLivroCaixa[],
+): boolean {
   if (!categoriaId) return false;
   const cat = categorias.find((c) => c.id === categoriaId);
   if (!cat || cat.tipo !== "ENTRADA") return false;
@@ -12,13 +21,7 @@ export function isCategoriaHonorariosContabeis(categoriaId: string, categorias: 
 }
 
 export type PeriodoRapido =
-  | "HOJE"
-  | "7_DIAS"
-  | "ESTE_MES"
-  | "MES_PASSADO"
-  | "ULTIMOS_3_MESES"
-  | "ESTE_ANO"
-  | "PERSONALIZADO";
+  "HOJE" | "7_DIAS" | "ESTE_MES" | "MES_PASSADO" | "ULTIMOS_3_MESES" | "ESTE_ANO" | "PERSONALIZADO";
 
 export type FiltroRapidoMovimentacao = "" | "A_PAGAR" | "A_RECEBER";
 
@@ -58,7 +61,20 @@ export function formatarMesLabel(mes: string): string {
   if (mes.includes("/")) return mes;
   const [y, m] = mes.split("-");
   if (!y || !m) return mes;
-  const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  const meses = [
+    "Jan",
+    "Fev",
+    "Mar",
+    "Abr",
+    "Mai",
+    "Jun",
+    "Jul",
+    "Ago",
+    "Set",
+    "Out",
+    "Nov",
+    "Dez",
+  ];
   const idx = Number(m) - 1;
   return `${meses[idx] ?? m}/${y.slice(2)}`;
 }
@@ -146,14 +162,19 @@ export function formatarValorMovimentacao(tipo: TipoMovimentacao, valor: number)
 }
 
 export function statusPermitidosPorTipo(tipo: TipoMovimentacao): StatusMovimentacao[] {
-  return tipo === "ENTRADA" ? ["PREVISTO", "RECEBIDO", "CANCELADO"] : ["PREVISTO", "PAGO", "CANCELADO"];
+  return tipo === "ENTRADA"
+    ? ["PREVISTO", "RECEBIDO", "CANCELADO"]
+    : ["PREVISTO", "PAGO", "CANCELADO"];
 }
 
 export function statusEfetivado(tipo: TipoMovimentacao): StatusMovimentacao {
   return tipo === "ENTRADA" ? "RECEBIDO" : "PAGO";
 }
 
-export function calcularPeriodoRapido(periodo: PeriodoRapido): { dataInicio: string; dataFim: string } {
+export function calcularPeriodoRapido(periodo: PeriodoRapido): {
+  dataInicio: string;
+  dataFim: string;
+} {
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
   const fim = hojeIso();
@@ -204,6 +225,7 @@ export function paramsFiltroRapido(filtro: FiltroRapidoMovimentacao): {
 export function formatarTamanhoArquivo(bytes?: number): string {
   if (bytes == null || bytes <= 0) return "—";
   if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} KB`;
+  if (bytes < 1024 * 1024)
+    return `${(bytes / 1024).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} KB`;
   return `${(bytes / (1024 * 1024)).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} MB`;
 }

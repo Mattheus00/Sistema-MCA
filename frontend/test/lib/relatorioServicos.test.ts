@@ -22,7 +22,7 @@ describe("gerarHtmlRelatorioServicos", () => {
       { titulo: "DAS MEI", valorPadrao: 500 },
     ];
     const html = gerarHtmlRelatorioServicos(servicos);
-    expect(html).toContain("<table class=\"relatorio-servicos__tabela\">");
+    expect(html).toContain('<table class="relatorio-servicos__tabela">');
     expect(html).toContain("<tbody>");
     expect(html).toContain("BAIXA MEI");
     expect(html).toContain("200,00");
@@ -54,6 +54,6 @@ describe("gerarHtmlRelatorioServicos", () => {
 
   it("retorna tabela vazia para lista vazia", () => {
     const html = gerarHtmlRelatorioServicos([]);
-    expect(html).toBe("<table class=\"relatorio-servicos__tabela\"><tbody></tbody></table>");
+    expect(html).toBe('<table class="relatorio-servicos__tabela"><tbody></tbody></table>');
   });
 });

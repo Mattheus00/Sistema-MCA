@@ -82,14 +82,27 @@ function Label({ required, children }: { required?: boolean; children: React.Rea
   return (
     <span className="lc-modal-form__label">
       {children}
-      {required && <span className="lc-modal-form__req" aria-hidden="true"> *</span>}
+      {required && (
+        <span className="lc-modal-form__req" aria-hidden="true">
+          {" "}
+          *
+        </span>
+      )}
     </span>
   );
 }
 
 function IconDados() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="10" />
       <line x1="12" y1="8" x2="12" y2="16" />
       <line x1="8" y1="12" x2="16" y2="12" />
@@ -99,7 +112,15 @@ function IconDados() {
 
 function IconDatas() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <rect x="3" y="4" width="18" height="18" rx="2" />
       <line x1="16" y1="2" x2="16" y2="6" />
       <line x1="8" y1="2" x2="8" y2="6" />
@@ -110,7 +131,15 @@ function IconDatas() {
 
 function IconPagamento() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <rect x="1" y="4" width="22" height="16" rx="2" />
       <line x1="1" y1="10" x2="23" y2="10" />
     </svg>
@@ -119,7 +148,15 @@ function IconPagamento() {
 
 function IconCliente() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
       <circle cx="12" cy="7" r="4" />
     </svg>
@@ -128,7 +165,15 @@ function IconCliente() {
 
 function IconEntrada() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="10" />
       <polyline points="16 12 12 8 8 12" />
       <line x1="12" y1="16" x2="12" y2="8" />
@@ -138,7 +183,15 @@ function IconEntrada() {
 
 function IconSaida() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="10" />
       <polyline points="8 12 12 16 16 12" />
       <line x1="12" y1="8" x2="12" y2="16" />
@@ -148,7 +201,15 @@ function IconSaida() {
 
 function IconBusca() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <circle cx="11" cy="11" r="8" />
       <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
@@ -193,7 +254,9 @@ export default function LivroCaixaFormModal({
       };
       if (termo.trim()) params.termo = termo.trim();
       const r = await api.get("/api/clientes", { params });
-      setListaClientes(normalizeListResponse<Record<string, unknown>>(r.data).map(normalizeClienteFromApi));
+      setListaClientes(
+        normalizeListResponse<Record<string, unknown>>(r.data).map(normalizeClienteFromApi),
+      );
     } catch {
       setListaClientes([]);
     } finally {
@@ -250,7 +313,10 @@ export default function LivroCaixaFormModal({
   const statusOpcoes = statusPermitidosPorTipo(form.tipo);
   const exigeCliente = isCategoriaHonorariosContabeis(form.categoriaId, categorias);
   const titulo = modo === "criar" ? "Nova movimentação" : "Editar movimentação";
-  const subtitulo = modo === "criar" ? "Preencha os dados da entrada ou saída" : "Atualize os dados da movimentação";
+  const subtitulo =
+    modo === "criar"
+      ? "Preencha os dados da entrada ou saída"
+      : "Atualize os dados da movimentação";
 
   function atualizarTipo(tipo: TipoMovimentacao) {
     setForm((f) => ({
@@ -342,14 +408,36 @@ export default function LivroCaixaFormModal({
 
   const modal = (
     <div className="modal-overlay" onClick={() => !salvando && onFechar()}>
-      <div className="lc-modal-form" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="lc-modal-form-titulo">
+      <div
+        className="lc-modal-form"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="lc-modal-form-titulo"
+      >
         <header className="lc-modal-form__header">
           <div>
-            <h2 id="lc-modal-form-titulo" className="lc-modal-form__titulo">{titulo}</h2>
+            <h2 id="lc-modal-form-titulo" className="lc-modal-form__titulo">
+              {titulo}
+            </h2>
             <p className="lc-modal-form__subtitulo">{subtitulo}</p>
           </div>
-          <button type="button" className="lc-modal-form__fechar" onClick={onFechar} disabled={salvando} aria-label="Fechar">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <button
+            type="button"
+            className="lc-modal-form__fechar"
+            onClick={onFechar}
+            disabled={salvando}
+            aria-label="Fechar"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -365,14 +453,20 @@ export default function LivroCaixaFormModal({
         <form className="lc-modal-form__body" onSubmit={(e) => void handleSubmit(e)}>
           <section className="lc-modal-form__secao">
             <h3 className="lc-modal-form__secao-titulo">
-              <span className="lc-modal-form__secao-icone"><IconDados /></span>
+              <span className="lc-modal-form__secao-icone">
+                <IconDados />
+              </span>
               Dados principais
             </h3>
 
             <div className="lc-modal-form__grid">
               <div className="lc-modal-form__campo lc-modal-form__campo--full">
                 <Label required>Tipo</Label>
-                <div className="lc-modal-form__tipo-grupo" role="group" aria-label="Tipo de movimentação">
+                <div
+                  className="lc-modal-form__tipo-grupo"
+                  role="group"
+                  aria-label="Tipo de movimentação"
+                >
                   <button
                     type="button"
                     className={`lc-modal-form__tipo-btn lc-modal-form__tipo-btn--entrada${form.tipo === "ENTRADA" ? " lc-modal-form__tipo-btn--ativa" : ""}`}
@@ -431,19 +525,26 @@ export default function LivroCaixaFormModal({
                 >
                   <option value="">Selecione...</option>
                   {categoriasFiltradas.map((c) => (
-                    <option key={c.id} value={c.id}>{c.nome}</option>
+                    <option key={c.id} value={c.id}>
+                      {c.nome}
+                    </option>
                   ))}
                 </select>
               </label>
 
               {exigeCliente && (
-                <div className="lc-modal-form__campo lc-modal-form__campo--full" ref={clienteComboRef}>
+                <div
+                  className="lc-modal-form__campo lc-modal-form__campo--full"
+                  ref={clienteComboRef}
+                >
                   <Label required>Cliente</Label>
                   <div
                     className={`lc-modal-form__combo${clienteListaAberta ? " lc-modal-form__combo--aberta" : ""}${form.clienteId ? " lc-modal-form__combo--selecionado" : ""}`}
                   >
                     <div className="lc-modal-form__busca">
-                      <span className="lc-modal-form__busca-icone"><IconBusca /></span>
+                      <span className="lc-modal-form__busca-icone">
+                        <IconBusca />
+                      </span>
                       <input
                         className="lc-modal-form__input lc-modal-form__input--combo"
                         value={form.clienteBusca}
@@ -479,11 +580,17 @@ export default function LivroCaixaFormModal({
                     </div>
 
                     <div className="lc-modal-form__combo-panel" aria-hidden={!clienteListaAberta}>
-                      <ul id="lc-modal-clientes-lista" className="lc-modal-form__sugestoes" role="listbox">
+                      <ul
+                        id="lc-modal-clientes-lista"
+                        className="lc-modal-form__sugestoes"
+                        role="listbox"
+                      >
                         {carregandoClientes ? (
                           <li className="lc-modal-form__sugestoes-status">Carregando clientes…</li>
                         ) : listaClientes.length === 0 ? (
-                          <li className="lc-modal-form__sugestoes-status">Nenhum cliente encontrado.</li>
+                          <li className="lc-modal-form__sugestoes-status">
+                            Nenhum cliente encontrado.
+                          </li>
                         ) : (
                           listaClientes.map((c) => (
                             <li key={c.id}>
@@ -491,7 +598,11 @@ export default function LivroCaixaFormModal({
                                 type="button"
                                 role="option"
                                 aria-selected={form.clienteId === String(c.id)}
-                                className={form.clienteId === String(c.id) ? "lc-modal-form__sugestao--ativa" : ""}
+                                className={
+                                  form.clienteId === String(c.id)
+                                    ? "lc-modal-form__sugestao--ativa"
+                                    : ""
+                                }
                                 onMouseDown={(e) => e.preventDefault()}
                                 onClick={() => selecionarCliente(c)}
                               >
@@ -516,10 +627,14 @@ export default function LivroCaixaFormModal({
                 <select
                   className="lc-modal-form__input lc-modal-form__select"
                   value={form.status}
-                  onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as StatusMovimentacao }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, status: e.target.value as StatusMovimentacao }))
+                  }
                 >
                   {statusOpcoes.map((s) => (
-                    <option key={s} value={s}>{labelStatusMovimentacao(s)}</option>
+                    <option key={s} value={s}>
+                      {labelStatusMovimentacao(s)}
+                    </option>
                   ))}
                 </select>
               </label>
@@ -539,7 +654,9 @@ export default function LivroCaixaFormModal({
 
           <section className="lc-modal-form__secao">
             <h3 className="lc-modal-form__secao-titulo">
-              <span className="lc-modal-form__secao-icone"><IconDatas /></span>
+              <span className="lc-modal-form__secao-icone">
+                <IconDatas />
+              </span>
               Datas
             </h3>
             <div className="lc-modal-form__grid">
@@ -566,7 +683,9 @@ export default function LivroCaixaFormModal({
 
           <section className="lc-modal-form__secao">
             <h3 className="lc-modal-form__secao-titulo">
-              <span className="lc-modal-form__secao-icone"><IconPagamento /></span>
+              <span className="lc-modal-form__secao-icone">
+                <IconPagamento />
+              </span>
               Pagamento
             </h3>
             <div className="lc-modal-form__grid">
@@ -575,11 +694,18 @@ export default function LivroCaixaFormModal({
                 <select
                   className="lc-modal-form__input lc-modal-form__select"
                   value={form.formaPagamento}
-                  onChange={(e) => setForm((f) => ({ ...f, formaPagamento: e.target.value as FormaPagamento | "" }))}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      formaPagamento: e.target.value as FormaPagamento | "",
+                    }))
+                  }
                 >
                   <option value="">Selecione...</option>
                   {FORMAS_PAGAMENTO.map((f) => (
-                    <option key={f} value={f}>{labelFormaPagamento(f)}</option>
+                    <option key={f} value={f}>
+                      {labelFormaPagamento(f)}
+                    </option>
                   ))}
                 </select>
               </label>
@@ -591,9 +717,13 @@ export default function LivroCaixaFormModal({
                   onChange={(e) => setForm((f) => ({ ...f, contaId: e.target.value }))}
                 >
                   <option value="">Selecione...</option>
-                  {contas.filter((c) => c.ativa).map((c) => (
-                    <option key={c.id} value={c.id}>{c.nome}</option>
-                  ))}
+                  {contas
+                    .filter((c) => c.ativa)
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.nome}
+                      </option>
+                    ))}
                 </select>
               </label>
             </div>
@@ -601,7 +731,9 @@ export default function LivroCaixaFormModal({
 
           <section className="lc-modal-form__secao">
             <h3 className="lc-modal-form__secao-titulo">
-              <span className="lc-modal-form__secao-icone"><IconCliente /></span>
+              <span className="lc-modal-form__secao-icone">
+                <IconCliente />
+              </span>
               {form.tipo === "SAIDA" ? "Fornecedor e observações" : "Observações"}
             </h3>
             <div className="lc-modal-form__grid">
@@ -631,10 +763,19 @@ export default function LivroCaixaFormModal({
           </section>
 
           <footer className="lc-modal-form__footer">
-            <button type="button" className="lc-modal-form__btn lc-modal-form__btn--cancelar" onClick={onFechar} disabled={salvando}>
+            <button
+              type="button"
+              className="lc-modal-form__btn lc-modal-form__btn--cancelar"
+              onClick={onFechar}
+              disabled={salvando}
+            >
               Cancelar
             </button>
-            <button type="submit" className="lc-modal-form__btn lc-modal-form__btn--salvar" disabled={salvando}>
+            <button
+              type="submit"
+              className="lc-modal-form__btn lc-modal-form__btn--salvar"
+              disabled={salvando}
+            >
               {salvando ? "Salvando…" : modo === "criar" ? "Criar" : "Salvar"}
             </button>
           </footer>

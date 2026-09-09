@@ -1,33 +1,33 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
-import Layout from '@/components/Layout'
-import ProtectedRoute from '@/components/ProtectedRoute'
-import PortalProtectedRoute from '@/components/portal/PortalProtectedRoute'
-import PortalLayout from '@/components/portal/PortalLayout'
-import PortalLogin from '@/components/portal/PortalLogin'
-import PortalPrimeiroAcesso from '@/components/portal/PortalPrimeiroAcesso'
-import PortalRecuperarSenha from '@/components/portal/PortalRecuperarSenha'
-import PortalDashboard from '@/components/portal/PortalDashboard'
-import PortalDividasList from '@/components/portal/PortalDividasList'
-import PortalDividaDetalhe from '@/components/portal/PortalDividaDetalhe'
-import PortalDocumentos from '@/components/portal/PortalDocumentos'
-import Dashboard from '@/components/pages/Dashboard'
-import WebClientes from '@/components/pages/WebClientes'
-import WebInadimplentes from '@/components/pages/WebInadimplentes'
-import WebInadimplentesRegistro from '@/components/pages/WebInadimplentesRegistro'
-import WebInadimplentesHonorarios from '@/components/pages/WebInadimplentesHonorarios'
-import WebRelatorios from '@/components/pages/WebRelatorios'
-import WebServicos from '@/components/pages/WebServicos'
-import WebReformaTributaria from '@/components/pages/WebReformaTributaria'
-import WebEnvioBoletos from '@/components/pages/WebEnvioBoletos'
-import WebDocumentosClientes from '@/components/pages/WebDocumentosClientes'
-import WebLivroCaixa from '@/components/pages/WebLivroCaixa'
-import WebTarefas from '@/components/pages/WebTarefas'
-import WebCadastroUsuario from '@/components/pages/WebCadastroUsuario'
-import WebUsuarios from '@/components/pages/WebUsuarios'
-import Login from '@/components/pages/Login'
-import LandingPage from '@/components/pages/LandingPage'
-import './App.css'
-import './styles/portal.css'
+import { Navigate, Route, Routes } from "react-router-dom";
+import Layout from "@/components/Layout";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import PortalProtectedRoute from "@/components/portal/PortalProtectedRoute";
+import PortalLayout from "@/components/portal/PortalLayout";
+import PortalLogin from "@/components/portal/PortalLogin";
+import PortalPrimeiroAcesso from "@/components/portal/PortalPrimeiroAcesso";
+import PortalRecuperarSenha from "@/components/portal/PortalRecuperarSenha";
+import PortalDashboard from "@/components/portal/PortalDashboard";
+import PortalDividasList from "@/components/portal/PortalDividasList";
+import PortalDividaDetalhe from "@/components/portal/PortalDividaDetalhe";
+import PortalDocumentos from "@/components/portal/PortalDocumentos";
+import Dashboard from "@/components/pages/Dashboard";
+import WebClientes from "@/components/pages/WebClientes";
+import WebInadimplentes from "@/components/pages/WebInadimplentes";
+import WebInadimplentesRegistro from "@/components/pages/WebInadimplentesRegistro";
+import WebInadimplentesHonorarios from "@/components/pages/WebInadimplentesHonorarios";
+import WebRelatorios from "@/components/pages/WebRelatorios";
+import WebServicos from "@/components/pages/WebServicos";
+import WebReformaTributaria from "@/components/pages/WebReformaTributaria";
+import WebEnvioBoletos from "@/components/pages/WebEnvioBoletos";
+import WebDocumentosClientes from "@/components/pages/WebDocumentosClientes";
+import WebLivroCaixa from "@/components/pages/WebLivroCaixa";
+import WebTarefas from "@/components/pages/WebTarefas";
+import WebCadastroUsuario from "@/components/pages/WebCadastroUsuario";
+import WebUsuarios from "@/components/pages/WebUsuarios";
+import Login from "@/components/pages/Login";
+import LandingPage from "@/components/pages/LandingPage";
+import "./App.css";
+import "./styles/portal.css";
 
 function App() {
   return (
@@ -51,7 +51,10 @@ function App() {
           <Route path="/clientes" element={<WebClientes />} />
           <Route path="/inadimplentes" element={<WebInadimplentes />} />
           <Route path="/inadimplentes/registrar" element={<WebInadimplentesRegistro />} />
-          <Route path="/inadimplentes/:clienteId/honorarios" element={<WebInadimplentesHonorarios />} />
+          <Route
+            path="/inadimplentes/:clienteId/honorarios"
+            element={<WebInadimplentesHonorarios />}
+          />
           <Route path="/tarefas" element={<WebTarefas />} />
 
           <Route element={<ProtectedRoute denyFuncionario />}>
@@ -70,13 +73,16 @@ function App() {
           <Route element={<ProtectedRoute onlyProprietaria />}>
             <Route path="/usuarios" element={<WebUsuarios />} />
             <Route path="/usuarios/cadastro" element={<WebCadastroUsuario />} />
-            <Route path="/usuarios/pendentes" element={<Navigate to="/usuarios?aba=pendentes" replace />} />
+            <Route
+              path="/usuarios/pendentes"
+              element={<Navigate to="/usuarios?aba=pendentes" replace />}
+            />
             <Route path="/usuarios/ativos" element={<Navigate to="/usuarios" replace />} />
           </Route>
         </Route>
       </Route>
     </Routes>
-  )
+  );
 }
 
-export default App
+export default App;

@@ -54,7 +54,9 @@ export function RecentActivities({ atividades, loading }: RecentActivitiesProps)
                       <td>
                         <span
                           className={`dash-status-badge ${
-                            a.status === "Confirmado" ? "dash-status-badge--ok" : "dash-status-badge--warn"
+                            a.status === "Confirmado"
+                              ? "dash-status-badge--ok"
+                              : "dash-status-badge--warn"
                           }`}
                         >
                           {a.status ?? "—"}
@@ -84,7 +86,9 @@ export function RecentActivities({ atividades, loading }: RecentActivitiesProps)
                         value: (
                           <span
                             className={`dash-status-badge ${
-                              a.status === "Confirmado" ? "dash-status-badge--ok" : "dash-status-badge--warn"
+                              a.status === "Confirmado"
+                                ? "dash-status-badge--ok"
+                                : "dash-status-badge--warn"
                             }`}
                           >
                             {a.status ?? "—"}

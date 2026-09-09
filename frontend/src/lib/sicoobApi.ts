@@ -18,7 +18,8 @@ export function normalizeCobrancaSicoobFromApi(raw: Record<string, unknown>): Co
     pixCopiaECola: raw.pixCopiaECola != null ? String(raw.pixCopiaECola) : null,
     pixQrCode: raw.pixQrCode != null ? String(raw.pixQrCode) : null,
     boletoNossoNumero: raw.boletoNossoNumero != null ? String(raw.boletoNossoNumero) : null,
-    boletoLinhaDigitavel: raw.boletoLinhaDigitavel != null ? String(raw.boletoLinhaDigitavel) : null,
+    boletoLinhaDigitavel:
+      raw.boletoLinhaDigitavel != null ? String(raw.boletoLinhaDigitavel) : null,
     boletoCodigoBarras: raw.boletoCodigoBarras != null ? String(raw.boletoCodigoBarras) : null,
     mensagemErro: raw.mensagemErro != null ? String(raw.mensagemErro) : null,
     criadoEm: raw.criadoEm != null ? String(raw.criadoEm) : null,

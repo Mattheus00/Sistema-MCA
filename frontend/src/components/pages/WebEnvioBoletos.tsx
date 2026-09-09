@@ -1,14 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import {
-  api,
-  getApiErrorMessage,
-  normalizeListResponse,
-} from "@/lib/api";
-import {
-  normalizeClienteFromApi,
-  normalizePaginaLotesEnvioFromApi,
-} from "@/lib/apiNormalizers";
+import { api, getApiErrorMessage, normalizeListResponse } from "@/lib/api";
+import { normalizeClienteFromApi, normalizePaginaLotesEnvioFromApi } from "@/lib/apiNormalizers";
 import {
   abrirPdfItem,
   atualizarClienteItem,
@@ -43,7 +36,14 @@ import {
 } from "@/lib/envioBoletosUtils";
 import AdminItemCard from "@/components/AdminItemCard";
 import ResponsiveList from "@/components/ResponsiveList";
-import type { Cliente, ItemEnvioBoleto, LoteEnvioBoleto, LoteEnvioBoletoResumo, ResultadoEnvioItem, ResultadoEnvioLote } from "@/types/api";
+import type {
+  Cliente,
+  ItemEnvioBoleto,
+  LoteEnvioBoleto,
+  LoteEnvioBoletoResumo,
+  ResultadoEnvioItem,
+  ResultadoEnvioLote,
+} from "@/types/api";
 
 type AbaPrincipal = "novo" | "historico";
 type EtapaNovo = "upload" | "conferencia" | "resultado";
@@ -90,14 +90,17 @@ export default function WebEnvioBoletos() {
   const inputArquivosRef = useRef<HTMLInputElement>(null);
   const inputPastaRef = useRef<HTMLInputElement>(null);
 
-  const itens = lote?.itens ?? [];
+  const loteItens = lote?.itens;
+  const itens = useMemo(() => loteItens ?? [], [loteItens]);
   const cards = useMemo(() => resumoCardsFromLote(lote), [lote]);
-  const podeEnviar = podeEnviarSelecionados(itens, selecionados, lote?.validacao);
+  const podeEnviar = podeEnviarSelecionados(itens, selecionados);
   const itensErro = itensComErroParaReenvio(itens);
   const resumoConfirmacao = useMemo(() => {
     const selecionadosLista = itens.filter((item) => selecionados.has(envioBoletoIdItem(item)));
     const prontos = itensElegiveisEnvio(itens, selecionados);
-    const duplicados = selecionadosLista.filter((item) => String(item.status ?? "").toUpperCase() === "DUPLICADO").length;
+    const duplicados = selecionadosLista.filter(
+      (item) => String(item.status ?? "").toUpperCase() === "DUPLICADO",
+    ).length;
     return {
       selecionados: selecionadosLista.length,
       prontos: prontos.length,
@@ -150,12 +153,14 @@ export default function WebEnvioBoletos() {
     }
   }
 
-  async function validarLoteAtual() {
-    if (!lote?.loteId) return;
+  const loteId = lote?.loteId;
+
+  const validarLoteAtual = useCallback(async () => {
+    if (!loteId) return;
     try {
       setLoading(true);
       setErro(null);
-      const atualizado = await validarLoteEnvioBoletos(lote.loteId);
+      const atualizado = await validarLoteEnvioBoletos(loteId);
       setLote(atualizado);
       const msgBloqueios = mensagemBloqueiosValidacao(atualizado.validacao);
       if (msgBloqueios) {
@@ -166,7 +171,7 @@ export default function WebEnvioBoletos() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [loteId]);
 
   async function executarEnvio(itemIds?: string[]) {
     if (!lote?.loteId) return;
@@ -224,7 +229,9 @@ export default function WebEnvioBoletos() {
       const params: Record<string, string | number> = { page: 0, size: 50, statusCliente: "ATIVO" };
       if (termo?.trim()) params.busca = termo.trim();
       const r = await api.get("/api/clientes", { params });
-      const list = normalizeListResponse<Record<string, unknown>>(r.data).map(normalizeClienteFromApi);
+      const list = normalizeListResponse<Record<string, unknown>>(r.data).map(
+        normalizeClienteFromApi,
+      );
       setClientes(list);
     } catch (e: unknown) {
       setErro(getApiErrorMessage(e, "Falha ao buscar clientes."));
@@ -238,7 +245,11 @@ export default function WebEnvioBoletos() {
     try {
       setLoading(true);
       setErro(null);
-      await atualizarClienteItem(lote.loteId, envioBoletoIdItem(itemCorrigir), clienteSelecionadoId);
+      await atualizarClienteItem(
+        lote.loteId,
+        envioBoletoIdItem(itemCorrigir),
+        clienteSelecionadoId,
+      );
       setItemCorrigir(null);
       await validarLoteAtual();
       setMensagemSucesso("Cliente atualizado no item.");
@@ -259,25 +270,34 @@ export default function WebEnvioBoletos() {
     }
   }
 
-  async function carregarHistorico(page = historicoPagina) {
-    try {
-      setLoading(true);
-      setErro(null);
-      const params: Record<string, string | number> = { page, size: 10 };
-      if (filtroStatus.trim()) params.status = filtroStatus.trim();
-      if (filtroDataInicio) params.dataInicio = filtroDataInicio;
-      if (filtroDataFim) params.dataFim = filtroDataFim;
-      const r = await api.get("/api/lotes-envio-boletos", { params });
-      const pagina = normalizePaginaLotesEnvioFromApi(r.data);
-      setHistorico(pagina.content);
-      setHistoricoTotalPaginas(Math.max(1, pagina.totalPages));
-      setHistoricoPagina(pagina.number);
-    } catch (e: unknown) {
-      setErro(getApiErrorMessage(e, "Falha ao carregar o histórico."));
-    } finally {
-      setLoading(false);
-    }
-  }
+  const carregarHistorico = useCallback(
+    async (page: number) => {
+      try {
+        setLoading(true);
+        setErro(null);
+        const params: Record<string, string | number> = { page, size: 10 };
+        if (filtroStatus.trim()) params.status = filtroStatus.trim();
+        if (filtroDataInicio) params.dataInicio = filtroDataInicio;
+        if (filtroDataFim) params.dataFim = filtroDataFim;
+        const r = await api.get("/api/lotes-envio-boletos", { params });
+        const pagina = normalizePaginaLotesEnvioFromApi(r.data);
+        setHistorico(pagina.content);
+        setHistoricoTotalPaginas(Math.max(1, pagina.totalPages));
+        setHistoricoPagina(pagina.number);
+      } catch (e: unknown) {
+        setErro(getApiErrorMessage(e, "Falha ao carregar o histórico."));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [filtroStatus, filtroDataInicio, filtroDataFim],
+  );
+
+  // Ref com a versão mais recente: a troca de aba dispara a carga, mas mudar filtros não.
+  const carregarHistoricoRef = useRef(carregarHistorico);
+  useEffect(() => {
+    carregarHistoricoRef.current = carregarHistorico;
+  }, [carregarHistorico]);
 
   async function abrirDetalheHistorico(loteId: string) {
     try {
@@ -322,8 +342,7 @@ export default function WebEnvioBoletos() {
   }, [mensagemSucesso]);
 
   useEffect(() => {
-    if (aba === "historico") carregarHistorico(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (aba === "historico") void carregarHistoricoRef.current(0);
   }, [aba]);
 
   useEffect(() => {
@@ -334,12 +353,10 @@ export default function WebEnvioBoletos() {
     };
   }, [modalConfirmarEnvio, itemCorrigir, resultadoHistorico]);
 
+  const precisaValidarLote = etapa === "conferencia" && !!loteId && !lote?.validacao;
   useEffect(() => {
-    if (etapa === "conferencia" && lote?.loteId && !lote.validacao) {
-      validarLoteAtual();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [etapa, lote?.loteId]);
+    if (precisaValidarLote) void validarLoteAtual();
+  }, [precisaValidarLote, validarLoteAtual]);
 
   const clientesFiltrados = useMemo(() => {
     const t = buscaCliente.trim().toLowerCase();
@@ -354,8 +371,12 @@ export default function WebEnvioBoletos() {
   }, [clientes, buscaCliente]);
 
   return (
-    <div className={`page-envio-boletos${aba === "novo" && etapa === "conferencia" ? " page-envio-boletos--conferencia" : ""}`}>
-      <header className={`page-envio-boletos__header ${etapa === "conferencia" && aba === "novo" ? "page-envio-boletos__header--compacto" : ""}`}>
+    <div
+      className={`page-envio-boletos${aba === "novo" && etapa === "conferencia" ? " page-envio-boletos--conferencia" : ""}`}
+    >
+      <header
+        className={`page-envio-boletos__header ${etapa === "conferencia" && aba === "novo" ? "page-envio-boletos__header--compacto" : ""}`}
+      >
         {!(aba === "novo" && etapa === "conferencia") && (
           <div>
             <h1 className="page-envio-boletos__title">Envio de boletos</h1>
@@ -374,7 +395,11 @@ export default function WebEnvioBoletos() {
       {mensagemSucesso && <p className="toast toast--sucesso">{mensagemSucesso}</p>}
       {erro && <p className="page-envio-boletos__erro">{erro}</p>}
 
-      <div className="page-envio-boletos__abas" role="tablist" aria-label="Seções do envio de boletos">
+      <div
+        className="page-envio-boletos__abas"
+        role="tablist"
+        aria-label="Seções do envio de boletos"
+      >
         <button
           type="button"
           role="tab"
@@ -441,10 +466,18 @@ export default function WebEnvioBoletos() {
                 <UploadIcon />
                 <p>Arraste PDFs aqui ou selecione arquivos / pasta</p>
                 <div className="page-envio-boletos__upload-acoes">
-                  <button type="button" className="btn btn--secondary" onClick={() => inputArquivosRef.current?.click()}>
+                  <button
+                    type="button"
+                    className="btn btn--secondary"
+                    onClick={() => inputArquivosRef.current?.click()}
+                  >
                     Selecionar PDFs
                   </button>
-                  <button type="button" className="btn btn--secondary" onClick={() => inputPastaRef.current?.click()}>
+                  <button
+                    type="button"
+                    className="btn btn--secondary"
+                    onClick={() => inputPastaRef.current?.click()}
+                  >
                     Selecionar pasta
                   </button>
                 </div>
@@ -467,7 +500,9 @@ export default function WebEnvioBoletos() {
                   hidden
                   {...{ webkitdirectory: "", directory: "" }}
                   onChange={(e) => {
-                    const pdfs = Array.from(e.target.files ?? []).filter((f) => f.name.toLowerCase().endsWith(".pdf"));
+                    const pdfs = Array.from(e.target.files ?? []).filter((f) =>
+                      f.name.toLowerCase().endsWith(".pdf"),
+                    );
                     if (pdfs.length) adicionarArquivos(pdfs);
                     e.target.value = "";
                   }}
@@ -477,37 +512,54 @@ export default function WebEnvioBoletos() {
               {arquivos.length > 0 && (
                 <>
                   <p className="page-envio-boletos__contagem">
-                    {arquivos.length} arquivo{arquivos.length !== 1 ? "s" : ""} selecionado{arquivos.length !== 1 ? "s" : ""}
+                    {arquivos.length} arquivo{arquivos.length !== 1 ? "s" : ""} selecionado
+                    {arquivos.length !== 1 ? "s" : ""}
                   </p>
                   <ul className="page-envio-boletos__lista-arquivos">
-                  {arquivos.map((arquivo, idx) => (
-                    <li key={`${arquivo.name}-${arquivo.size}-${idx}`}>
-                      <span className="page-envio-boletos__arquivo-nome">{arquivo.name}</span>
-                      <span className="page-envio-boletos__arquivo-tamanho">{formatarTamanhoArquivo(arquivo.size)}</span>
-                      <button type="button" className="page-envio-boletos__remover" onClick={() => removerArquivo(idx)} aria-label={`Remover ${arquivo.name}`}>
-                        Remover
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                    {arquivos.map((arquivo, idx) => (
+                      <li key={`${arquivo.name}-${arquivo.size}-${idx}`}>
+                        <span className="page-envio-boletos__arquivo-nome">{arquivo.name}</span>
+                        <span className="page-envio-boletos__arquivo-tamanho">
+                          {formatarTamanhoArquivo(arquivo.size)}
+                        </span>
+                        <button
+                          type="button"
+                          className="page-envio-boletos__remover"
+                          onClick={() => removerArquivo(idx)}
+                          aria-label={`Remover ${arquivo.name}`}
+                        >
+                          Remover
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 </>
               )}
 
               <div className="page-envio-boletos__acoes-principais">
-                <button type="button" className="btn btn--primary" disabled={loading || arquivos.length === 0} onClick={enviarUpload}>
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  disabled={loading || arquivos.length === 0}
+                  onClick={enviarUpload}
+                >
                   {loading ? "Enviando..." : "Analisar arquivos"}
                 </button>
               </div>
 
               <div className="page-envio-boletos__ajuda" role="note">
                 <p>
-                  Renomeie os PDFs antes do upload: <strong>{"{código} {nome igual ao cadastro}.pdf"}</strong>
+                  Renomeie os PDFs antes do upload:{" "}
+                  <strong>{"{código} {nome igual ao cadastro}.pdf"}</strong>
                 </p>
                 <p>
-                  Exemplos: <code>4 ANA CLAUDIA DE CARVALHO BOTELHO.pdf</code> · <code>14.pdf</code> ·{" "}
-                  <code>27383573000106.pdf</code> (CNPJ)
+                  Exemplos: <code>4 ANA CLAUDIA DE CARVALHO BOTELHO.pdf</code> · <code>14.pdf</code>{" "}
+                  · <code>27383573000106.pdf</code> (CNPJ)
                 </p>
-                <p>O e-mail vem do cadastro do cliente. Se aparecer &quot;E-mail não encontrado&quot;, cadastre o e-mail em Clientes.</p>
+                <p>
+                  O e-mail vem do cadastro do cliente. Se aparecer &quot;E-mail não
+                  encontrado&quot;, cadastre o e-mail em Clientes.
+                </p>
               </div>
             </section>
           )}
@@ -569,7 +621,10 @@ export default function WebEnvioBoletos() {
                             <input
                               type="checkbox"
                               aria-label="Selecionar todos"
-                              checked={todosItensSelecionaveis(itens).length > 0 && todosItensSelecionaveis(itens).every((id) => selecionados.has(id))}
+                              checked={
+                                todosItensSelecionaveis(itens).length > 0 &&
+                                todosItensSelecionaveis(itens).every((id) => selecionados.has(id))
+                              }
                               onChange={toggleTodos}
                             />
                           </th>
@@ -598,7 +653,14 @@ export default function WebEnvioBoletos() {
                             const bloqueio = motivoBloqueioItem(item, lote?.validacao);
                             const itemId = envioBoletoIdItem(item);
                             return (
-                              <tr key={itemId} className={itemBloqueiaEnvio(item) ? "page-envio-boletos__linha--bloqueada" : ""}>
+                              <tr
+                                key={itemId}
+                                className={
+                                  itemBloqueiaEnvio(item)
+                                    ? "page-envio-boletos__linha--bloqueada"
+                                    : ""
+                                }
+                              >
                                 <td>
                                   <input
                                     type="checkbox"
@@ -610,10 +672,16 @@ export default function WebEnvioBoletos() {
                                 </td>
                                 <td>
                                   <div className="page-envio-boletos__arquivo-cell">
-                                    <span className="page-envio-boletos__pdf-icon" aria-hidden="true">
+                                    <span
+                                      className="page-envio-boletos__pdf-icon"
+                                      aria-hidden="true"
+                                    >
                                       <PdfIcon />
                                     </span>
-                                    <span className="page-envio-boletos__arquivo-nome-tabela" title={item.nomeArquivoOriginal}>
+                                    <span
+                                      className="page-envio-boletos__arquivo-nome-tabela"
+                                      title={item.nomeArquivoOriginal}
+                                    >
                                       {item.nomeArquivoOriginal}
                                     </span>
                                   </div>
@@ -621,34 +689,56 @@ export default function WebEnvioBoletos() {
                                 <td>{item.clienteNome?.trim() || "—"}</td>
                                 <td>{exibirDocumento(item.documentoMascarado)}</td>
                                 <td>
-                                  <span className={emailInfo.ausente ? "page-envio-boletos__email-ausente" : ""}>
+                                  <span
+                                    className={
+                                      emailInfo.ausente ? "page-envio-boletos__email-ausente" : ""
+                                    }
+                                  >
                                     {emailInfo.texto}
                                   </span>
                                 </td>
                                 <td>{labelMetodoIdentificacao(item.metodoIdentificacao)}</td>
                                 <td>{labelConfianca(item.confiancaIdentificacao)}</td>
                                 <td>
-                                  <span className={`page-envio-boletos__badge page-envio-boletos__badge--${indicador.cor}`}>
+                                  <span
+                                    className={`page-envio-boletos__badge page-envio-boletos__badge--${indicador.cor}`}
+                                  >
                                     {indicador.texto}
                                   </span>
                                   {bloqueio && itemBloqueiaEnvio(item) && (
-                                    <div className="page-envio-boletos__bloqueio-item" title={bloqueio}>
+                                    <div
+                                      className="page-envio-boletos__bloqueio-item"
+                                      title={bloqueio}
+                                    >
                                       {bloqueio}
                                     </div>
                                   )}
                                 </td>
                                 <td>
                                   <div className="page-envio-boletos__acoes-linha">
-                                    <button type="button" className="page-envio-boletos__acao" title="Visualizar PDF" onClick={() => visualizarPdf(itemId)}>
+                                    <button
+                                      type="button"
+                                      className="page-envio-boletos__acao"
+                                      title="Visualizar PDF"
+                                      onClick={() => visualizarPdf(itemId)}
+                                    >
                                       <EyeIcon />
                                       PDF
                                     </button>
-                                    <button type="button" className="page-envio-boletos__acao" onClick={() => abrirModalCorrigir(item)}>
+                                    <button
+                                      type="button"
+                                      className="page-envio-boletos__acao"
+                                      onClick={() => abrirModalCorrigir(item)}
+                                    >
                                       <EditIcon />
                                       Corrigir
                                     </button>
                                     {status !== "IGNORADO" && (
-                                      <button type="button" className="page-envio-boletos__acao" onClick={() => patchItem(itemId, "ignorar")}>
+                                      <button
+                                        type="button"
+                                        className="page-envio-boletos__acao"
+                                        onClick={() => patchItem(itemId, "ignorar")}
+                                      >
                                         <BanIcon />
                                         Ignorar
                                       </button>
@@ -692,18 +782,28 @@ export default function WebEnvioBoletos() {
                                     />
                                   ),
                                 },
-                                { label: "CPF/CNPJ", value: exibirDocumento(item.documentoMascarado) },
+                                {
+                                  label: "CPF/CNPJ",
+                                  value: exibirDocumento(item.documentoMascarado),
+                                },
                                 { label: "E-mail", value: emailInfo.texto },
-                                { label: "Método", value: labelMetodoIdentificacao(item.metodoIdentificacao) },
+                                {
+                                  label: "Método",
+                                  value: labelMetodoIdentificacao(item.metodoIdentificacao),
+                                },
                                 {
                                   label: "Status",
                                   value: (
                                     <>
-                                      <span className={`page-envio-boletos__badge page-envio-boletos__badge--${indicador.cor}`}>
+                                      <span
+                                        className={`page-envio-boletos__badge page-envio-boletos__badge--${indicador.cor}`}
+                                      >
                                         {indicador.texto}
                                       </span>
                                       {bloqueio && itemBloqueiaEnvio(item) ? (
-                                        <span className="page-envio-boletos__bloqueio-item">{bloqueio}</span>
+                                        <span className="page-envio-boletos__bloqueio-item">
+                                          {bloqueio}
+                                        </span>
                                       ) : null}
                                     </>
                                   ),
@@ -711,14 +811,26 @@ export default function WebEnvioBoletos() {
                               ]}
                               actions={
                                 <>
-                                  <button type="button" className="btn btn--secondary btn--small" onClick={() => visualizarPdf(itemId)}>
+                                  <button
+                                    type="button"
+                                    className="btn btn--secondary btn--small"
+                                    onClick={() => visualizarPdf(itemId)}
+                                  >
                                     PDF
                                   </button>
-                                  <button type="button" className="btn btn--secondary btn--small" onClick={() => abrirModalCorrigir(item)}>
+                                  <button
+                                    type="button"
+                                    className="btn btn--secondary btn--small"
+                                    onClick={() => abrirModalCorrigir(item)}
+                                  >
                                     Corrigir
                                   </button>
                                   {status !== "IGNORADO" && (
-                                    <button type="button" className="btn btn--danger btn--small" onClick={() => patchItem(itemId, "ignorar")}>
+                                    <button
+                                      type="button"
+                                      className="btn btn--danger btn--small"
+                                      onClick={() => patchItem(itemId, "ignorar")}
+                                    >
                                       Ignorar
                                     </button>
                                   )}
@@ -733,25 +845,33 @@ export default function WebEnvioBoletos() {
                 }
               />
 
-              {lote.validacao && !lote.validacao.podeEnviar && lote.validacao.bloqueios.length > 0 && (
-                <div className="page-envio-boletos__bloqueios" role="alert">
-                  <strong>Pendências antes do envio:</strong>
-                  <ul>
-                    {lote.validacao.bloqueios.map((b) => {
-                      const itemRef = itens.find((i) => envioBoletoIdItem(i) === b.itemId);
-                      const rotulo = itemRef?.nomeArquivoOriginal ?? b.itemId;
-                      return (
-                        <li key={`${b.itemId}-${b.motivo}`}>
-                          <span className="page-envio-boletos__bloqueio-arquivo">{rotulo}</span>: {b.motivo}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              )}
+              {lote.validacao &&
+                !lote.validacao.podeEnviar &&
+                lote.validacao.bloqueios.length > 0 && (
+                  <div className="page-envio-boletos__bloqueios" role="alert">
+                    <strong>Pendências antes do envio:</strong>
+                    <ul>
+                      {lote.validacao.bloqueios.map((b) => {
+                        const itemRef = itens.find((i) => envioBoletoIdItem(i) === b.itemId);
+                        const rotulo = itemRef?.nomeArquivoOriginal ?? b.itemId;
+                        return (
+                          <li key={`${b.itemId}-${b.motivo}`}>
+                            <span className="page-envio-boletos__bloqueio-arquivo">{rotulo}</span>:{" "}
+                            {b.motivo}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
 
               <div className="page-envio-boletos__acoes-principais page-envio-boletos__acoes-principais--conferencia">
-                <button type="button" className="btn btn--secondary page-envio-boletos__btn-revalidar" disabled={loading} onClick={validarLoteAtual}>
+                <button
+                  type="button"
+                  className="btn btn--secondary page-envio-boletos__btn-revalidar"
+                  disabled={loading}
+                  onClick={validarLoteAtual}
+                >
                   <RefreshIcon />
                   {loading ? "Revalidando..." : "Revalidar"}
                 </button>
@@ -771,9 +891,27 @@ export default function WebEnvioBoletos() {
           {etapa === "resultado" && lote && (
             <section className="page-envio-boletos__resultado">
               <div className="page-envio-boletos__stats page-envio-boletos__stats--compacto">
-                <ResumoCard label="Enviados" valor={cards.enviados} tipo="verde" tooltip="Boletos enviados com sucesso." icon={<SendIcon />} />
-                <ResumoCard label="Erros" valor={cards.erros} tipo="laranja" tooltip="Itens com falha no envio." icon={<AlertIcon />} />
-                <ResumoCard label="Ignorados" valor={cards.ignorados} tipo="cinza" tooltip="Itens ignorados no lote." icon={<EyeOffIcon />} />
+                <ResumoCard
+                  label="Enviados"
+                  valor={cards.enviados}
+                  tipo="verde"
+                  tooltip="Boletos enviados com sucesso."
+                  icon={<SendIcon />}
+                />
+                <ResumoCard
+                  label="Erros"
+                  valor={cards.erros}
+                  tipo="laranja"
+                  tooltip="Itens com falha no envio."
+                  icon={<AlertIcon />}
+                />
+                <ResumoCard
+                  label="Ignorados"
+                  valor={cards.ignorados}
+                  tipo="cinza"
+                  tooltip="Itens ignorados no lote."
+                  icon={<EyeOffIcon />}
+                />
               </div>
 
               <ResponsiveList
@@ -797,7 +935,9 @@ export default function WebEnvioBoletos() {
                             <td>{exibirDocumento(item.emailDestinatario)}</td>
                             <td>{item.nomeArquivoOriginal}</td>
                             <td>
-                              <span className={`page-envio-boletos__badge page-envio-boletos__badge--${indicadorStatusItem(item).cor}`}>
+                              <span
+                                className={`page-envio-boletos__badge page-envio-boletos__badge--${indicadorStatusItem(item).cor}`}
+                              >
                                 {labelStatusItem(item.status)}
                               </span>
                             </td>
@@ -821,7 +961,9 @@ export default function WebEnvioBoletos() {
                             {
                               label: "Status",
                               value: (
-                                <span className={`page-envio-boletos__badge page-envio-boletos__badge--${indicadorStatusItem(item).cor}`}>
+                                <span
+                                  className={`page-envio-boletos__badge page-envio-boletos__badge--${indicadorStatusItem(item).cor}`}
+                                >
                                   {labelStatusItem(item.status)}
                                 </span>
                               ),
@@ -892,19 +1034,31 @@ export default function WebEnvioBoletos() {
               onChange={(e) => setFiltroDataFim(e.target.value)}
               aria-label="Data fim"
             />
-            <select className="page-envio-boletos__input" value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)} aria-label="Status">
+            <select
+              className="page-envio-boletos__input"
+              value={filtroStatus}
+              onChange={(e) => setFiltroStatus(e.target.value)}
+              aria-label="Status"
+            >
               <option value="">Todos os status</option>
               <option value="CONCLUIDO">Concluído</option>
               <option value="CONFERENCIA">Conferência</option>
               <option value="ENVIANDO">Enviando</option>
               <option value="CANCELADO">Cancelado</option>
             </select>
-            <button type="button" className="btn btn--secondary" onClick={() => carregarHistorico(0)} disabled={loading}>
+            <button
+              type="button"
+              className="btn btn--secondary"
+              onClick={() => carregarHistorico(0)}
+              disabled={loading}
+            >
               Filtrar
             </button>
           </div>
 
-          <p className="page-envio-boletos__historico-dica">Clique em um lote para ver os detalhes do envio por cliente.</p>
+          <p className="page-envio-boletos__historico-dica">
+            Clique em um lote para ver os detalhes do envio por cliente.
+          </p>
 
           <ResponsiveList
             desktop={
@@ -1049,8 +1203,9 @@ export default function WebEnvioBoletos() {
               <div className="modal-envio-confirmacao__alerta" role="alert">
                 <AlertTriangleIcon />
                 <p>
-                  <strong>Atenção:</strong> os e-mails serão enviados de verdade para os destinatários selecionados.
-                  Revise cuidadosamente a conferência antes de continuar.
+                  <strong>Atenção:</strong> os e-mails serão enviados de verdade para os
+                  destinatários selecionados. Revise cuidadosamente a conferência antes de
+                  continuar.
                 </p>
               </div>
 
@@ -1063,7 +1218,9 @@ export default function WebEnvioBoletos() {
                     </span>
                     <div>
                       <span className="modal-envio-confirmacao__resumo-label">Selecionados</span>
-                      <strong className="modal-envio-confirmacao__resumo-valor">{resumoConfirmacao.selecionados}</strong>
+                      <strong className="modal-envio-confirmacao__resumo-valor">
+                        {resumoConfirmacao.selecionados}
+                      </strong>
                     </div>
                   </div>
                   <div className="modal-envio-confirmacao__resumo-card modal-envio-confirmacao__resumo-card--verde">
@@ -1071,8 +1228,12 @@ export default function WebEnvioBoletos() {
                       <CheckCircleIcon />
                     </span>
                     <div>
-                      <span className="modal-envio-confirmacao__resumo-label">Prontos para envio</span>
-                      <strong className="modal-envio-confirmacao__resumo-valor">{resumoConfirmacao.prontos}</strong>
+                      <span className="modal-envio-confirmacao__resumo-label">
+                        Prontos para envio
+                      </span>
+                      <strong className="modal-envio-confirmacao__resumo-valor">
+                        {resumoConfirmacao.prontos}
+                      </strong>
                     </div>
                   </div>
                   <div className="modal-envio-confirmacao__resumo-card modal-envio-confirmacao__resumo-card--laranja">
@@ -1080,8 +1241,12 @@ export default function WebEnvioBoletos() {
                       <DuplicateIcon />
                     </span>
                     <div>
-                      <span className="modal-envio-confirmacao__resumo-label">Duplicados detectados</span>
-                      <strong className="modal-envio-confirmacao__resumo-valor">{resumoConfirmacao.duplicados}</strong>
+                      <span className="modal-envio-confirmacao__resumo-label">
+                        Duplicados detectados
+                      </span>
+                      <strong className="modal-envio-confirmacao__resumo-valor">
+                        {resumoConfirmacao.duplicados}
+                      </strong>
                     </div>
                   </div>
                 </div>
@@ -1098,26 +1263,44 @@ export default function WebEnvioBoletos() {
               </label>
 
               <footer className="modal-envio-confirmacao__footer">
-                <button type="button" className="btn btn--secondary" onClick={() => setModalConfirmarEnvio(false)} disabled={loading}>
+                <button
+                  type="button"
+                  className="btn btn--secondary"
+                  onClick={() => setModalConfirmarEnvio(false)}
+                  disabled={loading}
+                >
                   Cancelar
                 </button>
-                <button type="button" className="btn btn--primary modal-envio-confirmacao__btn-confirmar" disabled={loading} onClick={() => executarEnvio()}>
+                <button
+                  type="button"
+                  className="btn btn--primary modal-envio-confirmacao__btn-confirmar"
+                  disabled={loading}
+                  onClick={() => executarEnvio()}
+                >
                   {loading ? "Enviando..." : "Confirmar envio"}
                 </button>
               </footer>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
 
       {itemCorrigir &&
         createPortal(
           <div className="modal-overlay" role="presentation" onClick={() => setItemCorrigir(null)}>
-            <div className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-cliente-titulo" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="modal-cliente-titulo"
+              onClick={(e) => e.stopPropagation()}
+            >
               <h2 id="modal-cliente-titulo" className="modal__titulo">
                 Corrigir cliente
               </h2>
-              <p className="page-envio-boletos__modal-arquivo">Arquivo: {itemCorrigir.nomeArquivoOriginal}</p>
+              <p className="page-envio-boletos__modal-arquivo">
+                Arquivo: {itemCorrigir.nomeArquivoOriginal}
+              </p>
               <input
                 type="text"
                 className="page-envio-boletos__input page-envio-boletos__input--full"
@@ -1153,28 +1336,49 @@ export default function WebEnvioBoletos() {
                 )}
               </div>
               <div className="modal__acoes">
-                <button type="button" className="btn btn--secondary" onClick={() => setItemCorrigir(null)}>
+                <button
+                  type="button"
+                  className="btn btn--secondary"
+                  onClick={() => setItemCorrigir(null)}
+                >
                   Cancelar
                 </button>
-                <button type="button" className="btn btn--primary" disabled={loading || !clienteSelecionadoId} onClick={salvarClienteCorrigido}>
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  disabled={loading || !clienteSelecionadoId}
+                  onClick={salvarClienteCorrigido}
+                >
                   Salvar
                 </button>
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
 
       {resultadoHistorico &&
         createPortal(
-          <div className="modal-overlay" role="presentation" onClick={() => setResultadoHistorico(null)}>
-            <div className="modal modal--largo" role="dialog" aria-modal="true" aria-labelledby="modal-historico-titulo" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="modal-overlay"
+            role="presentation"
+            onClick={() => setResultadoHistorico(null)}
+          >
+            <div
+              className="modal modal--largo"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="modal-historico-titulo"
+              onClick={(e) => e.stopPropagation()}
+            >
               <h2 id="modal-historico-titulo" className="modal__titulo">
                 Detalhe do lote
               </h2>
               <p className="page-envio-boletos__modal-resumo">
                 {formatarDataHora(resultadoHistorico.criadoEm)}
-                {resultadoHistorico.dataFinalizacao ? ` · Finalizado em ${formatarDataHora(resultadoHistorico.dataFinalizacao)}` : ""}
+                {resultadoHistorico.dataFinalizacao
+                  ? ` · Finalizado em ${formatarDataHora(resultadoHistorico.dataFinalizacao)}`
+                  : ""}
                 {resultadoHistorico.status ? ` · ${resultadoHistorico.status}` : ""}
               </p>
 
@@ -1211,13 +1415,17 @@ export default function WebEnvioBoletos() {
                 >
                   Baixar CSV
                 </button>
-                <button type="button" className="btn btn--secondary" onClick={() => setResultadoHistorico(null)}>
+                <button
+                  type="button"
+                  className="btn btn--secondary"
+                  onClick={() => setResultadoHistorico(null)}
+                >
                   Fechar
                 </button>
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </div>
   );
@@ -1235,7 +1443,9 @@ function SecaoResultadoHistorico({
   colunas: Array<"cliente" | "email" | "arquivo" | "data" | "erro" | "status">;
 }) {
   return (
-    <section className={`page-envio-boletos__secao-resultado page-envio-boletos__secao-resultado--${variante}`}>
+    <section
+      className={`page-envio-boletos__secao-resultado page-envio-boletos__secao-resultado--${variante}`}
+    >
       <h3 className="page-envio-boletos__secao-titulo">
         {titulo} <span className="page-envio-boletos__secao-contagem">({itens.length})</span>
       </h3>
@@ -1290,13 +1500,21 @@ function ResumoCard({
     <div className={`page-envio-boletos__stat page-envio-boletos__stat--${tipo}`}>
       <div className="page-envio-boletos__stat-head">
         <span className="page-envio-boletos__stat-label">{label}</span>
-        <button type="button" className="page-envio-boletos__stat-info" title={tooltip} aria-label={tooltip}>
+        <button
+          type="button"
+          className="page-envio-boletos__stat-info"
+          title={tooltip}
+          aria-label={tooltip}
+        >
           <InfoIcon />
         </button>
       </div>
       <div className="page-envio-boletos__stat-body">
         <strong className="page-envio-boletos__stat-valor">{valor}</strong>
-        <span className={`page-envio-boletos__stat-icon page-envio-boletos__stat-icon--${tipo}`} aria-hidden="true">
+        <span
+          className={`page-envio-boletos__stat-icon page-envio-boletos__stat-icon--${tipo}`}
+          aria-hidden="true"
+        >
           {icon}
         </span>
       </div>
@@ -1306,7 +1524,17 @@ function ResumoCard({
 
 function UploadIcon() {
   return (
-    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="40"
+      height="40"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="17 8 12 3 7 8" />
       <line x1="12" y1="3" x2="12" y2="15" />
@@ -1316,7 +1544,15 @@ function UploadIcon() {
 
 function FileIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
       <polyline points="14 2 14 8 20 8" />
     </svg>
@@ -1325,7 +1561,15 @@ function FileIcon() {
 
 function SendIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <line x1="22" y1="2" x2="11" y2="13" />
       <polygon points="22 2 15 22 11 13 2 9 22 2" />
     </svg>
@@ -1334,7 +1578,15 @@ function SendIcon() {
 
 function MailIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
       <polyline points="22,6 12,13 2,6" />
     </svg>
@@ -1343,7 +1595,15 @@ function MailIcon() {
 
 function AlertIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
       <line x1="12" y1="9" x2="12" y2="13" />
       <line x1="12" y1="17" x2="12.01" y2="17" />
@@ -1353,7 +1613,15 @@ function AlertIcon() {
 
 function EyeOffIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
       <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
       <line x1="1" y1="1" x2="23" y2="23" />
@@ -1363,7 +1631,15 @@ function EyeOffIcon() {
 
 function PdfIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
       <polyline points="14 2 14 8 20 8" />
     </svg>
@@ -1372,7 +1648,15 @@ function PdfIcon() {
 
 function EyeIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
       <circle cx="12" cy="12" r="3" />
     </svg>
@@ -1381,7 +1665,15 @@ function EyeIcon() {
 
 function EditIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
     </svg>
@@ -1390,7 +1682,15 @@ function EditIcon() {
 
 function BanIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="10" />
       <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
     </svg>
@@ -1399,7 +1699,15 @@ function BanIcon() {
 
 function RefreshIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <polyline points="23 4 23 10 17 10" />
       <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
     </svg>
@@ -1408,7 +1716,15 @@ function RefreshIcon() {
 
 function InfoIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="10" />
       <line x1="12" y1="16" x2="12" y2="12" />
       <line x1="12" y1="8" x2="12.01" y2="8" />
@@ -1418,7 +1734,15 @@ function InfoIcon() {
 
 function CloseIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
@@ -1427,7 +1751,15 @@ function CloseIcon() {
 
 function UsersIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -1438,7 +1770,15 @@ function UsersIcon() {
 
 function CheckCircleIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
       <polyline points="22 4 12 14.01 9 11.01" />
     </svg>
@@ -1447,7 +1787,15 @@ function CheckCircleIcon() {
 
 function DuplicateIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
     </svg>
@@ -1456,7 +1804,15 @@ function DuplicateIcon() {
 
 function AlertTriangleIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
       <line x1="12" y1="9" x2="12" y2="13" />
       <line x1="12" y1="17" x2="12.01" y2="17" />

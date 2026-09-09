@@ -1,25 +1,11 @@
 import { parseValorReais } from "@/lib/valorBrasil";
 
 export type TaxSimulatorTabId =
-  | "rapido"
-  | "formacao"
-  | "credito"
-  | "nfe"
-  | "cashback"
-  | "ia"
-  | "regime";
+  "rapido" | "formacao" | "credito" | "nfe" | "cashback" | "ia" | "regime";
 
 export type SimulationType = "PRECO_FINAL" | "FORMAR_PRECO" | "SEPARAR";
 
-export type SimulationYear =
-  | "2026"
-  | "2027"
-  | "2028"
-  | "2029"
-  | "2030"
-  | "2031"
-  | "2032"
-  | "2033+";
+export type SimulationYear = "2026" | "2027" | "2028" | "2029" | "2030" | "2031" | "2032" | "2033+";
 
 export type TaxProfile = "PADRAO" | "SIMPLES" | "MEI" | "PERSONALIZADA";
 
@@ -176,7 +162,10 @@ export function formatarPercentual(valor: number, casas = 2): string {
   return `${valor.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas })}%`;
 }
 
-export function getDefaultRates(year: SimulationYear, profile: TaxProfile): { cbs: number; ibs: number } {
+export function getDefaultRates(
+  year: SimulationYear,
+  profile: TaxProfile,
+): { cbs: number; ibs: number } {
   if (profile === "MEI") return { cbs: 0, ibs: 0 };
   if (profile === "SIMPLES") {
     if (year === "2026") return { cbs: 0.45, ibs: 0.05 };
@@ -299,6 +288,8 @@ export function profileToApiCategory(profile: TaxProfile): "PLENO" | "REDUZIDO" 
   return "PLENO";
 }
 
-export function simulationTypeToApiTipo(type: SimulationType): "POR_DENTRO" | "POR_FORA" | "SEPARAR_CBS_IBS" {
+export function simulationTypeToApiTipo(
+  type: SimulationType,
+): "POR_DENTRO" | "POR_FORA" | "SEPARAR_CBS_IBS" {
   return SIMULATION_TYPE_OPTIONS.find((o) => o.id === type)?.apiTipo ?? "POR_DENTRO";
 }

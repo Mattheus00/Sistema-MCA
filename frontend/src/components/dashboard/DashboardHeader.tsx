@@ -26,24 +26,26 @@ export function DashboardHeader({
           <CalendarIcon />
           <label className="dash-header__filtro">
             <span className="visually-hidden">Data inicial</span>
-          <input
-            type="date"
-            className="dash-header__input"
-            value={dataInicio}
-            onChange={(e) => onDataInicioChange(e.target.value)}
-            aria-label="Data inicial do período"
-          />
+            <input
+              type="date"
+              className="dash-header__input"
+              value={dataInicio}
+              onChange={(e) => onDataInicioChange(e.target.value)}
+              aria-label="Data inicial do período"
+            />
           </label>
-          <span className="dash-header__periodo-separador" aria-hidden="true">–</span>
+          <span className="dash-header__periodo-separador" aria-hidden="true">
+            –
+          </span>
           <label className="dash-header__filtro">
             <span className="visually-hidden">Data final</span>
-          <input
-            type="date"
-            className="dash-header__input"
-            value={dataFim}
-            onChange={(e) => onDataFimChange(e.target.value)}
-            aria-label="Data final do período"
-          />
+            <input
+              type="date"
+              className="dash-header__input"
+              value={dataFim}
+              onChange={(e) => onDataFimChange(e.target.value)}
+              aria-label="Data final do período"
+            />
           </label>
         </div>
         <button
@@ -62,7 +64,14 @@ export function DashboardHeader({
 
 function CalendarIcon() {
   return (
-    <svg className="dash-header__calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+    <svg
+      className="dash-header__calendar"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      aria-hidden="true"
+    >
       <rect x="3" y="5" width="18" height="16" rx="3" />
       <path d="M3 10h18M8 3v4M16 3v4" />
     </svg>

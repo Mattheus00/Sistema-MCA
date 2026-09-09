@@ -1,6 +1,8 @@
 import type { Inadimplencia, PagamentoInadimplencia } from "@/types/api";
 
-export function ordenarPagamentosPorData(pagamentos: PagamentoInadimplencia[]): PagamentoInadimplencia[] {
+export function ordenarPagamentosPorData(
+  pagamentos: PagamentoInadimplencia[],
+): PagamentoInadimplencia[] {
   return [...pagamentos].sort((a, b) => {
     const da = (a.dataPagamento || "").split("T")[0];
     const db = (b.dataPagamento || "").split("T")[0];
@@ -59,7 +61,12 @@ export function isInadimplenciaCancelada(i: Inadimplencia): boolean {
 export function saldoDevedorItem(i: Inadimplencia): number {
   const totalDaApi = i.valor ?? i.valorDevedor ?? 0;
   const juros = i.juros ?? 0;
-  const valorOriginal = i.valorOriginal != null ? i.valorOriginal : totalDaApi > 0 ? Math.max(0, totalDaApi - juros) : 0;
+  const valorOriginal =
+    i.valorOriginal != null
+      ? i.valorOriginal
+      : totalDaApi > 0
+        ? Math.max(0, totalDaApi - juros)
+        : 0;
   return totalDaApi > 0 ? totalDaApi : valorOriginal + juros;
 }
 
@@ -67,7 +74,11 @@ export function valoresHonorario(i: Inadimplencia) {
   const totalDaApi = i.valor ?? i.valorDevedor ?? 0;
   const juros = i.juros ?? 0;
   const valorOriginal =
-    i.valorOriginal != null ? i.valorOriginal : totalDaApi > 0 ? Math.max(0, totalDaApi - juros) : 0;
+    i.valorOriginal != null
+      ? i.valorOriginal
+      : totalDaApi > 0
+        ? Math.max(0, totalDaApi - juros)
+        : 0;
   const valorTotal = totalDaApi > 0 ? totalDaApi : valorOriginal + juros;
   return { valorOriginal, juros, valorTotal };
 }

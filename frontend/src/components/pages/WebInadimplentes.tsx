@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useLocation } from "react-router-dom";
-import { api, getApiErrorMessage, getAuthUserProfile, isMockEnabled, normalizeListResponse } from "@/lib/api";
+import {
+  api,
+  getApiErrorMessage,
+  getAuthUserProfile,
+  isMockEnabled,
+  normalizeListResponse,
+} from "@/lib/api";
 import { normalizeInadimplenciaFromApi } from "@/lib/apiNormalizers";
 import { invalidateDashboard } from "@/lib/dashboardRefresh";
-import {
-  diasEmAtraso,
-  isInadimplenciaEmAberto,
-} from "@/lib/inadimplentesUtils";
+import { diasEmAtraso, isInadimplenciaEmAberto } from "@/lib/inadimplentesUtils";
 import type { Inadimplencia } from "@/types/api";
 import AdminItemCard from "@/components/AdminItemCard";
 import ResponsiveList from "@/components/ResponsiveList";
@@ -28,7 +31,10 @@ export default function WebInadimplentes() {
   const [buscaLista, setBuscaLista] = useState("");
   const itensPorPagina = 10;
   const [modalAjustarJurosAberto, setModalAjustarJurosAberto] = useState(false);
-  const [jurosGlobal, setJurosGlobal] = useState<{ multa: string; juros: string }>({ multa: "0,33", juros: "2" });
+  const [jurosGlobal, setJurosGlobal] = useState<{ multa: string; juros: string }>({
+    multa: "0,33",
+    juros: "2",
+  });
   const [loadingJurosGlobal, setLoadingJurosGlobal] = useState(false);
 
   async function listar() {
@@ -37,7 +43,11 @@ export default function WebInadimplentes() {
       setErro(null);
       const r = await api.get("/api/inadimplentes", { params: { paginado: false } });
       const rawList = normalizeListResponse<Record<string, unknown>>(r.data);
-      setItens(isMockEnabled() ? (rawList as Inadimplencia[]) : rawList.map((item) => normalizeInadimplenciaFromApi(item)));
+      setItens(
+        isMockEnabled()
+          ? (rawList as Inadimplencia[])
+          : rawList.map((item) => normalizeInadimplenciaFromApi(item)),
+      );
     } catch (e: unknown) {
       setErro(getApiErrorMessage(e, "Falha ao listar inadimplências"));
     } finally {
@@ -76,7 +86,10 @@ export default function WebInadimplentes() {
 
   /** Agrupa por cliente: soma valor, vencimento mais antigo, maior dias em atraso */
   const agrupadosPorCliente = (() => {
-    const map = new Map<string, { clienteNome: string; valor: number; vencimento: string; diasMax: number }>();
+    const map = new Map<
+      string,
+      { clienteNome: string; valor: number; vencimento: string; diasMax: number }
+    >();
     for (const i of emAberto) {
       const id = i.clienteId;
       const nome = i.clienteNome ?? `Cliente #${id}`;
@@ -107,13 +120,14 @@ export default function WebInadimplentes() {
 
   const totalValor = agrupadosPorCliente.reduce((s, i) => s + i.valor, 0);
   const diasList = emAberto.map((i) => diasEmAtraso(i.vencimento)).filter((d) => d > 0);
-  const mediaAtraso = diasList.length ? Math.round(diasList.reduce((a, b) => a + b, 0) / diasList.length) : 0;
+  const mediaAtraso = diasList.length
+    ? Math.round(diasList.reduce((a, b) => a + b, 0) / diasList.length)
+    : 0;
 
   const ordenados = [...filtradosPorBusca].sort((a, b) => {
     if (!ordenarPor) return 0;
     const mul = ordemAsc ? 1 : -1;
-    if (ordenarPor === "cliente")
-      return mul * (a.clienteNome.localeCompare(b.clienteNome));
+    if (ordenarPor === "cliente") return mul * a.clienteNome.localeCompare(b.clienteNome);
     if (ordenarPor === "valor") return mul * (a.valor - b.valor);
     if (ordenarPor === "dias") return mul * (a.diasEmAtraso - b.diasEmAtraso);
     return 0;
@@ -121,7 +135,10 @@ export default function WebInadimplentes() {
 
   const totalPaginasInad = Math.max(1, Math.ceil(ordenados.length / itensPorPagina));
   const paginaAtualInad = Math.min(pagina, totalPaginasInad);
-  const itensPaginaInad = ordenados.slice((paginaAtualInad - 1) * itensPorPagina, paginaAtualInad * itensPorPagina);
+  const itensPaginaInad = ordenados.slice(
+    (paginaAtualInad - 1) * itensPorPagina,
+    paginaAtualInad * itensPorPagina,
+  );
 
   useEffect(() => {
     if (pagina > totalPaginasInad && totalPaginasInad >= 1) setPagina(1);
@@ -212,12 +229,20 @@ export default function WebInadimplentes() {
       {erro && <p className="page-inadimplentes__erro">{erro}</p>}
 
       <div className="page-inadimplentes__acao-topo">
-        <button type="button" className="btn btn--primary" onClick={() => navigate("/inadimplentes/registrar")}>
+        <button
+          type="button"
+          className="btn btn--primary"
+          onClick={() => navigate("/inadimplentes/registrar")}
+        >
           <PlusIcon />
           Registrar inadimplência
         </button>
         {podeAjustarJuros && (
-          <button type="button" className="btn btn--primary btn--ajustar-juros" onClick={abrirModalAjustarJuros}>
+          <button
+            type="button"
+            className="btn btn--primary btn--ajustar-juros"
+            onClick={abrirModalAjustarJuros}
+          >
             <SlidersIcon />
             Ajustar juros
           </button>
@@ -238,7 +263,9 @@ export default function WebInadimplentes() {
           <div className="page-inadimplentes__card">
             <span className="page-inadimplentes__card-label">Valor total em aberto</span>
             <span className="page-inadimplentes__card-value">
-              {loading ? "—" : totalValor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              {loading
+                ? "—"
+                : totalValor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
             </span>
           </div>
           <div className="page-inadimplentes__card">
@@ -272,17 +299,29 @@ export default function WebInadimplentes() {
                 <thead>
                   <tr>
                     <th>
-                      <button type="button" className="page-inadimplentes__th" onClick={() => toggleOrdenacao("cliente")}>
+                      <button
+                        type="button"
+                        className="page-inadimplentes__th"
+                        onClick={() => toggleOrdenacao("cliente")}
+                      >
                         Cliente <SortIcon />
                       </button>
                     </th>
                     <th>
-                      <button type="button" className="page-inadimplentes__th" onClick={() => toggleOrdenacao("valor")}>
+                      <button
+                        type="button"
+                        className="page-inadimplentes__th"
+                        onClick={() => toggleOrdenacao("valor")}
+                      >
                         Valor <SortIcon />
                       </button>
                     </th>
                     <th>
-                      <button type="button" className="page-inadimplentes__th" onClick={() => toggleOrdenacao("dias")}>
+                      <button
+                        type="button"
+                        className="page-inadimplentes__th"
+                        onClick={() => toggleOrdenacao("dias")}
+                      >
                         Dias em atraso <SortIcon />
                       </button>
                     </th>
@@ -292,19 +331,25 @@ export default function WebInadimplentes() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={4} className="page-inadimplentes__loading">Carregando...</td>
+                      <td colSpan={4} className="page-inadimplentes__loading">
+                        Carregando...
+                      </td>
                     </tr>
                   ) : ordenados.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="page-inadimplentes__vazio">
-                        {termoBusca ? "Nenhum inadimplente encontrado para a busca." : "Nenhum inadimplente em aberto."}
+                        {termoBusca
+                          ? "Nenhum inadimplente encontrado para a busca."
+                          : "Nenhum inadimplente em aberto."}
                       </td>
                     </tr>
                   ) : (
                     itensPaginaInad.map((d) => (
                       <tr key={d.clienteId}>
                         <td>{d.clienteNome}</td>
-                        <td>{d.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
+                        <td>
+                          {d.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        </td>
                         <td>{d.diasEmAtraso} dias</td>
                         <td>
                           <button
@@ -327,7 +372,9 @@ export default function WebInadimplentes() {
               <p className="page-inadimplentes__vazio">Carregando...</p>
             ) : ordenados.length === 0 ? (
               <p className="page-inadimplentes__vazio">
-                {termoBusca ? "Nenhum inadimplente encontrado para a busca." : "Nenhum inadimplente em aberto."}
+                {termoBusca
+                  ? "Nenhum inadimplente encontrado para a busca."
+                  : "Nenhum inadimplente em aberto."}
               </p>
             ) : (
               <ul className="admin-item-list">
@@ -335,7 +382,10 @@ export default function WebInadimplentes() {
                   <li key={d.clienteId}>
                     <AdminItemCard
                       title={d.clienteNome}
-                      value={d.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                      value={d.valor.toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      })}
                       fields={[{ label: "Dias em atraso", value: `${d.diasEmAtraso} dias` }]}
                       actions={
                         <button
@@ -353,29 +403,30 @@ export default function WebInadimplentes() {
             )
           }
         />
-      {ordenados.length > itensPorPagina && (
-        <div className="page-inadimplentes__paginacao">
-          <button
-            type="button"
-            className="btn btn--secondary btn--small"
-            disabled={paginaAtualInad <= 1}
-            onClick={() => setPagina((p) => Math.max(1, p - 1))}
-          >
-            Anterior
-          </button>
-          <span className="page-inadimplentes__paginacao-info">
-            Página {paginaAtualInad} de {totalPaginasInad} ({ordenados.length} inadimplente{ordenados.length !== 1 ? "s" : ""})
-          </span>
-          <button
-            type="button"
-            className="btn btn--secondary btn--small"
-            disabled={paginaAtualInad >= totalPaginasInad}
-            onClick={() => setPagina((p) => Math.min(totalPaginasInad, p + 1))}
-          >
-            Próxima
-          </button>
-        </div>
-      )}
+        {ordenados.length > itensPorPagina && (
+          <div className="page-inadimplentes__paginacao">
+            <button
+              type="button"
+              className="btn btn--secondary btn--small"
+              disabled={paginaAtualInad <= 1}
+              onClick={() => setPagina((p) => Math.max(1, p - 1))}
+            >
+              Anterior
+            </button>
+            <span className="page-inadimplentes__paginacao-info">
+              Página {paginaAtualInad} de {totalPaginasInad} ({ordenados.length} inadimplente
+              {ordenados.length !== 1 ? "s" : ""})
+            </span>
+            <button
+              type="button"
+              className="btn btn--secondary btn--small"
+              disabled={paginaAtualInad >= totalPaginasInad}
+              onClick={() => setPagina((p) => Math.min(totalPaginasInad, p + 1))}
+            >
+              Próxima
+            </button>
+          </div>
+        )}
       </section>
 
       {modalAjustarJurosAberto &&
@@ -434,7 +485,10 @@ export default function WebInadimplentes() {
                       <div>
                         <label className="modal-juros__field-label" htmlFor="juros-multa">
                           Multa diária (% ao dia)
-                          <span className="modal-juros__info" title="Percentual aplicado por dia de atraso">
+                          <span
+                            className="modal-juros__info"
+                            title="Percentual aplicado por dia de atraso"
+                          >
                             <InfoCircleIcon />
                           </span>
                         </label>
@@ -449,7 +503,9 @@ export default function WebInadimplentes() {
                         type="text"
                         className="modal-juros__input"
                         value={jurosGlobal.multa}
-                        onChange={(e) => setJurosGlobal((prev) => ({ ...prev, multa: e.target.value }))}
+                        onChange={(e) =>
+                          setJurosGlobal((prev) => ({ ...prev, multa: e.target.value }))
+                        }
                         disabled={loadingJurosGlobal}
                         inputMode="decimal"
                       />
@@ -480,7 +536,9 @@ export default function WebInadimplentes() {
                         type="text"
                         className="modal-juros__input"
                         value={jurosGlobal.juros}
-                        onChange={(e) => setJurosGlobal((prev) => ({ ...prev, juros: e.target.value }))}
+                        onChange={(e) =>
+                          setJurosGlobal((prev) => ({ ...prev, juros: e.target.value }))
+                        }
                         disabled={loadingJurosGlobal}
                         inputMode="decimal"
                       />
@@ -492,7 +550,10 @@ export default function WebInadimplentes() {
                     <ShieldIcon />
                     <div>
                       <strong>Importante</strong>
-                      <p>As alterações feitas aqui afetarão todos os cálculos de juros futuros do sistema.</p>
+                      <p>
+                        As alterações feitas aqui afetarão todos os cálculos de juros futuros do
+                        sistema.
+                      </p>
                     </div>
                   </div>
 
@@ -530,7 +591,7 @@ export default function WebInadimplentes() {
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </div>
   );
@@ -538,7 +599,15 @@ export default function WebInadimplentes() {
 
 function PlusIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
@@ -547,7 +616,17 @@ function PlusIcon() {
 
 function SlidersIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <line x1="4" y1="21" x2="4" y2="14" />
       <line x1="4" y1="10" x2="4" y2="3" />
       <line x1="12" y1="21" x2="12" y2="12" />
@@ -563,7 +642,15 @@ function SlidersIcon() {
 
 function CloseIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
@@ -572,7 +659,15 @@ function CloseIcon() {
 
 function SettingsIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="3" />
       <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
     </svg>
@@ -581,7 +676,15 @@ function SettingsIcon() {
 
 function PercentIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <line x1="19" y1="5" x2="5" y2="19" />
       <circle cx="6.5" cy="6.5" r="2.5" />
       <circle cx="17.5" cy="17.5" r="2.5" />
@@ -591,7 +694,15 @@ function PercentIcon() {
 
 function TrendIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
       <polyline points="17 6 23 6 23 12" />
     </svg>
@@ -600,7 +711,15 @@ function TrendIcon() {
 
 function ShieldIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
     </svg>
   );
@@ -608,7 +727,15 @@ function ShieldIcon() {
 
 function InfoCircleIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="10" />
       <line x1="12" y1="16" x2="12" y2="12" />
       <line x1="12" y1="8" x2="12.01" y2="8" />
@@ -618,7 +745,15 @@ function InfoCircleIcon() {
 
 function RefreshIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <polyline points="23 4 23 10 17 10" />
       <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
     </svg>
@@ -627,7 +762,15 @@ function RefreshIcon() {
 
 function SaveIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
       <polyline points="17 21 17 13 7 13 7 21" />
       <polyline points="7 3 7 8 15 8" />
@@ -637,7 +780,17 @@ function SaveIcon() {
 
 function InfoIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="page-inadimplentes__info-icon" aria-hidden>
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      className="page-inadimplentes__info-icon"
+      aria-hidden
+    >
       <circle cx="12" cy="12" r="10" />
       <circle cx="12" cy="9" r="1.5" fill="currentColor" stroke="none" />
       <path d="M12 11.5v5" />
@@ -647,7 +800,15 @@ function InfoIcon() {
 
 function SearchIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <circle cx="11" cy="11" r="8" />
       <path d="m21 21-4.35-4.35" />
     </svg>
@@ -656,7 +817,14 @@ function SearchIcon() {
 
 function SortIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <path d="m7 15 5 5 5-5" />
       <path d="m7 9 5-5 5 5" />
     </svg>
@@ -665,7 +833,14 @@ function SortIcon() {
 
 function EyeIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
       <circle cx="12" cy="12" r="3" />
     </svg>

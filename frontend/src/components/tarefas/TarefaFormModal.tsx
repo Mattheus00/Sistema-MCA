@@ -93,7 +93,15 @@ function Label({ required, children }: { required?: boolean; children: React.Rea
 
 function IconFechar() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
@@ -102,7 +110,15 @@ function IconFechar() {
 
 function IconCalendario() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <rect x="3" y="4" width="18" height="18" rx="2" />
       <line x1="16" y1="2" x2="16" y2="6" />
       <line x1="8" y1="2" x2="8" y2="6" />
@@ -113,7 +129,15 @@ function IconCalendario() {
 
 function IconLixeira() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <polyline points="3 6 5 6 21 6" />
       <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
       <path d="M10 11v6" />
@@ -125,7 +149,15 @@ function IconLixeira() {
 
 function IconBusca() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <circle cx="11" cy="11" r="8" />
       <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
@@ -164,7 +196,9 @@ export default function TarefaFormModal({
       };
       if (termo.trim()) params.termo = termo.trim();
       const r = await api.get("/api/clientes", { params });
-      setListaClientes(normalizeListResponse<Record<string, unknown>>(r.data).map(normalizeClienteFromApi));
+      setListaClientes(
+        normalizeListResponse<Record<string, unknown>>(r.data).map(normalizeClienteFromApi),
+      );
     } catch {
       setListaClientes([]);
     } finally {
@@ -231,7 +265,13 @@ export default function TarefaFormModal({
   function atualizarCampo<K extends keyof FormState>(campo: K, valor: FormState[K]) {
     setForm((f) => {
       const next = { ...f, [campo]: valor };
-      if (campo === "dataInicio" && typeof valor === "string" && next.dataVencimento && valor && next.dataVencimento < valor) {
+      if (
+        campo === "dataInicio" &&
+        typeof valor === "string" &&
+        next.dataVencimento &&
+        valor &&
+        next.dataVencimento < valor
+      ) {
         next.dataVencimento = valor;
       }
       return next;
@@ -239,11 +279,13 @@ export default function TarefaFormModal({
     if (campo === "titulo" || campo === "responsavelId") {
       setErros((prev) => {
         if (campo === "titulo" && prev.titulo) {
-          const { titulo: _, ...rest } = prev;
+          const rest: FieldErrors = { ...prev };
+          delete rest.titulo;
           return rest;
         }
         if (campo === "responsavelId" && prev.responsavelId) {
-          const { responsavelId: _, ...rest } = prev;
+          const rest: FieldErrors = { ...prev };
+          delete rest.responsavelId;
           return rest;
         }
         return prev;
@@ -410,7 +452,9 @@ export default function TarefaFormModal({
                       tabIndex={-1}
                     />
                   )}
-                  {erros.responsavelId && <span className="tarefas-form__erro-campo">{erros.responsavelId}</span>}
+                  {erros.responsavelId && (
+                    <span className="tarefas-form__erro-campo">{erros.responsavelId}</span>
+                  )}
                 </label>
 
                 <label className="tarefas-form__campo">
@@ -433,7 +477,9 @@ export default function TarefaFormModal({
                   <select
                     className="tarefas-form__input tarefas-form__select"
                     value={form.prioridade}
-                    onChange={(e) => atualizarCampo("prioridade", e.target.value as PrioridadeTarefa)}
+                    onChange={(e) =>
+                      atualizarCampo("prioridade", e.target.value as PrioridadeTarefa)
+                    }
                   >
                     {(["BAIXA", "MEDIA", "ALTA"] as PrioridadeTarefa[]).map((p) => (
                       <option key={p} value={p}>
@@ -486,11 +532,17 @@ export default function TarefaFormModal({
                     </div>
 
                     <div className="lc-modal-form__combo-panel" aria-hidden={!clienteListaAberta}>
-                      <ul id="tarefas-form-clientes-lista" className="lc-modal-form__sugestoes" role="listbox">
+                      <ul
+                        id="tarefas-form-clientes-lista"
+                        className="lc-modal-form__sugestoes"
+                        role="listbox"
+                      >
                         {carregandoClientes ? (
                           <li className="lc-modal-form__sugestoes-status">Carregando clientes…</li>
                         ) : listaClientes.length === 0 ? (
-                          <li className="lc-modal-form__sugestoes-status">Nenhum cliente encontrado.</li>
+                          <li className="lc-modal-form__sugestoes-status">
+                            Nenhum cliente encontrado.
+                          </li>
                         ) : (
                           listaClientes.map((c) => (
                             <li key={c.id}>
@@ -498,7 +550,11 @@ export default function TarefaFormModal({
                                 type="button"
                                 role="option"
                                 aria-selected={form.clienteId === String(c.id)}
-                                className={form.clienteId === String(c.id) ? "lc-modal-form__sugestao--ativa" : ""}
+                                className={
+                                  form.clienteId === String(c.id)
+                                    ? "lc-modal-form__sugestao--ativa"
+                                    : ""
+                                }
                                 onMouseDown={(e) => e.preventDefault()}
                                 onClick={() => selecionarCliente(c)}
                               >
@@ -652,7 +708,12 @@ export default function TarefaFormModal({
           </div>
 
           <footer className="tarefas-form__footer">
-            <button type="button" className="btn btn--secondary" onClick={onFechar} disabled={salvando}>
+            <button
+              type="button"
+              className="btn btn--secondary"
+              onClick={onFechar}
+              disabled={salvando}
+            >
               Cancelar
             </button>
             <button type="submit" className="btn btn--primary" disabled={salvando}>

@@ -29,8 +29,18 @@ export default function PortalDividaDetalhe() {
     };
   }, [dividaId]);
 
-  if (loading) return <p className="portal-empty" role="status">Carregando…</p>;
-  if (erro) return <p className="portal-auth__erro" role="alert">{erro}</p>;
+  if (loading)
+    return (
+      <p className="portal-empty" role="status">
+        Carregando…
+      </p>
+    );
+  if (erro)
+    return (
+      <p className="portal-auth__erro" role="alert">
+        {erro}
+      </p>
+    );
   if (!divida) return <p className="portal-empty">Dívida não encontrada.</p>;
 
   const atraso = divida.diasAtraso ?? diasAtrasoPortal(divida.vencimento);

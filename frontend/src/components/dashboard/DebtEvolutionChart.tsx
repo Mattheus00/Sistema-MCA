@@ -83,7 +83,10 @@ export function DebtEvolutionChart({
               <YAxis
                 tick={{ fontSize: 12, fill: "#64748b" }}
                 tickFormatter={(v) =>
-                  Number(v).toLocaleString("pt-BR", { notation: "compact", compactDisplay: "short" })
+                  Number(v).toLocaleString("pt-BR", {
+                    notation: "compact",
+                    compactDisplay: "short",
+                  })
                 }
               />
               <Tooltip

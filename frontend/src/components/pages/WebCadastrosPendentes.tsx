@@ -64,7 +64,10 @@ export default function WebCadastrosPendentes({ embedded = false }: WebCadastros
     setAprovandoId(usuarioId);
     setErro(null);
     try {
-      await api.patch(`/api/usuarios/${usuarioId}/aprovar?perfil=${encodeURIComponent(perfil)}`, {});
+      await api.patch(
+        `/api/usuarios/${usuarioId}/aprovar?perfil=${encodeURIComponent(perfil)}`,
+        {},
+      );
       setMensagemSucesso("Cadastro aprovado com sucesso.");
       await listar();
     } catch (e: unknown) {
@@ -85,7 +88,11 @@ export default function WebCadastrosPendentes({ embedded = false }: WebCadastros
   }
 
   return (
-    <div className={embedded ? "page-cadastros-pendentes page-usuarios__subpagina" : "page-cadastros-pendentes"}>
+    <div
+      className={
+        embedded ? "page-cadastros-pendentes page-usuarios__subpagina" : "page-cadastros-pendentes"
+      }
+    >
       {!embedded && <h1 className="page-cadastros-pendentes__title">Usuários</h1>}
 
       {erro && <p className="page-cadastros-pendentes__erro">{erro}</p>}

@@ -11,7 +11,12 @@ type TarefasKanbanProps = {
   onAbrir: (id: string) => void;
 };
 
-export default function TarefasKanban({ colunas, loading, onAtualizado, onAbrir }: TarefasKanbanProps) {
+export default function TarefasKanban({
+  colunas,
+  loading,
+  onAtualizado,
+  onAbrir,
+}: TarefasKanbanProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropStatus, setDropStatus] = useState<StatusTarefa | null>(null);
   const [movendo, setMovendo] = useState(false);

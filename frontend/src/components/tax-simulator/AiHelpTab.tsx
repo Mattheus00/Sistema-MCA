@@ -27,13 +27,14 @@ export default function AiHelpTab({ onError }: AiHelpTabProps) {
     try {
       const res = await api.post<{ sucesso?: boolean; resposta?: string; erro?: string | null }>(
         "/api/tributos/consulta-ia",
-        { pergunta: texto }
+        { pergunta: texto },
       );
       const data = res.data;
       const resp =
         data?.sucesso === false && data?.erro
           ? data.erro
-          : (data?.resposta ?? "Resposta não disponível. A consulta à IA ainda não está configurada no servidor.");
+          : (data?.resposta ??
+            "Resposta não disponível. A consulta à IA ainda não está configurada no servidor.");
       setMensagens((prev) => [...prev, { role: "assistant", texto: resp }]);
     } catch {
       setMensagens((prev) => [
@@ -57,7 +58,9 @@ export default function AiHelpTab({ onError }: AiHelpTabProps) {
 
       <div className="tax-sim__chat-area">
         {mensagens.length === 0 && (
-          <p className="tax-sim__chat-empty">Escreva sua dúvida no campo abaixo e envie para a IA.</p>
+          <p className="tax-sim__chat-empty">
+            Escreva sua dúvida no campo abaixo e envie para a IA.
+          </p>
         )}
         {mensagens.map((m, i) => (
           <div key={i} className={`tax-sim__chat-msg tax-sim__chat-msg--${m.role}`}>

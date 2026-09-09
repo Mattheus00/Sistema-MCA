@@ -72,7 +72,13 @@ const store = {
     },
   ],
   lotesEnvioBoletos: [] as LoteEnvioBoleto[],
-  portalContas: [] as Array<{ cpfCnpj: string; email: string; senha: string; clienteId: string; nome: string }>,
+  portalContas: [] as Array<{
+    cpfCnpj: string;
+    email: string;
+    senha: string;
+    clienteId: string;
+    nome: string;
+  }>,
   portalDocumentos: [] as Array<PortalDocumento & { clienteId: string }>,
   documentosClientes: [] as DocumentoCliente[],
 };
@@ -104,15 +110,24 @@ function validarLoteMock(lote: LoteEnvioBoleto) {
       const s = String(i.status).toUpperCase();
       if (s === "PRONTO_PARA_ENVIO" || s === "ENVIADO" || s === "IGNORADO") return false;
       if (!i.emailDestinatario?.trim() && s === "AGUARDANDO_CORRECAO") return true;
-      return i.bloqueado || s === "BLOQUEADO" || s === "AGUARDANDO_CORRECAO" || s === "NAO_IDENTIFICADO" || s === "PENDENTE";
+      return (
+        i.bloqueado ||
+        s === "BLOQUEADO" ||
+        s === "AGUARDANDO_CORRECAO" ||
+        s === "NAO_IDENTIFICADO" ||
+        s === "PENDENTE"
+      );
     })
     .map((i) => ({
       itemId: idItemEnvioBoleto(i),
-      motivo: !i.emailDestinatario?.trim() && String(i.status).toUpperCase() === "AGUARDANDO_CORRECAO"
-        ? "Sem e-mail"
-        : i.motivoBloqueio ?? "Item bloqueado",
+      motivo:
+        !i.emailDestinatario?.trim() && String(i.status).toUpperCase() === "AGUARDANDO_CORRECAO"
+          ? "Sem e-mail"
+          : (i.motivoBloqueio ?? "Item bloqueado"),
     }));
-  const prontos = (lote.itens ?? []).filter((i) => String(i.status).toUpperCase() === "PRONTO_PARA_ENVIO");
+  const prontos = (lote.itens ?? []).filter(
+    (i) => String(i.status).toUpperCase() === "PRONTO_PARA_ENVIO",
+  );
   return {
     podeEnviar: prontos.length > 0,
     bloqueios,
@@ -221,11 +236,14 @@ function analisarArquivoMock(nomeArquivoOriginal: string, idx: number): ItemEnvi
     confiancaIdentificacao,
     status,
     bloqueado: bloqueado || semEmail,
-    motivoBloqueio: bloqueado ? "Cliente não encontrado no cadastro" : semEmail ? "Cliente sem e-mail" : undefined,
+    motivoBloqueio: bloqueado
+      ? "Cliente não encontrado no cadastro"
+      : semEmail
+        ? "Cliente sem e-mail"
+        : undefined,
     simulado: true,
   };
 }
-
 
 let nextId = 1;
 
@@ -262,7 +280,7 @@ function seedScreenshotDemoData() {
       cpf: "98.765.432/0001-10",
       celular: "(31) 96666-7788",
       situacao: "Inadimplente",
-    }
+    },
   );
 
   const venc1 = "2025-11-15";
@@ -307,7 +325,7 @@ function seedScreenshotDemoData() {
       descricao: "Honorários mensais",
       status: "Pago",
       updatedAt: "2025-10-08T14:00:00",
-    }
+    },
   );
 
   store.usuarios.push({
@@ -339,7 +357,9 @@ function getPortalSessao() {
 }
 
 function dividasAbertasCliente(clienteId: string) {
-  return store.inadimplentes.filter((d) => d.clienteId === clienteId && String(d.status ?? "EmAberto").toLowerCase() !== "pago");
+  return store.inadimplentes.filter(
+    (d) => d.clienteId === clienteId && String(d.status ?? "EmAberto").toLowerCase() !== "pago",
+  );
 }
 
 function mapDividaPortal(d: Inadimplencia) {
@@ -385,7 +405,7 @@ function seedPortalMockData() {
         vencimento: "2026-02-10",
         descricao: "Declaração anual",
         status: "EmAberto",
-      }
+      },
     );
   }
   const c = store.clientes[0];
@@ -453,7 +473,9 @@ function mapSituacaoToStatusCliente(situacao: Cliente["situacao"]): string {
 }
 
 function filtrarClientesMock(params: URLSearchParams): Cliente[] {
-  const busca = (params.get("busca") ?? params.get("termo") ?? params.get("nome") ?? "").trim().toLowerCase();
+  const busca = (params.get("busca") ?? params.get("termo") ?? params.get("nome") ?? "")
+    .trim()
+    .toLowerCase();
   const status = params.get("statusCliente")?.toUpperCase();
 
   return store.clientes.filter((c) => {
@@ -520,7 +542,7 @@ function seedDocumentosClientesStaffMock() {
       respondidoEm: "2026-03-11T09:15:00",
       respondidoPorNome: "Responsável Financeiro",
       enviadoEm: "2026-03-09T10:00:00",
-    }
+    },
   );
 }
 
@@ -644,7 +666,9 @@ export function createMockClient() {
         const page = Number(params.page ?? 0);
         const size = Number(params.size ?? 20);
         const list = filtrarDocumentosStaffMock({ ...params, clienteId });
-        return Promise.resolve({ data: paginarDocumentosStaffMock(list, page, size) } as { data: T });
+        return Promise.resolve({ data: paginarDocumentosStaffMock(list, page, size) } as {
+          data: T;
+        });
       }
       if (url.startsWith("/api/documentos-clientes")) {
         const matchArquivo = url.match(/^\/api\/documentos-clientes\/([\w-]+)\/arquivo$/);
@@ -668,7 +692,9 @@ export function createMockClient() {
           const page = Number(params.page ?? 0);
           const size = Number(params.size ?? 20);
           const list = filtrarDocumentosStaffMock(params);
-          return Promise.resolve({ data: paginarDocumentosStaffMock(list, page, size) } as { data: T });
+          return Promise.resolve({ data: paginarDocumentosStaffMock(list, page, size) } as {
+            data: T;
+          });
         }
       }
       if (url.startsWith("/api/portal/")) {
@@ -691,7 +717,9 @@ export function createMockClient() {
           if (!sessao) return Promise.reject(new Error("Não autorizado."));
           const matchId = url.match(/^\/api\/portal\/dividas\/([\w-]+)$/);
           if (matchId) {
-            const d = store.inadimplentes.find((i) => i.id === matchId[1] && i.clienteId === sessao.clienteId);
+            const d = store.inadimplentes.find(
+              (i) => i.id === matchId[1] && i.clienteId === sessao.clienteId,
+            );
             if (!d) return Promise.reject(new Error("Dívida não encontrada."));
             const pags = store.pagamentos
               .filter((p) => p.dividaId === d.id)
@@ -747,7 +775,9 @@ export function createMockClient() {
         if (matchDownload) {
           const doc = store.portalDocumentos.find((d) => d.id === matchDownload[1]);
           if (!doc) return Promise.reject(new Error("Documento não encontrado."));
-          const blob = new Blob([`Mock documento: ${doc.nomeArquivo}`], { type: "application/octet-stream" });
+          const blob = new Blob([`Mock documento: ${doc.nomeArquivo}`], {
+            type: "application/octet-stream",
+          });
           return Promise.resolve({ data: blob } as { data: T });
         }
         return Promise.reject(new Error(`Mock: rota portal não encontrada: ${url}`));
@@ -787,7 +817,9 @@ export function createMockClient() {
       }
       if (url.startsWith("/api/pagamentos")) {
         const urlObj = new URL(url, "http://x");
-        const dividaId = urlObj.searchParams.get("dividaId") ?? (config?.params?.dividaId != null ? String(config.params.dividaId) : "");
+        const dividaId =
+          urlObj.searchParams.get("dividaId") ??
+          (config?.params?.dividaId != null ? String(config.params.dividaId) : "");
         const pags = dividaId
           ? store.pagamentos.filter((p) => p.dividaId === dividaId)
           : store.pagamentos;
@@ -850,10 +882,7 @@ export function createMockClient() {
         const diasAtrasoMin = Number(urlObj.searchParams.get("diasAtraso")) || 0;
 
         const emAberto = store.inadimplentes.filter((i) => (i.status ?? "EmAberto") !== "Pago");
-        const porCliente = new Map<
-          string,
-          { valor: number; qtd: number; dias: number[] }
-        >();
+        const porCliente = new Map<string, { valor: number; qtd: number; dias: number[] }>();
         for (const d of emAberto) {
           const dias = diasAtraso(d.vencimento);
           const cid = String(d.clienteId);
@@ -896,7 +925,7 @@ export function createMockClient() {
         const c = getCliente(clienteId);
         if (!c) return Promise.reject(new Error(`Mock: cliente ${clienteId} não encontrado`));
         const dividasCliente = store.inadimplentes.filter(
-          (d) => d.clienteId === clienteId && (d.status ?? "EmAberto") !== "Pago"
+          (d) => d.clienteId === clienteId && (d.status ?? "EmAberto") !== "Pago",
         );
         const dividasAtivas = dividasCliente.map((d) => ({
           id: d.id ?? 0,
@@ -910,7 +939,7 @@ export function createMockClient() {
         }));
         const saldoTotal = dividasAtivas.reduce((s, d) => s + d.valorDevido, 0);
         const pagos = store.inadimplentes.filter(
-          (d) => d.clienteId === clienteId && d.status === "Pago"
+          (d) => d.clienteId === clienteId && d.status === "Pago",
         );
         const historicoPagamentos = pagos.map((d) => ({
           data: (d.updatedAt ?? d.createdAt ?? d.vencimento).split("T")[0],
@@ -920,7 +949,12 @@ export function createMockClient() {
           saldoApos: 0,
         }));
         const notificacoes = [
-          { data: new Date().toISOString().split("T")[0], tipo: "Cobrança", status: "Enviado", tentativas: 1 },
+          {
+            data: new Date().toISOString().split("T")[0],
+            tipo: "Cobrança",
+            status: "Enviado",
+            tentativas: 1,
+          },
         ];
         const extrato: ExtratoCliente = {
           cliente: {
@@ -951,14 +985,22 @@ export function createMockClient() {
         });
         const porCliente = new Map<
           string,
-          { qtd: number; valor: number; statusPior: InadimplenciaPeriodoRelatorio["detalhamento"][0]["statusPior"] }
+          {
+            qtd: number;
+            valor: number;
+            statusPior: InadimplenciaPeriodoRelatorio["detalhamento"][0]["statusPior"];
+          }
         >();
         const statusOrd = (s: InadimplenciaPeriodoRelatorio["detalhamento"][0]["statusPior"]) =>
           s === "VENCIDA" ? 3 : s === "PARCIAL" ? 2 : 1;
         for (const d of noPeriodo) {
           const dias = diasAtraso(d.vencimento);
           const statusMap: InadimplenciaPeriodoRelatorio["detalhamento"][0]["statusPior"] =
-            dias > 0 ? "VENCIDA" : (d.status ?? "EmAberto") === "EmAberto" ? "EM_ABERTO" : "PARCIAL";
+            dias > 0
+              ? "VENCIDA"
+              : (d.status ?? "EmAberto") === "EmAberto"
+                ? "EM_ABERTO"
+                : "PARCIAL";
           const cur = porCliente.get(d.clienteId);
           if (!cur) {
             porCliente.set(d.clienteId, { qtd: 1, valor: d.valor, statusPior: statusMap });
@@ -1137,7 +1179,9 @@ export function createMockClient() {
       }
 
       if (url.startsWith("/api/lotes-envio-boletos")) {
-        const matchArquivo = url.match(/^\/api\/lotes-envio-boletos\/([\w-]+)\/itens\/([\w-]+)\/arquivo$/);
+        const matchArquivo = url.match(
+          /^\/api\/lotes-envio-boletos\/([\w-]+)\/itens\/([\w-]+)\/arquivo$/,
+        );
         if (matchArquivo) {
           const [, loteId, itemId] = matchArquivo;
           const lote = store.lotesEnvioBoletos.find((l) => l.loteId === loteId);
@@ -1153,7 +1197,7 @@ export function createMockClient() {
           const linhas = ["cliente,email,arquivo,status,erro,simulado"];
           for (const item of lote?.itens ?? []) {
             linhas.push(
-              `"${item.clienteNome ?? ""}","${item.emailDestinatario ?? ""}","${item.nomeArquivoOriginal}","${item.status}","${item.erro ?? ""}","${item.simulado ? "sim" : "nao"}"`
+              `"${item.clienteNome ?? ""}","${item.emailDestinatario ?? ""}","${item.nomeArquivoOriginal}","${item.status}","${item.erro ?? ""}","${item.simulado ? "sim" : "nao"}"`,
             );
           }
           const blob = new Blob([linhas.join("\n")], { type: "text/csv;charset=utf-8" });
@@ -1174,9 +1218,14 @@ export function createMockClient() {
         const urlObj = new URL(url, "http://mock.local");
         const page = Number(urlObj.searchParams.get("page") ?? config?.params?.page ?? 0);
         const size = Number(urlObj.searchParams.get("size") ?? config?.params?.size ?? 10);
-        const statusFiltro = String(urlObj.searchParams.get("status") ?? config?.params?.status ?? "");
+        const statusFiltro = String(
+          urlObj.searchParams.get("status") ?? config?.params?.status ?? "",
+        );
         let lista = [...store.lotesEnvioBoletos].map(loteToResumo);
-        if (statusFiltro) lista = lista.filter((l) => String(l.status).toUpperCase() === statusFiltro.toUpperCase());
+        if (statusFiltro)
+          lista = lista.filter(
+            (l) => String(l.status).toUpperCase() === statusFiltro.toUpperCase(),
+          );
         lista.sort((a, b) => String(b.criadoEm ?? "").localeCompare(String(a.criadoEm ?? "")));
         const inicio = page * size;
         const content = lista.slice(inicio, inicio + size);
@@ -1197,7 +1246,10 @@ export function createMockClient() {
     post<T = unknown>(url: string, body: unknown) {
       if (url.startsWith("/api/livro-caixa")) {
         const data = mockLivroCaixaMutate("POST", url, body);
-        if (data == null) return Promise.reject(new Error("Não foi possível processar a requisição do Livro Caixa."));
+        if (data == null)
+          return Promise.reject(
+            new Error("Não foi possível processar a requisição do Livro Caixa."),
+          );
         return Promise.resolve({ data } as { data: T });
       }
       if (url === "/api/portal/auth/login") {
@@ -1217,16 +1269,24 @@ export function createMockClient() {
         } as { data: T });
       }
       if (url === "/api/portal/auth/ativar") {
-        const payload = (body ?? {}) as { cpfCnpj?: string; email?: string; senha?: string; confirmarSenha?: string };
+        const payload = (body ?? {}) as {
+          cpfCnpj?: string;
+          email?: string;
+          senha?: string;
+          confirmarSenha?: string;
+        };
         const doc = String(payload.cpfCnpj ?? "").replace(/\D/g, "");
-        const email = String(payload.email ?? "").trim().toLowerCase();
+        const email = String(payload.email ?? "")
+          .trim()
+          .toLowerCase();
         const senha = String(payload.senha ?? "");
         const confirmarSenha = String(payload.confirmarSenha ?? "");
         if (senha !== confirmarSenha) {
           return Promise.reject(new Error("Confirmação de senha não confere."));
         }
         const cliente = store.clientes.find((c) => (c.cpf ?? "").replace(/\D/g, "") === doc);
-        if (!cliente?.id) return Promise.reject(new Error("Cliente não encontrado para o CPF/CNPJ informado."));
+        if (!cliente?.id)
+          return Promise.reject(new Error("Cliente não encontrado para o CPF/CNPJ informado."));
         if ((cliente.email ?? "").trim().toLowerCase() !== email) {
           return Promise.reject(new Error("E-mail não confere com o cadastro do escritório."));
         }
@@ -1247,11 +1307,15 @@ export function createMockClient() {
         if (!sessao) return Promise.reject(new Error("Não autorizado."));
         const form = body as FormData;
         const arquivo = form instanceof FormData ? form.get("arquivo") : null;
-        const tipo = (form instanceof FormData ? String(form.get("tipo") ?? "OUTRO") : "OUTRO") as TipoDocumentoCliente;
+        const tipo = (
+          form instanceof FormData ? String(form.get("tipo") ?? "OUTRO") : "OUTRO"
+        ) as TipoDocumentoCliente;
         const dividaId = form instanceof FormData ? String(form.get("dividaId") ?? "") : "";
         const observacao = form instanceof FormData ? String(form.get("observacao") ?? "") : "";
         const nomeArquivo =
-          arquivo && typeof arquivo === "object" && "name" in arquivo ? String((arquivo as File).name) : "documento.pdf";
+          arquivo && typeof arquivo === "object" && "name" in arquivo
+            ? String((arquivo as File).name)
+            : "documento.pdf";
         const doc: PortalDocumento & { clienteId: string } = {
           id: `pdoc-${nextPortalDocId++}`,
           tipo,
@@ -1271,7 +1335,8 @@ export function createMockClient() {
         const login = String(payload.login ?? "").trim();
         const senha = String(payload.senha ?? "");
         const user = store.usuarios.find((u) => u.login === login);
-        if (!user || user.senha !== senha) return Promise.reject(new Error("Credenciais inválidas."));
+        if (!user || user.senha !== senha)
+          return Promise.reject(new Error("Credenciais inválidas."));
         if (user.statusUsuario === "PENDENTE_APROVACAO") {
           return Promise.reject(new Error("Cadastro pendente de aprovação da proprietária."));
         }
@@ -1295,7 +1360,9 @@ export function createMockClient() {
         if (!nome || !login || !senha) {
           return Promise.reject(new Error("Nome, login e senha são obrigatórios."));
         }
-        const loginExiste = store.usuarios.some((u) => u.login.toLowerCase() === login.toLowerCase());
+        const loginExiste = store.usuarios.some(
+          (u) => u.login.toLowerCase() === login.toLowerCase(),
+        );
         if (loginExiste) return Promise.reject(new Error("Login já cadastrado."));
         const novoId = `u-${Date.now()}`;
         store.usuarios.push({
@@ -1320,11 +1387,15 @@ export function createMockClient() {
           telefone1?: string;
         };
         const nome = String(payload.nome ?? "").trim();
-        const login = String(payload.email ?? "").trim().toLowerCase();
+        const login = String(payload.email ?? "")
+          .trim()
+          .toLowerCase();
         const senha = String(payload.senha ?? "123456");
         const permissaoRaw = String(payload.permissao ?? "RESPONSAVEL_FINANCEIRO").toUpperCase();
         const perfilValido: PerfilUsuario =
-          permissaoRaw === "PROPRIETARIA" || permissaoRaw === "FUNCIONARIO" || permissaoRaw === "RESPONSAVEL_FINANCEIRO"
+          permissaoRaw === "PROPRIETARIA" ||
+          permissaoRaw === "FUNCIONARIO" ||
+          permissaoRaw === "RESPONSAVEL_FINANCEIRO"
             ? (permissaoRaw as PerfilUsuario)
             : "RESPONSAVEL_FINANCEIRO";
         if (!nome || !login) {
@@ -1415,13 +1486,14 @@ export function createMockClient() {
         const lote = store.lotesEnvioBoletos.find((l) => l.loteId === matchEnviarLote[1]);
         if (!lote) return Promise.reject(new Error("Lote não encontrado."));
         const payload = (body ?? {}) as { permitirReenvioDuplicado?: boolean; itemIds?: string[] };
-        const ids = Array.isArray(payload.itemIds) && payload.itemIds.length > 0
-          ? new Set(payload.itemIds)
-          : new Set(
-              (lote.itens ?? [])
-                .filter((i) => String(i.status).toUpperCase() === "PRONTO_PARA_ENVIO")
-                .map((i) => idItemEnvioBoleto(i))
-            );
+        const ids =
+          Array.isArray(payload.itemIds) && payload.itemIds.length > 0
+            ? new Set(payload.itemIds)
+            : new Set(
+                (lote.itens ?? [])
+                  .filter((i) => String(i.status).toUpperCase() === "PRONTO_PARA_ENVIO")
+                  .map((i) => idItemEnvioBoleto(i)),
+              );
         if (ids.size === 0) {
           return Promise.reject(new Error("Nenhum item pronto para envio"));
         }
@@ -1522,7 +1594,9 @@ export function createMockClient() {
       if (url === "/api/notificacoes/enviar-aviso-pendencia") {
         const form = body as FormData;
         const clienteId =
-          form instanceof FormData ? String(form.get("clienteId") ?? "") : String((body as { clienteId?: string })?.clienteId ?? "");
+          form instanceof FormData
+            ? String(form.get("clienteId") ?? "")
+            : String((body as { clienteId?: string })?.clienteId ?? "");
         const cliente = store.clientes.find((c) => c.id === clienteId);
         const email = (cliente?.email ?? "").trim();
         if (!email) {
@@ -1598,7 +1672,10 @@ export function createMockClient() {
     patch<T = unknown>(url: string, body: unknown) {
       if (url.startsWith("/api/livro-caixa")) {
         const data = mockLivroCaixaMutate("PATCH", url, body);
-        if (data == null) return Promise.reject(new Error("Não foi possível processar a requisição do Livro Caixa."));
+        if (data == null)
+          return Promise.reject(
+            new Error("Não foi possível processar a requisição do Livro Caixa."),
+          );
         return Promise.resolve({ data } as { data: T });
       }
       const matchStatusDoc = url.match(/^\/api\/documentos-clientes\/([\w-]+)\/status$/);
@@ -1607,7 +1684,9 @@ export function createMockClient() {
         const idx = store.documentosClientes.findIndex((d) => d.documentoId === docId);
         if (idx < 0) return Promise.reject(new Error("Documento não encontrado."));
         const payload = (body ?? {}) as { status?: string };
-        const novoStatus = String(payload.status ?? "RECEBIDO").toUpperCase() as DocumentoCliente["status"];
+        const novoStatus = String(
+          payload.status ?? "RECEBIDO",
+        ).toUpperCase() as DocumentoCliente["status"];
         store.documentosClientes[idx] = { ...store.documentosClientes[idx], status: novoStatus };
         syncPortalFromStaff(store.documentosClientes[idx]);
         return Promise.resolve({ data: { ...store.documentosClientes[idx] } } as { data: T });
@@ -1626,13 +1705,16 @@ export function createMockClient() {
           respostaEscritorio: resposta,
           respondidoEm: new Date().toISOString(),
           respondidoPorNome: readAuthItem("sgi_user_display") ?? "Escritório",
-          status: atual.status === "RECEBIDO" || atual.status === "ENVIADO" ? "EM_ANALISE" : atual.status,
+          status:
+            atual.status === "RECEBIDO" || atual.status === "ENVIADO" ? "EM_ANALISE" : atual.status,
         };
         store.documentosClientes[idx] = atualizado;
         syncPortalFromStaff(atualizado);
         return Promise.resolve({ data: { ...atualizado } } as { data: T });
       }
-      const matchItemCliente = url.match(/^\/api\/lotes-envio-boletos\/([\w-]+)\/itens\/([\w-]+)\/cliente$/);
+      const matchItemCliente = url.match(
+        /^\/api\/lotes-envio-boletos\/([\w-]+)\/itens\/([\w-]+)\/cliente$/,
+      );
       if (matchItemCliente) {
         const [, loteId, itemId] = matchItemCliente;
         const lote = store.lotesEnvioBoletos.find((l) => l.loteId === loteId);
@@ -1655,7 +1737,9 @@ export function createMockClient() {
         lote.validacao = validarLoteMock(lote);
         return Promise.resolve({ data: item } as { data: T });
       }
-      const matchItemAcao = url.match(/^\/api\/lotes-envio-boletos\/([\w-]+)\/itens\/([\w-]+)\/(confirmar|ignorar|reativar)$/);
+      const matchItemAcao = url.match(
+        /^\/api\/lotes-envio-boletos\/([\w-]+)\/itens\/([\w-]+)\/(confirmar|ignorar|reativar)$/,
+      );
       if (matchItemAcao) {
         const [, loteId, itemId, acao] = matchItemAcao;
         const lote = store.lotesEnvioBoletos.find((l) => l.loteId === loteId);
@@ -1667,7 +1751,9 @@ export function createMockClient() {
         } else if (acao === "ignorar") {
           item.status = "IGNORADO";
         } else {
-          item.status = item.emailDestinatario?.trim() ? "PRONTO_PARA_ENVIO" : "AGUARDANDO_CORRECAO";
+          item.status = item.emailDestinatario?.trim()
+            ? "PRONTO_PARA_ENVIO"
+            : "AGUARDANDO_CORRECAO";
           item.bloqueado = !item.emailDestinatario?.trim();
         }
         lote.resumo = buildResumoLote(lote.itens ?? []);
@@ -1690,7 +1776,9 @@ export function createMockClient() {
         const perfilQuery = url.match(/[?&]perfil=([^&]+)/)?.[1];
         const perfilDecoded = perfilQuery ? decodeURIComponent(perfilQuery).toUpperCase() : "";
         const perfilAprovado: PerfilUsuario =
-          perfilDecoded === "FUNCIONARIO" || perfilDecoded === "PROPRIETARIA" || perfilDecoded === "RESPONSAVEL_FINANCEIRO"
+          perfilDecoded === "FUNCIONARIO" ||
+          perfilDecoded === "PROPRIETARIA" ||
+          perfilDecoded === "RESPONSAVEL_FINANCEIRO"
             ? (perfilDecoded as PerfilUsuario)
             : (atual.perfil as PerfilUsuario) || "RESPONSAVEL_FINANCEIRO";
         const aprovado = { ...atual, statusUsuario: "ATIVO" as const, perfil: perfilAprovado };
@@ -1714,7 +1802,9 @@ export function createMockClient() {
         if (idx === -1) return Promise.reject(new Error("Usuário não encontrado."));
         const alvo = store.usuarios[idx];
         if (alvo.perfil === "PROPRIETARIA") {
-          return Promise.reject(new Error("Não é possível revogar o acesso de outra proprietária."));
+          return Promise.reject(
+            new Error("Não é possível revogar o acesso de outra proprietária."),
+          );
         }
         const revogado = { ...alvo, statusUsuario: "INATIVO" as const };
         store.usuarios[idx] = revogado;
@@ -1726,7 +1816,8 @@ export function createMockClient() {
         const id = matchInad[1];
         const payload = body as { status?: string };
         const idx = store.inadimplentes.findIndex((x) => x.id === id);
-        if (idx === -1) return Promise.reject(new Error(`Mock: inadimplência ${id} não encontrada`));
+        if (idx === -1)
+          return Promise.reject(new Error(`Mock: inadimplência ${id} não encontrada`));
         const atual = store.inadimplentes[idx];
         // Quem confirmou já veio no POST /api/pagamentos (antes do PATCH).
         const atualizado: Inadimplencia = {
@@ -1758,7 +1849,10 @@ export function createMockClient() {
     put<T = unknown>(url: string, body: unknown) {
       if (url.startsWith("/api/livro-caixa")) {
         const data = mockLivroCaixaMutate("PUT", url, body);
-        if (data == null) return Promise.reject(new Error("Não foi possível processar a requisição do Livro Caixa."));
+        if (data == null)
+          return Promise.reject(
+            new Error("Não foi possível processar a requisição do Livro Caixa."),
+          );
         return Promise.resolve({ data } as { data: T });
       }
       return Promise.reject(new Error(`Mock: rota não encontrada: ${url}`));
@@ -1777,7 +1871,8 @@ export function createMockClient() {
       if (matchInad) {
         const id = matchInad[1];
         const idx = store.inadimplentes.findIndex((x) => x.id === id);
-        if (idx === -1) return Promise.reject(new Error(`Mock: inadimplência ${id} não encontrada`));
+        if (idx === -1)
+          return Promise.reject(new Error(`Mock: inadimplência ${id} não encontrada`));
         store.inadimplentes.splice(idx, 1);
         return Promise.resolve({ data: {} } as { data: unknown });
       }

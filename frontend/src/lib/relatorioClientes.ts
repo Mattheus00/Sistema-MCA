@@ -28,17 +28,9 @@ function formatCelularExport(tel: string | undefined): string {
  */
 export function exportarRelatorioClientesExcel(
   clientes: Cliente[],
-  filtros?: FiltrosRelatorioClientes
+  filtros?: FiltrosRelatorioClientes,
 ): void {
-  const cabecalhos = [
-    "Código",
-    "Nome",
-    "CPF/CNPJ",
-    "Celular",
-    "E-mail",
-    "Endereço",
-    "Situação",
-  ];
+  const cabecalhos = ["Código", "Nome", "CPF/CNPJ", "Celular", "E-mail", "Endereço", "Situação"];
 
   const linhas = clientes.map((c) => [
     c.codigo?.trim() ?? "",
@@ -51,7 +43,8 @@ export function exportarRelatorioClientesExcel(
   ]);
 
   const data = new Date().toISOString().slice(0, 10);
-  const sufixoFiltro = filtros?.situacao && filtros.situacao !== "todos" ? `-${filtros.situacao}` : "";
+  const sufixoFiltro =
+    filtros?.situacao && filtros.situacao !== "todos" ? `-${filtros.situacao}` : "";
   const nomeArquivo = `clientes${sufixoFiltro}-${data}`;
 
   exportarCSV(nomeArquivo, cabecalhos, linhas);

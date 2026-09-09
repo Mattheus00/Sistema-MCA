@@ -74,7 +74,9 @@ export default function SicoobCobrancaPanel({
     try {
       const c = await gerarPixSicoob(dividaId);
       setEmitida(c);
-      onSucessoRef.current?.(status?.mock ? "Pix gerado (simulação — modo mock)." : "Pix Sicoob gerado.");
+      onSucessoRef.current?.(
+        status?.mock ? "Pix gerado (simulação — modo mock)." : "Pix Sicoob gerado.",
+      );
       await carregarCobrancas();
     } catch (e: unknown) {
       onErroRef.current?.(e instanceof Error ? e.message : "Falha ao gerar Pix");
@@ -88,7 +90,9 @@ export default function SicoobCobrancaPanel({
     try {
       const c = await gerarBoletoSicoob(dividaId);
       setEmitida(c);
-      onSucessoRef.current?.(status?.mock ? "Boleto gerado (simulação — modo mock)." : "Boleto Sicoob gerado.");
+      onSucessoRef.current?.(
+        status?.mock ? "Boleto gerado (simulação — modo mock)." : "Boleto Sicoob gerado.",
+      );
       await carregarCobrancas();
     } catch (e: unknown) {
       onErroRef.current?.(e instanceof Error ? e.message : "Falha ao gerar boleto");
@@ -109,13 +113,9 @@ export default function SicoobCobrancaPanel({
 
   const modoReal = status != null && !status.mock;
   const pixDisabled =
-    emitindo !== null ||
-    (modoReal && !status.pixChaveConfigured) ||
-    status?.enabled === false;
+    emitindo !== null || (modoReal && !status.pixChaveConfigured) || status?.enabled === false;
   const boletoDisabled =
-    emitindo !== null ||
-    (modoReal && !status.contasBoletoConfigured) ||
-    status?.enabled === false;
+    emitindo !== null || (modoReal && !status.contasBoletoConfigured) || status?.enabled === false;
 
   return (
     <div className="sicoob-panel">
@@ -138,10 +138,14 @@ export default function SicoobCobrancaPanel({
                   <span className="sicoob-panel__badge sicoob-panel__badge--ok">API real</span>
                 )}
                 {!status.mock && !status.configuredForApi && (
-                  <span className="sicoob-panel__badge sicoob-panel__badge--alerta">Configuração incompleta</span>
+                  <span className="sicoob-panel__badge sicoob-panel__badge--alerta">
+                    Configuração incompleta
+                  </span>
                 )}
                 {!status.enabled && (
-                  <span className="sicoob-panel__badge sicoob-panel__badge--alerta">Desabilitado</span>
+                  <span className="sicoob-panel__badge sicoob-panel__badge--alerta">
+                    Desabilitado
+                  </span>
                 )}
               </>
             )}
@@ -149,10 +153,14 @@ export default function SicoobCobrancaPanel({
         </div>
         {status?.mensagem && <p className="sicoob-panel__mensagem">{status.mensagem}</p>}
         {modoReal && !status.pixChaveConfigured && (
-          <p className="sicoob-panel__hint">Pix indisponível: chave Pix não configurada no backend.</p>
+          <p className="sicoob-panel__hint">
+            Pix indisponível: chave Pix não configurada no backend.
+          </p>
         )}
         {modoReal && !status.contasBoletoConfigured && (
-          <p className="sicoob-panel__hint">Boleto indisponível: contas de boleto não configuradas no backend.</p>
+          <p className="sicoob-panel__hint">
+            Boleto indisponível: contas de boleto não configuradas no backend.
+          </p>
         )}
       </div>
 
@@ -260,13 +268,17 @@ export default function SicoobCobrancaPanel({
             {cobrancas.map((c) => (
               <li key={c.cobrancaId || `${c.tipo}-${c.criadoEm}`} className="sicoob-panel__li">
                 <span className="sicoob-panel__li-tipo">{c.tipo}</span>
-                <span className={`sicoob-panel__li-status sicoob-panel__li-status--${c.status.toLowerCase()}`}>
+                <span
+                  className={`sicoob-panel__li-status sicoob-panel__li-status--${c.status.toLowerCase()}`}
+                >
                   {statusLabel(c.status)}
                 </span>
                 <span className="sicoob-panel__li-valor">
                   {formatarMoeda(valorCentavosParaReais(c.valorCentavos))}
                 </span>
-                <span className="sicoob-panel__li-data">{c.criadoEm ? formatarData(c.criadoEm) : "—"}</span>
+                <span className="sicoob-panel__li-data">
+                  {c.criadoEm ? formatarData(c.criadoEm) : "—"}
+                </span>
                 {c.mensagemErro && <span className="sicoob-panel__li-erro">{c.mensagemErro}</span>}
               </li>
             ))}

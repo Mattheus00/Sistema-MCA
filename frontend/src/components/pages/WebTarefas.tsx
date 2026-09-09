@@ -38,7 +38,15 @@ import type {
 
 function IconAberto() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <rect x="3" y="5" width="18" height="14" rx="2" />
       <path d="M3 10h18" />
     </svg>
@@ -47,7 +55,15 @@ function IconAberto() {
 
 function IconAndamento() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="10" />
       <polyline points="12 6 12 12 16 14" />
     </svg>
@@ -56,7 +72,15 @@ function IconAndamento() {
 
 function IconAtraso() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
       <line x1="12" y1="9" x2="12" y2="13" />
       <line x1="12" y1="17" x2="12.01" y2="17" />
@@ -66,7 +90,15 @@ function IconAtraso() {
 
 function IconConcluido() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
       <polyline points="22 4 12 14.01 9 11.01" />
     </svg>
@@ -119,7 +151,15 @@ export default function WebTarefas() {
       categoria: categoriaFiltro || undefined,
       busca: buscaAplicada || undefined,
     }),
-    [isGestor, visaoEquipe, responsavelId, statusFiltro, prioridadeFiltro, categoriaFiltro, buscaAplicada]
+    [
+      isGestor,
+      visaoEquipe,
+      responsavelId,
+      statusFiltro,
+      prioridadeFiltro,
+      categoriaFiltro,
+      buscaAplicada,
+    ],
   );
 
   const carregarIndicadores = useCallback(async () => {
@@ -260,7 +300,14 @@ export default function WebTarefas() {
           <h1 className="tarefas__titulo">Gestão de Tarefas</h1>
           <p className="tarefas__subtitulo">{subtitulo}</p>
         </div>
-        <button type="button" className="btn btn--primary" onClick={() => { setDetalhe(null); setModalForm("criar"); }}>
+        <button
+          type="button"
+          className="btn btn--primary"
+          onClick={() => {
+            setDetalhe(null);
+            setModalForm("criar");
+          }}
+        >
           + Nova tarefa
         </button>
       </header>
@@ -277,33 +324,80 @@ export default function WebTarefas() {
       )}
 
       {modo !== "calendario" && (
-      <div className="dash-metrics tarefas__metrics">
-        <MetricCard icon={<IconAberto />} label="Em aberto" value={String(indicadores?.emAberto ?? 0)} loading={loadingIndicadores} iconTone="purple" />
-        <MetricCard icon={<IconAndamento />} label="Em andamento" value={String(indicadores?.emAndamento ?? 0)} loading={loadingIndicadores} iconTone="money" />
-        <MetricCard icon={<IconAtraso />} label="Atrasadas" value={String(indicadores?.atrasadas ?? 0)} loading={loadingIndicadores} iconTone="alert" hintTone="danger" />
-        <MetricCard icon={<IconConcluido />} label="Concluídas na semana" value={String(indicadores?.concluidasNaSemana ?? 0)} loading={loadingIndicadores} iconTone="wallet" />
-      </div>
+        <div className="dash-metrics tarefas__metrics">
+          <MetricCard
+            icon={<IconAberto />}
+            label="Em aberto"
+            value={String(indicadores?.emAberto ?? 0)}
+            loading={loadingIndicadores}
+            iconTone="purple"
+          />
+          <MetricCard
+            icon={<IconAndamento />}
+            label="Em andamento"
+            value={String(indicadores?.emAndamento ?? 0)}
+            loading={loadingIndicadores}
+            iconTone="money"
+          />
+          <MetricCard
+            icon={<IconAtraso />}
+            label="Atrasadas"
+            value={String(indicadores?.atrasadas ?? 0)}
+            loading={loadingIndicadores}
+            iconTone="alert"
+            hintTone="danger"
+          />
+          <MetricCard
+            icon={<IconConcluido />}
+            label="Concluídas na semana"
+            value={String(indicadores?.concluidasNaSemana ?? 0)}
+            loading={loadingIndicadores}
+            iconTone="wallet"
+          />
+        </div>
       )}
 
       <div className="tarefas__toolbar">
         {isGestor && (
           <div className="tarefas__toggle" role="group" aria-label="Visão">
-            <button type="button" className={!visaoEquipe ? "is-active" : ""} onClick={() => { setVisaoEquipe(false); setResponsavelId(""); setPagina(0); }}>
+            <button
+              type="button"
+              className={!visaoEquipe ? "is-active" : ""}
+              onClick={() => {
+                setVisaoEquipe(false);
+                setResponsavelId("");
+                setPagina(0);
+              }}
+            >
               Minhas tarefas
             </button>
-            <button type="button" className={visaoEquipe ? "is-active" : ""} onClick={() => { setVisaoEquipe(true); setPagina(0); }}>
+            <button
+              type="button"
+              className={visaoEquipe ? "is-active" : ""}
+              onClick={() => {
+                setVisaoEquipe(true);
+                setPagina(0);
+              }}
+            >
               Equipe
             </button>
           </div>
         )}
 
         <div className="tarefas__modos" role="group" aria-label="Modo de visualização">
-          {([
-            ["kanban", "Kanban"],
-            ["lista", "Lista"],
-            ["calendario", "Calendário"],
-          ] as const).map(([id, label]) => (
-            <button key={id} type="button" className={modo === id ? "is-active" : ""} onClick={() => mudarModo(id)}>
+          {(
+            [
+              ["kanban", "Kanban"],
+              ["lista", "Lista"],
+              ["calendario", "Calendário"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              className={modo === id ? "is-active" : ""}
+              onClick={() => mudarModo(id)}
+            >
               {label}
             </button>
           ))}
@@ -318,29 +412,59 @@ export default function WebTarefas() {
           onChange={(e) => setBusca(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && aplicarBusca()}
         />
-        <select className="modal__input" value={prioridadeFiltro} onChange={(e) => { setPrioridadeFiltro(e.target.value as PrioridadeTarefa | ""); setPagina(0); }}>
+        <select
+          className="modal__input"
+          value={prioridadeFiltro}
+          onChange={(e) => {
+            setPrioridadeFiltro(e.target.value as PrioridadeTarefa | "");
+            setPagina(0);
+          }}
+        >
           <option value="">Prioridade</option>
           {(["BAIXA", "MEDIA", "ALTA"] as PrioridadeTarefa[]).map((p) => (
-            <option key={p} value={p}>{labelPrioridadeTarefa(p)}</option>
+            <option key={p} value={p}>
+              {labelPrioridadeTarefa(p)}
+            </option>
           ))}
         </select>
-        <select className="modal__input" value={statusFiltro} onChange={(e) => { setStatusFiltro(e.target.value as StatusTarefa | ""); setPagina(0); }}>
+        <select
+          className="modal__input"
+          value={statusFiltro}
+          onChange={(e) => {
+            setStatusFiltro(e.target.value as StatusTarefa | "");
+            setPagina(0);
+          }}
+        >
           <option value="">Status</option>
           {STATUS_KANBAN.map((s) => (
-            <option key={s} value={s}>{labelStatusTarefa(s)}</option>
+            <option key={s} value={s}>
+              {labelStatusTarefa(s)}
+            </option>
           ))}
         </select>
         <input
           className="modal__input"
           placeholder="Cliente"
           value={categoriaFiltro}
-          onChange={(e) => { setCategoriaFiltro(e.target.value); setPagina(0); }}
+          onChange={(e) => {
+            setCategoriaFiltro(e.target.value);
+            setPagina(0);
+          }}
         />
         {isGestor && visaoEquipe && (
-          <select className="modal__input" value={responsavelId} onChange={(e) => { setResponsavelId(e.target.value); setPagina(0); }}>
+          <select
+            className="modal__input"
+            value={responsavelId}
+            onChange={(e) => {
+              setResponsavelId(e.target.value);
+              setPagina(0);
+            }}
+          >
             <option value="">Responsável</option>
             {responsaveis.map((r) => (
-              <option key={r.id} value={r.id}>{r.nome}</option>
+              <option key={r.id} value={r.id}>
+                {r.nome}
+              </option>
             ))}
           </select>
         )}
@@ -356,7 +480,9 @@ export default function WebTarefas() {
               key={c.responsavelId}
               type="button"
               className={`tarefas__colab-card${responsavelId === c.responsavelId ? " is-active" : ""}`}
-              onClick={() => setResponsavelId((atual) => (atual === c.responsavelId ? "" : c.responsavelId))}
+              onClick={() =>
+                setResponsavelId((atual) => (atual === c.responsavelId ? "" : c.responsavelId))
+              }
             >
               <strong>{c.responsavelNome}</strong>
               <span>{c.total} tarefas</span>
@@ -372,7 +498,10 @@ export default function WebTarefas() {
         <TarefasKanban
           colunas={colunas}
           loading={loadingConteudo}
-          onAtualizado={() => { void carregarIndicadores(); void carregarConteudo(); }}
+          onAtualizado={() => {
+            void carregarIndicadores();
+            void carregarConteudo();
+          }}
           onAbrir={(id) => void abrirDetalhe(id)}
         />
       )}
@@ -396,7 +525,10 @@ export default function WebTarefas() {
           loading={loadingConteudo}
           ano={calAno}
           mes={calMes}
-          onMesChange={(a, m) => { setCalAno(a); setCalMes(m); }}
+          onMesChange={(a, m) => {
+            setCalAno(a);
+            setCalMes(m);
+          }}
           onAbrir={(id) => void abrirDetalhe(id)}
         />
       )}
@@ -416,7 +548,10 @@ export default function WebTarefas() {
         tarefa={modalForm ? null : detalhe}
         carregando={carregandoDetalhe}
         onFechar={() => setDetalhe(null)}
-        onEditar={(t) => { setDetalhe(t); setModalForm("editar"); }}
+        onEditar={(t) => {
+          setDetalhe(t);
+          setModalForm("editar");
+        }}
         onAtualizado={(t) => {
           setDetalhe(t);
           void carregarIndicadores();

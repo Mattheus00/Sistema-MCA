@@ -20,9 +20,7 @@ const axiosInstance = axios.create({
 });
 
 /** Em modo mock (VITE_USE_MOCK=true) usa dados em memória; senão usa o backend real */
-export const api = isMockEnabled()
-  ? (createMockClient() as typeof axiosInstance)
-  : axiosInstance;
+export const api = isMockEnabled() ? (createMockClient() as typeof axiosInstance) : axiosInstance;
 
 /** Chave onde o token de autenticação é guardado (quando o backend exigir) */
 export const AUTH_TOKEN_KEY = "sgi_token";
@@ -36,7 +34,12 @@ export const USER_PROFILE_KEY = "sgi_user_profile";
 /** Preferência do checkbox "Manter conectado" (sempre em localStorage) */
 export const REMEMBER_ME_KEY = "sgi_remember_me";
 
-const AUTH_SESSION_KEYS = [AUTH_TOKEN_KEY, USER_DISPLAY_KEY, USER_LOGIN_KEY, USER_PROFILE_KEY] as const;
+const AUTH_SESSION_KEYS = [
+  AUTH_TOKEN_KEY,
+  USER_DISPLAY_KEY,
+  USER_LOGIN_KEY,
+  USER_PROFILE_KEY,
+] as const;
 
 export type AuthSessionData = {
   token: string;
@@ -130,7 +133,9 @@ export function encodeConfirmadoPorComprovante(label: string): string {
   return `${CONFIRMADO_POR_COMPROVANTE_PREFIX}${label.trim()}`;
 }
 
-export function decodeConfirmadoPorComprovante(comprovante: string | null | undefined): string | undefined {
+export function decodeConfirmadoPorComprovante(
+  comprovante: string | null | undefined,
+): string | undefined {
   if (!comprovante) return undefined;
   const s = comprovante.trim();
   if (!s.toLowerCase().startsWith(CONFIRMADO_POR_COMPROVANTE_PREFIX)) return undefined;
@@ -154,7 +159,7 @@ if (!isMockEnabled()) {
         clearAuthSession();
       }
       return Promise.reject(error);
-    }
+    },
   );
 }
 
@@ -164,7 +169,10 @@ if (!isMockEnabled()) {
  */
 const MSG_RELATORIO_INDISPONIVEL = "Este relatório ainda não está disponível no servidor.";
 
-export function getApiErrorMessage(error: unknown, fallback = "Ocorreu um erro. Tente novamente."): string {
+export function getApiErrorMessage(
+  error: unknown,
+  fallback = "Ocorreu um erro. Tente novamente.",
+): string {
   if (!error || typeof error !== "object") return fallback;
   const ax = error as AxiosError<ApiErrorBody>;
   const data = ax.response?.data;
@@ -173,9 +181,12 @@ export function getApiErrorMessage(error: unknown, fallback = "Ocorreu um erro. 
     if (typeof data.error === "string" && data.error.trim()) return data.error;
     if (Array.isArray(data.errors) && data.errors[0]?.message) return data.errors[0].message;
   }
-  if (ax.code === "ECONNABORTED" || ax.message?.includes("timeout")) return "Tempo esgotado. Verifique sua conexão.";
-  if (ax.message === "Network Error") return "Erro de conexão. Verifique se o backend está em execução.";
-  if (typeof (error as Error).message === "string" && (error as Error).message) return (error as Error).message;
+  if (ax.code === "ECONNABORTED" || ax.message?.includes("timeout"))
+    return "Tempo esgotado. Verifique sua conexão.";
+  if (ax.message === "Network Error")
+    return "Erro de conexão. Verifique se o backend está em execução.";
+  if (typeof (error as Error).message === "string" && (error as Error).message)
+    return (error as Error).message;
   return fallback;
 }
 
@@ -193,7 +204,12 @@ export function getRelatorioErrorMessage(error: unknown, fallback: string): stri
  */
 export function normalizeListResponse<T>(data: unknown): T[] {
   if (Array.isArray(data)) return data;
-  if (data && typeof data === "object" && "content" in data && Array.isArray((data as { content: T[] }).content)) {
+  if (
+    data &&
+    typeof data === "object" &&
+    "content" in data &&
+    Array.isArray((data as { content: T[] }).content)
+  ) {
     return (data as { content: T[] }).content;
   }
   return [];
@@ -212,7 +228,11 @@ export async function fetchAllInadimplentes(): Promise<Inadimplencia[]> {
     return data.map((item) => mapInadimplenciaResponseItem(item as Record<string, unknown>));
   }
 
-  if (data && typeof data === "object" && Array.isArray((data as { content?: unknown[] }).content)) {
+  if (
+    data &&
+    typeof data === "object" &&
+    Array.isArray((data as { content?: unknown[] }).content)
+  ) {
     const body = data as {
       content: Record<string, unknown>[];
       totalPages?: number;
@@ -233,7 +253,9 @@ export async function fetchAllInadimplentes(): Promise<Inadimplencia[]> {
         totalPages?: number;
         last?: boolean;
       };
-      const chunk = Array.isArray(pageData.content) ? pageData.content.map(mapInadimplenciaResponseItem) : [];
+      const chunk = Array.isArray(pageData.content)
+        ? pageData.content.map(mapInadimplenciaResponseItem)
+        : [];
       if (chunk.length === 0) break;
       all.push(...chunk);
       if (pageData.last === true) break;

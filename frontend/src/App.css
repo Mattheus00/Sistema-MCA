@@ -202,7 +202,11 @@ a.topbar__brand-link:focus-visible {
   line-height: 1.2;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .app-nav-pill:hover {
@@ -324,7 +328,10 @@ a.topbar__brand-link:focus-visible {
   border-radius: 999px;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease;
 }
 
 .app-header__logout:hover {
@@ -561,15 +568,15 @@ a.topbar__brand-link:focus-visible {
 }
 
 .dashboard-card__icon--people {
-  background: linear-gradient(135deg, #A43F9B 0%, #6366f1 100%);
+  background: linear-gradient(135deg, #a43f9b 0%, #6366f1 100%);
 }
 
 .dashboard-card__icon--chart {
-  background: linear-gradient(135deg, #A43F9B 0%, #06b6d4 100%);
+  background: linear-gradient(135deg, #a43f9b 0%, #06b6d4 100%);
 }
 
 .dashboard-card__icon--money {
-  background: linear-gradient(135deg, #A43F9B 0%, #ec4899 100%);
+  background: linear-gradient(135deg, #a43f9b 0%, #ec4899 100%);
 }
 
 .dashboard-card__content {
@@ -658,7 +665,9 @@ a.topbar__brand-link:focus-visible {
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .dashboard-chart-filtro:hover {
@@ -763,7 +772,7 @@ a.topbar__brand-link:focus-visible {
 }
 
 .donut-chart__legenda-bullet--receber {
-  background: #A43F9B;
+  background: #a43f9b;
   box-shadow: 0 2px 8px var(--shadow-accent);
 }
 
@@ -903,10 +912,21 @@ a.topbar__brand-link:focus-visible {
   flex-shrink: 0;
 }
 
-.dash-metric__icon--purple { background: #f3e8ff; }
-.dash-metric__icon--alert { background: #ffe9ee; color: #f43f5e; }
-.dash-metric__icon--money { background: #e5f8ef; color: #22a06b; }
-.dash-metric__icon--wallet { background: #e8f1ff; color: #2563eb; }
+.dash-metric__icon--purple {
+  background: #f3e8ff;
+}
+.dash-metric__icon--alert {
+  background: #ffe9ee;
+  color: #f43f5e;
+}
+.dash-metric__icon--money {
+  background: #e5f8ef;
+  color: #22a06b;
+}
+.dash-metric__icon--wallet {
+  background: #e8f1ff;
+  color: #2563eb;
+}
 
 .dash-metric__body {
   display: flex;
@@ -934,9 +954,15 @@ a.topbar__brand-link:focus-visible {
   color: var(--text-secondary);
 }
 
-.dash-metric__hint--warning { color: #b45309; }
-.dash-metric__hint--success { color: #15803d; }
-.dash-metric__hint--danger { color: #b91c1c; }
+.dash-metric__hint--warning {
+  color: #b45309;
+}
+.dash-metric__hint--success {
+  color: #15803d;
+}
+.dash-metric__hint--danger {
+  color: #b91c1c;
+}
 
 .dash-metric__skeleton {
   display: block;
@@ -1027,7 +1053,7 @@ a.topbar__brand-link:focus-visible {
   margin-top: 14px;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #A43F9B;
+  color: #a43f9b;
   text-decoration: none;
 }
 
@@ -1062,7 +1088,7 @@ a.topbar__brand-link:focus-visible {
 
 .dash-pill--active {
   background: #fff;
-  color: #A43F9B;
+  color: #a43f9b;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
 }
 
@@ -1092,10 +1118,18 @@ a.topbar__brand-link:focus-visible {
   border-radius: 50%;
 }
 
-.dash-aging__dot--verde { background: #22c55e; }
-.dash-aging__dot--amarelo { background: #eab308; }
-.dash-aging__dot--laranja { background: #f97316; }
-.dash-aging__dot--vermelho { background: #ef4444; }
+.dash-aging__dot--verde {
+  background: #22c55e;
+}
+.dash-aging__dot--amarelo {
+  background: #eab308;
+}
+.dash-aging__dot--laranja {
+  background: #f97316;
+}
+.dash-aging__dot--vermelho {
+  background: #ef4444;
+}
 
 .dash-aging__rotulo {
   color: var(--text-primary);
@@ -1127,10 +1161,18 @@ a.topbar__brand-link:focus-visible {
   border-radius: 999px;
 }
 
-.dash-aging__fill--verde { background: #22c55e; }
-.dash-aging__fill--amarelo { background: #eab308; }
-.dash-aging__fill--laranja { background: #f97316; }
-.dash-aging__fill--vermelho { background: #ef4444; }
+.dash-aging__fill--verde {
+  background: #22c55e;
+}
+.dash-aging__fill--amarelo {
+  background: #eab308;
+}
+.dash-aging__fill--laranja {
+  background: #f97316;
+}
+.dash-aging__fill--vermelho {
+  background: #ef4444;
+}
 
 .dash-quick-actions {
   display: grid;
@@ -1152,7 +1194,10 @@ a.topbar__brand-link:focus-visible {
   font-weight: 600;
   cursor: pointer;
   text-align: center;
-  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    transform 0.15s;
 }
 
 .dash-quick-actions__item:hover {
@@ -1167,7 +1212,7 @@ a.topbar__brand-link:focus-visible {
   align-items: center;
   justify-content: center;
   background: #f3e8ff;
-  color: #A43F9B;
+  color: #a43f9b;
   flex-shrink: 0;
 }
 
@@ -1288,15 +1333,31 @@ a.topbar__brand-link:focus-visible {
   animation: dash-shimmer 1.2s infinite;
 }
 
-.dash-skeleton--header { height: 72px; margin-bottom: 20px; }
-.dash-skeleton--metric { min-height: 118px; }
-.dash-skeleton--chart { min-height: 340px; }
-.dash-skeleton--card { min-height: 220px; }
-.dash-skeleton--wide { min-height: 260px; margin-top: 16px; }
+.dash-skeleton--header {
+  height: 72px;
+  margin-bottom: 20px;
+}
+.dash-skeleton--metric {
+  min-height: 118px;
+}
+.dash-skeleton--chart {
+  min-height: 340px;
+}
+.dash-skeleton--card {
+  min-height: 220px;
+}
+.dash-skeleton--wide {
+  min-height: 260px;
+  margin-top: 16px;
+}
 
 @keyframes dash-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 @media (max-width: 1100px) {
@@ -1450,7 +1511,9 @@ a.topbar__brand-link:focus-visible {
   border-radius: 8px;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 }
 
 .btn--primary {
@@ -1766,7 +1829,9 @@ a.topbar__brand-link:focus-visible {
   border-radius: 8px;
   cursor: pointer;
   background: transparent;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .page-servicos__acao--editar {
@@ -1887,7 +1952,10 @@ a.topbar__brand-link:focus-visible {
   border: 1px solid var(--glass-border);
   border-radius: 10px;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    color 0.2s;
 }
 
 .page-clientes__filtro:hover {
@@ -1899,7 +1967,7 @@ a.topbar__brand-link:focus-visible {
 .page-clientes__filtro--ativo {
   background: #faf0f9;
   border-color: var(--cor-principal);
-  color: #A43F9B;
+  color: #a43f9b;
 }
 
 .page-clientes__filtro-grupo {
@@ -2036,7 +2104,9 @@ a.topbar__brand-link:focus-visible {
   border-radius: 8px;
   cursor: pointer;
   background: transparent;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .page-clientes__acao--editar {
@@ -2102,7 +2172,9 @@ a.topbar__brand-link:focus-visible {
   border: 1px solid var(--glass-border);
   cursor: pointer;
   padding: 2px;
-  transition: background 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease;
   flex-shrink: 0;
   position: relative;
 }
@@ -2219,7 +2291,9 @@ a.topbar__brand-link:focus-visible {
   padding: 28px;
   width: 100%;
   max-width: 900px;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 25px 60px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(0, 0, 0, 0.04);
   color: var(--text-primary);
 }
 
@@ -2358,7 +2432,9 @@ a.topbar__brand-link:focus-visible {
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .modal-cliente__close:hover {
@@ -2442,7 +2518,9 @@ a.topbar__brand-link:focus-visible {
   background: #fff;
   font-size: 0.9375rem;
   color: var(--text-primary);
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .modal-cliente__input::placeholder {
@@ -2774,7 +2852,10 @@ a.topbar__brand-link:focus-visible {
   background: #f8fafc;
   cursor: pointer;
   text-align: left;
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    box-shadow 0.15s;
 }
 
 .modal-pagamento__tipo-tab:hover:not(:disabled) {
@@ -3088,7 +3169,7 @@ select.modal__select {
 
 .modal__cliente-opcao[aria-selected="true"] {
   background: #f5e6f3;
-  color: #A43F9B;
+  color: #a43f9b;
   font-weight: 500;
 }
 
@@ -3255,7 +3336,9 @@ select.modal__select {
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .modal-juros__close:hover:not(:disabled) {
@@ -3413,7 +3496,9 @@ select.modal__select {
   border-radius: 10px;
   background: #fff;
   overflow: hidden;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .modal-juros__field:first-of-type .modal-juros__input-wrap:focus-within {
@@ -3717,7 +3802,7 @@ select.modal__select {
   height: 20px;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   transition: transform 0.2s;
 }
 
@@ -4258,7 +4343,10 @@ select.modal__select {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
-  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s,
+    background 0.15s;
 }
 
 .registro-inadimplencia__combobox .registro-inadimplencia__input {
@@ -4447,7 +4535,9 @@ select.modal__select {
   background: #fff;
   color: var(--cor-principal);
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 }
 
 .registro-inadimplencia__btn-servicos:hover {
@@ -4467,7 +4557,9 @@ select.modal__select {
   background: transparent;
   color: #94a3b8;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .registro-inadimplencia__btn-remover:hover:not(:disabled) {
@@ -5303,7 +5395,9 @@ select.modal__select {
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .page-inadimplentes__btn-icone:disabled {
@@ -6643,7 +6737,9 @@ select.modal__select {
   border: 2px solid var(--glass-border);
   border-radius: 12px;
   cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .tax-sim__type-card:hover {
@@ -6913,7 +7009,9 @@ select.modal__select {
   font-size: 0.8125rem;
   color: var(--text-primary);
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 }
 
 .tax-sim__quick-q:hover {
@@ -7198,15 +7296,33 @@ select.modal__select {
   width: 100%;
 }
 
-.page-envio-boletos--conferencia .page-envio-boletos__tabela--conferencia th:nth-child(1) { width: 4%; }
-.page-envio-boletos--conferencia .page-envio-boletos__tabela--conferencia th:nth-child(2) { width: 22%; }
-.page-envio-boletos--conferencia .page-envio-boletos__tabela--conferencia th:nth-child(3) { width: 11%; }
-.page-envio-boletos--conferencia .page-envio-boletos__tabela--conferencia th:nth-child(4) { width: 10%; }
-.page-envio-boletos--conferencia .page-envio-boletos__tabela--conferencia th:nth-child(5) { width: 12%; }
-.page-envio-boletos--conferencia .page-envio-boletos__tabela--conferencia th:nth-child(6) { width: 9%; }
-.page-envio-boletos--conferencia .page-envio-boletos__tabela--conferencia th:nth-child(7) { width: 7%; }
-.page-envio-boletos--conferencia .page-envio-boletos__tabela--conferencia th:nth-child(8) { width: 10%; }
-.page-envio-boletos--conferencia .page-envio-boletos__tabela--conferencia th:nth-child(9) { width: 15%; }
+.page-envio-boletos--conferencia .page-envio-boletos__tabela--conferencia th:nth-child(1) {
+  width: 4%;
+}
+.page-envio-boletos--conferencia .page-envio-boletos__tabela--conferencia th:nth-child(2) {
+  width: 22%;
+}
+.page-envio-boletos--conferencia .page-envio-boletos__tabela--conferencia th:nth-child(3) {
+  width: 11%;
+}
+.page-envio-boletos--conferencia .page-envio-boletos__tabela--conferencia th:nth-child(4) {
+  width: 10%;
+}
+.page-envio-boletos--conferencia .page-envio-boletos__tabela--conferencia th:nth-child(5) {
+  width: 12%;
+}
+.page-envio-boletos--conferencia .page-envio-boletos__tabela--conferencia th:nth-child(6) {
+  width: 9%;
+}
+.page-envio-boletos--conferencia .page-envio-boletos__tabela--conferencia th:nth-child(7) {
+  width: 7%;
+}
+.page-envio-boletos--conferencia .page-envio-boletos__tabela--conferencia th:nth-child(8) {
+  width: 10%;
+}
+.page-envio-boletos--conferencia .page-envio-boletos__tabela--conferencia th:nth-child(9) {
+  width: 15%;
+}
 
 .page-envio-boletos--conferencia .page-envio-boletos__tabela--conferencia th,
 .page-envio-boletos--conferencia .page-envio-boletos__tabela--conferencia td {
@@ -7739,10 +7855,18 @@ select.modal__select {
   font-size: 1.25rem;
 }
 
-.page-envio-boletos__card--verde { border-color: #86efac; }
-.page-envio-boletos__card--amarelo { border-color: #fde68a; }
-.page-envio-boletos__card--vermelho { border-color: #fecaca; }
-.page-envio-boletos__card--cinza { border-color: #d1d5db; }
+.page-envio-boletos__card--verde {
+  border-color: #86efac;
+}
+.page-envio-boletos__card--amarelo {
+  border-color: #fde68a;
+}
+.page-envio-boletos__card--vermelho {
+  border-color: #fecaca;
+}
+.page-envio-boletos__card--cinza {
+  border-color: #d1d5db;
+}
 
 .page-envio-boletos__tabela-wrap {
   overflow-x: auto;
@@ -7785,11 +7909,26 @@ select.modal__select {
   font-weight: 600;
 }
 
-.page-envio-boletos__badge--verde { background: #dcfce7; color: #166534; }
-.page-envio-boletos__badge--amarelo { background: #fef9c3; color: #854d0e; }
-.page-envio-boletos__badge--vermelho { background: #fee2e2; color: #991b1b; }
-.page-envio-boletos__badge--cinza { background: #f3f4f6; color: #4b5563; }
-.page-envio-boletos__badge--laranja { background: #ffedd5; color: #c2410c; }
+.page-envio-boletos__badge--verde {
+  background: #dcfce7;
+  color: #166534;
+}
+.page-envio-boletos__badge--amarelo {
+  background: #fef9c3;
+  color: #854d0e;
+}
+.page-envio-boletos__badge--vermelho {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.page-envio-boletos__badge--cinza {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+.page-envio-boletos__badge--laranja {
+  background: #ffedd5;
+  color: #c2410c;
+}
 
 .page-envio-boletos__link {
   border: none;
@@ -8255,7 +8394,9 @@ select.modal__select {
   background: #fff;
   text-align: left;
   cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .page-documentos-clientes__card:hover {
@@ -9155,7 +9296,9 @@ select.modal__select {
   background: #fff;
   color: #0f172a;
   box-sizing: border-box;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .lc-modal-form__input::placeholder {
@@ -9207,7 +9350,10 @@ select.modal__select {
   font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .lc-modal-form__tipo-btn--entrada.lc-modal-form__tipo-btn--ativa {
@@ -9237,7 +9383,9 @@ select.modal__select {
   border-radius: 10px;
   overflow: hidden;
   background: #fff;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .lc-modal-form__money:focus-within {
@@ -9276,7 +9424,10 @@ select.modal__select {
   z-index: 1;
   border-radius: 999px;
   background: #fff;
-  transition: border-radius 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  transition:
+    border-radius 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
 }
 
 .lc-modal-form__combo--aberta {
@@ -9298,7 +9449,10 @@ select.modal__select {
   border: 1px solid #e2e8f0;
   border-radius: 999px;
   background: #fff;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, border-radius 0.22s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    border-radius 0.22s ease;
 }
 
 .lc-modal-form__combo--aberta .lc-modal-form__busca {
@@ -9450,7 +9604,9 @@ select.modal__select {
   font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .lc-modal-form__btn--cancelar {
@@ -9867,7 +10023,6 @@ select.modal__select {
   }
 }
 
-
 /* ========== Gestão de Tarefas ========== */
 .tarefas {
   max-width: 1440px;
@@ -10154,8 +10309,12 @@ select.modal__select {
   border-radius: 18px;
   padding: 12px 14px 10px;
   cursor: grab;
-  box-shadow: 0 1px 2px rgba(124, 58, 237, 0.04), 0 8px 22px rgba(15, 23, 42, 0.04);
-  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  box-shadow:
+    0 1px 2px rgba(124, 58, 237, 0.04),
+    0 8px 22px rgba(15, 23, 42, 0.04);
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .tarefas-card:hover {
@@ -10239,14 +10398,35 @@ select.modal__select {
   flex-shrink: 0;
 }
 
-.tarefas-card__pill--prio-baixa { background: #eff6ff; color: #1d4ed8; }
-.tarefas-card__pill--prio-media { background: #fff1e6; color: #c2410c; }
-.tarefas-card__pill--prio-alta { background: #fef2f2; color: #b91c1c; }
+.tarefas-card__pill--prio-baixa {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+.tarefas-card__pill--prio-media {
+  background: #fff1e6;
+  color: #c2410c;
+}
+.tarefas-card__pill--prio-alta {
+  background: #fef2f2;
+  color: #b91c1c;
+}
 
-.tarefas-card__pill--st-a_fazer { background: #eef2f7; color: #334155; }
-.tarefas-card__pill--st-em_andamento { background: #ffedd5; color: #c2410c; }
-.tarefas-card__pill--st-em_revisao { background: #f3e8ff; color: #7c3aed; }
-.tarefas-card__pill--st-concluido { background: #dcfce7; color: #166534; }
+.tarefas-card__pill--st-a_fazer {
+  background: #eef2f7;
+  color: #334155;
+}
+.tarefas-card__pill--st-em_andamento {
+  background: #ffedd5;
+  color: #c2410c;
+}
+.tarefas-card__pill--st-em_revisao {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+.tarefas-card__pill--st-concluido {
+  background: #dcfce7;
+  color: #166534;
+}
 
 .tarefas-card__atrasada {
   font-size: 0.6875rem;
@@ -10356,15 +10536,39 @@ select.modal__select {
   font-weight: 600;
 }
 
-.tarefas__badge-prioridade--baixa { background: #dbeafe; color: #1d4ed8; }
-.tarefas__badge-prioridade--media { background: #ffedd5; color: #c2410c; }
-.tarefas__badge-prioridade--alta { background: #fee2e2; color: #b91c1c; }
+.tarefas__badge-prioridade--baixa {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.tarefas__badge-prioridade--media {
+  background: #ffedd5;
+  color: #c2410c;
+}
+.tarefas__badge-prioridade--alta {
+  background: #fee2e2;
+  color: #b91c1c;
+}
 
-.tarefas__badge-status--backlog { background: #f1f5f9; color: #475569; }
-.tarefas__badge-status--fazer { background: #dbeafe; color: #1d4ed8; }
-.tarefas__badge-status--andamento { background: #ffedd5; color: #c2410c; }
-.tarefas__badge-status--revisao { background: #ede9fe; color: #6d28d9; }
-.tarefas__badge-status--concluido { background: #dcfce7; color: #166534; }
+.tarefas__badge-status--backlog {
+  background: #f1f5f9;
+  color: #475569;
+}
+.tarefas__badge-status--fazer {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.tarefas__badge-status--andamento {
+  background: #ffedd5;
+  color: #c2410c;
+}
+.tarefas__badge-status--revisao {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+.tarefas__badge-status--concluido {
+  background: #dcfce7;
+  color: #166534;
+}
 
 .tarefas-lista__tabela-wrap {
   overflow-x: auto;
@@ -10440,10 +10644,26 @@ select.modal__select {
   color: #334155;
 }
 
-.tarefas-cal__chip--azul { background: #eff6ff; border-color: #dbeafe; color: #1d4ed8; }
-.tarefas-cal__chip--vermelho { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
-.tarefas-cal__chip--verde { background: #ecfdf5; border-color: #bbf7d0; color: #15803d; }
-.tarefas-cal__chip--roxo { background: #f3e8ff; border-color: #e9d5ff; color: var(--cor-principal); }
+.tarefas-cal__chip--azul {
+  background: #eff6ff;
+  border-color: #dbeafe;
+  color: #1d4ed8;
+}
+.tarefas-cal__chip--vermelho {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+.tarefas-cal__chip--verde {
+  background: #ecfdf5;
+  border-color: #bbf7d0;
+  color: #15803d;
+}
+.tarefas-cal__chip--roxo {
+  background: #f3e8ff;
+  border-color: #e9d5ff;
+  color: var(--cor-principal);
+}
 
 .tarefas-cal__toolbar {
   display: flex;
@@ -10741,11 +10961,21 @@ select.modal__select {
   flex-shrink: 0;
 }
 
-.dot-red { background: #dc2626; }
-.dot-orange { background: #ea580c; }
-.dot-blue { background: #2563eb; }
-.dot-purple { background: #7c3aed; }
-.dot-green { background: #16a34a; }
+.dot-red {
+  background: #dc2626;
+}
+.dot-orange {
+  background: #ea580c;
+}
+.dot-blue {
+  background: #2563eb;
+}
+.dot-purple {
+  background: #7c3aed;
+}
+.dot-green {
+  background: #16a34a;
+}
 
 @media (max-width: 1100px) {
   .tarefas-cal__layout {
@@ -10917,7 +11147,9 @@ select.modal__select {
   background: #fff;
   color: #0f172a;
   box-sizing: border-box;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
   font-family: inherit;
 }
 
@@ -11010,7 +11242,10 @@ select.modal__select {
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .tarefas-form__check-btn:hover:not(:disabled) {

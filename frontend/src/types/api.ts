@@ -15,8 +15,8 @@ export type Cliente = {
   celular?: string;
   endereco?: string;
   situacao?: "Ativo" | "Inadimplente" | "Inativo";
-   /** Dívida total do cliente (somatório das inadimplências em aberto). */
-   saldoDevedorTotal?: number;
+  /** Dívida total do cliente (somatório das inadimplências em aberto). */
+  saldoDevedorTotal?: number;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -375,13 +375,7 @@ export type MetodoIdentificacaoBoleto =
   | string;
 
 export type StatusLoteEnvioBoleto =
-  | "RECEBIDO"
-  | "ANALISANDO"
-  | "CONFERENCIA"
-  | "ENVIANDO"
-  | "CONCLUIDO"
-  | "CANCELADO"
-  | string;
+  "RECEBIDO" | "ANALISANDO" | "CONFERENCIA" | "ENVIANDO" | "CONCLUIDO" | "CANCELADO" | string;
 
 /** Espelha ItemEnvioBoletoResponse do backend */
 export type ItemEnvioBoleto = {
@@ -484,7 +478,8 @@ export type ResultadoEnvioLote = {
 
 /** --- Área do Cliente (portal self-service) --- */
 
-export type TipoDocumentoCliente = "COMPROVANTE" | "NOTA_FISCAL" | "CONTRATO" | "DECLARACAO" | "OUTRO";
+export type TipoDocumentoCliente =
+  "COMPROVANTE" | "NOTA_FISCAL" | "CONTRATO" | "DECLARACAO" | "OUTRO";
 
 export type StatusDocumentoCliente = "ENVIADO" | "RECEBIDO" | "EM_ANALISE" | "ARQUIVADO";
 

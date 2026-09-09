@@ -21,7 +21,7 @@ function renderWithRouter(initialEntries: string[] = ["/"]) {
         </Route>
         <Route path="/login" element={<div>Página de login</div>} />
       </Routes>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 

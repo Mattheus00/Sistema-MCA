@@ -110,10 +110,7 @@ describe("auth session helpers", () => {
   });
 
   it("salva sessão em localStorage quando manter conectado", () => {
-    setAuthSession(
-      { token: "t1", display: "João", login: "joao", profile: "PROPRIETARIA" },
-      true
-    );
+    setAuthSession({ token: "t1", display: "João", login: "joao", profile: "PROPRIETARIA" }, true);
     expect(localStorage.getItem(AUTH_TOKEN_KEY)).toBe("t1");
     expect(localStorage.getItem(USER_DISPLAY_KEY)).toBe("João");
     expect(sessionStorage.getItem(AUTH_TOKEN_KEY)).toBeNull();

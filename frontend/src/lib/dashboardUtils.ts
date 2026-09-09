@@ -2,8 +2,15 @@ import type { AgingRelatorio, Inadimplencia } from "@/types/api";
 import { isInadimplenciaEmAberto, saldoDevedorItem } from "@/lib/inadimplentesUtils";
 
 const MOEDA = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
-const PERCENT = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-const DATA = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+const PERCENT = new Intl.NumberFormat("pt-BR", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+const DATA = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
 const DATA_HORA = new Intl.DateTimeFormat("pt-BR", {
   day: "2-digit",
   month: "2-digit",
@@ -125,7 +132,10 @@ function valorAcumuladoAteMes(incrementos: Map<string, number>, ateMes: string):
   return total;
 }
 
-function pontosCumulativos(incrementos: Map<string, number>, mesesExibicao: string[]): PontoEvolucao[] {
+function pontosCumulativos(
+  incrementos: Map<string, number>,
+  mesesExibicao: string[],
+): PontoEvolucao[] {
   return mesesExibicao.map((chave) => ({
     mes: chave,
     mesLabel: labelMes(chave),
@@ -144,7 +154,7 @@ function mesesJanelaRolante(quantidade: number, referencia = new Date()): string
 
 export function calcularEvolucaoValorAberto(
   itens: Inadimplencia[],
-  meses: 6 | 12 | "total"
+  meses: 6 | 12 | "total",
 ): PontoEvolucao[] {
   const emAberto = itens.filter((item) => isInadimplenciaEmAberto(item));
   const incrementos = incrementosPorMesEntrada(emAberto);
@@ -240,7 +250,7 @@ export function mapInadimplenciasParaAtividades(itens: Inadimplencia[]): Ativida
 /** Completa valor de pagamentos confirmados quando a listagem veio com saldo 0 e sem histórico embutido. */
 export async function enriquecerValoresAtividades(
   atividades: AtividadeDashboard[],
-  buscarPagamentos: (dividaId: string) => Promise<{ valorPago: number }[]>
+  buscarPagamentos: (dividaId: string) => Promise<{ valorPago: number }[]>,
 ): Promise<AtividadeDashboard[]> {
   const precisaIds = atividades
     .filter((a) => a.status === "Confirmado" && !(a.valor != null && a.valor > 0) && a.id)
@@ -258,7 +268,7 @@ export async function enriquecerValoresAtividades(
       } catch {
         /* ignora — mantém valor atual */
       }
-    })
+    }),
   );
 
   if (valores.size === 0) return atividades;

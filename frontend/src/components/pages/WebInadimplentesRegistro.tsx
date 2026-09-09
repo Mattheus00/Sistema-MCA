@@ -17,7 +17,13 @@ type ServicoResumo = {
   ativo?: boolean | null;
 };
 
-type MensalidadeRow = { rowId: number; mes: string; ano: string; valorDigitado: string; descricao: string };
+type MensalidadeRow = {
+  rowId: number;
+  mes: string;
+  ano: string;
+  valorDigitado: string;
+  descricao: string;
+};
 
 const MESES = [
   { value: "01", label: "Janeiro" },
@@ -76,7 +82,7 @@ export default function WebInadimplentesRegistro() {
         list.map((c) => {
           const norm = normalizeClienteFromApi(c);
           return { id: norm.id ?? "", nome: norm.nome, cpf: norm.cpf, email: norm.email };
-        })
+        }),
       );
     } catch {
       setClientes([]);
@@ -93,7 +99,9 @@ export default function WebInadimplentesRegistro() {
       const r = await api.get("/api/servicos");
       const data = Array.isArray(r.data)
         ? r.data
-        : r.data && (r.data as { content?: unknown[] }).content && Array.isArray((r.data as { content: unknown[] }).content)
+        : r.data &&
+            (r.data as { content?: unknown[] }).content &&
+            Array.isArray((r.data as { content: unknown[] }).content)
           ? (r.data as { content: unknown[] }).content
           : [];
       const list: ServicoResumo[] = (data as Record<string, unknown>[]).map((s) => ({
@@ -117,7 +125,7 @@ export default function WebInadimplentesRegistro() {
   }, []);
 
   const clientesFiltrados = clientes.filter((c) =>
-    c.nome.toLowerCase().includes(clienteBusca.trim().toLowerCase())
+    c.nome.toLowerCase().includes(clienteBusca.trim().toLowerCase()),
   );
   const clienteSelecionado = clientes.find((c) => c.id === formRegistro.clienteId);
 
@@ -134,7 +142,13 @@ export default function WebInadimplentesRegistro() {
       ...prev,
       mensalidades: [
         ...prev.mensalidades,
-        { rowId: nextRowIdRef.current++, mes: "01", ano: String(anoAtual), valorDigitado: "", descricao: "" },
+        {
+          rowId: nextRowIdRef.current++,
+          mes: "01",
+          ano: String(anoAtual),
+          valorDigitado: "",
+          descricao: "",
+        },
       ],
     }));
   }
@@ -142,7 +156,9 @@ export default function WebInadimplentesRegistro() {
   function atualizarMensalidade(index: number, campo: keyof MensalidadeRow, valor: string) {
     setFormRegistro((prev) => ({
       ...prev,
-      mensalidades: prev.mensalidades.map((row, i) => (i === index ? { ...row, [campo]: valor } : row)),
+      mensalidades: prev.mensalidades.map((row, i) =>
+        i === index ? { ...row, [campo]: valor } : row,
+      ),
     }));
   }
 
@@ -156,9 +172,11 @@ export default function WebInadimplentesRegistro() {
 
   const totalMensalidades = formRegistro.mensalidades.reduce(
     (s, row) => s + parseValorReais(row.valorDigitado),
-    0
+    0,
   );
-  const qtdPeriodosComValor = formRegistro.mensalidades.filter((row) => parseValorReais(row.valorDigitado) > 0).length;
+  const qtdPeriodosComValor = formRegistro.mensalidades.filter(
+    (row) => parseValorReais(row.valorDigitado) > 0,
+  ).length;
 
   function abrirModalServicosParaValor(rowIndex: number) {
     setModalServicosValorRowIndex(rowIndex);
@@ -174,7 +192,10 @@ export default function WebInadimplentesRegistro() {
     if (modalServicosValorRowIndex === null) return;
     const valorStr =
       somaServicosModalReais > 0
-        ? somaServicosModalReais.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        ? somaServicosModalReais.toLocaleString("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })
         : "";
     atualizarMensalidade(modalServicosValorRowIndex, "valorDigitado", valorStr);
     setModalServicosValorRowIndex(null);
@@ -182,7 +203,7 @@ export default function WebInadimplentesRegistro() {
 
   function toggleServicoParaValor(servicoId: string) {
     setServicosSelecionadosParaValor((prev) =>
-      prev.includes(servicoId) ? prev.filter((id) => id !== servicoId) : [...prev, servicoId]
+      prev.includes(servicoId) ? prev.filter((id) => id !== servicoId) : [...prev, servicoId],
     );
   }
 
@@ -240,7 +261,8 @@ export default function WebInadimplentesRegistro() {
         <p className="page-inadimplentes__contexto">Sistema de Gestão de Inadimplentes</p>
         <h1 className="page-inadimplentes__title">Registro de Inadimplência</h1>
         <p className="page-inadimplentes__subtitle">
-          Cadastre os honorários em aberto do cliente. Cada linha representa um período de referência.
+          Cadastre os honorários em aberto do cliente. Cada linha representa um período de
+          referência.
         </p>
       </header>
 
@@ -253,7 +275,9 @@ export default function WebInadimplentesRegistro() {
               <span className="registro-inadimplencia__step">1</span>
               <div>
                 <h2 className="registro-inadimplencia__card-title">Cliente</h2>
-                <p className="registro-inadimplencia__card-desc">Busque e selecione quem possui a dívida.</p>
+                <p className="registro-inadimplencia__card-desc">
+                  Busque e selecione quem possui a dívida.
+                </p>
               </div>
             </div>
 
@@ -268,12 +292,20 @@ export default function WebInadimplentesRegistro() {
                 type="text"
                 autoComplete="off"
                 placeholder="Digite para buscar o cliente..."
-                value={clienteDropdownAberto ? clienteBusca : clienteSelecionado ? clienteSelecionado.nome : clienteBusca}
+                value={
+                  clienteDropdownAberto
+                    ? clienteBusca
+                    : clienteSelecionado
+                      ? clienteSelecionado.nome
+                      : clienteBusca
+                }
                 onChange={(e) => {
                   const v = e.target.value;
                   setClienteBusca(v);
                   setClienteDropdownAberto(true);
-                  const encontrado = clientes.find((c) => c.nome.toLowerCase() === v.trim().toLowerCase());
+                  const encontrado = clientes.find(
+                    (c) => c.nome.toLowerCase() === v.trim().toLowerCase(),
+                  );
                   setFormRegistro((prev) => ({ ...prev, clienteId: encontrado?.id ?? "" }));
                 }}
                 onFocus={() => {
@@ -296,7 +328,9 @@ export default function WebInadimplentesRegistro() {
                   onMouseDown={(e) => e.preventDefault()}
                 >
                   {clientesFiltrados.length === 0 ? (
-                    <li className="registro-inadimplencia__listbox-vazio">Nenhum cliente encontrado</li>
+                    <li className="registro-inadimplencia__listbox-vazio">
+                      Nenhum cliente encontrado
+                    </li>
                   ) : (
                     clientesFiltrados.map((c) => (
                       <li
@@ -312,7 +346,11 @@ export default function WebInadimplentesRegistro() {
                         }}
                       >
                         <span className="registro-inadimplencia__opcao-nome">{c.nome}</span>
-                        {c.cpf && <span className="registro-inadimplencia__opcao-doc">{formatCpfCnpj(c.cpf)}</span>}
+                        {c.cpf && (
+                          <span className="registro-inadimplencia__opcao-doc">
+                            {formatCpfCnpj(c.cpf)}
+                          </span>
+                        )}
                       </li>
                     ))
                   )}
@@ -322,10 +360,10 @@ export default function WebInadimplentesRegistro() {
 
             {clienteSelecionado && (
               <div className="registro-inadimplencia__cliente-info">
-                <span className="registro-inadimplencia__cliente-info-nome">{clienteSelecionado.nome}</span>
-                {clienteSelecionado.cpf && (
-                  <span>{formatCpfCnpj(clienteSelecionado.cpf)}</span>
-                )}
+                <span className="registro-inadimplencia__cliente-info-nome">
+                  {clienteSelecionado.nome}
+                </span>
+                {clienteSelecionado.cpf && <span>{formatCpfCnpj(clienteSelecionado.cpf)}</span>}
                 {clienteSelecionado.email && <span>{clienteSelecionado.email}</span>}
               </div>
             )}
@@ -342,7 +380,11 @@ export default function WebInadimplentesRegistro() {
                   </p>
                 </div>
               </div>
-              <button type="button" className="btn btn--secondary btn--small" onClick={adicionarMensalidade}>
+              <button
+                type="button"
+                className="btn btn--secondary btn--small"
+                onClick={adicionarMensalidade}
+              >
                 <PlusIcon /> Adicionar período
               </button>
             </div>
@@ -399,7 +441,13 @@ export default function WebInadimplentesRegistro() {
                                   autoComplete="off"
                                   placeholder="0,00"
                                   value={row.valorDigitado}
-                                  onChange={(e) => atualizarMensalidade(index, "valorDigitado", e.target.value ?? "")}
+                                  onChange={(e) =>
+                                    atualizarMensalidade(
+                                      index,
+                                      "valorDigitado",
+                                      e.target.value ?? "",
+                                    )
+                                  }
                                   className="registro-inadimplencia__input registro-inadimplencia__input--valor"
                                   aria-label={`Valor da linha ${index + 1}`}
                                 />
@@ -431,16 +479,24 @@ export default function WebInadimplentesRegistro() {
                           </tr>
                           <tr className="registro-inadimplencia__linha-descricao">
                             <td colSpan={4}>
-                              <label className="registro-inadimplencia__descricao-label" htmlFor={`descricao-${row.rowId}`}>
+                              <label
+                                className="registro-inadimplencia__descricao-label"
+                                htmlFor={`descricao-${row.rowId}`}
+                              >
                                 Descrição do período
-                                <span className="registro-inadimplencia__descricao-opcional"> (opcional)</span>
+                                <span className="registro-inadimplencia__descricao-opcional">
+                                  {" "}
+                                  (opcional)
+                                </span>
                               </label>
                               <input
                                 id={`descricao-${row.rowId}`}
                                 type="text"
                                 placeholder={`Ex.: Honorários contábeis de ${MESES.find((m) => m.value === row.mes)?.label ?? "referência"}/${row.ano}`}
                                 value={row.descricao}
-                                onChange={(e) => atualizarMensalidade(index, "descricao", e.target.value)}
+                                onChange={(e) =>
+                                  atualizarMensalidade(index, "descricao", e.target.value)
+                                }
                                 className="registro-inadimplencia__input registro-inadimplencia__input--descricao"
                               />
                             </td>
@@ -494,7 +550,9 @@ export default function WebInadimplentesRegistro() {
                                 autoComplete="off"
                                 placeholder="0,00"
                                 value={row.valorDigitado}
-                                onChange={(e) => atualizarMensalidade(index, "valorDigitado", e.target.value ?? "")}
+                                onChange={(e) =>
+                                  atualizarMensalidade(index, "valorDigitado", e.target.value ?? "")
+                                }
                                 className="registro-inadimplencia__input registro-inadimplencia__input--valor"
                               />
                               {!isMockEnabled() && servicos.length > 0 && (
@@ -511,14 +569,19 @@ export default function WebInadimplentesRegistro() {
                             </div>
                           </label>
                         </div>
-                        <label className="registro-inadimplencia__descricao-label" htmlFor={`descricao-mobile-${row.rowId}`}>
+                        <label
+                          className="registro-inadimplencia__descricao-label"
+                          htmlFor={`descricao-mobile-${row.rowId}`}
+                        >
                           Descrição (opcional)
                           <input
                             id={`descricao-mobile-${row.rowId}`}
                             type="text"
                             placeholder={`Ex.: Honorários de ${MESES.find((m) => m.value === row.mes)?.label ?? "referência"}/${row.ano}`}
                             value={row.descricao}
-                            onChange={(e) => atualizarMensalidade(index, "descricao", e.target.value)}
+                            onChange={(e) =>
+                              atualizarMensalidade(index, "descricao", e.target.value)
+                            }
                             className="registro-inadimplencia__input registro-inadimplencia__input--descricao"
                           />
                         </label>
@@ -554,7 +617,12 @@ export default function WebInadimplentesRegistro() {
               </div>
               <div className="registro-inadimplencia__resumo-item registro-inadimplencia__resumo-item--total">
                 <dt>Total em aberto</dt>
-                <dd>{totalMensalidades.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</dd>
+                <dd>
+                  {totalMensalidades.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                </dd>
               </div>
             </dl>
 
@@ -583,7 +651,10 @@ export default function WebInadimplentesRegistro() {
       {modalServicosValorRowIndex !== null &&
         createPortal(
           <div className="modal-overlay" onClick={() => setModalServicosValorRowIndex(null)}>
-            <div className="modal modal--cadastro modal--servicos-valor" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="modal modal--cadastro modal--servicos-valor"
+              onClick={(e) => e.stopPropagation()}
+            >
               <h2 className="modal__titulo">Selecionar serviços</h2>
               <p className="modal__servicos-valor-desc">
                 Marque os serviços prestados. O valor será somado e aplicado ao período selecionado.
@@ -614,7 +685,10 @@ export default function WebInadimplentesRegistro() {
                         const valorReais = s.valorPadrao ?? 0;
                         const checked = servicosSelecionadosParaValor.includes(s.servicoId);
                         return (
-                          <label key={s.servicoId || s.nome} className="modal__servico-item modal__servico-item--valor">
+                          <label
+                            key={s.servicoId || s.nome}
+                            className="modal__servico-item modal__servico-item--valor"
+                          >
                             <input
                               type="checkbox"
                               checked={checked}
@@ -623,7 +697,10 @@ export default function WebInadimplentesRegistro() {
                             <span className="modal__servico-nome">{s.nome}</span>
                             <span className="modal__servico-valor">
                               {valorReais > 0
-                                ? valorReais.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+                                ? valorReais.toLocaleString("pt-BR", {
+                                    style: "currency",
+                                    currency: "BRL",
+                                  })
                                 : "—"}
                             </span>
                           </label>
@@ -638,17 +715,28 @@ export default function WebInadimplentesRegistro() {
                         const descricao = (s.descricao ?? "").toLowerCase();
                         return nome.includes(termo) || descricao.includes(termo);
                       }).length === 0 && (
-                      <p className="modal__servicos-status">Nenhum serviço encontrado para a busca informada.</p>
+                      <p className="modal__servicos-status">
+                        Nenhum serviço encontrado para a busca informada.
+                      </p>
                     )}
                   </div>
                 </>
               )}
               <p className="modal__total-label modal__total-label--servicos">
                 Total:{" "}
-                <strong>{somaServicosModalReais.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong>
+                <strong>
+                  {somaServicosModalReais.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                </strong>
               </p>
               <div className="modal__botoes">
-                <button type="button" className="btn btn--secondary" onClick={() => setModalServicosValorRowIndex(null)}>
+                <button
+                  type="button"
+                  className="btn btn--secondary"
+                  onClick={() => setModalServicosValorRowIndex(null)}
+                >
                   Cancelar
                 </button>
                 <button type="button" className="btn btn--primary" onClick={aplicarServicosAoValor}>
@@ -657,7 +745,7 @@ export default function WebInadimplentesRegistro() {
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </div>
   );
@@ -665,7 +753,16 @@ export default function WebInadimplentesRegistro() {
 
 function ArrowLeftIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <line x1="19" y1="12" x2="5" y2="12" />
       <polyline points="12 19 5 12 12 5" />
     </svg>
@@ -674,7 +771,15 @@ function ArrowLeftIcon() {
 
 function SearchIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <circle cx="11" cy="11" r="8" />
       <path d="m21 21-4.35-4.35" />
     </svg>
@@ -683,7 +788,15 @@ function SearchIcon() {
 
 function PlusIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
@@ -692,7 +805,15 @@ function PlusIcon() {
 
 function LayersIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <polygon points="12 2 2 7 12 12 22 7 12 2" />
       <polyline points="2 17 12 22 22 17" />
       <polyline points="2 12 12 17 22 12" />
@@ -702,7 +823,14 @@ function LayersIcon() {
 
 function TrashIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <polyline points="3 6 5 6 21 6" />
       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
       <line x1="10" y1="11" x2="10" y2="17" />

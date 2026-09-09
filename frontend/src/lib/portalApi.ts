@@ -5,11 +5,7 @@ import {
   normalizeDocumentoPortalFromApi,
   normalizePaginaDocumentosPortalFromApi,
 } from "@/lib/apiNormalizers";
-import {
-  clearPortalSession,
-  getPortalToken,
-  setPortalSession,
-} from "@/lib/portalSession";
+import { clearPortalSession, getPortalToken, setPortalSession } from "@/lib/portalSession";
 import type {
   PortalDivida,
   PortalDividaDetalhe,
@@ -42,7 +38,7 @@ if (!isMockEnabled()) {
     (error: AxiosError) => {
       if (error.response?.status === 401) clearPortalSession();
       return Promise.reject(error);
-    }
+    },
   );
 }
 
@@ -52,7 +48,9 @@ function normalizeResumo(data: unknown): PortalResumo {
   const raw = (data ?? {}) as Record<string, unknown>;
   return {
     saldoDevedorTotal: Number(raw.saldoDevedorTotal ?? raw.saldoDevedor ?? raw.totalEmAberto ?? 0),
-    quantidadeDividasAbertas: Number(raw.quantidadeDividasAbertas ?? raw.dividasAbertas ?? raw.totalDividasAbertas ?? 0),
+    quantidadeDividasAbertas: Number(
+      raw.quantidadeDividasAbertas ?? raw.dividasAbertas ?? raw.totalDividasAbertas ?? 0,
+    ),
     quantidadeDividasVencidas: Number(raw.quantidadeDividasVencidas ?? raw.dividasVencidas ?? 0),
     clienteNome: raw.clienteNome != null ? String(raw.clienteNome) : undefined,
   };
@@ -63,7 +61,12 @@ function normalizeDivida(raw: Record<string, unknown>): PortalDivida {
     id: String(raw.id ?? raw.dividaId ?? ""),
     protocolo: raw.protocolo != null ? String(raw.protocolo) : undefined,
     descricao: raw.descricao != null ? String(raw.descricao) : undefined,
-    vencimento: raw.vencimento != null ? String(raw.vencimento) : raw.dataVencimento != null ? String(raw.dataVencimento) : undefined,
+    vencimento:
+      raw.vencimento != null
+        ? String(raw.vencimento)
+        : raw.dataVencimento != null
+          ? String(raw.dataVencimento)
+          : undefined,
     valorDevedor: Number(raw.valorDevedor ?? raw.valor ?? raw.saldoDevedor ?? 0),
     valor: raw.valor != null ? Number(raw.valor) : undefined,
     status: raw.status != null ? String(raw.status) : undefined,
@@ -105,7 +108,7 @@ export async function ativarPortal(
   cpfCnpj: string,
   email: string,
   senha: string,
-  confirmarSenha: string
+  confirmarSenha: string,
 ): Promise<PortalLoginResponse> {
   const r = await http.post("/api/portal/auth/ativar", {
     cpfCnpj: cpfCnpj.replace(/\D/g, ""),
@@ -129,7 +132,11 @@ export async function fetchPortalResumo(): Promise<PortalResumo> {
 
 export async function fetchPortalDividas(status = "abertas"): Promise<PortalDivida[]> {
   const r = await http.get("/api/portal/dividas", { params: { status } });
-  const list = Array.isArray(r.data) ? r.data : Array.isArray((r.data as { content?: unknown[] })?.content) ? (r.data as { content: unknown[] }).content : [];
+  const list = Array.isArray(r.data)
+    ? r.data
+    : Array.isArray((r.data as { content?: unknown[] })?.content)
+      ? (r.data as { content: unknown[] }).content
+      : [];
   return (list as Record<string, unknown>[]).map(normalizeDivida);
 }
 

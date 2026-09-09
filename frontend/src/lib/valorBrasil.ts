@@ -4,7 +4,10 @@
  * Sem vírgula: ponto como decimal (ex.: 150.50).
  */
 export function parseValorReais(s: string): number {
-  let v = s.trim().replace(/\s/g, "").replace(/[^\d.,]/g, "");
+  let v = s
+    .trim()
+    .replace(/\s/g, "")
+    .replace(/[^\d.,]/g, "");
   if (!v) return 0;
   if (v.includes(",")) {
     v = v.replace(/\./g, "").replace(",", ".");

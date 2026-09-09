@@ -1,6 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { api, getApiErrorMessage, getAuthUserProfile, isMockEnabled, normalizeListResponse } from "@/lib/api";
+import {
+  api,
+  getApiErrorMessage,
+  getAuthUserProfile,
+  isMockEnabled,
+  normalizeListResponse,
+} from "@/lib/api";
 import { normalizeClienteFromApi, normalizeClienteToApi } from "@/lib/apiNormalizers";
 import { exportarRelatorioClientesExcel } from "@/lib/relatorioClientes";
 import type { Cliente } from "@/types/api";
@@ -57,6 +63,59 @@ const FORM_VAZIO: Cliente = {
 
 type FiltroSituacaoCliente = "ATIVO" | "INATIVO";
 
+function buildListParams(
+  termoBusca: string | undefined,
+  page: number,
+  size: number,
+  status: FiltroSituacaoCliente,
+) {
+  const params: Record<string, string | number> = {
+    page,
+    size,
+    statusCliente: status,
+  };
+  const termo = termoBusca?.trim();
+  if (termo) params.busca = termo;
+  return params;
+}
+
+/** Busca todas as páginas Spring até esgotar (evita o teto antigo de 100). */
+async function listarTodasPaginas(
+  termo: string | undefined,
+  status: FiltroSituacaoCliente,
+): Promise<Cliente[]> {
+  const pageSize = 200;
+  const all: Cliente[] = [];
+  let page = 0;
+  let totalPages = 1;
+
+  while (page < totalPages) {
+    const r = await api.get("/api/clientes", {
+      params: buildListParams(termo, page, pageSize, status),
+    });
+    const data = r.data;
+    const rawList = normalizeListResponse<Record<string, unknown>>(data);
+    all.push(...rawList.map((c) => normalizeClienteFromApi(c)));
+
+    if (data && typeof data === "object" && !Array.isArray(data)) {
+      const body = data as { totalPages?: number; last?: boolean; totalElements?: number };
+      if (typeof body.totalPages === "number") {
+        totalPages = Math.max(1, body.totalPages);
+      } else if (body.last === true || rawList.length < pageSize) {
+        break;
+      } else {
+        totalPages = page + 2;
+      }
+    } else {
+      break;
+    }
+    page += 1;
+    // segurança: evita loop infinito se a API ignorar page
+    if (page > 50) break;
+  }
+  return all;
+}
+
 /** Filtro local apenas para modo mock (API real já filtra com `busca`). */
 function filtrarClientesPorTermoMock(lista: Cliente[], termo?: string): Cliente[] {
   const t = termo?.trim();
@@ -108,70 +167,39 @@ export default function WebClientes() {
   const [pagina, setPagina] = useState(1);
   const itensPorPagina = 10;
   const buscaDebounceRef = useRef(false);
-  const filtroInitRef = useRef(true);
   const podeExcluirCliente = getAuthUserProfile() !== "FUNCIONARIO";
 
   const [form, setForm] = useState<Cliente>({ ...FORM_VAZIO });
 
-  function buildListParams(termoBusca?: string, page = 0, size = 200, status: FiltroSituacaoCliente = filtroSituacao) {
-    const params: Record<string, string | number> = {
-      page,
-      size,
-      statusCliente: status,
-    };
-    const termo = termoBusca?.trim();
-    if (termo) params.busca = termo;
-    return params;
-  }
-
-  /** Busca todas as páginas Spring até esgotar (evita o teto antigo de 100). */
-  async function listarTodasPaginas(termo?: string, status: FiltroSituacaoCliente = filtroSituacao): Promise<Cliente[]> {
-    const pageSize = 200;
-    const all: Cliente[] = [];
-    let page = 0;
-    let totalPages = 1;
-
-    while (page < totalPages) {
-      const r = await api.get("/api/clientes", { params: buildListParams(termo, page, pageSize, status) });
-      const data = r.data;
-      const rawList = normalizeListResponse<Record<string, unknown>>(data);
-      all.push(...rawList.map((c) => normalizeClienteFromApi(c)));
-
-      if (data && typeof data === "object" && !Array.isArray(data)) {
-        const body = data as { totalPages?: number; last?: boolean; totalElements?: number };
-        if (typeof body.totalPages === "number") {
-          totalPages = Math.max(1, body.totalPages);
-        } else if (body.last === true || rawList.length < pageSize) {
-          break;
-        } else {
-          totalPages = page + 2;
+  const listar = useCallback(
+    async (termoBusca?: string, status: FiltroSituacaoCliente = filtroSituacao) => {
+      try {
+        setLoading(true);
+        setErro(null);
+        const termo = termoBusca?.trim();
+        let list = await listarTodasPaginas(termo, status);
+        if (isMockEnabled() && termo) {
+          list = filtrarClientesPorTermoMock(list, termo);
         }
-      } else {
-        break;
+        setClientes(list);
+      } catch (e: unknown) {
+        setErro(getApiErrorMessage(e, "Falha ao buscar clientes"));
+      } finally {
+        setLoading(false);
       }
-      page += 1;
-      // segurança: evita loop infinito se a API ignorar page
-      if (page > 50) break;
-    }
-    return all;
-  }
+    },
+    [filtroSituacao],
+  );
 
-  async function listar(termoBusca?: string, status: FiltroSituacaoCliente = filtroSituacao) {
-    try {
-      setLoading(true);
-      setErro(null);
-      const termo = termoBusca?.trim();
-      let list = await listarTodasPaginas(termo, status);
-      if (isMockEnabled() && termo) {
-        list = filtrarClientesPorTermoMock(list, termo);
-      }
-      setClientes(list);
-    } catch (e: unknown) {
-      setErro(getApiErrorMessage(e, "Falha ao buscar clientes"));
-    } finally {
-      setLoading(false);
-    }
-  }
+  // Refs com o valor mais recente, para efeitos que não devem reagir a essas mudanças.
+  const buscaRef = useRef(busca);
+  useEffect(() => {
+    buscaRef.current = busca;
+  }, [busca]);
+  const listarRef = useRef(listar);
+  useEffect(() => {
+    listarRef.current = listar;
+  }, [listar]);
 
   useEffect(() => {
     if (modalAberto || clienteParaExcluir) {
@@ -278,10 +306,13 @@ export default function WebClientes() {
     }
   }
 
+  // Carrega ao montar e sempre que o filtro de situação muda (listar depende de filtroSituacao).
   useEffect(() => {
-    void listar();
-  }, []);
+    void listar(buscaRef.current.trim() || undefined);
+    setPagina(1);
+  }, [listar]);
 
+  // Busca com debounce; ignora a primeira renderização (já coberta pelo efeito acima).
   useEffect(() => {
     if (!buscaDebounceRef.current) {
       buscaDebounceRef.current = true;
@@ -289,33 +320,27 @@ export default function WebClientes() {
     }
     const termo = busca.trim();
     const t = setTimeout(() => {
-      void listar(termo || undefined);
+      void listarRef.current(termo || undefined);
       setPagina(1);
     }, 300);
     return () => clearTimeout(t);
   }, [busca]);
-
-  useEffect(() => {
-    if (filtroInitRef.current) {
-      filtroInitRef.current = false;
-      return;
-    }
-    void listar(busca.trim() || undefined);
-    setPagina(1);
-  }, [filtroSituacao]);
 
   const ordenados = [...clientes].sort((a, b) => {
     if (!ordenarPor) return 0;
     const mul = ordemAsc ? 1 : -1;
     if (ordenarPor === "codigo") return compareCodigo(a.codigo, b.codigo, mul);
     if (ordenarPor === "nome") return mul * (a.nome.localeCompare(b.nome) || 0);
-    if (ordenarPor === "cpf") return mul * ((a.cpf || "").localeCompare(b.cpf || ""));
+    if (ordenarPor === "cpf") return mul * (a.cpf || "").localeCompare(b.cpf || "");
     return 0;
   });
 
   const totalPaginas = Math.max(1, Math.ceil(ordenados.length / itensPorPagina));
   const paginaAtual = Math.min(pagina, totalPaginas);
-  const itensPagina = ordenados.slice((paginaAtual - 1) * itensPorPagina, paginaAtual * itensPorPagina);
+  const itensPagina = ordenados.slice(
+    (paginaAtual - 1) * itensPorPagina,
+    paginaAtual * itensPorPagina,
+  );
 
   useEffect(() => {
     if (pagina > totalPaginas && totalPaginas >= 1) setPagina(1);
@@ -378,7 +403,11 @@ export default function WebClientes() {
             className="page-clientes__input"
           />
         </div>
-        <div className="page-clientes__filtro-grupo" role="group" aria-label="Filtrar por situação do cliente">
+        <div
+          className="page-clientes__filtro-grupo"
+          role="group"
+          aria-label="Filtrar por situação do cliente"
+        >
           {(
             [
               { valor: "ATIVO" as const, rotulo: "Ativos" },
@@ -408,17 +437,29 @@ export default function WebClientes() {
               <thead>
                 <tr>
                   <th>
-                    <button type="button" className="page-clientes__th" onClick={() => toggleOrdenacao("codigo")}>
+                    <button
+                      type="button"
+                      className="page-clientes__th"
+                      onClick={() => toggleOrdenacao("codigo")}
+                    >
                       Código <SortIcon />
                     </button>
                   </th>
                   <th>
-                    <button type="button" className="page-clientes__th" onClick={() => toggleOrdenacao("nome")}>
+                    <button
+                      type="button"
+                      className="page-clientes__th"
+                      onClick={() => toggleOrdenacao("nome")}
+                    >
                       Nome <SortIcon />
                     </button>
                   </th>
                   <th>
-                    <button type="button" className="page-clientes__th" onClick={() => toggleOrdenacao("cpf")}>
+                    <button
+                      type="button"
+                      className="page-clientes__th"
+                      onClick={() => toggleOrdenacao("cpf")}
+                    >
                       CPF/CNPJ <SortIcon />
                     </button>
                   </th>
@@ -504,11 +545,19 @@ export default function WebClientes() {
                     ]}
                     actions={
                       <>
-                        <button type="button" className="btn btn--secondary btn--small" onClick={() => abrirModalEditar(c)}>
+                        <button
+                          type="button"
+                          className="btn btn--secondary btn--small"
+                          onClick={() => abrirModalEditar(c)}
+                        >
                           Editar
                         </button>
                         {podeExcluirCliente && (
-                          <button type="button" className="btn btn--danger btn--small" onClick={() => setClienteParaExcluir(c)}>
+                          <button
+                            type="button"
+                            className="btn btn--danger btn--small"
+                            onClick={() => setClienteParaExcluir(c)}
+                          >
                             Excluir
                           </button>
                         )}
@@ -561,16 +610,24 @@ export default function WebClientes() {
                 ? Esta ação não pode ser desfeita.
               </p>
               <div className="modal__botoes">
-                <button type="button" className="btn btn--secondary" onClick={() => setClienteParaExcluir(null)}>
+                <button
+                  type="button"
+                  className="btn btn--secondary"
+                  onClick={() => setClienteParaExcluir(null)}
+                >
                   Cancelar
                 </button>
-                <button type="button" className="btn btn--danger" onClick={() => excluir(clienteParaExcluir)}>
+                <button
+                  type="button"
+                  className="btn btn--danger"
+                  onClick={() => excluir(clienteParaExcluir)}
+                >
                   Excluir
                 </button>
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
 
       {modalAberto &&
@@ -624,17 +681,24 @@ export default function WebClientes() {
                       id="cliente-codigo"
                       placeholder="Ex.: 35 ou MCA"
                       value={form.codigo ?? ""}
-                      onChange={(e) => setForm({ ...form, codigo: e.target.value.toUpperCase().slice(0, 20) })}
+                      onChange={(e) =>
+                        setForm({ ...form, codigo: e.target.value.toUpperCase().slice(0, 20) })
+                      }
                       className="modal-cliente__input"
                       maxLength={20}
                       autoComplete="off"
                     />
-                    <p className="modal-cliente__hint">Código interno para identificação do cliente.</p>
+                    <p className="modal-cliente__hint">
+                      Código interno para identificação do cliente.
+                    </p>
                   </div>
                 </div>
 
                 <div className="modal-cliente__row">
-                  <label className="modal-cliente__label modal-cliente__label--required" htmlFor="cliente-nome">
+                  <label
+                    className="modal-cliente__label modal-cliente__label--required"
+                    htmlFor="cliente-nome"
+                  >
                     Nome
                   </label>
                   <div className="modal-cliente__control">
@@ -650,7 +714,10 @@ export default function WebClientes() {
                 </div>
 
                 <div className="modal-cliente__row">
-                  <label className="modal-cliente__label modal-cliente__label--required" htmlFor="cliente-cpf">
+                  <label
+                    className="modal-cliente__label modal-cliente__label--required"
+                    htmlFor="cliente-cpf"
+                  >
                     CPF/CNPJ
                   </label>
                   <div className="modal-cliente__control">
@@ -661,7 +728,13 @@ export default function WebClientes() {
                       onChange={(e) => {
                         const v = e.target.value;
                         if (/[a-zA-Z]/.test(v)) {
-                          setForm({ ...form, cpf: v.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 18) });
+                          setForm({
+                            ...form,
+                            cpf: v
+                              .toUpperCase()
+                              .replace(/[^A-Z0-9]/g, "")
+                              .slice(0, 18),
+                          });
                         } else {
                           setForm({ ...form, cpf: maskCpfCnpj(v) });
                         }
@@ -746,7 +819,8 @@ export default function WebClientes() {
                           onClick={() =>
                             setForm({
                               ...form,
-                              situacao: (form.situacao ?? "Ativo") !== "Inativo" ? "Inativo" : "Ativo",
+                              situacao:
+                                (form.situacao ?? "Ativo") !== "Inativo" ? "Inativo" : "Ativo",
                             })
                           }
                         >
@@ -780,7 +854,11 @@ export default function WebClientes() {
                   >
                     Cancelar
                   </button>
-                  <button type="button" className="btn btn--primary modal-cliente__btn-salvar" onClick={clienteEmEdicao ? atualizar : criar}>
+                  <button
+                    type="button"
+                    className="btn btn--primary modal-cliente__btn-salvar"
+                    onClick={clienteEmEdicao ? atualizar : criar}
+                  >
                     <SaveIcon />
                     {clienteEmEdicao ? "Salvar alterações" : "Salvar cliente"}
                   </button>
@@ -788,7 +866,7 @@ export default function WebClientes() {
               </footer>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </div>
   );
@@ -796,7 +874,14 @@ export default function WebClientes() {
 
 function PlusIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
@@ -805,7 +890,14 @@ function PlusIcon() {
 
 function DownloadIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="7 10 12 15 17 10" />
       <line x1="12" y1="15" x2="12" y2="3" />
@@ -815,7 +907,14 @@ function DownloadIcon() {
 
 function SearchIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <circle cx="11" cy="11" r="8" />
       <path d="m21 21-4.35-4.35" />
     </svg>
@@ -824,7 +923,14 @@ function SearchIcon() {
 
 function SortIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <path d="m7 15 5 5 5-5" />
       <path d="m7 9 5-5 5 5" />
     </svg>
@@ -833,7 +939,14 @@ function SortIcon() {
 
 function EditIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
     </svg>
@@ -842,7 +955,14 @@ function EditIcon() {
 
 function TrashIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <polyline points="3 6 5 6 21 6" />
       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
       <line x1="10" y1="11" x2="10" y2="17" />
@@ -853,7 +973,15 @@ function TrashIcon() {
 
 function CloseIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
@@ -862,7 +990,15 @@ function CloseIcon() {
 
 function UserIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
       <circle cx="12" cy="7" r="4" />
     </svg>
@@ -871,7 +1007,15 @@ function UserIcon() {
 
 function RefreshIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <polyline points="23 4 23 10 17 10" />
       <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
     </svg>
@@ -880,7 +1024,15 @@ function RefreshIcon() {
 
 function SaveIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
       <polyline points="17 21 17 13 7 13 7 21" />
       <polyline points="7 3 7 8 15 8" />

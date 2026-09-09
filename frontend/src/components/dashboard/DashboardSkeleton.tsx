@@ -1,6 +1,10 @@
 export function DashboardSkeleton() {
   return (
-    <div className="dashboard dashboard--loading" aria-busy="true" aria-label="Carregando dashboard">
+    <div
+      className="dashboard dashboard--loading"
+      aria-busy="true"
+      aria-label="Carregando dashboard"
+    >
       <div className="dash-skeleton dash-skeleton--header" />
       <div className="dash-metrics">
         {Array.from({ length: 4 }).map((_, i) => (

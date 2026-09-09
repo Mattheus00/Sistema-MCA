@@ -71,34 +71,65 @@ export default function TaxCreditTab({ onError }: TaxCreditTabProps) {
   return (
     <div className="tax-sim__card">
       <h2 className="tax-sim__card-title">Crédito tributário</h2>
-      <p className="tax-sim__card-desc">Simule débitos sobre vendas e créditos sobre compras (não cumulatividade).</p>
+      <p className="tax-sim__card-desc">
+        Simule débitos sobre vendas e créditos sobre compras (não cumulatividade).
+      </p>
       <div className="tax-sim__fields tax-sim__fields--grid">
         <label className="tax-sim__label">
           Valor total das vendas (R$)
-          <input className="tax-sim__input" value={sales} onChange={(e) => setSales(e.target.value)} />
+          <input
+            className="tax-sim__input"
+            value={sales}
+            onChange={(e) => setSales(e.target.value)}
+          />
         </label>
         <label className="tax-sim__label">
           Valor total das compras (R$)
-          <input className="tax-sim__input" value={purchases} onChange={(e) => setPurchases(e.target.value)} />
+          <input
+            className="tax-sim__input"
+            value={purchases}
+            onChange={(e) => setPurchases(e.target.value)}
+          />
         </label>
         <label className="tax-sim__label">
           CBS sobre vendas (%)
-          <input className="tax-sim__input" value={cbsSales} onChange={(e) => setCbsSales(e.target.value)} />
+          <input
+            className="tax-sim__input"
+            value={cbsSales}
+            onChange={(e) => setCbsSales(e.target.value)}
+          />
         </label>
         <label className="tax-sim__label">
           IBS sobre vendas (%)
-          <input className="tax-sim__input" value={ibsSales} onChange={(e) => setIbsSales(e.target.value)} />
+          <input
+            className="tax-sim__input"
+            value={ibsSales}
+            onChange={(e) => setIbsSales(e.target.value)}
+          />
         </label>
         <label className="tax-sim__label">
           Crédito CBS (%)
-          <input className="tax-sim__input" value={cbsCredit} onChange={(e) => setCbsCredit(e.target.value)} />
+          <input
+            className="tax-sim__input"
+            value={cbsCredit}
+            onChange={(e) => setCbsCredit(e.target.value)}
+          />
         </label>
         <label className="tax-sim__label">
           Crédito IBS (%)
-          <input className="tax-sim__input" value={ibsCredit} onChange={(e) => setIbsCredit(e.target.value)} />
+          <input
+            className="tax-sim__input"
+            value={ibsCredit}
+            onChange={(e) => setIbsCredit(e.target.value)}
+          />
         </label>
       </div>
-      <button type="button" className="btn btn--primary tax-sim__btn" onClick={() => void calcular()} disabled={loading}>
+      <button
+        type="button"
+        className="btn btn--primary tax-sim__btn"
+        onClick={() => void calcular()}
+        disabled={loading}
+      >
         {loading ? "Calculando…" : "Calcular crédito tributário"}
       </button>
 

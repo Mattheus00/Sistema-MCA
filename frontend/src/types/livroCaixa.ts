@@ -12,12 +12,7 @@ export type FormaPagamento =
   | "DEBITO_AUTOMATICO"
   | "OUTRO";
 
-export type OrigemMovimentacao =
-  | "MANUAL"
-  | "INADIMPLENCIA"
-  | "RECORRENTE"
-  | "IMPORTACAO"
-  | "OUTRO";
+export type OrigemMovimentacao = "MANUAL" | "INADIMPLENCIA" | "RECORRENTE" | "IMPORTACAO" | "OUTRO";
 
 export type LivroCaixaDashboard = {
   saldoRealizado: number;

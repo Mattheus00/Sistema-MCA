@@ -30,7 +30,9 @@ function badgeCobranca(c: CobrancaSicoob) {
   const s = String(c.status).toUpperCase();
   if (s === "PENDENTE") {
     return (
-      <span className="honorarios-sicoob__badge honorarios-sicoob__badge--pendente">Aguardando pagamento</span>
+      <span className="honorarios-sicoob__badge honorarios-sicoob__badge--pendente">
+        Aguardando pagamento
+      </span>
     );
   }
   if (s === "PAGO") {
@@ -43,18 +45,29 @@ function badgeCobranca(c: CobrancaSicoob) {
   }
   if (s === "ERRO") {
     return (
-      <span className="honorarios-sicoob__badge honorarios-sicoob__badge--erro" title={c.mensagemErro ?? undefined}>
+      <span
+        className="honorarios-sicoob__badge honorarios-sicoob__badge--erro"
+        title={c.mensagemErro ?? undefined}
+      >
         Erro{c.mensagemErro ? `: ${c.mensagemErro}` : ""}
       </span>
     );
   }
   if (s === "CANCELADO") {
-    return <span className="honorarios-sicoob__badge honorarios-sicoob__badge--cancelado">Cancelado</span>;
+    return (
+      <span className="honorarios-sicoob__badge honorarios-sicoob__badge--cancelado">
+        Cancelado
+      </span>
+    );
   }
   return <span className="honorarios-sicoob__badge">{c.status}</span>;
 }
 
-export default function HonorariosSicoobDetalhe({ dividaId, sicoobMock, onPagamentoConfirmado }: Props) {
+export default function HonorariosSicoobDetalhe({
+  dividaId,
+  sicoobMock,
+  onPagamentoConfirmado,
+}: Props) {
   const [cobrancas, setCobrancas] = useState<CobrancaSicoob[]>([]);
   const [pagamentos, setPagamentos] = useState<PagamentoInadimplencia[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,7 +98,10 @@ export default function HonorariosSicoobDetalhe({ dividaId, sicoobMock, onPagame
       if (!dividaId) return;
       if (!silent) setLoading(true);
       try {
-        const [cobs, pags] = await Promise.all([listarCobrancasPorDivida(dividaId), carregarPagamentos()]);
+        const [cobs, pags] = await Promise.all([
+          listarCobrancasPorDivida(dividaId),
+          carregarPagamentos(),
+        ]);
 
         for (const c of cobs) {
           const id = c.cobrancaId;
@@ -106,7 +122,7 @@ export default function HonorariosSicoobDetalhe({ dividaId, sicoobMock, onPagame
         if (!silent) setLoading(false);
       }
     },
-    [dividaId, carregarPagamentos]
+    [dividaId, carregarPagamentos],
   );
 
   useEffect(() => {
@@ -126,7 +142,9 @@ export default function HonorariosSicoobDetalhe({ dividaId, sicoobMock, onPagame
   return (
     <div className="honorarios-sicoob">
       {sicoobMock && (
-        <p className="honorarios-sicoob__mock-banner">Modo simulação Sicoob — confirmação automática pode não refletir produção.</p>
+        <p className="honorarios-sicoob__mock-banner">
+          Modo simulação Sicoob — confirmação automática pode não refletir produção.
+        </p>
       )}
 
       <div className="honorarios-sicoob__secao">
@@ -187,7 +205,9 @@ export default function HonorariosSicoobDetalhe({ dividaId, sicoobMock, onPagame
                           )}
                         </div>
                       ) : (
-                        <span className="honorarios-sicoob__metodo">{p.metodoPagamento ?? "Manual"}</span>
+                        <span className="honorarios-sicoob__metodo">
+                          {p.metodoPagamento ?? "Manual"}
+                        </span>
                       )}
                     </td>
                   </tr>

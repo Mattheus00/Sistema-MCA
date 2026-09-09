@@ -22,7 +22,8 @@ export default function ProtectedRoute({
   denyFuncionario = false,
   onlyFinanceiro = false,
 }: ProtectedRouteProps) {
-  if (isMockEnabled() && !onlyProprietaria && !denyFuncionario && !onlyFinanceiro) return <Outlet />;
+  if (isMockEnabled() && !onlyProprietaria && !denyFuncionario && !onlyFinanceiro)
+    return <Outlet />;
 
   const token = getAuthToken();
   if (!isMockEnabled() && !token) return <Navigate to="/login" replace />;

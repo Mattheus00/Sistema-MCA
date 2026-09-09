@@ -118,14 +118,27 @@ export default function LivroCaixaCadastrosModal({
 
   const modal = (
     <div className="modal-overlay" onClick={() => !salvando && onFechar()}>
-      <div className="modal modal--cadastro livro-caixa__modal-cadastros" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+      <div
+        className="modal modal--cadastro livro-caixa__modal-cadastros"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
         <h2 className="modal__titulo">Categorias e contas</h2>
 
         <div className="livro-caixa__abas-internas">
-          <button type="button" className={`livro-caixa__aba-interna${aba === "categorias" ? " livro-caixa__aba-interna--ativa" : ""}`} onClick={() => setAba("categorias")}>
+          <button
+            type="button"
+            className={`livro-caixa__aba-interna${aba === "categorias" ? " livro-caixa__aba-interna--ativa" : ""}`}
+            onClick={() => setAba("categorias")}
+          >
             Categorias
           </button>
-          <button type="button" className={`livro-caixa__aba-interna${aba === "contas" ? " livro-caixa__aba-interna--ativa" : ""}`} onClick={() => setAba("contas")}>
+          <button
+            type="button"
+            className={`livro-caixa__aba-interna${aba === "contas" ? " livro-caixa__aba-interna--ativa" : ""}`}
+            onClick={() => setAba("contas")}
+          >
             Contas
           </button>
         </div>
@@ -139,12 +152,26 @@ export default function LivroCaixaCadastrosModal({
         {aba === "categorias" ? (
           <>
             <div className="livro-caixa__cadastro-form">
-              <input className="modal__input" placeholder="Nome da categoria" value={nomeCat} onChange={(e) => setNomeCat(e.target.value)} />
-              <select className="modal__input" value={tipoCat} onChange={(e) => setTipoCat(e.target.value as TipoMovimentacao)}>
+              <input
+                className="modal__input"
+                placeholder="Nome da categoria"
+                value={nomeCat}
+                onChange={(e) => setNomeCat(e.target.value)}
+              />
+              <select
+                className="modal__input"
+                value={tipoCat}
+                onChange={(e) => setTipoCat(e.target.value as TipoMovimentacao)}
+              >
                 <option value="ENTRADA">Entrada</option>
                 <option value="SAIDA">Saída</option>
               </select>
-              <button type="button" className="btn btn--primary" onClick={() => void salvarCategoria()} disabled={salvando}>
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => void salvarCategoria()}
+                disabled={salvando}
+              >
                 {editCatId ? "Salvar" : "Adicionar"}
               </button>
             </div>
@@ -169,7 +196,11 @@ export default function LivroCaixaCadastrosModal({
                         >
                           Editar
                         </button>
-                        <button type="button" className="btn btn--link" onClick={() => void desativarCat(c.id)}>
+                        <button
+                          type="button"
+                          className="btn btn--link"
+                          onClick={() => void desativarCat(c.id)}
+                        >
                           Desativar
                         </button>
                       </>
@@ -182,8 +213,18 @@ export default function LivroCaixaCadastrosModal({
         ) : (
           <>
             <div className="livro-caixa__cadastro-form">
-              <input className="modal__input" placeholder="Nome da conta" value={nomeConta} onChange={(e) => setNomeConta(e.target.value)} />
-              <button type="button" className="btn btn--primary" onClick={() => void salvarConta()} disabled={salvando}>
+              <input
+                className="modal__input"
+                placeholder="Nome da conta"
+                value={nomeConta}
+                onChange={(e) => setNomeConta(e.target.value)}
+              />
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => void salvarConta()}
+                disabled={salvando}
+              >
                 {editContaId ? "Salvar" : "Adicionar"}
               </button>
             </div>
@@ -206,7 +247,11 @@ export default function LivroCaixaCadastrosModal({
                         >
                           Editar
                         </button>
-                        <button type="button" className="btn btn--link" onClick={() => void desativarC(c.id)}>
+                        <button
+                          type="button"
+                          className="btn btn--link"
+                          onClick={() => void desativarC(c.id)}
+                        >
                           Desativar
                         </button>
                       </>
@@ -219,7 +264,12 @@ export default function LivroCaixaCadastrosModal({
         )}
 
         <div className="modal__botoes">
-          <button type="button" className="btn btn--secondary" onClick={onFechar} disabled={salvando}>
+          <button
+            type="button"
+            className="btn btn--secondary"
+            onClick={onFechar}
+            disabled={salvando}
+          >
             Fechar
           </button>
         </div>

@@ -35,7 +35,9 @@ import type {
 /** Prefixo gravado em `comprovante` para persistir quem confirmou. */
 const CONFIRMADO_POR_COMPROVANTE_PREFIX = "user:";
 
-function decodeConfirmadoPorComprovante(comprovante: string | null | undefined): string | undefined {
+function decodeConfirmadoPorComprovante(
+  comprovante: string | null | undefined,
+): string | undefined {
   if (!comprovante) return undefined;
   const s = comprovante.trim();
   if (!s.toLowerCase().startsWith(CONFIRMADO_POR_COMPROVANTE_PREFIX)) return undefined;
@@ -53,7 +55,12 @@ export function normalizeClienteFromApi(raw: Record<string, unknown>): Cliente {
     nome: String(raw.nome ?? ""),
     email: raw.email != null ? String(raw.email) : undefined,
     cpf: raw.cpf != null ? String(raw.cpf) : raw.cpfCnpj != null ? String(raw.cpfCnpj) : undefined,
-    telefone: raw.telefone != null ? String(raw.telefone) : raw.telefoneFixo != null ? String(raw.telefoneFixo) : undefined,
+    telefone:
+      raw.telefone != null
+        ? String(raw.telefone)
+        : raw.telefoneFixo != null
+          ? String(raw.telefoneFixo)
+          : undefined,
     celular: raw.celular != null ? String(raw.celular) : undefined,
     endereco: raw.endereco != null ? String(raw.endereco) : undefined,
     situacao: situacao as Cliente["situacao"],
@@ -63,8 +70,18 @@ export function normalizeClienteFromApi(raw: Record<string, unknown>): Cliente {
         : raw.saldoDevedor != null
           ? Number(raw.saldoDevedor)
           : undefined,
-    createdAt: raw.createdAt != null ? String(raw.createdAt) : raw.criadoEm != null ? String(raw.criadoEm) : undefined,
-    updatedAt: raw.updatedAt != null ? String(raw.updatedAt) : raw.atualizadoEm != null ? String(raw.atualizadoEm) : undefined,
+    createdAt:
+      raw.createdAt != null
+        ? String(raw.createdAt)
+        : raw.criadoEm != null
+          ? String(raw.criadoEm)
+          : undefined,
+    updatedAt:
+      raw.updatedAt != null
+        ? String(raw.updatedAt)
+        : raw.atualizadoEm != null
+          ? String(raw.atualizadoEm)
+          : undefined,
   };
 }
 
@@ -79,7 +96,8 @@ function mapStatusClienteToSituacao(status: string): string {
 /** Payload para backend: statusCliente em maiúsculas, cpfCnpj (backend aceita cpf como alias) */
 export function normalizeClienteToApi(c: Partial<Cliente>): Record<string, unknown> {
   const situacao = c.situacao ?? "Ativo";
-  const statusCliente = situacao === "Ativo" ? "ATIVO" : situacao === "Inadimplente" ? "INADIMPLENTE" : "INATIVO";
+  const statusCliente =
+    situacao === "Ativo" ? "ATIVO" : situacao === "Inadimplente" ? "INADIMPLENTE" : "INATIVO";
   const cpfRaw = c.cpf?.trim();
   const cpfDigits = cpfRaw?.replace(/\D/g, "") ?? "";
   const cpfCnpj =
@@ -130,7 +148,7 @@ function extrairConfirmadoPor(raw: Record<string, unknown>): string | undefined 
     if (nome != null && String(nome).trim()) return String(nome).trim();
   }
   const fromComprovante = decodeConfirmadoPorComprovante(
-    raw.comprovante != null ? String(raw.comprovante) : undefined
+    raw.comprovante != null ? String(raw.comprovante) : undefined,
   );
   if (fromComprovante) return fromComprovante;
 
@@ -142,15 +160,13 @@ function extrairConfirmadoPor(raw: Record<string, unknown>): string | undefined 
 }
 
 /** Pagamentos embutidos na dívida: valorPago em reais (DTO de resposta). */
-export function normalizePagamentoInadimplenciaFromApi(raw: Record<string, unknown>): PagamentoInadimplencia {
+export function normalizePagamentoInadimplenciaFromApi(
+  raw: Record<string, unknown>,
+): PagamentoInadimplencia {
   const valorBruto = Number(raw.valorPago ?? raw.valor ?? 0);
   const valorPago = Number.isFinite(valorBruto) ? valorBruto : 0;
   const id =
-    raw.pagamentoId != null
-      ? String(raw.pagamentoId)
-      : raw.id != null
-        ? String(raw.id)
-        : undefined;
+    raw.pagamentoId != null ? String(raw.pagamentoId) : raw.id != null ? String(raw.id) : undefined;
   return {
     pagamentoId: id,
     dividaId: raw.dividaId != null ? String(raw.dividaId) : undefined,
@@ -176,7 +192,12 @@ function normalizeStatusInadimplenciaFromApi(raw: unknown): Inadimplencia["statu
 }
 
 function normalizeVencimentoFromApi(raw: Record<string, unknown>): string {
-  const candidatos = [raw.vencimento, raw.dataVencimento, raw.dataVencimentoOriginal, raw.mesReferencia];
+  const candidatos = [
+    raw.vencimento,
+    raw.dataVencimento,
+    raw.dataVencimentoOriginal,
+    raw.mesReferencia,
+  ];
   for (const candidato of candidatos) {
     if (candidato == null) continue;
     const texto = String(candidato).trim();
@@ -262,20 +283,22 @@ export function normalizeRankingFromApi(data: unknown): RankingDevedorItem[] {
   return arr.map((item, i: number) => {
     const r = item as Record<string, unknown>;
     return {
-    posicao: Number(r.posicao ?? i + 1),
-    clienteId: r.clienteId != null ? String(r.clienteId) : "",
-    clienteNome: String(r.nomeCliente ?? r.clienteNome ?? ""),
-    cpfCnpj: String(r.cpfCnpj ?? ""),
-    valorDevido: Number(r.saldoDevedor ?? r.valorDevido ?? 0),
-    qtdDividas: Number(r.quantidadeDividas ?? r.qtdDividas ?? 0),
-    mediaDiasAtraso: Number(r.mediaDiasAtraso ?? 0),
-    status: (r.status as RankingDevedorItem["status"]) ?? "Recente",
+      posicao: Number(r.posicao ?? i + 1),
+      clienteId: r.clienteId != null ? String(r.clienteId) : "",
+      clienteNome: String(r.nomeCliente ?? r.clienteNome ?? ""),
+      cpfCnpj: String(r.cpfCnpj ?? ""),
+      valorDevido: Number(r.saldoDevedor ?? r.valorDevido ?? 0),
+      qtdDividas: Number(r.quantidadeDividas ?? r.qtdDividas ?? 0),
+      mediaDiasAtraso: Number(r.mediaDiasAtraso ?? 0),
+      status: (r.status as RankingDevedorItem["status"]) ?? "Recente",
     };
   });
 }
 
 /** Backend retorna periodoInicio, periodoFim, totalClientesInadimplentes, valorTotalInadimplente, itens[] */
-export function normalizeInadimplenciaPeriodoFromApi(data: unknown): InadimplenciaPeriodoRelatorio | null {
+export function normalizeInadimplenciaPeriodoFromApi(
+  data: unknown,
+): InadimplenciaPeriodoRelatorio | null {
   if (!data || typeof data !== "object") return null;
   const d = data as Record<string, unknown>;
   const itens = d.itens ?? d.detalhamento;
@@ -286,7 +309,9 @@ export function normalizeInadimplenciaPeriodoFromApi(data: unknown): Inadimplenc
     cpfCnpj: String(x.cpfCnpj ?? ""),
     qtdDividas: Number(x.quantidadeDividas ?? x.qtdDividas ?? 0),
     valorTotal: Number(x.saldoDevedor ?? x.valorTotal ?? 0),
-    statusPior: (x.statusPior as InadimplenciaPeriodoRelatorio["detalhamento"][0]["statusPior"]) ?? "EM_ABERTO",
+    statusPior:
+      (x.statusPior as InadimplenciaPeriodoRelatorio["detalhamento"][0]["statusPior"]) ??
+      "EM_ABERTO",
   }));
   return {
     dataInicio: String(d.periodoInicio ?? d.dataInicio ?? ""),
@@ -307,8 +332,18 @@ export function normalizeResumoFinanceiroFromApi(data: unknown): ResumoFinanceir
   return {
     totalEmAberto: conv(Number(d.totalEmAberto ?? 0)),
     totalRecebido: conv(Number(d.totalRecebido ?? d.totalPago ?? 0)),
-    periodoInicio: d.periodoInicio != null ? String(d.periodoInicio) : d.dataInicio != null ? String(d.dataInicio) : undefined,
-    periodoFim: d.periodoFim != null ? String(d.periodoFim) : d.dataFim != null ? String(d.dataFim) : undefined,
+    periodoInicio:
+      d.periodoInicio != null
+        ? String(d.periodoInicio)
+        : d.dataInicio != null
+          ? String(d.dataInicio)
+          : undefined,
+    periodoFim:
+      d.periodoFim != null
+        ? String(d.periodoFim)
+        : d.dataFim != null
+          ? String(d.dataFim)
+          : undefined,
   };
 }
 
@@ -341,7 +376,9 @@ export function mesReferenciaPagamentoRecebido(item: PagamentoRecebidoItem): str
   return "—";
 }
 
-export function normalizePagamentoRecebidoItemFromApi(raw: Record<string, unknown>): PagamentoRecebidoItem {
+export function normalizePagamentoRecebidoItemFromApi(
+  raw: Record<string, unknown>,
+): PagamentoRecebidoItem {
   const conv = (v: number) => (VALOR_CENTAVOS ? v / 100 : v);
   const valorBruto = Number(raw.valor ?? raw.valorPago ?? raw.valorRecebido ?? 0);
   const vencimento =
@@ -372,7 +409,9 @@ export function normalizePagamentoRecebidoItemFromApi(raw: Record<string, unknow
 }
 
 /** Normaliza GET /api/relatorios/pagamentos-recebidos. */
-export function normalizePagamentosRecebidosFromApi(data: unknown): PagamentosRecebidosRelatorio | null {
+export function normalizePagamentosRecebidosFromApi(
+  data: unknown,
+): PagamentosRecebidosRelatorio | null {
   if (!data || typeof data !== "object") return null;
   const d = data as Record<string, unknown>;
   const conv = (v: number) => (VALOR_CENTAVOS ? v / 100 : v);
@@ -383,7 +422,9 @@ export function normalizePagamentosRecebidosFromApi(data: unknown): PagamentosRe
       : Array.isArray(d.itens)
         ? d.itens
         : [];
-  const detalhamento = (listaRaw as Record<string, unknown>[]).map(normalizePagamentoRecebidoItemFromApi);
+  const detalhamento = (listaRaw as Record<string, unknown>[]).map(
+    normalizePagamentoRecebidoItemFromApi,
+  );
   const valorTotalBruto = Number(d.valorTotal ?? d.totalRecebido ?? d.valorTotalRecebido ?? 0);
   return {
     dataInicio: String(d.dataInicio ?? d.periodoInicio ?? ""),
@@ -434,9 +475,19 @@ export function normalizeItemEnvioBoletoFromApi(raw: Record<string, unknown>): I
     envioBoletoId,
     itemId: envioBoletoId,
     nomeArquivoOriginal: String(raw.nomeArquivoOriginal ?? raw.nomeArquivo ?? raw.arquivo ?? ""),
-    tamanhoBytes: raw.tamanhoBytes != null ? Number(raw.tamanhoBytes) : raw.tamanho != null ? Number(raw.tamanho) : undefined,
+    tamanhoBytes:
+      raw.tamanhoBytes != null
+        ? Number(raw.tamanhoBytes)
+        : raw.tamanho != null
+          ? Number(raw.tamanho)
+          : undefined,
     clienteId: raw.clienteId != null ? String(raw.clienteId) : undefined,
-    clienteNome: raw.clienteNome != null ? String(raw.clienteNome) : raw.nomeCliente != null ? String(raw.nomeCliente) : undefined,
+    clienteNome:
+      raw.clienteNome != null
+        ? String(raw.clienteNome)
+        : raw.nomeCliente != null
+          ? String(raw.nomeCliente)
+          : undefined,
     documentoMascarado:
       raw.documentoMascarado != null
         ? String(raw.documentoMascarado)
@@ -446,13 +497,34 @@ export function normalizeItemEnvioBoletoFromApi(raw: Record<string, unknown>): I
             ? String(raw.cpf)
             : undefined,
     emailDestinatario:
-      raw.emailDestinatario != null ? String(raw.emailDestinatario) : raw.email != null ? String(raw.email) : undefined,
-    metodoIdentificacao: raw.metodoIdentificacao != null ? String(raw.metodoIdentificacao) : raw.metodo != null ? String(raw.metodo) : undefined,
-    confiancaIdentificacao: normalizeConfianca(raw.confiancaIdentificacao ?? raw.confianca ?? raw.nivelConfianca),
+      raw.emailDestinatario != null
+        ? String(raw.emailDestinatario)
+        : raw.email != null
+          ? String(raw.email)
+          : undefined,
+    metodoIdentificacao:
+      raw.metodoIdentificacao != null
+        ? String(raw.metodoIdentificacao)
+        : raw.metodo != null
+          ? String(raw.metodo)
+          : undefined,
+    confiancaIdentificacao: normalizeConfianca(
+      raw.confiancaIdentificacao ?? raw.confianca ?? raw.nivelConfianca,
+    ),
     status: normalizeStatusItem(raw.status),
     bloqueado: raw.bloqueado === true || String(raw.bloqueado ?? "").toLowerCase() === "true",
-    motivoBloqueio: raw.motivoBloqueio != null ? String(raw.motivoBloqueio) : raw.motivo != null ? String(raw.motivo) : undefined,
-    erro: raw.erro != null ? String(raw.erro) : raw.mensagemErro != null ? String(raw.mensagemErro) : undefined,
+    motivoBloqueio:
+      raw.motivoBloqueio != null
+        ? String(raw.motivoBloqueio)
+        : raw.motivo != null
+          ? String(raw.motivo)
+          : undefined,
+    erro:
+      raw.erro != null
+        ? String(raw.erro)
+        : raw.mensagemErro != null
+          ? String(raw.mensagemErro)
+          : undefined,
     simulado: raw.simulado === true || String(raw.simulado ?? "").toLowerCase() === "true",
   };
 }
@@ -460,24 +532,32 @@ export function normalizeItemEnvioBoletoFromApi(raw: Record<string, unknown>): I
 function buildResumoFromItens(itens: ItemEnvioBoleto[]): ResumoLoteEnvioBoleto {
   const statusApi = (i: ItemEnvioBoleto) => String(i.status ?? "").toUpperCase();
   return {
-    semEmail: itens.filter((i) => !i.emailDestinatario?.trim() && statusApi(i) === "AGUARDANDO_CORRECAO").length,
+    semEmail: itens.filter(
+      (i) => !i.emailDestinatario?.trim() && statusApi(i) === "AGUARDANDO_CORRECAO",
+    ).length,
     prontosParaEnvio: itens.filter((i) => statusApi(i) === "PRONTO_PARA_ENVIO").length,
     ignorados: itens.filter((i) => String(i.status).toUpperCase() === "IGNORADO").length,
     enviados: itens.filter((i) => String(i.status).toUpperCase() === "ENVIADO").length,
     erros: itens.filter((i) => String(i.status).toUpperCase() === "ERRO").length,
     duplicados: itens.filter((i) => String(i.status).toUpperCase() === "DUPLICADO").length,
-    bloqueados: itens.filter((i) => i.bloqueado || String(i.status).toUpperCase() === "BLOQUEADO").length,
-    aguardandoCorrecao: itens.filter((i) => String(i.status).toUpperCase() === "AGUARDANDO_CORRECAO").length,
+    bloqueados: itens.filter((i) => i.bloqueado || String(i.status).toUpperCase() === "BLOQUEADO")
+      .length,
+    aguardandoCorrecao: itens.filter(
+      (i) => String(i.status).toUpperCase() === "AGUARDANDO_CORRECAO",
+    ).length,
     naoIdentificados: itens.filter(
       (i) =>
         String(i.status).toUpperCase() === "NAO_IDENTIFICADO" ||
         String(i.metodoIdentificacao ?? "").toUpperCase() === "NAO_IDENTIFICADO" ||
-        !i.clienteNome?.trim()
+        !i.clienteNome?.trim(),
     ).length,
   };
 }
 
-function normalizeResumoLoteFromApi(raw: Record<string, unknown> | undefined, itens: ItemEnvioBoleto[]): ResumoLoteEnvioBoleto {
+function normalizeResumoLoteFromApi(
+  raw: Record<string, unknown> | undefined,
+  itens: ItemEnvioBoleto[],
+): ResumoLoteEnvioBoleto {
   if (!raw) return buildResumoFromItens(itens);
   return {
     semEmail: Number(raw.semEmail ?? 0),
@@ -492,11 +572,15 @@ function normalizeResumoLoteFromApi(raw: Record<string, unknown> | undefined, it
   };
 }
 
-export function normalizeValidacaoLoteFromApi(raw: Record<string, unknown> | undefined): ValidacaoLoteEnvioBoleto | undefined {
+export function normalizeValidacaoLoteFromApi(
+  raw: Record<string, unknown> | undefined,
+): ValidacaoLoteEnvioBoleto | undefined {
   if (!raw) return undefined;
 
   const validacaoAninhada =
-    raw.validacao && typeof raw.validacao === "object" ? (raw.validacao as Record<string, unknown>) : undefined;
+    raw.validacao && typeof raw.validacao === "object"
+      ? (raw.validacao as Record<string, unknown>)
+      : undefined;
 
   const bloqueiosRaw = Array.isArray(raw.bloqueios)
     ? (raw.bloqueios as Record<string, unknown>[])
@@ -523,7 +607,10 @@ export function normalizeLoteEnvioBoletoFromApi(raw: Record<string, unknown>): L
     itensRaw = raw.resultados as Record<string, unknown>[];
   }
   const itens = itensRaw.map(normalizeItemEnvioBoletoFromApi);
-  const resumoEmbutido = raw.resumo && typeof raw.resumo === "object" ? (raw.resumo as Record<string, unknown>) : undefined;
+  const resumoEmbutido =
+    raw.resumo && typeof raw.resumo === "object"
+      ? (raw.resumo as Record<string, unknown>)
+      : undefined;
   const resumoRaw =
     resumoEmbutido ??
     (raw.enviados != null || raw.erros != null || raw.ignorados != null
@@ -536,10 +623,20 @@ export function normalizeLoteEnvioBoletoFromApi(raw: Record<string, unknown>): L
   return {
     loteId: String(raw.loteId ?? raw.id ?? ""),
     status: String(raw.status ?? raw.statusLote ?? "CONFERENCIA"),
-    criadoEm: raw.criadoEm != null ? String(raw.criadoEm) : raw.createdAt != null ? String(raw.createdAt) : undefined,
+    criadoEm:
+      raw.criadoEm != null
+        ? String(raw.criadoEm)
+        : raw.createdAt != null
+          ? String(raw.createdAt)
+          : undefined,
     enviadoEm: raw.enviadoEm != null ? String(raw.enviadoEm) : undefined,
     criadoPor: raw.criadoPor != null ? String(raw.criadoPor) : undefined,
-    quantidadeTotal: raw.quantidadeTotal != null ? Number(raw.quantidadeTotal) : raw.totalItens != null ? Number(raw.totalItens) : itens.length,
+    quantidadeTotal:
+      raw.quantidadeTotal != null
+        ? Number(raw.quantidadeTotal)
+        : raw.totalItens != null
+          ? Number(raw.totalItens)
+          : itens.length,
     quantidadeIdentificada:
       raw.quantidadeIdentificada != null
         ? Number(raw.quantidadeIdentificada)
@@ -562,7 +659,12 @@ export function normalizeLoteResumoFromApi(raw: Record<string, unknown>): LoteEn
     loteId: String(raw.loteId ?? raw.id ?? ""),
     status: String(raw.status ?? ""),
     criadoEm: raw.criadoEm != null ? String(raw.criadoEm) : undefined,
-    enviadoEm: raw.dataFinalizacao != null ? String(raw.dataFinalizacao) : raw.enviadoEm != null ? String(raw.enviadoEm) : undefined,
+    enviadoEm:
+      raw.dataFinalizacao != null
+        ? String(raw.dataFinalizacao)
+        : raw.enviadoEm != null
+          ? String(raw.enviadoEm)
+          : undefined,
     criadoPor:
       raw.criadoPor != null
         ? String(raw.criadoPor)
@@ -596,7 +698,8 @@ function normalizeResultadoEnvioItemFromApi(raw: Record<string, unknown>): Resul
     clienteId: raw.clienteId != null ? String(raw.clienteId) : undefined,
     clienteNome: raw.clienteNome != null ? String(raw.clienteNome) : undefined,
     emailDestinatario: raw.emailDestinatario != null ? String(raw.emailDestinatario) : undefined,
-    nomeArquivoOriginal: raw.nomeArquivoOriginal != null ? String(raw.nomeArquivoOriginal) : undefined,
+    nomeArquivoOriginal:
+      raw.nomeArquivoOriginal != null ? String(raw.nomeArquivoOriginal) : undefined,
     status: raw.status != null ? String(raw.status) : undefined,
     simulado: Boolean(raw.simulado),
     reenvio: Boolean(raw.reenvio),
@@ -610,9 +713,13 @@ function normalizeResultadoEnvioItemFromApi(raw: Record<string, unknown>): Resul
   };
 }
 
-export function normalizeResultadoEnvioLoteFromApi(raw: Record<string, unknown>): ResultadoEnvioLote {
+export function normalizeResultadoEnvioLoteFromApi(
+  raw: Record<string, unknown>,
+): ResultadoEnvioLote {
   const mapLista = (lista: unknown): ResultadoEnvioItem[] =>
-    Array.isArray(lista) ? (lista as Record<string, unknown>[]).map(normalizeResultadoEnvioItemFromApi) : [];
+    Array.isArray(lista)
+      ? (lista as Record<string, unknown>[]).map(normalizeResultadoEnvioItemFromApi)
+      : [];
 
   return {
     loteId: String(raw.loteId ?? raw.id ?? ""),
@@ -622,7 +729,8 @@ export function normalizeResultadoEnvioLoteFromApi(raw: Record<string, unknown>)
     quantidadeTotal: raw.quantidadeTotal != null ? Number(raw.quantidadeTotal) : undefined,
     quantidadeEnviada: raw.quantidadeEnviada != null ? Number(raw.quantidadeEnviada) : undefined,
     quantidadeComErro: raw.quantidadeComErro != null ? Number(raw.quantidadeComErro) : undefined,
-    quantidadeNaoEnviada: raw.quantidadeNaoEnviada != null ? Number(raw.quantidadeNaoEnviada) : undefined,
+    quantidadeNaoEnviada:
+      raw.quantidadeNaoEnviada != null ? Number(raw.quantidadeNaoEnviada) : undefined,
     enviados: mapLista(raw.enviados),
     comErro: mapLista(raw.comErro),
     naoEnviados: mapLista(raw.naoEnviados),
@@ -632,7 +740,9 @@ export function normalizeResultadoEnvioLoteFromApi(raw: Record<string, unknown>)
 export function normalizePaginaLotesEnvioFromApi(data: unknown): PaginaLotesEnvioBoleto {
   if (data && typeof data === "object" && "content" in data) {
     const body = data as Record<string, unknown>;
-    const content = Array.isArray(body.content) ? (body.content as Record<string, unknown>[]).map(normalizeLoteResumoFromApi) : [];
+    const content = Array.isArray(body.content)
+      ? (body.content as Record<string, unknown>[]).map(normalizeLoteResumoFromApi)
+      : [];
     return {
       content,
       totalElements: Number(body.totalElements ?? content.length),
@@ -641,7 +751,9 @@ export function normalizePaginaLotesEnvioFromApi(data: unknown): PaginaLotesEnvi
       size: Number(body.size ?? content.length),
     };
   }
-  const list = Array.isArray(data) ? (data as Record<string, unknown>[]).map(normalizeLoteResumoFromApi) : [];
+  const list = Array.isArray(data)
+    ? (data as Record<string, unknown>[]).map(normalizeLoteResumoFromApi)
+    : [];
   return {
     content: list,
     totalElements: list.length,
@@ -665,7 +777,13 @@ function normalizeStatusDocumentoCliente(raw: unknown): StatusDocumentoCliente {
 
 function normalizeTipoDocumentoCliente(raw: unknown): TipoDocumentoCliente {
   const t = String(raw ?? "OUTRO").toUpperCase();
-  const validos: TipoDocumentoCliente[] = ["COMPROVANTE", "NOTA_FISCAL", "CONTRATO", "DECLARACAO", "OUTRO"];
+  const validos: TipoDocumentoCliente[] = [
+    "COMPROVANTE",
+    "NOTA_FISCAL",
+    "CONTRATO",
+    "DECLARACAO",
+    "OUTRO",
+  ];
   return validos.includes(t as TipoDocumentoCliente) ? (t as TipoDocumentoCliente) : "OUTRO";
 }
 
@@ -674,12 +792,19 @@ export function normalizeDocumentoClienteFromApi(raw: Record<string, unknown>): 
     documentoId: String(raw.documentoId ?? raw.id ?? ""),
     clienteId: raw.clienteId != null ? String(raw.clienteId) : undefined,
     clienteNome: raw.clienteNome != null ? String(raw.clienteNome) : undefined,
-    clienteCodigo: raw.clienteCodigo != null ? String(raw.clienteCodigo) : raw.codigo != null ? String(raw.codigo) : undefined,
+    clienteCodigo:
+      raw.clienteCodigo != null
+        ? String(raw.clienteCodigo)
+        : raw.codigo != null
+          ? String(raw.codigo)
+          : undefined,
     dividaId: raw.dividaId != null ? String(raw.dividaId) : undefined,
     protocoloDivida: raw.protocoloDivida != null ? String(raw.protocoloDivida) : undefined,
     tipo: normalizeTipoDocumentoCliente(raw.tipo),
     status: normalizeStatusDocumentoCliente(raw.status),
-    nomeOriginal: String(raw.nomeOriginal ?? raw.nomeArquivo ?? raw.nomeArquivoOriginal ?? "arquivo"),
+    nomeOriginal: String(
+      raw.nomeOriginal ?? raw.nomeArquivo ?? raw.nomeArquivoOriginal ?? "arquivo",
+    ),
     contentType: String(raw.contentType ?? raw.mimeType ?? "application/octet-stream"),
     tamanhoBytes: Number(raw.tamanhoBytes ?? raw.tamanho ?? 0),
     observacaoCliente:
@@ -721,7 +846,9 @@ export function normalizePaginaDocumentosClientesFromApi(data: unknown): PaginaD
       size: Number(body.size ?? content.length),
     };
   }
-  const list = Array.isArray(data) ? (data as Record<string, unknown>[]).map(normalizeDocumentoClienteFromApi) : [];
+  const list = Array.isArray(data)
+    ? (data as Record<string, unknown>[]).map(normalizeDocumentoClienteFromApi)
+    : [];
   return {
     content: list,
     totalElements: list.length,

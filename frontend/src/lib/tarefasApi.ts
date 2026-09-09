@@ -20,7 +20,13 @@ import type {
 
 const BASE = "/api/tarefas";
 
-const STATUS_VALIDOS: StatusTarefa[] = ["BACKLOG", "A_FAZER", "EM_ANDAMENTO", "EM_REVISAO", "CONCLUIDO"];
+const STATUS_VALIDOS: StatusTarefa[] = [
+  "BACKLOG",
+  "A_FAZER",
+  "EM_ANDAMENTO",
+  "EM_REVISAO",
+  "CONCLUIDO",
+];
 /** Colunas exibidas no Kanban (Backlog oculto no front). */
 const STATUS_COLUNAS_UI: StatusTarefa[] = ["A_FAZER", "EM_ANDAMENTO", "EM_REVISAO", "CONCLUIDO"];
 const PRIORIDADES_VALIDAS: PrioridadeTarefa[] = ["BAIXA", "MEDIA", "ALTA"];
@@ -65,9 +71,19 @@ function normalizeHistorico(raw: Record<string, unknown>): HistoricoTarefa {
   return {
     id: raw.id != null ? String(raw.id) : undefined,
     dataHora: str(raw.dataHora ?? raw.data ?? raw.criadoEm),
-    usuario: raw.usuario != null ? String(raw.usuario) : raw.usuarioNome != null ? String(raw.usuarioNome) : undefined,
+    usuario:
+      raw.usuario != null
+        ? String(raw.usuario)
+        : raw.usuarioNome != null
+          ? String(raw.usuarioNome)
+          : undefined,
     acao: str(raw.acao ?? raw.tipo),
-    detalhes: raw.detalhes != null ? String(raw.detalhes) : raw.descricao != null ? String(raw.descricao) : undefined,
+    detalhes:
+      raw.detalhes != null
+        ? String(raw.detalhes)
+        : raw.descricao != null
+          ? String(raw.descricao)
+          : undefined,
   };
 }
 
@@ -93,8 +109,16 @@ export function normalizeTarefaFromApi(raw: Record<string, unknown>): TarefaResu
 
 export function normalizeTarefaDetalheFromApi(raw: Record<string, unknown>): TarefaDetalhe {
   const base = normalizeTarefaFromApi(raw);
-  const checklistRaw = Array.isArray(raw.checklist) ? raw.checklist : Array.isArray(raw.checklistItens) ? raw.checklistItens : [];
-  const historicoRaw = Array.isArray(raw.historico) ? raw.historico : Array.isArray(raw.historicoAlteracoes) ? raw.historicoAlteracoes : [];
+  const checklistRaw = Array.isArray(raw.checklist)
+    ? raw.checklist
+    : Array.isArray(raw.checklistItens)
+      ? raw.checklistItens
+      : [];
+  const historicoRaw = Array.isArray(raw.historico)
+    ? raw.historico
+    : Array.isArray(raw.historicoAlteracoes)
+      ? raw.historicoAlteracoes
+      : [];
   return {
     ...base,
     observacoes: raw.observacoes != null ? String(raw.observacoes) : undefined,
@@ -108,7 +132,11 @@ export function normalizeTarefaDetalheFromApi(raw: Record<string, unknown>): Tar
 
 function normalizePagina(raw: unknown): PaginaTarefas {
   const data = (raw ?? {}) as Record<string, unknown>;
-  const content = Array.isArray(data.content) ? data.content : Array.isArray(raw) ? (raw as unknown[]) : [];
+  const content = Array.isArray(data.content)
+    ? data.content
+    : Array.isArray(raw)
+      ? (raw as unknown[])
+      : [];
   return {
     content: content.map((item) => normalizeTarefaFromApi(item as Record<string, unknown>)),
     totalElements: num(data.totalElements, content.length),
@@ -169,7 +197,9 @@ function normalizeKanban(raw: unknown): KanbanTarefas {
     const primeiro = (items[0] ?? {}) as Record<string, unknown>;
     const pareceListaDeTarefas =
       !isKanbanColunaShape(primeiro) &&
-      (primeiro.titulo != null || primeiro.tarefaId != null || (primeiro.id != null && primeiro.status != null));
+      (primeiro.titulo != null ||
+        primeiro.tarefaId != null ||
+        (primeiro.id != null && primeiro.status != null));
 
     if (pareceListaDeTarefas) {
       const porStatus = new Map<StatusTarefa, TarefaResumo[]>();
@@ -184,16 +214,16 @@ function normalizeKanban(raw: unknown): KanbanTarefas {
           STATUS_VALIDOS.map((status) => {
             const tarefas = porStatus.get(status) ?? [];
             return { status, tarefas, total: tarefas.length };
-          })
+          }),
         ),
       };
     }
 
     // Formato 2: lista de colunas [{ status, tarefas: [...] }]
     const colunas: ColunaKanban[] = STATUS_VALIDOS.map((status) => {
-      const found = items.find((c) => asStatus((c as Record<string, unknown>).status) === status) as
-        | Record<string, unknown>
-        | undefined;
+      const found = items.find(
+        (c) => asStatus((c as Record<string, unknown>).status) === status,
+      ) as Record<string, unknown> | undefined;
       const tarefasRaw = found ? extrairTarefasDaColuna(found) : [];
       const tarefas = tarefasRaw.map((t) => normalizeTarefaFromApi(t as Record<string, unknown>));
       return {
@@ -219,7 +249,7 @@ function normalizeKanban(raw: unknown): KanbanTarefas {
       : data;
 
   const chavesStatus = Object.keys(mapaFonte).filter((k) =>
-    STATUS_VALIDOS.includes(k.toUpperCase() as StatusTarefa)
+    STATUS_VALIDOS.includes(k.toUpperCase() as StatusTarefa),
   );
   if (chavesStatus.length > 0) {
     const colunas: ColunaKanban[] = STATUS_VALIDOS.map((status) => {
@@ -280,7 +310,9 @@ export async function obterKanbanTarefas(params: ListarTarefasParams = {}): Prom
   }
 }
 
-export async function obterIndicadoresTarefas(params: Pick<ListarTarefasParams, "visaoEquipe" | "responsavelId"> = {}): Promise<IndicadoresTarefas> {
+export async function obterIndicadoresTarefas(
+  params: Pick<ListarTarefasParams, "visaoEquipe" | "responsavelId"> = {},
+): Promise<IndicadoresTarefas> {
   try {
     const r = await api.get(`${BASE}/indicadores`, { params: buildQuery(params) });
     return normalizeIndicadores(r.data);
@@ -292,7 +324,11 @@ export async function obterIndicadoresTarefas(params: Pick<ListarTarefasParams, 
 export async function listarResponsaveisTarefas(): Promise<ResponsavelTarefa[]> {
   try {
     const r = await api.get(`${BASE}/responsaveis`);
-    const list = Array.isArray(r.data) ? r.data : Array.isArray((r.data as Record<string, unknown>)?.content) ? ((r.data as Record<string, unknown>).content as unknown[]) : [];
+    const list = Array.isArray(r.data)
+      ? r.data
+      : Array.isArray((r.data as Record<string, unknown>)?.content)
+        ? ((r.data as Record<string, unknown>).content as unknown[])
+        : [];
     return list.map((item) => {
       const raw = item as Record<string, unknown>;
       const id = raw.id ?? raw.usuarioId ?? raw.responsavelId;
@@ -307,10 +343,26 @@ export async function listarResponsaveisTarefas(): Promise<ResponsavelTarefa[]> 
   }
 }
 
-export async function obterResumoColaboradores(params: Pick<ListarTarefasParams, "visaoEquipe" | "responsavelId" | "status" | "prioridade" | "categoria" | "busca" | "dataInicio" | "dataFim"> = {}): Promise<ResumoColaborador[]> {
+export async function obterResumoColaboradores(
+  params: Pick<
+    ListarTarefasParams,
+    | "visaoEquipe"
+    | "responsavelId"
+    | "status"
+    | "prioridade"
+    | "categoria"
+    | "busca"
+    | "dataInicio"
+    | "dataFim"
+  > = {},
+): Promise<ResumoColaborador[]> {
   try {
     const r = await api.get(`${BASE}/resumo-colaboradores`, { params: buildQuery(params) });
-    const list = Array.isArray(r.data) ? r.data : Array.isArray((r.data as Record<string, unknown>)?.content) ? ((r.data as Record<string, unknown>).content as unknown[]) : [];
+    const list = Array.isArray(r.data)
+      ? r.data
+      : Array.isArray((r.data as Record<string, unknown>)?.content)
+        ? ((r.data as Record<string, unknown>).content as unknown[])
+        : [];
     return list.map((item) => {
       const raw = item as Record<string, unknown>;
       return {
@@ -346,7 +398,10 @@ export async function criarTarefa(payload: CriarTarefaPayload): Promise<TarefaDe
   }
 }
 
-export async function atualizarTarefa(id: string, payload: AtualizarTarefaPayload): Promise<TarefaDetalhe> {
+export async function atualizarTarefa(
+  id: string,
+  payload: AtualizarTarefaPayload,
+): Promise<TarefaDetalhe> {
   try {
     const r = await api.put(`${BASE}/${id}`, payload);
     return normalizeTarefaDetalheFromApi(r.data as Record<string, unknown>);
@@ -364,7 +419,10 @@ export async function moverTarefa(id: string, payload: MoverTarefaPayload): Prom
   }
 }
 
-export async function adicionarChecklistItem(tarefaId: string, descricao: string): Promise<TarefaDetalhe> {
+export async function adicionarChecklistItem(
+  tarefaId: string,
+  descricao: string,
+): Promise<TarefaDetalhe> {
   try {
     const r = await api.post(`${BASE}/${tarefaId}/checklist`, { descricao });
     return normalizeTarefaDetalheFromApi(r.data as Record<string, unknown>);
@@ -373,7 +431,10 @@ export async function adicionarChecklistItem(tarefaId: string, descricao: string
   }
 }
 
-export async function toggleChecklistItem(tarefaId: string, itemId: string): Promise<TarefaDetalhe> {
+export async function toggleChecklistItem(
+  tarefaId: string,
+  itemId: string,
+): Promise<TarefaDetalhe> {
   try {
     const r = await api.patch(`${BASE}/${tarefaId}/checklist/${itemId}/toggle`);
     return normalizeTarefaDetalheFromApi(r.data as Record<string, unknown>);
@@ -382,7 +443,10 @@ export async function toggleChecklistItem(tarefaId: string, itemId: string): Pro
   }
 }
 
-export async function removerChecklistItem(tarefaId: string, itemId: string): Promise<TarefaDetalhe | void> {
+export async function removerChecklistItem(
+  tarefaId: string,
+  itemId: string,
+): Promise<TarefaDetalhe | void> {
   try {
     const r = await api.delete(`${BASE}/${tarefaId}/checklist/${itemId}`);
     if (r.data && typeof r.data === "object") {

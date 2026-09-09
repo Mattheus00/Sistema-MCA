@@ -7,7 +7,7 @@ describe("escapeCsvCell", () => {
   });
 
   it("escapa ponto e vírgula e aspas", () => {
-    expect(escapeCsvCell('a;b')).toBe('"a;b"');
+    expect(escapeCsvCell("a;b")).toBe('"a;b"');
     expect(escapeCsvCell('diz "oi"')).toBe('"diz ""oi"""');
   });
 

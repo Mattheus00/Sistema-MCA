@@ -40,7 +40,8 @@
   padding: clamp(40px, 5vw, 80px) clamp(32px, 4.2vw, 72px);
   border-radius: 24px;
   color: #fff;
-  background: radial-gradient(ellipse at 100% 100%, rgba(164, 63, 155, 0.2), transparent 65%),
+  background:
+    radial-gradient(ellipse at 100% 100%, rgba(164, 63, 155, 0.2), transparent 65%),
     linear-gradient(145deg, #3b0d4a, #3b0d4a 50%, #4a1458);
 }
 
@@ -253,7 +254,9 @@
   background: #fff;
   border: 1px solid var(--login-border);
   border-radius: 10px;
-  transition: border-color 200ms ease, box-shadow 200ms ease;
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease;
 }
 
 .page-login__input-wrap:focus-within {
@@ -308,7 +311,9 @@
   background: transparent;
   color: var(--login-accent);
   cursor: pointer;
-  transition: color 200ms ease, background 200ms ease;
+  transition:
+    color 200ms ease,
+    background 200ms ease;
 }
 
 .page-login__toggle-senha:hover:not(:disabled) {
@@ -391,7 +396,10 @@
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 200ms ease, box-shadow 200ms ease, transform 200ms var(--login-ease);
+  transition:
+    background 200ms ease,
+    box-shadow 200ms ease,
+    transform 200ms var(--login-ease);
 }
 
 .page-login__btn-arrow {
@@ -469,8 +477,12 @@
   line-height: 1.65;
 }
 
-.page-login__erro { color: #b91c1c; }
-.page-login__sucesso { color: #15803d; }
+.page-login__erro {
+  color: #b91c1c;
+}
+.page-login__sucesso {
+  color: #15803d;
+}
 
 .page-login__form-panel > .page-login__erro,
 .page-login__form-panel > .page-login__sucesso {
@@ -489,21 +501,43 @@
   .page-login__secure {
     animation: loginEnter 750ms var(--login-ease) both;
   }
-  .page-login__hero-content { animation-delay: 90ms; }
-  .page-login__features { animation-delay: 180ms; }
-  .page-login__form-panel { animation-delay: 120ms; }
-  .page-login__secure { animation-delay: 240ms; }
-  .page-login__art { animation: loginArtworkEnter 1400ms 150ms var(--login-ease) both; }
+  .page-login__hero-content {
+    animation-delay: 90ms;
+  }
+  .page-login__features {
+    animation-delay: 180ms;
+  }
+  .page-login__form-panel {
+    animation-delay: 120ms;
+  }
+  .page-login__secure {
+    animation-delay: 240ms;
+  }
+  .page-login__art {
+    animation: loginArtworkEnter 1400ms 150ms var(--login-ease) both;
+  }
 }
 
 @keyframes loginEnter {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes loginArtworkEnter {
-  from { opacity: 0; transform: translate(14px, 18px) rotate(4deg); }
-  to { opacity: 0.72; transform: translate(0, 0) rotate(0); }
+  from {
+    opacity: 0;
+    transform: translate(14px, 18px) rotate(4deg);
+  }
+  to {
+    opacity: 0.72;
+    transform: translate(0, 0) rotate(0);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -520,17 +554,40 @@
 }
 
 @media (max-width: 1200px) {
-  .page-login { gap: 12px; padding: 16px; }
-  .page-login__hero { padding: 48px 32px; }
-  .page-login__hero-inner { gap: 48px; }
-  .page-login__hero-brand { gap: 12px; }
-  .page-login__hero-brand span { font-size: 11px; }
-  .page-login__hero-title { font-size: clamp(32px, 3.8vw, 44px); }
-  .page-login__hero-text { font-size: 14px; }
-  .page-login__features { gap: 22px; }
-  .page-login__features li { gap: 13px; }
-  .page-login__features p { font-size: 11px; }
-  .page-login__main { padding: 48px 28px 32px; }
+  .page-login {
+    gap: 12px;
+    padding: 16px;
+  }
+  .page-login__hero {
+    padding: 48px 32px;
+  }
+  .page-login__hero-inner {
+    gap: 48px;
+  }
+  .page-login__hero-brand {
+    gap: 12px;
+  }
+  .page-login__hero-brand span {
+    font-size: 11px;
+  }
+  .page-login__hero-title {
+    font-size: clamp(32px, 3.8vw, 44px);
+  }
+  .page-login__hero-text {
+    font-size: 14px;
+  }
+  .page-login__features {
+    gap: 22px;
+  }
+  .page-login__features li {
+    gap: 13px;
+  }
+  .page-login__features p {
+    font-size: 11px;
+  }
+  .page-login__main {
+    padding: 48px 28px 32px;
+  }
 }
 
 @media (max-width: 900px) {
@@ -540,7 +597,9 @@
     padding: 0;
     background: linear-gradient(145deg, #f4eef7, #fff 35%);
   }
-  .page-login__hero { display: none; }
+  .page-login__hero {
+    display: none;
+  }
   .page-login__main {
     min-height: 100vh;
     min-height: 100svh;
@@ -550,36 +609,88 @@
     display: flex;
     margin-bottom: 48px;
   }
-  .page-login__card-brand strong { font-size: 18px; }
-  .page-login__card-brand span { color: var(--login-muted); font-size: 11px; }
-  .page-login__welcome { font-size: 36px; }
-  .page-login__eyebrow { margin-bottom: 15px; }
-  .page-login__secure { margin-top: 32px; }
+  .page-login__card-brand strong {
+    font-size: 18px;
+  }
+  .page-login__card-brand span {
+    color: var(--login-muted);
+    font-size: 11px;
+  }
+  .page-login__welcome {
+    font-size: 36px;
+  }
+  .page-login__eyebrow {
+    margin-bottom: 15px;
+  }
+  .page-login__secure {
+    margin-top: 32px;
+  }
 }
 
 @media (max-width: 480px) {
-  .page-login__main { padding: 28px 24px; }
-  .page-login__card-brand { gap: 12px; margin-bottom: 36px; }
-  .page-login__card-brand > svg { width: 34px; height: 34px; }
-  .page-login__card-brand strong { font-size: 16px; }
-  .page-login__card-brand span { font-size: 10px; }
-  .page-login__welcome { font-size: clamp(28px, 7.6vw, 34px); }
-  .page-login__subtitle { font-size: 13px; margin-bottom: 30px; }
-  .page-login__form { gap: 20px; }
-  .page-login__input-wrap { gap: 10px; padding-inline: 13px; }
-  .page-login__options { gap: 0 10px; }
+  .page-login__main {
+    padding: 28px 24px;
+  }
+  .page-login__card-brand {
+    gap: 12px;
+    margin-bottom: 36px;
+  }
+  .page-login__card-brand > svg {
+    width: 34px;
+    height: 34px;
+  }
+  .page-login__card-brand strong {
+    font-size: 16px;
+  }
+  .page-login__card-brand span {
+    font-size: 10px;
+  }
+  .page-login__welcome {
+    font-size: clamp(28px, 7.6vw, 34px);
+  }
+  .page-login__subtitle {
+    font-size: 13px;
+    margin-bottom: 30px;
+  }
+  .page-login__form {
+    gap: 20px;
+  }
+  .page-login__input-wrap {
+    gap: 10px;
+    padding-inline: 13px;
+  }
+  .page-login__options {
+    gap: 0 10px;
+  }
   .page-login__remember,
-  .page-login__forgot-link { min-height: 44px; }
-  .page-login__footer { margin-top: 24px; }
-  .page-login__footer-link { padding-block: 5px; }
-  .page-login__secure { font-size: 11px; }
+  .page-login__forgot-link {
+    min-height: 44px;
+  }
+  .page-login__footer {
+    margin-top: 24px;
+  }
+  .page-login__footer-link {
+    padding-block: 5px;
+  }
+  .page-login__secure {
+    font-size: 11px;
+  }
 }
 
 @media (max-height: 760px) and (min-width: 901px) {
-  .page-login__hero { padding-block: 38px; }
-  .page-login__hero-inner { gap: 38px; }
-  .page-login__features { gap: 20px; padding-top: 10px; }
-  .page-login__main { padding-block: 32px; }
+  .page-login__hero {
+    padding-block: 38px;
+  }
+  .page-login__hero-inner {
+    gap: 38px;
+  }
+  .page-login__features {
+    gap: 20px;
+    padding-top: 10px;
+  }
+  .page-login__main {
+    padding-block: 32px;
+  }
 }
 
 .page-login__recuperacao-modal {

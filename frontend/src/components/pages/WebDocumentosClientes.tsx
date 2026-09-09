@@ -20,12 +20,28 @@ import {
   labelTipoDocumentoCliente,
   truncarTexto,
 } from "@/lib/documentosClientesUtils";
-import type { Cliente, DocumentoCliente, ResumoDocumentosClientes, StatusDocumentoCliente, TipoDocumentoCliente } from "@/types/api";
+import type {
+  Cliente,
+  DocumentoCliente,
+  ResumoDocumentosClientes,
+  StatusDocumentoCliente,
+  TipoDocumentoCliente,
+} from "@/types/api";
 import AdminItemCard from "@/components/AdminItemCard";
 import ResponsiveList from "@/components/ResponsiveList";
 
-const TIPOS: TipoDocumentoCliente[] = ["COMPROVANTE", "NOTA_FISCAL", "CONTRATO", "DECLARACAO", "OUTRO"];
-const STATUS_CARDS: Array<{ status: StatusDocumentoCliente | ""; label: string; chave: keyof ResumoDocumentosClientes }> = [
+const TIPOS: TipoDocumentoCliente[] = [
+  "COMPROVANTE",
+  "NOTA_FISCAL",
+  "CONTRATO",
+  "DECLARACAO",
+  "OUTRO",
+];
+const STATUS_CARDS: Array<{
+  status: StatusDocumentoCliente | "";
+  label: string;
+  chave: keyof ResumoDocumentosClientes;
+}> = [
   { status: "ENVIADO", label: "Novos", chave: "pendentes" },
   { status: "RECEBIDO", label: "Recebidos", chave: "recebidos" },
   { status: "EM_ANALISE", label: "Em análise", chave: "emAnalise" },
@@ -52,7 +68,10 @@ export default function WebDocumentosClientes() {
   const [statusDetalhe, setStatusDetalhe] = useState<StatusDocumentoCliente>("RECEBIDO");
   const [carregandoDetalhe, setCarregandoDetalhe] = useState(false);
   const [salvando, setSalvando] = useState(false);
-  const [feedbackModal, setFeedbackModal] = useState<{ tipo: "sucesso" | "erro"; texto: string } | null>(null);
+  const [feedbackModal, setFeedbackModal] = useState<{
+    tipo: "sucesso" | "erro";
+    texto: string;
+  } | null>(null);
   const buscaTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const carregarResumo = useCallback(async () => {
@@ -119,7 +138,9 @@ export default function WebDocumentosClientes() {
           const r = await api.get("/api/clientes", {
             params: { termo: clienteBusca.trim(), page: 0, size: 20, statusCliente: "ATIVO" },
           });
-          const list = normalizeListResponse<Record<string, unknown>>(r.data).map(normalizeClienteFromApi);
+          const list = normalizeListResponse<Record<string, unknown>>(r.data).map(
+            normalizeClienteFromApi,
+          );
           setClientesSugestoes(list);
         } catch {
           setClientesSugestoes([]);
@@ -178,7 +199,7 @@ export default function WebDocumentosClientes() {
 
   function sincronizarDocumentoNaLista(atualizado: DocumentoCliente) {
     setDocumentos((lista) =>
-      lista.map((d) => (d.documentoId === atualizado.documentoId ? { ...d, ...atualizado } : d))
+      lista.map((d) => (d.documentoId === atualizado.documentoId ? { ...d, ...atualizado } : d)),
     );
   }
 
@@ -314,7 +335,11 @@ export default function WebDocumentosClientes() {
               autoComplete="off"
             />
             {clienteSelecionado && (
-              <button type="button" className="page-documentos-clientes__limpar-cliente" onClick={limparCliente}>
+              <button
+                type="button"
+                className="page-documentos-clientes__limpar-cliente"
+                onClick={limparCliente}
+              >
                 Limpar
               </button>
             )}
@@ -355,7 +380,12 @@ export default function WebDocumentosClientes() {
           </select>
         </div>
 
-        <button type="button" className="btn btn--secondary" onClick={() => void carregarLista()} disabled={loading}>
+        <button
+          type="button"
+          className="btn btn--secondary"
+          onClick={() => void carregarLista()}
+          disabled={loading}
+        >
           Atualizar
         </button>
       </div>
@@ -400,20 +430,31 @@ export default function WebDocumentosClientes() {
                       </td>
                       <td>{labelTipoDocumentoCliente(doc.tipo)}</td>
                       <td>
-                        <span className="page-documentos-clientes__arquivo" title={doc.nomeOriginal}>
+                        <span
+                          className="page-documentos-clientes__arquivo"
+                          title={doc.nomeOriginal}
+                        >
                           {doc.nomeOriginal}
                         </span>
                         <small>{formatarTamanhoArquivo(doc.tamanhoBytes)}</small>
                       </td>
-                      <td title={doc.observacaoCliente}>{truncarTexto(doc.observacaoCliente, 50)}</td>
+                      <td title={doc.observacaoCliente}>
+                        {truncarTexto(doc.observacaoCliente, 50)}
+                      </td>
                       <td>
-                        <span className={`page-documentos-clientes__badge ${classeBadgeStatusDocumento(doc.status)}`}>
+                        <span
+                          className={`page-documentos-clientes__badge ${classeBadgeStatusDocumento(doc.status)}`}
+                        >
                           {labelStatusDocumentoCliente(doc.status)}
                         </span>
                       </td>
                       <td>
                         <div className="page-documentos-clientes__acoes-linha">
-                          <button type="button" className="btn btn--small btn--secondary" onClick={() => void abrirDetalhe(doc.documentoId)}>
+                          <button
+                            type="button"
+                            className="btn btn--small btn--secondary"
+                            onClick={() => void abrirDetalhe(doc.documentoId)}
+                          >
                             Ver
                           </button>
                           <button
@@ -449,23 +490,36 @@ export default function WebDocumentosClientes() {
                 <li key={doc.documentoId}>
                   <AdminItemCard
                     title={doc.clienteNome ?? "—"}
-                    meta={doc.clienteCodigo ? `Cód. ${doc.clienteCodigo}` : formatarDataDocumento(doc.enviadoEm)}
+                    meta={
+                      doc.clienteCodigo
+                        ? `Cód. ${doc.clienteCodigo}`
+                        : formatarDataDocumento(doc.enviadoEm)
+                    }
                     fields={[
                       { label: "Tipo", value: labelTipoDocumentoCliente(doc.tipo) },
                       { label: "Arquivo", value: doc.nomeOriginal },
                       {
                         label: "Status",
                         value: (
-                          <span className={`page-documentos-clientes__badge ${classeBadgeStatusDocumento(doc.status)}`}>
+                          <span
+                            className={`page-documentos-clientes__badge ${classeBadgeStatusDocumento(doc.status)}`}
+                          >
                             {labelStatusDocumentoCliente(doc.status)}
                           </span>
                         ),
                       },
-                      { label: "Observação", value: truncarTexto(doc.observacaoCliente, 80) || "—" },
+                      {
+                        label: "Observação",
+                        value: truncarTexto(doc.observacaoCliente, 80) || "—",
+                      },
                     ]}
                     actions={
                       <>
-                        <button type="button" className="btn btn--secondary btn--small" onClick={() => void abrirDetalhe(doc.documentoId)}>
+                        <button
+                          type="button"
+                          className="btn btn--secondary btn--small"
+                          onClick={() => void abrirDetalhe(doc.documentoId)}
+                        >
                           Ver
                         </button>
                         <button
@@ -493,11 +547,17 @@ export default function WebDocumentosClientes() {
 
       {totalPaginas > 1 && (
         <div className="page-documentos-clientes__paginacao">
-          <button type="button" className="btn btn--secondary" disabled={pagina <= 0 || loading} onClick={() => setPagina((p) => p - 1)}>
+          <button
+            type="button"
+            className="btn btn--secondary"
+            disabled={pagina <= 0 || loading}
+            onClick={() => setPagina((p) => p - 1)}
+          >
             Anterior
           </button>
           <span>
-            Página {pagina + 1} de {totalPaginas} ({totalElementos} documento{totalElementos === 1 ? "" : "s"})
+            Página {pagina + 1} de {totalPaginas} ({totalElementos} documento
+            {totalElementos === 1 ? "" : "s"})
           </span>
           <button
             type="button"
@@ -512,7 +572,11 @@ export default function WebDocumentosClientes() {
 
       {detalhe &&
         createPortal(
-          <div className="modal-overlay modal-overlay--blur" role="presentation" onClick={fecharDetalhe}>
+          <div
+            className="modal-overlay modal-overlay--blur"
+            role="presentation"
+            onClick={fecharDetalhe}
+          >
             <div
               className="modal modal--largo page-documentos-clientes__modal"
               role="dialog"
@@ -527,7 +591,9 @@ export default function WebDocumentosClientes() {
                     <h2 id="modal-doc-titulo" className="modal__titulo">
                       {detalhe.nomeOriginal}
                     </h2>
-                    <span className={`page-documentos-clientes__badge ${classeBadgeStatusDocumento(statusDetalhe)}`}>
+                    <span
+                      className={`page-documentos-clientes__badge ${classeBadgeStatusDocumento(statusDetalhe)}`}
+                    >
                       {labelStatusDocumentoCliente(statusDetalhe)}
                     </span>
                   </div>
@@ -538,7 +604,12 @@ export default function WebDocumentosClientes() {
                     Enviado em {formatarDataDocumento(detalhe.enviadoEm)}
                   </p>
                 </div>
-                <button type="button" className="page-documentos-clientes__modal-fechar" onClick={fecharDetalhe} aria-label="Fechar">
+                <button
+                  type="button"
+                  className="page-documentos-clientes__modal-fechar"
+                  onClick={fecharDetalhe}
+                  aria-label="Fechar"
+                >
                   ×
                 </button>
               </header>
@@ -588,7 +659,11 @@ export default function WebDocumentosClientes() {
                       type="button"
                       className="btn btn--secondary"
                       disabled={salvando || carregandoDetalhe}
-                      onClick={() => void abrirArquivoDocumento(detalhe.documentoId).catch((e: unknown) => setErro(getApiErrorMessage(e, "Falha ao abrir o arquivo.")))}
+                      onClick={() =>
+                        void abrirArquivoDocumento(detalhe.documentoId).catch((e: unknown) =>
+                          setErro(getApiErrorMessage(e, "Falha ao abrir o arquivo.")),
+                        )
+                      }
                     >
                       Visualizar arquivo
                     </button>
@@ -597,8 +672,11 @@ export default function WebDocumentosClientes() {
                       className="btn btn--secondary"
                       disabled={salvando || carregandoDetalhe}
                       onClick={() =>
-                        void baixarArquivoDocumento(detalhe.documentoId, detalhe.nomeOriginal).catch((e: unknown) =>
-                          setErro(getApiErrorMessage(e, "Falha ao baixar o arquivo."))
+                        void baixarArquivoDocumento(
+                          detalhe.documentoId,
+                          detalhe.nomeOriginal,
+                        ).catch((e: unknown) =>
+                          setErro(getApiErrorMessage(e, "Falha ao baixar o arquivo.")),
                         )
                       }
                     >
@@ -646,7 +724,12 @@ export default function WebDocumentosClientes() {
                   </div>
 
                   <div className="modal__botoes">
-                    <button type="button" className="btn btn--secondary" onClick={fecharDetalhe} disabled={salvando}>
+                    <button
+                      type="button"
+                      className="btn btn--secondary"
+                      onClick={fecharDetalhe}
+                      disabled={salvando}
+                    >
                       Fechar
                     </button>
                     <button
@@ -662,7 +745,7 @@ export default function WebDocumentosClientes() {
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </div>
   );

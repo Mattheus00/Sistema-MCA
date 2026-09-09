@@ -73,7 +73,7 @@ export function useDashboardData(
   periodoChart: PeriodoChart,
   periodoEvolucao: PeriodoEvolucao,
   dataInicio: string,
-  dataFim: string
+  dataFim: string,
 ) {
   const location = useLocation();
   const [state, setState] = useState<DashboardState>({
@@ -111,18 +111,23 @@ export function useDashboardData(
         ]);
 
         const resumo =
-          rResumo.status === "fulfilled" ? normalizeResumoRelatorioFromApi(rResumo.value.data) : null;
+          rResumo.status === "fulfilled"
+            ? normalizeResumoRelatorioFromApi(rResumo.value.data)
+            : null;
         const resumoChart =
           rChart.status === "fulfilled" ? normalizeResumoRelatorioFromApi(rChart.value.data) : null;
         const resumoFinanceiro =
-          rFinanceiro.status === "fulfilled" ? normalizeResumoFinanceiroFromApi(rFinanceiro.value.data) : null;
+          rFinanceiro.status === "fulfilled"
+            ? normalizeResumoFinanceiroFromApi(rFinanceiro.value.data)
+            : null;
 
         let inadimplentes: Inadimplencia[] = [];
         if (rInad.status === "fulfilled") {
           inadimplentes = rInad.value;
         }
 
-        const aging = rAging.status === "fulfilled" ? normalizeAgingResponse(rAging.value.data) : null;
+        const aging =
+          rAging.status === "fulfilled" ? normalizeAgingResponse(rAging.value.data) : null;
         const falhouTudo = !resumo && !resumoChart && inadimplentes.length === 0;
 
         setState({
@@ -146,7 +151,7 @@ export function useDashboardData(
         }));
       }
     },
-    [periodoChart, dataInicio, dataFim]
+    [periodoChart, dataInicio, dataFim],
   );
 
   useEffect(() => {
@@ -182,11 +187,11 @@ export function useDashboardData(
 
   const evolucao: PontoEvolucao[] = useMemo(
     () => calcularEvolucaoValorAberto(state.inadimplentes, periodoEvolucao),
-    [state.inadimplentes, periodoEvolucao]
+    [state.inadimplentes, periodoEvolucao],
   );
   const faixasInadimplencia: FaixaInadimplenciaUi[] = useMemo(
     () => mapAgingParaFaixas(state.aging),
-    [state.aging]
+    [state.aging],
   );
 
   useEffect(() => {
@@ -196,7 +201,7 @@ export function useDashboardData(
     void enriquecerValoresAtividades(base, async (dividaId) => {
       const r = await api.get(`/api/pagamentos/divida/${dividaId}`);
       return normalizeListResponse<Record<string, unknown>>(r.data).map((raw) =>
-        normalizePagamentoInadimplenciaFromApi(raw)
+        normalizePagamentoInadimplenciaFromApi(raw),
       );
     }).then((enriquecidas) => {
       if (ativo) setAtividades(enriquecidas);

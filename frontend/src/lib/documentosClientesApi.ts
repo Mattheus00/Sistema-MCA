@@ -4,11 +4,17 @@ import {
   normalizePaginaDocumentosClientesFromApi,
   normalizeResumoDocumentosClientesFromApi,
 } from "@/lib/apiNormalizers";
-import type { DocumentoCliente, PaginaDocumentosClientes, ResumoDocumentosClientes, StatusDocumentoCliente } from "@/types/api";
+import type {
+  DocumentoCliente,
+  PaginaDocumentosClientes,
+  ResumoDocumentosClientes,
+  StatusDocumentoCliente,
+} from "@/types/api";
 
 function getApiBaseUrl(): string {
   if (isMockEnabled()) return "";
-  return import.meta.env.VITE_API_URL !== undefined && String(import.meta.env.VITE_API_URL).trim() !== ""
+  return import.meta.env.VITE_API_URL !== undefined &&
+    String(import.meta.env.VITE_API_URL).trim() !== ""
     ? String(import.meta.env.VITE_API_URL).replace(/\/$/, "")
     : "http://localhost:8080";
 }
@@ -31,7 +37,7 @@ export type ListarDocumentosClientesParams = {
 };
 
 export async function listarDocumentosClientes(
-  params: ListarDocumentosClientesParams = {}
+  params: ListarDocumentosClientesParams = {},
 ): Promise<PaginaDocumentosClientes> {
   const query: Record<string, string | number> = {
     page: params.page ?? 0,
@@ -48,7 +54,7 @@ export async function listarDocumentosClientes(
 export async function listarDocumentosPorCliente(
   clienteId: string,
   page = 0,
-  size = 20
+  size = 20,
 ): Promise<PaginaDocumentosClientes> {
   const r = await api.get(`/api/clientes/${clienteId}/documentos`, { params: { page, size } });
   return normalizePaginaDocumentosClientesFromApi(r.data);
@@ -85,7 +91,10 @@ export function invalidateDocumentosClientesResumo(): void {
   }
 }
 
-export async function atualizarStatusDocumento(id: string, status: StatusDocumentoCliente): Promise<DocumentoCliente> {
+export async function atualizarStatusDocumento(
+  id: string,
+  status: StatusDocumentoCliente,
+): Promise<DocumentoCliente> {
   const r = await api.patch(`/api/documentos-clientes/${id}/status`, { status });
   const data = r.data as Record<string, unknown>;
   if (data && (data.documentoId != null || data.id != null)) {
@@ -95,7 +104,9 @@ export async function atualizarStatusDocumento(id: string, status: StatusDocumen
 }
 
 export async function responderDocumento(id: string, resposta: string): Promise<DocumentoCliente> {
-  const r = await api.patch(`/api/documentos-clientes/${id}/resposta`, { resposta: resposta.trim() });
+  const r = await api.patch(`/api/documentos-clientes/${id}/resposta`, {
+    resposta: resposta.trim(),
+  });
   const data = r.data as Record<string, unknown>;
   if (data && (data.documentoId != null || data.id != null)) {
     return normalizeDocumentoClienteFromApi(data);

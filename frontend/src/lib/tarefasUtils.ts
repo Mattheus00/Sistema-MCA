@@ -138,7 +138,11 @@ export function isoDataLocal(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-export function corFaixaCalendario(tarefa: { status: StatusTarefa; prioridade: PrioridadeTarefa; atrasada: boolean }): string {
+export function corFaixaCalendario(tarefa: {
+  status: StatusTarefa;
+  prioridade: PrioridadeTarefa;
+  atrasada: boolean;
+}): string {
   if (tarefa.status === "CONCLUIDO") return "#16a34a";
   if (tarefa.atrasada) return "#dc2626";
   if (tarefa.status === "EM_ANDAMENTO") return "#ea580c";

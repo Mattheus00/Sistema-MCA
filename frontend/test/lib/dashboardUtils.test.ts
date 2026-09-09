@@ -2,7 +2,9 @@ import { describe, it, expect } from "vitest";
 import { calcularEvolucaoValorAberto } from "@/lib/dashboardUtils";
 import type { Inadimplencia } from "@/types/api";
 
-function divida(partial: Partial<Inadimplencia> & { vencimento: string; valor: number }): Inadimplencia {
+function divida(
+  partial: Partial<Inadimplencia> & { vencimento: string; valor: number },
+): Inadimplencia {
   return {
     id: partial.id ?? "1",
     clienteId: partial.clienteId ?? "c1",
@@ -46,7 +48,7 @@ describe("calcularEvolucaoValorAberto", () => {
   it("usa saldo devedor com juros quando valor total da API é zero", () => {
     const pontos = calcularEvolucaoValorAberto(
       [divida({ id: "5", vencimento: "2026-01-10", valor: 0, valorOriginal: 1000, juros: 500 })],
-      "total"
+      "total",
     );
     expect(pontos[pontos.length - 1].valor).toBe(1500);
   });
@@ -54,7 +56,7 @@ describe("calcularEvolucaoValorAberto", () => {
   it("usa vencimento como fallback quando não há createdAt", () => {
     const pontos = calcularEvolucaoValorAberto(
       [divida({ id: "6", vencimento: "15/07/2026", valor: 4200 })],
-      "total"
+      "total",
     );
     const pontoJulho = pontos.find((p) => p.mes === "2026-07");
     expect(pontoJulho?.valor).toBe(4200);
@@ -62,8 +64,15 @@ describe("calcularEvolucaoValorAberto", () => {
 
   it("ignora status INADIMPLENTE da API como em aberto", () => {
     const pontos = calcularEvolucaoValorAberto(
-      [divida({ id: "7", vencimento: "2026-03-01", valor: 900, status: "INADIMPLENTE" as Inadimplencia["status"] })],
-      "total"
+      [
+        divida({
+          id: "7",
+          vencimento: "2026-03-01",
+          valor: 900,
+          status: "INADIMPLENTE" as Inadimplencia["status"],
+        }),
+      ],
+      "total",
     );
     expect(pontos[pontos.length - 1].valor).toBe(900);
   });

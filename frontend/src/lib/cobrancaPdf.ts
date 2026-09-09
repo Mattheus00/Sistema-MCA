@@ -16,8 +16,8 @@ function waitForImages(root: HTMLElement): Promise<void> {
           }
           img.onload = () => resolve();
           img.onerror = () => resolve();
-        })
-    )
+        }),
+    ),
   ).then(() => undefined);
 }
 
@@ -73,7 +73,7 @@ function collectPdfBlocks(documento: HTMLElement): CssBlock[] {
 function computePageSlices(
   totalHeight: number,
   pageHeight: number,
-  blocks: CssBlock[]
+  blocks: CssBlock[],
 ): Array<{ y0: number; y1: number }> {
   const slices: Array<{ y0: number; y1: number }> = [];
   let y = 0;
@@ -86,7 +86,7 @@ function computePageSlices(
     let breakAt = hardEnd;
 
     const wouldCut = blocks.find(
-      (b) => b.top >= y - eps && b.top < hardEnd - 8 && b.bottom > hardEnd + eps
+      (b) => b.top >= y - eps && b.top < hardEnd - 8 && b.bottom > hardEnd + eps,
     );
 
     if (wouldCut && wouldCut.top > y + 8) {
@@ -208,17 +208,7 @@ async function renderHtmlToPdfBlob(html: string): Promise<Blob> {
       if (!ctx) throw new Error("Não foi possível criar o canvas do PDF.");
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
-      ctx.drawImage(
-        canvas,
-        0,
-        srcY,
-        canvas.width,
-        sliceHeight,
-        0,
-        0,
-        canvas.width,
-        sliceHeight
-      );
+      ctx.drawImage(canvas, 0, srcY, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
 
       if (pageIndex > 0) pdf.addPage();
       const sliceHeightMm = (sliceHeight * pageWidth) / canvas.width;
@@ -230,7 +220,7 @@ async function renderHtmlToPdfBlob(html: string): Promise<Blob> {
         pageWidth,
         sliceHeightMm,
         undefined,
-        "FAST"
+        "FAST",
       );
     });
 
@@ -254,7 +244,7 @@ function baixarBlob(blob: Blob, filename: string): void {
  */
 export async function gerarAvisoPendenciaPdfBlob(
   itensOuItem: Inadimplencia | Inadimplencia[],
-  nomeCliente: string
+  nomeCliente: string,
 ): Promise<{ blob: Blob; filename: string }> {
   const itens = Array.isArray(itensOuItem) ? itensOuItem : [itensOuItem];
   if (itens.length === 0) {
@@ -272,7 +262,7 @@ export async function gerarAvisoPendenciaPdfBlob(
  */
 export async function gerarEBaixarAvisoPendenciaPdf(
   itensOuItem: Inadimplencia | Inadimplencia[],
-  nomeCliente: string
+  nomeCliente: string,
 ): Promise<void> {
   const { blob, filename } = await gerarAvisoPendenciaPdfBlob(itensOuItem, nomeCliente);
   baixarBlob(blob, filename);

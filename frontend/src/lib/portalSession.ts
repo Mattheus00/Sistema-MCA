@@ -16,7 +16,9 @@ export function getPortalToken(): string | null {
 export function getPortalClientName(): string | null {
   if (typeof window === "undefined") return null;
   try {
-    return localStorage.getItem(PORTAL_CLIENT_NAME_KEY) ?? sessionStorage.getItem(PORTAL_CLIENT_NAME_KEY);
+    return (
+      localStorage.getItem(PORTAL_CLIENT_NAME_KEY) ?? sessionStorage.getItem(PORTAL_CLIENT_NAME_KEY)
+    );
   } catch {
     return null;
   }
@@ -25,7 +27,9 @@ export function getPortalClientName(): string | null {
 export function getPortalClientId(): string | null {
   if (typeof window === "undefined") return null;
   try {
-    return localStorage.getItem(PORTAL_CLIENT_ID_KEY) ?? sessionStorage.getItem(PORTAL_CLIENT_ID_KEY);
+    return (
+      localStorage.getItem(PORTAL_CLIENT_ID_KEY) ?? sessionStorage.getItem(PORTAL_CLIENT_ID_KEY)
+    );
   } catch {
     return null;
   }

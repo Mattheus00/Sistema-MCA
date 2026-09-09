@@ -64,11 +64,28 @@ import type { AnaliseLivroCaixa, RelatorioLivroCaixa } from "@/types/livroCaixa"
 
 type AbaLivroCaixa = "movimentacoes" | "analise" | "relatorio";
 
-const CORES_PIZZA = ["#A43F9B", "#7c3aed", "#6366f1", "#0ea5e9", "#14b8a6", "#22c55e", "#eab308", "#f97316"];
+const CORES_PIZZA = [
+  "#A43F9B",
+  "#7c3aed",
+  "#6366f1",
+  "#0ea5e9",
+  "#14b8a6",
+  "#22c55e",
+  "#eab308",
+  "#f97316",
+];
 
 function WalletIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
       <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
       <path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z" />
@@ -78,7 +95,15 @@ function WalletIcon() {
 
 function ArrowDownIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <line x1="12" y1="5" x2="12" y2="19" />
       <polyline points="19 12 12 19 5 12" />
     </svg>
@@ -87,7 +112,15 @@ function ArrowDownIcon() {
 
 function ArrowUpIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <line x1="12" y1="19" x2="12" y2="5" />
       <polyline points="5 12 12 5 19 12" />
     </svg>
@@ -96,7 +129,15 @@ function ArrowUpIcon() {
 
 function ChartIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <line x1="18" y1="20" x2="18" y2="10" />
       <line x1="12" y1="20" x2="12" y2="4" />
       <line x1="6" y1="20" x2="6" y2="14" />
@@ -187,7 +228,18 @@ export default function WebLivroCaixa() {
     } finally {
       setLoadingLista(false);
     }
-  }, [pagina, filtroRapido, tipoFiltro, statusFiltro, categoriaFiltro, contaFiltro, formaFiltro, dataInicio, dataFim, busca]);
+  }, [
+    pagina,
+    filtroRapido,
+    tipoFiltro,
+    statusFiltro,
+    categoriaFiltro,
+    contaFiltro,
+    formaFiltro,
+    dataInicio,
+    dataFim,
+    busca,
+  ]);
 
   const carregarAnalise = useCallback(async () => {
     if (!dataInicio || !dataFim) return;
@@ -326,10 +378,16 @@ export default function WebLivroCaixa() {
         <div>
           <p className="livro-caixa__contexto">Sistema de Gestão de Inadimplentes</p>
           <h1 className="livro-caixa__titulo">Livro Caixa</h1>
-          <p className="livro-caixa__subtitulo">Controle financeiro com saldo realizado, previsto e movimentações.</p>
+          <p className="livro-caixa__subtitulo">
+            Controle financeiro com saldo realizado, previsto e movimentações.
+          </p>
         </div>
         <div className="livro-caixa__head-acoes">
-          <button type="button" className="btn btn--secondary" onClick={() => setCadastrosAberto(true)}>
+          <button
+            type="button"
+            className="btn btn--secondary"
+            onClick={() => setCadastrosAberto(true)}
+          >
             Categorias e contas
           </button>
           <button type="button" className="btn btn--primary" onClick={() => setModalForm("criar")}>
@@ -355,7 +413,9 @@ export default function WebLivroCaixa() {
           icon={<WalletIcon />}
           label="Saldo realizado"
           value={dashboard ? formatarMoedaDashboard(dashboard.saldoRealizado) : "—"}
-          hint={dashboard ? `Previsto: ${formatarMoedaDashboard(dashboard.saldoPrevisto)}` : undefined}
+          hint={
+            dashboard ? `Previsto: ${formatarMoedaDashboard(dashboard.saldoPrevisto)}` : undefined
+          }
           hintTone="success"
           loading={loadingDashboard}
           iconTone="wallet"
@@ -414,13 +474,30 @@ export default function WebLivroCaixa() {
         <div className="livro-caixa__periodo-custom">
           <label>
             De
-            <input type="date" className="modal__input" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+            <input
+              type="date"
+              className="modal__input"
+              value={dataInicio}
+              onChange={(e) => setDataInicio(e.target.value)}
+            />
           </label>
           <label>
             Até
-            <input type="date" className="modal__input" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+            <input
+              type="date"
+              className="modal__input"
+              value={dataFim}
+              onChange={(e) => setDataFim(e.target.value)}
+            />
           </label>
-          <button type="button" className="btn btn--secondary" onClick={() => { setPagina(0); void carregarLista(); }}>
+          <button
+            type="button"
+            className="btn btn--secondary"
+            onClick={() => {
+              setPagina(0);
+              void carregarLista();
+            }}
+          >
             Aplicar
           </button>
         </div>
@@ -442,51 +519,122 @@ export default function WebLivroCaixa() {
       {aba === "movimentacoes" && (
         <>
           <div className="livro-caixa__filtros-rapidos">
-            <button type="button" className={`livro-caixa__chip${filtroRapido === "A_PAGAR" ? " livro-caixa__chip--ativa" : ""}`} onClick={() => aplicarFiltroRapido("A_PAGAR")}>
+            <button
+              type="button"
+              className={`livro-caixa__chip${filtroRapido === "A_PAGAR" ? " livro-caixa__chip--ativa" : ""}`}
+              onClick={() => aplicarFiltroRapido("A_PAGAR")}
+            >
               A pagar
             </button>
-            <button type="button" className={`livro-caixa__chip${filtroRapido === "A_RECEBER" ? " livro-caixa__chip--ativa" : ""}`} onClick={() => aplicarFiltroRapido("A_RECEBER")}>
+            <button
+              type="button"
+              className={`livro-caixa__chip${filtroRapido === "A_RECEBER" ? " livro-caixa__chip--ativa" : ""}`}
+              onClick={() => aplicarFiltroRapido("A_RECEBER")}
+            >
               A receber
             </button>
-            <button type="button" className="btn btn--link" onClick={() => setMostrarFiltrosAvancados((v) => !v)}>
+            <button
+              type="button"
+              className="btn btn--link"
+              onClick={() => setMostrarFiltrosAvancados((v) => !v)}
+            >
               {mostrarFiltrosAvancados ? "Ocultar filtros" : "Mais filtros"}
             </button>
           </div>
 
           {mostrarFiltrosAvancados && (
             <div className="livro-caixa__filtros-avancados">
-              <select className="modal__input" value={tipoFiltro} onChange={(e) => { setTipoFiltro(e.target.value as TipoMovimentacao | ""); setFiltroRapido(""); setPagina(0); }}>
+              <select
+                className="modal__input"
+                value={tipoFiltro}
+                onChange={(e) => {
+                  setTipoFiltro(e.target.value as TipoMovimentacao | "");
+                  setFiltroRapido("");
+                  setPagina(0);
+                }}
+              >
                 <option value="">Tipo</option>
                 <option value="ENTRADA">Entrada</option>
                 <option value="SAIDA">Saída</option>
               </select>
-              <select className="modal__input" value={statusFiltro} onChange={(e) => { setStatusFiltro(e.target.value as StatusMovimentacao | ""); setFiltroRapido(""); setPagina(0); }}>
+              <select
+                className="modal__input"
+                value={statusFiltro}
+                onChange={(e) => {
+                  setStatusFiltro(e.target.value as StatusMovimentacao | "");
+                  setFiltroRapido("");
+                  setPagina(0);
+                }}
+              >
                 <option value="">Status</option>
                 <option value="PREVISTO">Previsto</option>
                 <option value="RECEBIDO">Recebido</option>
                 <option value="PAGO">Pago</option>
                 <option value="CANCELADO">Cancelado</option>
               </select>
-              <select className="modal__input" value={categoriaFiltro} onChange={(e) => { setCategoriaFiltro(e.target.value); setPagina(0); }}>
+              <select
+                className="modal__input"
+                value={categoriaFiltro}
+                onChange={(e) => {
+                  setCategoriaFiltro(e.target.value);
+                  setPagina(0);
+                }}
+              >
                 <option value="">Categoria</option>
-                {categorias.filter((c) => c.ativa).map((c) => (
-                  <option key={c.id} value={c.id}>{c.nome}</option>
-                ))}
+                {categorias
+                  .filter((c) => c.ativa)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nome}
+                    </option>
+                  ))}
               </select>
-              <select className="modal__input" value={contaFiltro} onChange={(e) => { setContaFiltro(e.target.value); setPagina(0); }}>
+              <select
+                className="modal__input"
+                value={contaFiltro}
+                onChange={(e) => {
+                  setContaFiltro(e.target.value);
+                  setPagina(0);
+                }}
+              >
                 <option value="">Conta</option>
-                {contas.filter((c) => c.ativa).map((c) => (
-                  <option key={c.id} value={c.id}>{c.nome}</option>
-                ))}
+                {contas
+                  .filter((c) => c.ativa)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nome}
+                    </option>
+                  ))}
               </select>
-              <select className="modal__input" value={formaFiltro} onChange={(e) => { setFormaFiltro(e.target.value as FormaPagamento | ""); setPagina(0); }}>
+              <select
+                className="modal__input"
+                value={formaFiltro}
+                onChange={(e) => {
+                  setFormaFiltro(e.target.value as FormaPagamento | "");
+                  setPagina(0);
+                }}
+              >
                 <option value="">Forma pagamento</option>
                 {FORMAS_PAGAMENTO.map((f) => (
-                  <option key={f} value={f}>{labelFormaPagamento(f)}</option>
+                  <option key={f} value={f}>
+                    {labelFormaPagamento(f)}
+                  </option>
                 ))}
               </select>
-              <input className="modal__input" placeholder="Buscar descrição…" value={busca} onChange={(e) => setBusca(e.target.value)} onKeyDown={(e) => e.key === "Enter" && setPagina(0)} />
-              <button type="button" className="btn btn--secondary" onClick={() => void carregarLista()}>Filtrar</button>
+              <input
+                className="modal__input"
+                placeholder="Buscar descrição…"
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && setPagina(0)}
+              />
+              <button
+                type="button"
+                className="btn btn--secondary"
+                onClick={() => void carregarLista()}
+              >
+                Filtrar
+              </button>
             </div>
           )}
 
@@ -508,23 +656,50 @@ export default function WebLivroCaixa() {
                   </thead>
                   <tbody>
                     {loadingLista ? (
-                      <tr><td colSpan={8} className="livro-caixa__vazio">Carregando…</td></tr>
+                      <tr>
+                        <td colSpan={8} className="livro-caixa__vazio">
+                          Carregando…
+                        </td>
+                      </tr>
                     ) : movimentacoes.length === 0 ? (
-                      <tr><td colSpan={8} className="livro-caixa__vazio">Nenhuma movimentação encontrada.</td></tr>
+                      <tr>
+                        <td colSpan={8} className="livro-caixa__vazio">
+                          Nenhuma movimentação encontrada.
+                        </td>
+                      </tr>
                     ) : (
                       movimentacoes.map((m) => (
-                        <tr key={m.id} className={m.vencido ? "livro-caixa__linha--vencida" : m.proximoVencimento ? "livro-caixa__linha--proxima" : ""}>
+                        <tr
+                          key={m.id}
+                          className={
+                            m.vencido
+                              ? "livro-caixa__linha--vencida"
+                              : m.proximoVencimento
+                                ? "livro-caixa__linha--proxima"
+                                : ""
+                          }
+                        >
                           <td>{formatarDataLivroCaixa(m.dataMovimentacao)}</td>
                           <td>
                             <strong>{m.descricao}</strong>
                             {m.vencido && <span className="livro-caixa__flag">Vencido</span>}
-                            {m.proximoVencimento && !m.vencido && <span className="livro-caixa__flag livro-caixa__flag--proximo">Próximo</span>}
+                            {m.proximoVencimento && !m.vencido && (
+                              <span className="livro-caixa__flag livro-caixa__flag--proximo">
+                                Próximo
+                              </span>
+                            )}
                           </td>
                           <td>{m.categoriaNome ?? "—"}</td>
                           <td>{labelTipoMovimentacao(m.tipo)}</td>
                           <td>{labelFormaPagamento(m.formaPagamento)}</td>
-                          <td className={classeValorMovimentacao(m.tipo)}>{formatarValorMovimentacao(m.tipo, m.valor)}</td>
-                          <td><span className={classeBadgeStatus(m.status)}>{labelStatusMovimentacao(m.status)}</span></td>
+                          <td className={classeValorMovimentacao(m.tipo)}>
+                            {formatarValorMovimentacao(m.tipo, m.valor)}
+                          </td>
+                          <td>
+                            <span className={classeBadgeStatus(m.status)}>
+                              {labelStatusMovimentacao(m.status)}
+                            </span>
+                          </td>
                           <td>{renderLinhaAcoes(m)}</td>
                         </tr>
                       ))
@@ -533,36 +708,65 @@ export default function WebLivroCaixa() {
                 </table>
               </div>
             }
-            mobile={loadingLista ? (
-              <p className="livro-caixa__vazio">Carregando…</p>
-            ) : movimentacoes.length === 0 ? (
-              <p className="livro-caixa__vazio">Nenhuma movimentação encontrada.</p>
-            ) : (
-              movimentacoes.map((m) => (
-                <AdminItemCard
-                  key={m.id}
-                  title={m.descricao}
-                  meta={`${formatarDataLivroCaixa(m.dataMovimentacao)} · ${labelTipoMovimentacao(m.tipo)}`}
-                  value={<span className={classeValorMovimentacao(m.tipo)}>{formatarValorMovimentacao(m.tipo, m.valor)}</span>}
-                  fields={[
-                    { label: "Categoria", value: m.categoriaNome ?? "—" },
-                    { label: "Forma", value: labelFormaPagamento(m.formaPagamento) },
-                    { label: "Status", value: <span className={classeBadgeStatus(m.status)}>{labelStatusMovimentacao(m.status)}</span> },
-                  ]}
-                  actions={renderLinhaAcoes(m)}
-                  onClick={() => void abrirDetalhe(m.id)}
-                  className={m.vencido ? "livro-caixa__card--vencida" : ""}
-                />
-              ))
-            )}
+            mobile={
+              loadingLista ? (
+                <p className="livro-caixa__vazio">Carregando…</p>
+              ) : movimentacoes.length === 0 ? (
+                <p className="livro-caixa__vazio">Nenhuma movimentação encontrada.</p>
+              ) : (
+                movimentacoes.map((m) => (
+                  <AdminItemCard
+                    key={m.id}
+                    title={m.descricao}
+                    meta={`${formatarDataLivroCaixa(m.dataMovimentacao)} · ${labelTipoMovimentacao(m.tipo)}`}
+                    value={
+                      <span className={classeValorMovimentacao(m.tipo)}>
+                        {formatarValorMovimentacao(m.tipo, m.valor)}
+                      </span>
+                    }
+                    fields={[
+                      { label: "Categoria", value: m.categoriaNome ?? "—" },
+                      { label: "Forma", value: labelFormaPagamento(m.formaPagamento) },
+                      {
+                        label: "Status",
+                        value: (
+                          <span className={classeBadgeStatus(m.status)}>
+                            {labelStatusMovimentacao(m.status)}
+                          </span>
+                        ),
+                      },
+                    ]}
+                    actions={renderLinhaAcoes(m)}
+                    onClick={() => void abrirDetalhe(m.id)}
+                    className={m.vencido ? "livro-caixa__card--vencida" : ""}
+                  />
+                ))
+              )
+            }
           />
 
           <div className="livro-caixa__paginacao">
             <span>{totalElementos} registro(s)</span>
             <div>
-              <button type="button" className="btn btn--secondary" disabled={pagina <= 0 || loadingLista} onClick={() => setPagina((p) => p - 1)}>Anterior</button>
-              <span>Página {pagina + 1} de {totalPaginas}</span>
-              <button type="button" className="btn btn--secondary" disabled={pagina + 1 >= totalPaginas || loadingLista} onClick={() => setPagina((p) => p + 1)}>Próxima</button>
+              <button
+                type="button"
+                className="btn btn--secondary"
+                disabled={pagina <= 0 || loadingLista}
+                onClick={() => setPagina((p) => p - 1)}
+              >
+                Anterior
+              </button>
+              <span>
+                Página {pagina + 1} de {totalPaginas}
+              </span>
+              <button
+                type="button"
+                className="btn btn--secondary"
+                disabled={pagina + 1 >= totalPaginas || loadingLista}
+                onClick={() => setPagina((p) => p + 1)}
+              >
+                Próxima
+              </button>
             </div>
           </div>
         </>
@@ -584,7 +788,12 @@ export default function WebLivroCaixa() {
                       <BarChart data={dadosBarra}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                         <XAxis dataKey="mes" tick={{ fontSize: 12, fill: "#64748b" }} />
-                        <YAxis tick={{ fontSize: 12, fill: "#64748b" }} tickFormatter={(v) => Number(v).toLocaleString("pt-BR", { notation: "compact" })} />
+                        <YAxis
+                          tick={{ fontSize: 12, fill: "#64748b" }}
+                          tickFormatter={(v) =>
+                            Number(v).toLocaleString("pt-BR", { notation: "compact" })
+                          }
+                        />
                         <Tooltip formatter={(v: number) => formatarMoeda(v)} />
                         <Legend />
                         <Bar dataKey="Entradas" fill="#22c55e" radius={[4, 4, 0, 0]} />
@@ -603,7 +812,16 @@ export default function WebLivroCaixa() {
                   ) : (
                     <ResponsiveContainer width="100%" height={260}>
                       <PieChart>
-                        <Pie data={dadosPizza} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={2}>
+                        <Pie
+                          data={dadosPizza}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={55}
+                          outerRadius={90}
+                          paddingAngle={2}
+                        >
                           {dadosPizza.map((_, i) => (
                             <Cell key={i} fill={CORES_PIZZA[i % CORES_PIZZA.length]} />
                           ))}
@@ -619,10 +837,22 @@ export default function WebLivroCaixa() {
                   <h2 className="dash-card__title">Fluxo de caixa</h2>
                   {analise && (
                     <dl className="livro-caixa__fluxo-lista">
-                      <div><dt>Saldo inicial</dt><dd>{formatarMoeda(analise.fluxoCaixa.saldoInicial)}</dd></div>
-                      <div className="livro-caixa__fluxo-entrada"><dt>+ Entradas</dt><dd>{formatarMoeda(analise.fluxoCaixa.totalEntradas)}</dd></div>
-                      <div className="livro-caixa__fluxo-saida"><dt>− Saídas</dt><dd>{formatarMoeda(analise.fluxoCaixa.totalSaidas)}</dd></div>
-                      <div className="livro-caixa__fluxo-final"><dt>Saldo final</dt><dd>{formatarMoeda(analise.fluxoCaixa.saldoFinal)}</dd></div>
+                      <div>
+                        <dt>Saldo inicial</dt>
+                        <dd>{formatarMoeda(analise.fluxoCaixa.saldoInicial)}</dd>
+                      </div>
+                      <div className="livro-caixa__fluxo-entrada">
+                        <dt>+ Entradas</dt>
+                        <dd>{formatarMoeda(analise.fluxoCaixa.totalEntradas)}</dd>
+                      </div>
+                      <div className="livro-caixa__fluxo-saida">
+                        <dt>− Saídas</dt>
+                        <dd>{formatarMoeda(analise.fluxoCaixa.totalSaidas)}</dd>
+                      </div>
+                      <div className="livro-caixa__fluxo-final">
+                        <dt>Saldo final</dt>
+                        <dd>{formatarMoeda(analise.fluxoCaixa.saldoFinal)}</dd>
+                      </div>
                     </dl>
                   )}
                 </section>
@@ -639,11 +869,33 @@ export default function WebLivroCaixa() {
           ) : relatorio ? (
             <>
               <div className="livro-caixa__relatorio-resumo">
-                <div><span>Período</span><strong>{formatarDataLivroCaixa(relatorio.dataInicio)} — {formatarDataLivroCaixa(relatorio.dataFim)}</strong></div>
-                <div><span>Saldo inicial</span><strong>{formatarMoeda(relatorio.saldoInicial)}</strong></div>
-                <div><span>Entradas</span><strong className="livro-caixa__valor--entrada">{formatarMoeda(relatorio.totalEntradas)}</strong></div>
-                <div><span>Saídas</span><strong className="livro-caixa__valor--saida">{formatarMoeda(relatorio.totalSaidas)}</strong></div>
-                <div><span>Saldo final</span><strong>{formatarMoeda(relatorio.saldoFinal)}</strong></div>
+                <div>
+                  <span>Período</span>
+                  <strong>
+                    {formatarDataLivroCaixa(relatorio.dataInicio)} —{" "}
+                    {formatarDataLivroCaixa(relatorio.dataFim)}
+                  </strong>
+                </div>
+                <div>
+                  <span>Saldo inicial</span>
+                  <strong>{formatarMoeda(relatorio.saldoInicial)}</strong>
+                </div>
+                <div>
+                  <span>Entradas</span>
+                  <strong className="livro-caixa__valor--entrada">
+                    {formatarMoeda(relatorio.totalEntradas)}
+                  </strong>
+                </div>
+                <div>
+                  <span>Saídas</span>
+                  <strong className="livro-caixa__valor--saida">
+                    {formatarMoeda(relatorio.totalSaidas)}
+                  </strong>
+                </div>
+                <div>
+                  <span>Saldo final</span>
+                  <strong>{formatarMoeda(relatorio.saldoFinal)}</strong>
+                </div>
               </div>
 
               {relatorio.porCategoria && relatorio.porCategoria.length > 0 && (
@@ -677,7 +929,11 @@ export default function WebLivroCaixa() {
                       </thead>
                       <tbody>
                         {relatorio.movimentacoes.length === 0 ? (
-                          <tr><td colSpan={6} className="livro-caixa__vazio">Sem movimentações no período.</td></tr>
+                          <tr>
+                            <td colSpan={6} className="livro-caixa__vazio">
+                              Sem movimentações no período.
+                            </td>
+                          </tr>
                         ) : (
                           relatorio.movimentacoes.map((m) => (
                             <tr key={m.id}>
@@ -685,7 +941,9 @@ export default function WebLivroCaixa() {
                               <td>{m.descricao}</td>
                               <td>{m.categoriaNome ?? "—"}</td>
                               <td>{labelTipoMovimentacao(m.tipo)}</td>
-                              <td className={classeValorMovimentacao(m.tipo)}>{formatarValorMovimentacao(m.tipo, m.valor)}</td>
+                              <td className={classeValorMovimentacao(m.tipo)}>
+                                {formatarValorMovimentacao(m.tipo, m.valor)}
+                              </td>
                               <td>{labelStatusMovimentacao(m.status)}</td>
                             </tr>
                           ))
@@ -704,10 +962,21 @@ export default function WebLivroCaixa() {
                           key={m.id}
                           title={m.descricao}
                           meta={`${formatarDataLivroCaixa(m.dataMovimentacao)} · ${labelTipoMovimentacao(m.tipo)}`}
-                          value={<span className={classeValorMovimentacao(m.tipo)}>{formatarValorMovimentacao(m.tipo, m.valor)}</span>}
+                          value={
+                            <span className={classeValorMovimentacao(m.tipo)}>
+                              {formatarValorMovimentacao(m.tipo, m.valor)}
+                            </span>
+                          }
                           fields={[
                             { label: "Categoria", value: m.categoriaNome ?? "—" },
-                            { label: "Status", value: <span className={classeBadgeStatus(m.status)}>{labelStatusMovimentacao(m.status)}</span> },
+                            {
+                              label: "Status",
+                              value: (
+                                <span className={classeBadgeStatus(m.status)}>
+                                  {labelStatusMovimentacao(m.status)}
+                                </span>
+                              ),
+                            },
                           ]}
                         />
                       ))}

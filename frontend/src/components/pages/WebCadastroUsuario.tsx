@@ -130,9 +130,7 @@ export default function WebCadastroUsuario() {
 
       <form onSubmit={handleSubmit} className="page-cadastro-usuario__form">
         {erro && <p className="page-cadastro-usuario__erro">{erro}</p>}
-        {sucesso && (
-          <p className="toast toast--sucesso">Usuário cadastrado com sucesso.</p>
-        )}
+        {sucesso && <p className="toast toast--sucesso">Usuário cadastrado com sucesso.</p>}
 
         <div className="page-cadastro-usuario__row page-cadastro-usuario__row--toggle">
           <div className="page-cadastro-usuario__field">
@@ -206,7 +204,9 @@ export default function WebCadastroUsuario() {
           disabled={loading}
         >
           {OPCOES_FUNCAO.map((op) => (
-            <option key={op.value} value={op.value}>{op.label}</option>
+            <option key={op.value} value={op.value}>
+              {op.label}
+            </option>
           ))}
         </select>
 
@@ -220,7 +220,9 @@ export default function WebCadastroUsuario() {
               disabled={loading}
             >
               {OPCOES_PERMISSAO.map((op) => (
-                <option key={op.value} value={op.value}>{op.label}</option>
+                <option key={op.value} value={op.value}>
+                  {op.label}
+                </option>
               ))}
             </select>
           </div>
@@ -234,10 +236,17 @@ export default function WebCadastroUsuario() {
                 disabled={loading}
               >
                 {OPCOES_PLANTA.map((op) => (
-                  <option key={op.value} value={op.value}>{op.label}</option>
+                  <option key={op.value} value={op.value}>
+                    {op.label}
+                  </option>
                 ))}
               </select>
-              <button type="button" className="page-cadastro-usuario__add-btn" title="Adicionar planta" disabled={loading}>
+              <button
+                type="button"
+                className="page-cadastro-usuario__add-btn"
+                title="Adicionar planta"
+                disabled={loading}
+              >
                 <PlusIcon />
               </button>
             </div>
@@ -245,7 +254,12 @@ export default function WebCadastroUsuario() {
         </div>
 
         <div className="page-cadastro-usuario__botoes">
-          <button type="button" className="btn btn--secondary" onClick={() => setErro(null)} disabled={loading}>
+          <button
+            type="button"
+            className="btn btn--secondary"
+            onClick={() => setErro(null)}
+            disabled={loading}
+          >
             Cancelar
           </button>
           <button type="submit" className="btn btn--primary" disabled={loading}>
@@ -259,7 +273,14 @@ export default function WebCadastroUsuario() {
 
 function PlusIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
     </svg>

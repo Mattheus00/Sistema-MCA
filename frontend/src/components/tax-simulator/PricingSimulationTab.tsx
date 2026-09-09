@@ -42,13 +42,16 @@ export default function PricingSimulationTab({ onError }: PricingSimulationTabPr
     });
 
     try {
-      const res = await api.post<{ precoVenda?: number; valorFinal?: number }>("/api/tributos/calcular", {
-        tipo: "MARGEM_LUCRO",
-        valor: 0,
-        categoria: profileToApiCategory("PADRAO"),
-        custoAquisicao: custo + despesas,
-        margemDesejada: margem / 100,
-      });
+      const res = await api.post<{ precoVenda?: number; valorFinal?: number }>(
+        "/api/tributos/calcular",
+        {
+          tipo: "MARGEM_LUCRO",
+          valor: 0,
+          categoria: profileToApiCategory("PADRAO"),
+          custoAquisicao: custo + despesas,
+          margemDesejada: margem / 100,
+        },
+      );
       const apiPrice = res.data.precoVenda ?? res.data.valorFinal;
       if (local && apiPrice != null && apiPrice > 0) {
         const estimatedTaxes = apiPrice * (aliq / 100);
@@ -75,30 +78,55 @@ export default function PricingSimulationTab({ onError }: PricingSimulationTabPr
       <div className="tax-sim__panel tax-sim__panel--form">
         <div className="tax-sim__card">
           <h2 className="tax-sim__card-title">Formação de preço</h2>
-          <p className="tax-sim__card-desc">Estime preço mínimo, tributos e margem líquida após impostos.</p>
+          <p className="tax-sim__card-desc">
+            Estime preço mínimo, tributos e margem líquida após impostos.
+          </p>
           <div className="tax-sim__fields">
             <label className="tax-sim__label">
               Custo do produto/serviço (R$)
-              <input className="tax-sim__input" value={cost} onChange={(e) => setCost(e.target.value)} />
+              <input
+                className="tax-sim__input"
+                value={cost}
+                onChange={(e) => setCost(e.target.value)}
+              />
             </label>
             <label className="tax-sim__label">
               Despesas adicionais (R$)
-              <input className="tax-sim__input" value={expenses} onChange={(e) => setExpenses(e.target.value)} />
+              <input
+                className="tax-sim__input"
+                value={expenses}
+                onChange={(e) => setExpenses(e.target.value)}
+              />
             </label>
             <label className="tax-sim__label">
               Margem desejada (%)
-              <input className="tax-sim__input" value={margin} onChange={(e) => setMargin(e.target.value)} />
+              <input
+                className="tax-sim__input"
+                value={margin}
+                onChange={(e) => setMargin(e.target.value)}
+              />
             </label>
             <label className="tax-sim__label">
               Alíquota total estimada (%)
-              <input className="tax-sim__input" value={taxPercent} onChange={(e) => setTaxPercent(e.target.value)} />
+              <input
+                className="tax-sim__input"
+                value={taxPercent}
+                onChange={(e) => setTaxPercent(e.target.value)}
+              />
             </label>
-            <button type="button" className="btn btn--primary tax-sim__btn" onClick={() => void calcular()} disabled={loading}>
+            <button
+              type="button"
+              className="btn btn--primary tax-sim__btn"
+              onClick={() => void calcular()}
+              disabled={loading}
+            >
               {loading ? "Calculando…" : "Calcular formação de preço"}
             </button>
           </div>
         </div>
-        <TaxAlert>Valores estimados para apoio à decisão comercial. Valide com seu contador.</TaxAlert>
+        <TaxAlert>
+          Valores estimados para apoio à decisão comercial. Valide com seu contador.
+        </TaxAlert>
       </div>
       <div className="tax-sim__panel tax-sim__panel--results">
         {result ? (
@@ -106,12 +134,31 @@ export default function PricingSimulationTab({ onError }: PricingSimulationTabPr
             <h3 className="tax-sim__results-title">Resultado</h3>
             <div className="tax-sim__result-grid">
               {[
-                { label: "Preço mínimo sugerido", value: formatarMoeda(result.suggestedMinPrice), hl: true },
-                { label: "Lucro estimado", value: formatarMoeda(result.estimatedProfit), hl: false },
-                { label: "Tributos estimados", value: formatarMoeda(result.estimatedTaxes), hl: false },
-                { label: "Margem líquida após tributos", value: formatarPercentual(result.netMarginPercent), hl: true },
+                {
+                  label: "Preço mínimo sugerido",
+                  value: formatarMoeda(result.suggestedMinPrice),
+                  hl: true,
+                },
+                {
+                  label: "Lucro estimado",
+                  value: formatarMoeda(result.estimatedProfit),
+                  hl: false,
+                },
+                {
+                  label: "Tributos estimados",
+                  value: formatarMoeda(result.estimatedTaxes),
+                  hl: false,
+                },
+                {
+                  label: "Margem líquida após tributos",
+                  value: formatarPercentual(result.netMarginPercent),
+                  hl: true,
+                },
               ].map((i) => (
-                <div key={i.label} className={`tax-sim__result-card${i.hl ? " tax-sim__result-card--highlight" : ""}`}>
+                <div
+                  key={i.label}
+                  className={`tax-sim__result-card${i.hl ? " tax-sim__result-card--highlight" : ""}`}
+                >
                   <span className="tax-sim__result-label">{i.label}</span>
                   <strong className="tax-sim__result-value">{i.value}</strong>
                 </div>

@@ -18,10 +18,7 @@ function parseAba(raw: string | null): Aba {
 
 export default function WebUsuarios() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const aba = useMemo(
-    () => parseAba(searchParams.get(ABA_KEY)),
-    [searchParams]
-  );
+  const aba = useMemo(() => parseAba(searchParams.get(ABA_KEY)), [searchParams]);
 
   const setAba = useCallback(
     (_: SyntheticEvent, value: Aba) => {
@@ -31,7 +28,7 @@ export default function WebUsuarios() {
         setSearchParams({}, { replace: true });
       }
     },
-    [setSearchParams]
+    [setSearchParams],
   );
 
   return (
@@ -55,7 +52,11 @@ export default function WebUsuarios() {
         <Tab label="Cadastros pendentes" value="pendentes" id="tab-usuarios-pendentes" />
       </Tabs>
 
-      <Box role="tabpanel" id={`panel-usuarios-${aba}`} aria-labelledby={`tab-usuarios-${aba === "pendentes" ? "pendentes" : "ativos"}`}>
+      <Box
+        role="tabpanel"
+        id={`panel-usuarios-${aba}`}
+        aria-labelledby={`tab-usuarios-${aba === "pendentes" ? "pendentes" : "ativos"}`}
+      >
         {aba === "pendentes" ? <WebCadastrosPendentes embedded /> : <WebUsuariosAtivos embedded />}
       </Box>
     </Box>

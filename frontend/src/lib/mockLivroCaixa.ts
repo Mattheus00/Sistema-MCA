@@ -1,7 +1,19 @@
 type MockCategoria = { id: string; nome: string; tipo: "ENTRADA" | "SAIDA"; ativa: boolean };
 type MockConta = { id: string; nome: string; ativa: boolean };
-type MockAnexo = { id: string; nomeArquivo: string; tamanhoBytes: number; contentType: string; enviadoEm: string };
-type MockHistorico = { id: string; dataHora: string; usuario: string; acao: string; detalhes?: string };
+type MockAnexo = {
+  id: string;
+  nomeArquivo: string;
+  tamanhoBytes: number;
+  contentType: string;
+  enviadoEm: string;
+};
+type MockHistorico = {
+  id: string;
+  dataHora: string;
+  usuario: string;
+  acao: string;
+  detalhes?: string;
+};
 type MockMovimentacao = {
   id: string;
   tipo: "ENTRADA" | "SAIDA";
@@ -62,7 +74,15 @@ export const mockLivroCaixaStore = {
       contaNome: "Conta corrente",
       origem: "MANUAL",
       anexos: [],
-      historico: [{ id: "h1", dataHora: `${hoje}T10:00:00`, usuario: "Mock", acao: "Criação", detalhes: "Lançamento manual" }],
+      historico: [
+        {
+          id: "h1",
+          dataHora: `${hoje}T10:00:00`,
+          usuario: "Mock",
+          acao: "Criação",
+          detalhes: "Lançamento manual",
+        },
+      ],
       criadoEm: `${hoje}T10:00:00`,
       atualizadoEm: `${hoje}T10:00:00`,
     },
@@ -120,10 +140,18 @@ function dashboardMock() {
   const saidasMes = mockLivroCaixaStore.movimentacoes
     .filter((m) => m.tipo === "SAIDA" && (m.status === "PAGO" || m.status === "PREVISTO"))
     .reduce((s, m) => s + m.valor, 0);
-  const realizadoEntradas = mockLivroCaixaStore.movimentacoes.filter((m) => m.tipo === "ENTRADA" && m.status === "RECEBIDO").reduce((s, m) => s + m.valor, 0);
-  const realizadoSaidas = mockLivroCaixaStore.movimentacoes.filter((m) => m.tipo === "SAIDA" && m.status === "PAGO").reduce((s, m) => s + m.valor, 0);
-  const previstoEntradas = mockLivroCaixaStore.movimentacoes.filter((m) => m.tipo === "ENTRADA" && m.status === "PREVISTO").reduce((s, m) => s + m.valor, 0);
-  const previstoSaidas = mockLivroCaixaStore.movimentacoes.filter((m) => m.tipo === "SAIDA" && m.status === "PREVISTO").reduce((s, m) => s + m.valor, 0);
+  const realizadoEntradas = mockLivroCaixaStore.movimentacoes
+    .filter((m) => m.tipo === "ENTRADA" && m.status === "RECEBIDO")
+    .reduce((s, m) => s + m.valor, 0);
+  const realizadoSaidas = mockLivroCaixaStore.movimentacoes
+    .filter((m) => m.tipo === "SAIDA" && m.status === "PAGO")
+    .reduce((s, m) => s + m.valor, 0);
+  const previstoEntradas = mockLivroCaixaStore.movimentacoes
+    .filter((m) => m.tipo === "ENTRADA" && m.status === "PREVISTO")
+    .reduce((s, m) => s + m.valor, 0);
+  const previstoSaidas = mockLivroCaixaStore.movimentacoes
+    .filter((m) => m.tipo === "SAIDA" && m.status === "PREVISTO")
+    .reduce((s, m) => s + m.valor, 0);
   return {
     saldoRealizado: realizadoEntradas - realizadoSaidas,
     saldoPrevisto: realizadoEntradas + previstoEntradas - realizadoSaidas - previstoSaidas,
@@ -169,7 +197,10 @@ function getConta(id: string) {
   return mockLivroCaixaStore.contas.find((c) => c.id === id);
 }
 
-export function mockLivroCaixaGet(url: string, params: Record<string, unknown> = {}): unknown | null {
+export function mockLivroCaixaGet(
+  url: string,
+  params: Record<string, unknown> = {},
+): unknown | null {
   if (url === "/api/livro-caixa/dashboard") return dashboardMock();
   if (url === "/api/livro-caixa/movimentacoes") {
     const page = Number(params.page ?? 0);
@@ -187,8 +218,12 @@ export function mockLivroCaixaGet(url: string, params: Record<string, unknown> =
   if (url === "/api/livro-caixa/categorias") return mockLivroCaixaStore.categorias;
   if (url === "/api/livro-caixa/contas") return mockLivroCaixaStore.contas;
   if (url === "/api/livro-caixa/analise") {
-    const entradas = mockLivroCaixaStore.movimentacoes.filter((m) => m.tipo === "ENTRADA").reduce((s, m) => s + m.valor, 0);
-    const saidas = mockLivroCaixaStore.movimentacoes.filter((m) => m.tipo === "SAIDA").reduce((s, m) => s + m.valor, 0);
+    const entradas = mockLivroCaixaStore.movimentacoes
+      .filter((m) => m.tipo === "ENTRADA")
+      .reduce((s, m) => s + m.valor, 0);
+    const saidas = mockLivroCaixaStore.movimentacoes
+      .filter((m) => m.tipo === "SAIDA")
+      .reduce((s, m) => s + m.valor, 0);
     return {
       entradasSaidasMensal: [{ mes: hoje.slice(0, 7), entradas, saidas }],
       despesasPorCategoria: mockLivroCaixaStore.categorias
@@ -196,9 +231,16 @@ export function mockLivroCaixaGet(url: string, params: Record<string, unknown> =
         .map((c) => ({
           categoriaId: c.id,
           categoriaNome: c.nome,
-          valor: mockLivroCaixaStore.movimentacoes.filter((m) => m.categoriaId === c.id).reduce((s, m) => s + m.valor, 0),
+          valor: mockLivroCaixaStore.movimentacoes
+            .filter((m) => m.categoriaId === c.id)
+            .reduce((s, m) => s + m.valor, 0),
         })),
-      fluxoCaixa: { saldoInicial: 5000, totalEntradas: entradas, totalSaidas: saidas, saldoFinal: 5000 + entradas - saidas },
+      fluxoCaixa: {
+        saldoInicial: 5000,
+        totalEntradas: entradas,
+        totalSaidas: saidas,
+        saldoFinal: 5000 + entradas - saidas,
+      },
     };
   }
   if (url === "/api/livro-caixa/relatorio") {
@@ -215,8 +257,12 @@ export function mockLivroCaixaGet(url: string, params: Record<string, unknown> =
       movimentacoes: movs,
       porCategoria: mockLivroCaixaStore.categorias.map((c) => ({
         categoriaNome: c.nome,
-        entradas: movs.filter((m) => m.categoriaId === c.id && m.tipo === "ENTRADA").reduce((s, m) => s + m.valor, 0),
-        saidas: movs.filter((m) => m.categoriaId === c.id && m.tipo === "SAIDA").reduce((s, m) => s + m.valor, 0),
+        entradas: movs
+          .filter((m) => m.categoriaId === c.id && m.tipo === "ENTRADA")
+          .reduce((s, m) => s + m.valor, 0),
+        saidas: movs
+          .filter((m) => m.categoriaId === c.id && m.tipo === "SAIDA")
+          .reduce((s, m) => s + m.valor, 0),
       })),
     };
   }
@@ -329,7 +375,11 @@ export function mockLivroCaixaMutate(method: string, url: string, body: unknown)
   }
   if (url === "/api/livro-caixa/contas" && method === "POST") {
     const payload = body as Record<string, unknown>;
-    const conta: MockConta = { id: `lc-conta-${nextContaId++}`, nome: String(payload.nome ?? ""), ativa: true };
+    const conta: MockConta = {
+      id: `lc-conta-${nextContaId++}`,
+      nome: String(payload.nome ?? ""),
+      ativa: true,
+    };
     mockLivroCaixaStore.contas.push(conta);
     return conta;
   }

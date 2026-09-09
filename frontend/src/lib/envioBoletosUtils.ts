@@ -93,7 +93,12 @@ export function labelConfianca(confianca: ConfiancaIdentificacaoBoleto | undefin
 }
 
 export function labelStatusItem(status: StatusItemEnvioBoleto | string | undefined): string {
-  return indicadorStatusItem({ envioBoletoId: "", itemId: "", nomeArquivoOriginal: "", status: String(status ?? "PENDENTE") as StatusItemEnvioBoleto }).texto;
+  return indicadorStatusItem({
+    envioBoletoId: "",
+    itemId: "",
+    nomeArquivoOriginal: "",
+    status: String(status ?? "PENDENTE") as StatusItemEnvioBoleto,
+  }).texto;
 }
 
 /** Badge e texto de status — usa exclusivamente item.status da API. */
@@ -148,8 +153,13 @@ export function itemPrecisaConfirmacao(item: ItemEnvioBoleto): boolean {
   return statusItemApi(item) === "AGUARDANDO_CORRECAO";
 }
 
-export function itensElegiveisEnvio(itens: ItemEnvioBoleto[], selecionados: Set<string>): ItemEnvioBoleto[] {
-  return itens.filter((item) => selecionados.has(envioBoletoIdItem(item)) && itemProntoParaEnvio(item));
+export function itensElegiveisEnvio(
+  itens: ItemEnvioBoleto[],
+  selecionados: Set<string>,
+): ItemEnvioBoleto[] {
+  return itens.filter(
+    (item) => selecionados.has(envioBoletoIdItem(item)) && itemProntoParaEnvio(item),
+  );
 }
 
 export function loteTemItensProntos(itens: ItemEnvioBoleto[]): boolean {
@@ -159,7 +169,6 @@ export function loteTemItensProntos(itens: ItemEnvioBoleto[]): boolean {
 export function podeEnviarSelecionados(
   itens: ItemEnvioBoleto[],
   selecionados: Set<string>,
-  _validacao?: ValidacaoLoteEnvioBoleto | null
 ): boolean {
   if (!loteTemItensProntos(itens)) return false;
   return itensElegiveisEnvio(itens, selecionados).length > 0;
@@ -168,7 +177,7 @@ export function podeEnviarSelecionados(
 export function idsProntosParaEnvio(
   itens: ItemEnvioBoleto[],
   selecionados: Set<string>,
-  itemIds?: string[]
+  itemIds?: string[],
 ): string[] {
   const base = itemIds && itemIds.length > 0 ? itemIds : Array.from(selecionados);
   return base.filter((id) => {
@@ -179,7 +188,7 @@ export function idsProntosParaEnvio(
 
 export function motivoBloqueioItem(
   item: ItemEnvioBoleto,
-  validacao?: ValidacaoLoteEnvioBoleto | null
+  validacao?: ValidacaoLoteEnvioBoleto | null,
 ): string | undefined {
   const itemId = envioBoletoIdItem(item);
   const bloqueio = validacao?.bloqueios.find((b) => b.itemId === itemId);
@@ -203,12 +212,16 @@ export function todosItensSelecionaveis(itens: ItemEnvioBoleto[]): string[] {
 export function resumoCardsFromLote(lote: LoteEnvioBoleto | null) {
   const resumo = lote?.resumo;
   const itens = lote?.itens ?? [];
-  const countPorStatus = (status: string) => itens.filter((i) => statusItemApi(i) === status).length;
+  const countPorStatus = (status: string) =>
+    itens.filter((i) => statusItemApi(i) === status).length;
 
   return {
     total: lote?.quantidadeTotal ?? itens.length,
-    identificados: lote?.quantidadeIdentificada ?? itens.filter((i) => i.clienteNome?.trim()).length,
-    pendentes: lote?.quantidadePendente ?? countPorStatus("AGUARDANDO_CORRECAO") + countPorStatus("NAO_IDENTIFICADO"),
+    identificados:
+      lote?.quantidadeIdentificada ?? itens.filter((i) => i.clienteNome?.trim()).length,
+    pendentes:
+      lote?.quantidadePendente ??
+      countPorStatus("AGUARDANDO_CORRECAO") + countPorStatus("NAO_IDENTIFICADO"),
     prontos: resumo?.prontosParaEnvio ?? countPorStatus("PRONTO_PARA_ENVIO"),
     semEmail: resumo?.semEmail ?? itens.filter((i) => itemSemEmailBloqueado(i)).length,
     pendentesCorrecao: resumo?.aguardandoCorrecao ?? countPorStatus("AGUARDANDO_CORRECAO"),
@@ -218,7 +231,12 @@ export function resumoCardsFromLote(lote: LoteEnvioBoleto | null) {
   };
 }
 
-export function mensagemBloqueiosValidacao(validacao?: ValidacaoLoteEnvioBoleto | null): string | null {
+export function mensagemBloqueiosValidacao(
+  validacao?: ValidacaoLoteEnvioBoleto | null,
+): string | null {
   if (!validacao || validacao.podeEnviar || validacao.bloqueios.length === 0) return null;
-  return validacao.bloqueios.map((b) => b.motivo).filter(Boolean).join(" · ");
+  return validacao.bloqueios
+    .map((b) => b.motivo)
+    .filter(Boolean)
+    .join(" · ");
 }

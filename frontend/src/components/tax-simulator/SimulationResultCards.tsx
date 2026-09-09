@@ -46,7 +46,8 @@ export default function SimulationResultCards({
         ))}
       </div>
       <p className="tax-sim__result-meta">
-        Alíquotas: CBS {formatarPercentual(result.cbsPercent)} · IBS {formatarPercentual(result.ibsPercent)}
+        Alíquotas: CBS {formatarPercentual(result.cbsPercent)} · IBS{" "}
+        {formatarPercentual(result.ibsPercent)}
       </p>
     </div>
   );

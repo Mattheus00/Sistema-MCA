@@ -1,5 +1,10 @@
 :root {
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color: #1e293b;
@@ -9,7 +14,7 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /* Roxo protagonista (destaques) */
-  --cor-principal: #A43F9B;
+  --cor-principal: #a43f9b;
   --cor-principal-hover: #8a3583;
   /* Soft Light + Glass */
   --bg-base: #f8fafc;

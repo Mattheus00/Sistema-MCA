@@ -25,7 +25,7 @@ describe("buildMailtoCobrancaUrl", () => {
     expect(url).toContain("body=");
     const subjectPart = url.split("&body=")[0];
     expect(decodeURIComponent(subjectPart.replace("mailto:?subject=", ""))).toBe(
-      "Cobrança - Débito em Aberto - DIV-20260228-0042"
+      "Cobrança - Débito em Aberto - DIV-20260228-0042",
     );
   });
 

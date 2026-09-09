@@ -1,9 +1,11 @@
 import type { Inadimplencia } from "@/types/api";
-import { formatarData, formatarMesAno, formatarMoeda, saldoDevedorItem } from "@/lib/inadimplentesUtils";
 import {
-  buildPixQrCodeImageUrl,
-  getPixCobrancaInfo,
-} from "@/lib/mailtoCobranca";
+  formatarData,
+  formatarMesAno,
+  formatarMoeda,
+  saldoDevedorItem,
+} from "@/lib/inadimplentesUtils";
+import { buildPixQrCodeImageUrl, getPixCobrancaInfo } from "@/lib/mailtoCobranca";
 
 export const EMPRESA_COBRANCA = {
   telefone: "(31) 99823-1343",
@@ -70,15 +72,15 @@ export function buildAvisoPendenciaHtml(opts: AvisoPendenciaHtmlOptions): string
   }
 
   const pix = getPixCobrancaInfo();
-  const ordenados = [...itens].sort((a, b) => (a.vencimento || "").localeCompare(b.vencimento || ""));
+  const ordenados = [...itens].sort((a, b) =>
+    (a.vencimento || "").localeCompare(b.vencimento || ""),
+  );
   const totalNumerico = ordenados.reduce((s, i) => s + saldoDevedorItem(i), 0);
   const valorTotal = formatarMoeda(totalNumerico);
   const vencimentoMaisAntigo = formatarData(ordenados[0].vencimento);
   const qtdPeriodos = ordenados.length;
   const referenciaResumo =
-    qtdPeriodos === 1
-      ? formatarMesAno(ordenados[0].vencimento)
-      : `${qtdPeriodos} períodos`;
+    qtdPeriodos === 1 ? formatarMesAno(ordenados[0].vencimento) : `${qtdPeriodos} períodos`;
   const dataGeracao = formatarDataGeracao();
   const qrSrc = qrCodeSrc || buildPixQrCodeImageUrl(pix.pixCopiaECola, 280);
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import WebEnvioBoletos from "@/components/pages/WebEnvioBoletos";
 import * as envioBoletosApi from "@/lib/envioBoletosApi";
@@ -76,7 +76,7 @@ function renderPage() {
   return render(
     <MemoryRouter>
       <WebEnvioBoletos />
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 
@@ -91,20 +91,27 @@ describe("WebEnvioBoletos", () => {
 
     renderPage();
 
-    const input = document.querySelector('input[type="file"]:not([webkitdirectory])') as HTMLInputElement;
-    const file = new File(["pdf"], "4 ANA CLAUDIA DE CARVALHO BOTELHO.pdf", { type: "application/pdf" });
+    const input = document.querySelector(
+      'input[type="file"]:not([webkitdirectory])',
+    ) as HTMLInputElement;
+    const file = new File(["pdf"], "4 ANA CLAUDIA DE CARVALHO BOTELHO.pdf", {
+      type: "application/pdf",
+    });
     fireEvent.change(input, { target: { files: [file] } });
 
     expect(screen.getByText(/1 arquivo selecionado/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /analisar arquivos/i }));
 
+    // ResponsiveList renderiza tabela (desktop) e cards (mobile); o jsdom não aplica media queries,
+    // então os textos aparecem duas vezes. Escopamos a asserção à tabela.
     await waitFor(() => {
-      expect(screen.getByText("4 ANA CLAUDIA DE CARVALHO BOTELHO.pdf")).toBeInTheDocument();
-      expect(screen.getByText("Cliente A")).toBeInTheDocument();
-      expect(screen.getByText("***.***.901-01")).toBeInTheDocument();
-      expect(screen.getByText("a@test.com")).toBeInTheDocument();
       expect(screen.getByText(/conferência dos boletos/i)).toBeInTheDocument();
+      const tabela = within(screen.getByRole("table"));
+      expect(tabela.getByText("4 ANA CLAUDIA DE CARVALHO BOTELHO.pdf")).toBeInTheDocument();
+      expect(tabela.getByText("Cliente A")).toBeInTheDocument();
+      expect(tabela.getByText("***.***.901-01")).toBeInTheDocument();
+      expect(tabela.getByText("a@test.com")).toBeInTheDocument();
     });
   });
 
@@ -121,7 +128,9 @@ describe("WebEnvioBoletos", () => {
 
     renderPage();
 
-    const input = document.querySelector('input[type="file"]:not([webkitdirectory])') as HTMLInputElement;
+    const input = document.querySelector(
+      'input[type="file"]:not([webkitdirectory])',
+    ) as HTMLInputElement;
     const file = new File(["pdf"], "boleto-bloqueado.pdf", { type: "application/pdf" });
     fireEvent.change(input, { target: { files: [file] } });
     fireEvent.click(screen.getByRole("button", { name: /analisar arquivos/i }));
@@ -138,7 +147,12 @@ describe("WebEnvioBoletos", () => {
       quantidadePendente: 0,
       itens: [
         { ...loteMock.itens![0], envioBoletoId: "uuid-1", itemId: "uuid-1" },
-        { ...loteMock.itens![0], envioBoletoId: "uuid-2", itemId: "uuid-2", nomeArquivoOriginal: "outro.pdf" },
+        {
+          ...loteMock.itens![0],
+          envioBoletoId: "uuid-2",
+          itemId: "uuid-2",
+          nomeArquivoOriginal: "outro.pdf",
+        },
       ],
       validacao: { podeEnviar: true, bloqueios: [] },
     };
@@ -147,7 +161,9 @@ describe("WebEnvioBoletos", () => {
 
     renderPage();
 
-    const input = document.querySelector('input[type="file"]:not([webkitdirectory])') as HTMLInputElement;
+    const input = document.querySelector(
+      'input[type="file"]:not([webkitdirectory])',
+    ) as HTMLInputElement;
     const file = new File(["pdf"], "boleto-ok.pdf", { type: "application/pdf" });
     fireEvent.change(input, { target: { files: [file] } });
     fireEvent.click(screen.getByRole("button", { name: /analisar arquivos/i }));
@@ -176,7 +192,9 @@ describe("WebEnvioBoletos", () => {
 
     renderPage();
 
-    const input = document.querySelector('input[type="file"]:not([webkitdirectory])') as HTMLInputElement;
+    const input = document.querySelector(
+      'input[type="file"]:not([webkitdirectory])',
+    ) as HTMLInputElement;
     const file = new File(["pdf"], "boleto-ok.pdf", { type: "application/pdf" });
     fireEvent.change(input, { target: { files: [file] } });
     fireEvent.click(screen.getByRole("button", { name: /analisar arquivos/i }));

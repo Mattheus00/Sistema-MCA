@@ -26,7 +26,15 @@ type TarefaDetalheModalProps = {
 
 function IconFechar() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
@@ -35,7 +43,15 @@ function IconFechar() {
 
 function IconLixeira() {
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <polyline points="3 6 5 6 21 6" />
       <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
       <path d="M10 11v6" />
@@ -45,9 +61,19 @@ function IconLixeira() {
   );
 }
 
-function MetaItem({ label, value, destaque }: { label: string; value: string; destaque?: boolean }) {
+function MetaItem({
+  label,
+  value,
+  destaque,
+}: {
+  label: string;
+  value: string;
+  destaque?: boolean;
+}) {
   return (
-    <div className={`tarefas-detalhe__meta-item${destaque ? " tarefas-detalhe__meta-item--destaque" : ""}`}>
+    <div
+      className={`tarefas-detalhe__meta-item${destaque ? " tarefas-detalhe__meta-item--destaque" : ""}`}
+    >
       <span className="tarefas-detalhe__meta-label">{label}</span>
       <strong className="tarefas-detalhe__meta-value">{value}</strong>
     </div>
@@ -67,8 +93,10 @@ export default function TarefaDetalheModal({
   const [erro, setErro] = useState<string | null>(null);
   const [historicoAberto, setHistoricoAberto] = useState(false);
 
+  const tarefaId = tarefa?.id ?? null;
+
   useEffect(() => {
-    if (!tarefa) return;
+    if (tarefaId === null) return;
     document.body.style.overflow = "hidden";
     setErro(null);
     setNovoItem("");
@@ -76,7 +104,7 @@ export default function TarefaDetalheModal({
     return () => {
       document.body.style.overflow = "";
     };
-  }, [tarefa?.id]);
+  }, [tarefaId]);
 
   if (!tarefa) return null;
 
@@ -125,7 +153,8 @@ export default function TarefaDetalheModal({
           ...tarefa,
           checklist: tarefa.checklist.filter((i) => i.id !== itemId),
           checklistTotal: Math.max(0, tarefa.checklistTotal - 1),
-          checklistConcluidos: tarefa.checklist.filter((i) => i.id !== itemId && i.concluido).length,
+          checklistConcluidos: tarefa.checklist.filter((i) => i.id !== itemId && i.concluido)
+            .length,
         });
       }
     } catch (e: unknown) {
@@ -147,8 +176,12 @@ export default function TarefaDetalheModal({
         <header className="tarefas-detalhe__header">
           <div className="tarefas-detalhe__header-main">
             <div className="tarefas-detalhe__badges">
-              <span className={classeStatusTarefa(tarefa.status)}>{labelStatusTarefa(tarefa.status)}</span>
-              <span className={classePrioridadeTarefa(tarefa.prioridade)}>{labelPrioridadeTarefa(tarefa.prioridade)}</span>
+              <span className={classeStatusTarefa(tarefa.status)}>
+                {labelStatusTarefa(tarefa.status)}
+              </span>
+              <span className={classePrioridadeTarefa(tarefa.prioridade)}>
+                {labelPrioridadeTarefa(tarefa.prioridade)}
+              </span>
               {tarefa.atrasada && <span className="tarefas-card__atrasada">Atrasada</span>}
             </div>
             <h2 id={tituloId} className="tarefas-detalhe__titulo">
@@ -183,12 +216,18 @@ export default function TarefaDetalheModal({
                 </span>
                 <div>
                   <span className="tarefas-detalhe__meta-label">Responsável</span>
-                  <strong className="tarefas-detalhe__meta-value">{tarefa.responsavelNome ?? "—"}</strong>
+                  <strong className="tarefas-detalhe__meta-value">
+                    {tarefa.responsavelNome ?? "—"}
+                  </strong>
                 </div>
               </div>
               <MetaItem label="Cliente" value={tarefa.categoria ?? "—"} />
               <MetaItem label="Início" value={formatarDataTarefa(tarefa.dataInicio)} />
-              <MetaItem label="Prazo" value={formatarDataTarefa(tarefa.dataVencimento)} destaque={tarefa.atrasada} />
+              <MetaItem
+                label="Prazo"
+                value={formatarDataTarefa(tarefa.dataVencimento)}
+                destaque={tarefa.atrasada}
+              />
             </div>
           </section>
 
@@ -216,7 +255,9 @@ export default function TarefaDetalheModal({
 
             <ul className="tarefas-detalhe__checklist">
               {tarefa.checklist.length === 0 ? (
-                <li className="tarefas-detalhe__checklist-vazio">Nenhum item no checklist ainda.</li>
+                <li className="tarefas-detalhe__checklist-vazio">
+                  Nenhum item no checklist ainda.
+                </li>
               ) : (
                 tarefa.checklist.map((item) => (
                   <li key={item.id} className={item.concluido ? "is-feito" : ""}>
@@ -227,7 +268,9 @@ export default function TarefaDetalheModal({
                         disabled={busy}
                         onChange={() => void toggleItem(item.id)}
                       />
-                      <span className={item.concluido ? "tarefas-detalhe__check--feito" : ""}>{item.descricao}</span>
+                      <span className={item.concluido ? "tarefas-detalhe__check--feito" : ""}>
+                        {item.descricao}
+                      </span>
                     </label>
                     <button
                       type="button"
@@ -273,7 +316,9 @@ export default function TarefaDetalheModal({
             <section className="tarefas-detalhe__secao">
               <div className="tarefas-detalhe__secao-head">
                 <h3 className="tarefas-detalhe__secao-titulo">Histórico</h3>
-                <span className="tarefas-detalhe__progresso-label">{tarefa.historico.length} eventos</span>
+                <span className="tarefas-detalhe__progresso-label">
+                  {tarefa.historico.length} eventos
+                </span>
               </div>
               <ol className="tarefas-detalhe__timeline">
                 {historicoVisivel.map((h, i) => (
@@ -284,7 +329,9 @@ export default function TarefaDetalheModal({
                         <strong>{h.acao}</strong>
                         <time>{formatarDataTarefa(h.dataHora)}</time>
                       </div>
-                      {h.usuario && <span className="tarefas-detalhe__timeline-user">{h.usuario}</span>}
+                      {h.usuario && (
+                        <span className="tarefas-detalhe__timeline-user">{h.usuario}</span>
+                      )}
                       {h.detalhes && <p>{h.detalhes}</p>}
                     </div>
                   </li>
@@ -296,7 +343,9 @@ export default function TarefaDetalheModal({
                   className="tarefas-detalhe__mais-historico"
                   onClick={() => setHistoricoAberto((v) => !v)}
                 >
-                  {historicoAberto ? "Mostrar menos" : `Ver mais ${historicoOrdenado.length - 4} eventos`}
+                  {historicoAberto
+                    ? "Mostrar menos"
+                    : `Ver mais ${historicoOrdenado.length - 4} eventos`}
                 </button>
               )}
             </section>
@@ -307,7 +356,12 @@ export default function TarefaDetalheModal({
           <button type="button" className="btn btn--secondary" onClick={onFechar} disabled={busy}>
             Fechar
           </button>
-          <button type="button" className="btn btn--primary" onClick={() => onEditar(tarefa)} disabled={busy}>
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={() => onEditar(tarefa)}
+            disabled={busy}
+          >
             Editar tarefa
           </button>
         </footer>

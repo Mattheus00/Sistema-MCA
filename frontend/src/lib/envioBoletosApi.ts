@@ -8,7 +8,8 @@ import type { LoteEnvioBoleto, ResultadoEnvioLote } from "@/types/api";
 
 function getApiBaseUrl(): string {
   if (isMockEnabled()) return "";
-  return import.meta.env.VITE_API_URL !== undefined && String(import.meta.env.VITE_API_URL).trim() !== ""
+  return import.meta.env.VITE_API_URL !== undefined &&
+    String(import.meta.env.VITE_API_URL).trim() !== ""
     ? String(import.meta.env.VITE_API_URL).replace(/\/$/, "")
     : "http://localhost:8080";
 }
@@ -45,18 +46,24 @@ export async function consultarResultadoEnvioLote(loteId: string): Promise<Resul
 export async function atualizarClienteItem(
   loteId: string,
   itemId: string,
-  clienteId: string
+  clienteId: string,
 ): Promise<LoteEnvioBoleto> {
   await api.patch(`/api/lotes-envio-boletos/${loteId}/itens/${itemId}/cliente`, { clienteId });
   return consultarLoteEnvioBoletos(loteId);
 }
 
-export async function confirmarItemEnvioBoleto(loteId: string, itemId: string): Promise<LoteEnvioBoleto> {
+export async function confirmarItemEnvioBoleto(
+  loteId: string,
+  itemId: string,
+): Promise<LoteEnvioBoleto> {
   await api.patch(`/api/lotes-envio-boletos/${loteId}/itens/${itemId}/confirmar`);
   return consultarLoteEnvioBoletos(loteId);
 }
 
-export async function ignorarItemEnvioBoleto(loteId: string, itemId: string): Promise<LoteEnvioBoleto> {
+export async function ignorarItemEnvioBoleto(
+  loteId: string,
+  itemId: string,
+): Promise<LoteEnvioBoleto> {
   await api.patch(`/api/lotes-envio-boletos/${loteId}/itens/${itemId}/ignorar`);
   return consultarLoteEnvioBoletos(loteId);
 }
@@ -74,7 +81,7 @@ export async function validarLoteEnvioBoletos(loteId: string): Promise<LoteEnvio
 
 export async function enviarLoteEnvioBoletos(
   loteId: string,
-  opcoes?: { permitirReenvioDuplicado?: boolean; itemIds?: string[] }
+  opcoes?: { permitirReenvioDuplicado?: boolean; itemIds?: string[] },
 ): Promise<LoteEnvioBoleto> {
   const body: { permitirReenvioDuplicado?: boolean; itemIds?: string[] } = {};
   if (opcoes?.permitirReenvioDuplicado) body.permitirReenvioDuplicado = true;

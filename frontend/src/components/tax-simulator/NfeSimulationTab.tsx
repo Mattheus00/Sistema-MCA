@@ -50,7 +50,7 @@ export default function NfeSimulationTab({ onError }: NfeSimulationTabProps) {
         freight: parseValorReais(freight),
         cbsPercent: parsePercentInput(cbsPercent),
         ibsPercent: parsePercentInput(ibsPercent),
-      })
+      }),
     );
   }
 
@@ -77,24 +77,44 @@ export default function NfeSimulationTab({ onError }: NfeSimulationTabProps) {
             {cnpjInfo && <p className="tax-sim__hint">{cnpjInfo}</p>}
             <label className="tax-sim__label">
               Valor produtos/serviços (R$)
-              <input className="tax-sim__input" value={products} onChange={(e) => setProducts(e.target.value)} />
+              <input
+                className="tax-sim__input"
+                value={products}
+                onChange={(e) => setProducts(e.target.value)}
+              />
             </label>
             <label className="tax-sim__label">
               Desconto (R$)
-              <input className="tax-sim__input" value={discount} onChange={(e) => setDiscount(e.target.value)} />
+              <input
+                className="tax-sim__input"
+                value={discount}
+                onChange={(e) => setDiscount(e.target.value)}
+              />
             </label>
             <label className="tax-sim__label">
               Frete (R$)
-              <input className="tax-sim__input" value={freight} onChange={(e) => setFreight(e.target.value)} />
+              <input
+                className="tax-sim__input"
+                value={freight}
+                onChange={(e) => setFreight(e.target.value)}
+              />
             </label>
             <div className="tax-sim__fields-row">
               <label className="tax-sim__label">
                 CBS (%)
-                <input className="tax-sim__input" value={cbsPercent} onChange={(e) => setCbsPercent(e.target.value)} />
+                <input
+                  className="tax-sim__input"
+                  value={cbsPercent}
+                  onChange={(e) => setCbsPercent(e.target.value)}
+                />
               </label>
               <label className="tax-sim__label">
                 IBS (%)
-                <input className="tax-sim__input" value={ibsPercent} onChange={(e) => setIbsPercent(e.target.value)} />
+                <input
+                  className="tax-sim__input"
+                  value={ibsPercent}
+                  onChange={(e) => setIbsPercent(e.target.value)}
+                />
               </label>
             </div>
             <button type="button" className="btn btn--primary tax-sim__btn" onClick={calcular}>
@@ -114,7 +134,10 @@ export default function NfeSimulationTab({ onError }: NfeSimulationTabProps) {
                 { label: "IBS", value: formatarMoeda(result.ibs) },
                 { label: "Total da nota", value: formatarMoeda(result.invoiceTotal), hl: true },
               ].map((i) => (
-                <div key={i.label} className={`tax-sim__result-card${i.hl ? " tax-sim__result-card--highlight" : ""}`}>
+                <div
+                  key={i.label}
+                  className={`tax-sim__result-card${i.hl ? " tax-sim__result-card--highlight" : ""}`}
+                >
                   <span className="tax-sim__result-label">{i.label}</span>
                   <strong className="tax-sim__result-value">{i.value}</strong>
                 </div>

@@ -31,7 +31,15 @@ const MAX_ITENS_CELULA = 2;
 
 function IconChevron({ dir }: { dir: "esq" | "dir" }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       {dir === "esq" ? <polyline points="15 18 9 12 15 6" /> : <polyline points="9 18 15 12 9 6" />}
     </svg>
   );
@@ -93,7 +101,7 @@ export default function TarefasCalendario({
 
   const doMes = useMemo(
     () => tarefas.filter((t) => t.dataVencimento?.startsWith(prefixoMes)),
-    [tarefas, prefixoMes]
+    [tarefas, prefixoMes],
   );
 
   const resumoMes = useMemo(() => {
@@ -107,7 +115,13 @@ export default function TarefasCalendario({
 
   const proximos = useMemo(() => {
     return tarefas
-      .filter((t) => t.dataVencimento && !t.atrasada && t.status !== "CONCLUIDO" && t.dataVencimento.split("T")[0] >= hojeIso)
+      .filter(
+        (t) =>
+          t.dataVencimento &&
+          !t.atrasada &&
+          t.status !== "CONCLUIDO" &&
+          t.dataVencimento.split("T")[0] >= hojeIso,
+      )
       .sort((a, b) => String(a.dataVencimento).localeCompare(String(b.dataVencimento)))
       .slice(0, 4);
   }, [tarefas, hojeIso]);
@@ -140,19 +154,35 @@ export default function TarefasCalendario({
   return (
     <div className="tarefas-cal">
       <div className="tarefas-cal__chips">
-        <span className="tarefas-cal__chip tarefas-cal__chip--azul">{resumoMes.total} tarefas este mês</span>
-        <span className="tarefas-cal__chip tarefas-cal__chip--vermelho">{resumoMes.atrasadas} atrasadas</span>
-        <span className="tarefas-cal__chip tarefas-cal__chip--verde">{resumoMes.concluidas} concluídas</span>
+        <span className="tarefas-cal__chip tarefas-cal__chip--azul">
+          {resumoMes.total} tarefas este mês
+        </span>
+        <span className="tarefas-cal__chip tarefas-cal__chip--vermelho">
+          {resumoMes.atrasadas} atrasadas
+        </span>
+        <span className="tarefas-cal__chip tarefas-cal__chip--verde">
+          {resumoMes.concluidas} concluídas
+        </span>
         <span className="tarefas-cal__chip tarefas-cal__chip--roxo">{resumoMes.hoje} hoje</span>
       </div>
 
       <div className="tarefas-cal__toolbar">
         <div className="tarefas-cal__nav">
-          <button type="button" className="tarefas-cal__nav-btn" onClick={mesAnterior} aria-label="Mês anterior">
+          <button
+            type="button"
+            className="tarefas-cal__nav-btn"
+            onClick={mesAnterior}
+            aria-label="Mês anterior"
+          >
             <IconChevron dir="esq" />
           </button>
           <h3>{labelMesAno(ano, mes)}</h3>
-          <button type="button" className="tarefas-cal__nav-btn" onClick={mesProximo} aria-label="Próximo mês">
+          <button
+            type="button"
+            className="tarefas-cal__nav-btn"
+            onClick={mesProximo}
+            aria-label="Próximo mês"
+          >
             <IconChevron dir="dir" />
           </button>
           <button type="button" className="tarefas-cal__hoje" onClick={irParaHoje}>
@@ -225,11 +255,17 @@ export default function TarefasCalendario({
                 <ul>
                   {(porDia.get(diaSelecionado) ?? []).map((t) => (
                     <li key={t.id}>
-                      <button type="button" className="tarefas-cal__side-item" onClick={() => onAbrir(t.id)}>
+                      <button
+                        type="button"
+                        className="tarefas-cal__side-item"
+                        onClick={() => onAbrir(t.id)}
+                      >
                         <div>
                           <strong>{t.titulo}</strong>
                           <span>
-                            <em className="tarefas-cal__avatar">{iniciaisResponsavel(t.responsavelNome)}</em>
+                            <em className="tarefas-cal__avatar">
+                              {iniciaisResponsavel(t.responsavelNome)}
+                            </em>
                             {t.responsavelNome ?? "Sem responsável"}
                           </span>
                         </div>
@@ -249,12 +285,18 @@ export default function TarefasCalendario({
                 <ul>
                   {proximos.map((t) => (
                     <li key={t.id}>
-                      <button type="button" className="tarefas-cal__side-item" onClick={() => onAbrir(t.id)}>
+                      <button
+                        type="button"
+                        className="tarefas-cal__side-item"
+                        onClick={() => onAbrir(t.id)}
+                      >
                         <div>
                           <small>{labelRelativoPrazo(t.dataVencimento)}</small>
                           <strong>{t.titulo}</strong>
                           <span>
-                            <em className="tarefas-cal__avatar">{iniciaisResponsavel(t.responsavelNome)}</em>
+                            <em className="tarefas-cal__avatar">
+                              {iniciaisResponsavel(t.responsavelNome)}
+                            </em>
                             {t.responsavelNome ?? "Sem responsável"}
                           </span>
                         </div>
@@ -274,12 +316,18 @@ export default function TarefasCalendario({
                 <ul>
                   {atrasadas.map((t) => (
                     <li key={t.id}>
-                      <button type="button" className="tarefas-cal__side-item is-atrasada" onClick={() => onAbrir(t.id)}>
+                      <button
+                        type="button"
+                        className="tarefas-cal__side-item is-atrasada"
+                        onClick={() => onAbrir(t.id)}
+                      >
                         <div>
                           <small>Atrasada desde {formatarDataTarefa(t.dataVencimento)}</small>
                           <strong>{t.titulo}</strong>
                           <span>
-                            <em className="tarefas-cal__avatar">{iniciaisResponsavel(t.responsavelNome)}</em>
+                            <em className="tarefas-cal__avatar">
+                              {iniciaisResponsavel(t.responsavelNome)}
+                            </em>
                             {t.responsavelNome ?? "Sem responsável"}
                           </span>
                         </div>
@@ -294,11 +342,21 @@ export default function TarefasCalendario({
             <section className="tarefas-cal__legenda">
               <h4>Legenda</h4>
               <ul>
-                <li><i className="dot dot-red" /> Alta prioridade / atrasada</li>
-                <li><i className="dot dot-orange" /> Em andamento</li>
-                <li><i className="dot dot-blue" /> A fazer</li>
-                <li><i className="dot dot-purple" /> Em revisão</li>
-                <li><i className="dot dot-green" /> Concluída</li>
+                <li>
+                  <i className="dot dot-red" /> Alta prioridade / atrasada
+                </li>
+                <li>
+                  <i className="dot dot-orange" /> Em andamento
+                </li>
+                <li>
+                  <i className="dot dot-blue" /> A fazer
+                </li>
+                <li>
+                  <i className="dot dot-purple" /> Em revisão
+                </li>
+                <li>
+                  <i className="dot dot-green" /> Concluída
+                </li>
               </ul>
             </section>
           </aside>

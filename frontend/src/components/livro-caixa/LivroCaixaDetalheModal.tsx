@@ -121,17 +121,26 @@ export default function LivroCaixaDetalheModal({
 
   const modal = (
     <div className="modal-overlay" onClick={() => !acaoLoading && onFechar()}>
-      <div className="modal modal--cadastro livro-caixa__modal-detalhe" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+      <div
+        className="modal modal--cadastro livro-caixa__modal-detalhe"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
         <div className="livro-caixa__detalhe-head">
           <div className="livro-caixa__detalhe-info">
             <p className="livro-caixa__detalhe-tipo">{labelTipoMovimentacao(movimentacao.tipo)}</p>
             <h2 className="livro-caixa__detalhe-titulo">{movimentacao.descricao}</h2>
-            <p className={`livro-caixa__detalhe-valor ${classeValorMovimentacao(movimentacao.tipo)}`}>
+            <p
+              className={`livro-caixa__detalhe-valor ${classeValorMovimentacao(movimentacao.tipo)}`}
+            >
               {formatarValorMovimentacao(movimentacao.tipo, movimentacao.valor)}
             </p>
           </div>
           <div className="livro-caixa__detalhe-status">
-            <span className={classeBadgeStatus(movimentacao.status)}>{labelStatusMovimentacao(movimentacao.status)}</span>
+            <span className={classeBadgeStatus(movimentacao.status)}>
+              {labelStatusMovimentacao(movimentacao.status)}
+            </span>
           </div>
         </div>
 
@@ -143,9 +152,14 @@ export default function LivroCaixaDetalheModal({
         )}
 
         {(movimentacao.vencido || movimentacao.proximoVencimento) && (
-          <p className={`livro-caixa__alerta${movimentacao.vencido ? " livro-caixa__alerta--vencido" : ""}`} role="status">
+          <p
+            className={`livro-caixa__alerta${movimentacao.vencido ? " livro-caixa__alerta--vencido" : ""}`}
+            role="status"
+          >
             {movimentacao.vencido ? "Vencido" : "Vencimento próximo"}
-            {movimentacao.dataVencimento ? ` · ${formatarDataLivroCaixa(movimentacao.dataVencimento)}` : ""}
+            {movimentacao.dataVencimento
+              ? ` · ${formatarDataLivroCaixa(movimentacao.dataVencimento)}`
+              : ""}
           </p>
         )}
 
@@ -213,11 +227,15 @@ export default function LivroCaixaDetalheModal({
               {movimentacao.anexos.map((a) => (
                 <li key={a.id}>
                   <span>{a.nomeArquivo}</span>
-                  <span className="livro-caixa__anexo-meta">{formatarTamanhoArquivo(a.tamanhoBytes)}</span>
+                  <span className="livro-caixa__anexo-meta">
+                    {formatarTamanhoArquivo(a.tamanhoBytes)}
+                  </span>
                   <button
                     type="button"
                     className="btn btn--link"
-                    onClick={() => void baixarAnexoMovimentacao(movimentacao.id, a.id, a.nomeArquivo)}
+                    onClick={() =>
+                      void baixarAnexoMovimentacao(movimentacao.id, a.id, a.nomeArquivo)
+                    }
                   >
                     Baixar
                   </button>
@@ -245,15 +263,26 @@ export default function LivroCaixaDetalheModal({
 
         {mostrarReceberPagar && (podeReceber || podePagar) && (
           <div className="livro-caixa__receber-pagar">
-            <h3>{movimentacao.tipo === "ENTRADA" ? "Registrar recebimento" : "Registrar pagamento"}</h3>
+            <h3>
+              {movimentacao.tipo === "ENTRADA" ? "Registrar recebimento" : "Registrar pagamento"}
+            </h3>
             <div className="modal__grid">
               <label className="modal__campo">
                 <span className="modal__label">Data *</span>
-                <input type="date" className="modal__input" value={dataPagamento} onChange={(e) => setDataPagamento(e.target.value)} />
+                <input
+                  type="date"
+                  className="modal__input"
+                  value={dataPagamento}
+                  onChange={(e) => setDataPagamento(e.target.value)}
+                />
               </label>
               <label className="modal__campo">
                 <span className="modal__label">Forma</span>
-                <select className="modal__input" value={formaPagamento} onChange={(e) => setFormaPagamento(e.target.value as FormaPagamento | "")}>
+                <select
+                  className="modal__input"
+                  value={formaPagamento}
+                  onChange={(e) => setFormaPagamento(e.target.value as FormaPagamento | "")}
+                >
                   <option value="">—</option>
                   {FORMAS_PAGAMENTO.map((f) => (
                     <option key={f} value={f}>
@@ -264,21 +293,37 @@ export default function LivroCaixaDetalheModal({
               </label>
               <label className="modal__campo">
                 <span className="modal__label">Conta</span>
-                <select className="modal__input" value={contaId} onChange={(e) => setContaId(e.target.value)}>
+                <select
+                  className="modal__input"
+                  value={contaId}
+                  onChange={(e) => setContaId(e.target.value)}
+                >
                   <option value="">—</option>
-                  {contas.filter((c) => c.ativa).map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nome}
-                    </option>
-                  ))}
+                  {contas
+                    .filter((c) => c.ativa)
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.nome}
+                      </option>
+                    ))}
                 </select>
               </label>
             </div>
             <div className="modal__botoes modal__botoes--inline">
-              <button type="button" className="btn btn--secondary" onClick={() => setMostrarReceberPagar(false)} disabled={acaoLoading}>
+              <button
+                type="button"
+                className="btn btn--secondary"
+                onClick={() => setMostrarReceberPagar(false)}
+                disabled={acaoLoading}
+              >
                 Voltar
               </button>
-              <button type="button" className="btn btn--primary" onClick={() => void executarReceberPagar()} disabled={acaoLoading}>
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => void executarReceberPagar()}
+                disabled={acaoLoading}
+              >
                 Confirmar
               </button>
             </div>
@@ -286,21 +331,41 @@ export default function LivroCaixaDetalheModal({
         )}
 
         <div className="modal__botoes">
-          <button type="button" className="btn btn--secondary" onClick={onFechar} disabled={acaoLoading}>
+          <button
+            type="button"
+            className="btn btn--secondary"
+            onClick={onFechar}
+            disabled={acaoLoading}
+          >
             Fechar
           </button>
           {movimentacao.editavel && (
-            <button type="button" className="btn btn--secondary" onClick={() => onEditar(movimentacao)} disabled={acaoLoading}>
+            <button
+              type="button"
+              className="btn btn--secondary"
+              onClick={() => onEditar(movimentacao)}
+              disabled={acaoLoading}
+            >
               Editar
             </button>
           )}
           {podeCancelar && (
-            <button type="button" className="btn btn--secondary" onClick={() => void executarCancelar()} disabled={acaoLoading}>
+            <button
+              type="button"
+              className="btn btn--secondary"
+              onClick={() => void executarCancelar()}
+              disabled={acaoLoading}
+            >
               Cancelar movimentação
             </button>
           )}
           {(podeReceber || podePagar) && !mostrarReceberPagar && (
-            <button type="button" className="btn btn--primary" onClick={() => setMostrarReceberPagar(true)} disabled={acaoLoading}>
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={() => setMostrarReceberPagar(true)}
+              disabled={acaoLoading}
+            >
               {movimentacao.tipo === "ENTRADA" ? "Receber" : "Pagar"}
             </button>
           )}

@@ -43,7 +43,12 @@ export default function TaxSimulatorPage() {
       {erro && (
         <div className="page-reforma__erro tax-sim__erro-global" role="alert">
           {erro}
-          <button type="button" className="page-reforma__erro-fechar" onClick={() => setErro(null)} aria-label="Fechar">
+          <button
+            type="button"
+            className="page-reforma__erro-fechar"
+            onClick={() => setErro(null)}
+            aria-label="Fechar"
+          >
             ×
           </button>
         </div>

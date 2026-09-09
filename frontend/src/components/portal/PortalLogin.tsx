@@ -67,38 +67,48 @@ export default function PortalLogin() {
 
   return (
     <PortalAuthShell titulo="Entrar">
-        {erro && (
-          <p className="portal-auth__erro" role="alert">
-            {erro}
-          </p>
-        )}
+      {erro && (
+        <p className="portal-auth__erro" role="alert">
+          {erro}
+        </p>
+      )}
 
-        <form className="portal-auth__form" onSubmit={handleSubmit}>
-          <label className="portal-field" htmlFor="portal-cpf">
-            <span className="portal-field__label">CPF ou CNPJ</span>
-            <input
-              id="portal-cpf"
-              type="text"
-              className="portal-field__input"
-              inputMode="numeric"
-              autoComplete="username"
-              value={cpfCnpj}
-              onChange={(e) => setCpfCnpj(maskCpfCnpj(e.target.value))}
-              placeholder="000.000.000-00"
-              required
-            />
-          </label>
-          <CampoSenha id="portal-senha" label="Senha" value={senha} onChange={setSenha} autoComplete="current-password" />
-          <button type="submit" className="portal-btn portal-btn--primary portal-auth__submit" disabled={loading}>
-            {loading ? "Entrando…" : "Entrar"}
-          </button>
-        </form>
+      <form className="portal-auth__form" onSubmit={handleSubmit}>
+        <label className="portal-field" htmlFor="portal-cpf">
+          <span className="portal-field__label">CPF ou CNPJ</span>
+          <input
+            id="portal-cpf"
+            type="text"
+            className="portal-field__input"
+            inputMode="numeric"
+            autoComplete="username"
+            value={cpfCnpj}
+            onChange={(e) => setCpfCnpj(maskCpfCnpj(e.target.value))}
+            placeholder="000.000.000-00"
+            required
+          />
+        </label>
+        <CampoSenha
+          id="portal-senha"
+          label="Senha"
+          value={senha}
+          onChange={setSenha}
+          autoComplete="current-password"
+        />
+        <button
+          type="submit"
+          className="portal-btn portal-btn--primary portal-auth__submit"
+          disabled={loading}
+        >
+          {loading ? "Entrando…" : "Entrar"}
+        </button>
+      </form>
 
-        <div className="portal-auth__links">
-          <Link to="/portal/primeiro-acesso">Primeiro acesso</Link>
-          <Link to="/portal/recuperar-senha">Esqueci minha senha</Link>
-          <Link to="/">Voltar ao site</Link>
-        </div>
+      <div className="portal-auth__links">
+        <Link to="/portal/primeiro-acesso">Primeiro acesso</Link>
+        <Link to="/portal/recuperar-senha">Esqueci minha senha</Link>
+        <Link to="/">Voltar ao site</Link>
+      </div>
     </PortalAuthShell>
   );
 }

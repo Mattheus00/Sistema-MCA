@@ -87,8 +87,8 @@ export default function WebUsuariosAtivos({ embedded = false }: WebUsuariosAtivo
         setErro(
           getApiErrorMessage(
             e,
-            "Você não tem permissão para essa ação, ou o usuário não pode ser revogado."
-          )
+            "Você não tem permissão para essa ação, ou o usuário não pode ser revogado.",
+          ),
         );
         return;
       }
@@ -155,7 +155,9 @@ export default function WebUsuariosAtivos({ embedded = false }: WebUsuariosAtivo
                         <tr key={u.usuarioId}>
                           <td>{u.nome}</td>
                           <td>
-                            <span className="page-usuarios-ativos__tel">{u.telefone?.trim() || "—"}</span>
+                            <span className="page-usuarios-ativos__tel">
+                              {u.telefone?.trim() || "—"}
+                            </span>
                             <span className="page-usuarios-ativos__sep" aria-hidden>
                               {" "}
                               /{" "}
@@ -238,8 +240,18 @@ export default function WebUsuariosAtivos({ embedded = false }: WebUsuariosAtivo
       </section>
 
       {confirmar && (
-        <div className="modal-overlay" onClick={() => !revogandoId && setConfirmar(null)} role="presentation">
-          <div className="modal modal--confirmar-exclusao" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="modal-revogar-titulo">
+        <div
+          className="modal-overlay"
+          onClick={() => !revogandoId && setConfirmar(null)}
+          role="presentation"
+        >
+          <div
+            className="modal modal--confirmar-exclusao"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-revogar-titulo"
+          >
             <h2 className="modal__titulo" id="modal-revogar-titulo">
               Revogar acesso?
             </h2>
@@ -250,7 +262,12 @@ export default function WebUsuariosAtivos({ embedded = false }: WebUsuariosAtivo
               <strong>{confirmar.nome}</strong> — {confirmar.login}
             </p>
             <div className="modal__botoes modal__botoes--duplo">
-              <button type="button" className="btn btn--secondary" disabled={!!revogandoId} onClick={() => setConfirmar(null)}>
+              <button
+                type="button"
+                className="btn btn--secondary"
+                disabled={!!revogandoId}
+                onClick={() => setConfirmar(null)}
+              >
                 Cancelar
               </button>
               <button

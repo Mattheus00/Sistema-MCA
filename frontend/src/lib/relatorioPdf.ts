@@ -12,12 +12,7 @@ import type {
 import { mesReferenciaPagamentoRecebido } from "@/lib/apiNormalizers";
 
 export type RelatorioAbaId =
-  | "ranking"
-  | "extrato"
-  | "inadimplencia"
-  | "pagamentos"
-  | "aging"
-  | "efetividade";
+  "ranking" | "extrato" | "inadimplencia" | "pagamentos" | "aging" | "efetividade";
 
 export type DadosRelatorioPdf = {
   aba: RelatorioAbaId;
@@ -168,9 +163,12 @@ export function exportarRelatorioPdf(d: DadosRelatorioPdf): void {
   let y = yInicial;
 
   if (d.aba === "ranking" && d.ranking?.length) {
-    y = texto(doc, [
-      `Período: ${labelPeriodoRanking(d.filtroPeriodo)} | Limite: Top ${d.filtroLimit ?? 20}`,
-    ], y, margem);
+    y = texto(
+      doc,
+      [`Período: ${labelPeriodoRanking(d.filtroPeriodo)} | Limite: Top ${d.filtroLimit ?? 20}`],
+      y,
+      margem,
+    );
 
     autoTable(doc, {
       startY: y,
@@ -207,7 +205,7 @@ export function exportarRelatorioPdf(d: DadosRelatorioPdf): void {
         `Dívidas vencidas no período: ${p.dividasVencidasNoPeriodo} (${formatarMoeda(p.valorVencidoNoPeriodo)})`,
       ],
       y,
-      margem
+      margem,
     );
 
     autoTable(doc, {
@@ -241,7 +239,7 @@ export function exportarRelatorioPdf(d: DadosRelatorioPdf): void {
         `Valor total recebido: ${formatarMoeda(total)}`,
       ],
       y,
-      margem
+      margem,
     );
 
     if (pagRec && pagRec.detalhamento.length > 0) {
@@ -281,7 +279,8 @@ export function exportarRelatorioPdf(d: DadosRelatorioPdf): void {
       columnStyles: { 1: { halign: "center" }, 2: { halign: "right" }, 3: { halign: "right" } },
     });
 
-    const finalY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? y;
+    const finalY =
+      (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? y;
     texto(doc, [`Valor total geral: ${formatarMoeda(a.valorTotalGeral)}`], finalY + 8, margem);
   }
 
@@ -297,7 +296,7 @@ export function exportarRelatorioPdf(d: DadosRelatorioPdf): void {
     ];
     if (e.comparativoAnterior) {
       linhas.push(
-        `Comparativo: ${e.comparativoAnterior.periodo} ${e.comparativoAnterior.taxaConversao}% → este mês ${e.taxaConversao}% (${e.comparativoAnterior.variacaoPp >= 0 ? "+" : ""}${e.comparativoAnterior.variacaoPp} pp)`
+        `Comparativo: ${e.comparativoAnterior.periodo} ${e.comparativoAnterior.taxaConversao}% → este mês ${e.taxaConversao}% (${e.comparativoAnterior.variacaoPp >= 0 ? "+" : ""}${e.comparativoAnterior.variacaoPp} pp)`,
       );
     }
     texto(doc, linhas, y, margem);
@@ -314,7 +313,7 @@ export function exportarRelatorioPdf(d: DadosRelatorioPdf): void {
         `Saldo devedor total: ${formatarMoeda(ex.cliente.saldoDevedorTotal)}`,
       ],
       y,
-      margem
+      margem,
     );
 
     doc.setFont("helvetica", "bold");

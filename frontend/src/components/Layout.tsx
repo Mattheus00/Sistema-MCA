@@ -1,70 +1,136 @@
-import { useEffect, useState, type ComponentType } from 'react'
-import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { clearAuthSession, getAuthToken, getAuthUserDisplay, getAuthUserProfile, isMockEnabled } from '@/lib/api'
-import { iniciaisNome, labelPerfilUsuario } from '@/lib/dashboardUtils'
+import { useEffect, useState, type ComponentType } from "react";
+import { Link, NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
+import {
+  clearAuthSession,
+  getAuthToken,
+  getAuthUserDisplay,
+  getAuthUserProfile,
+  isMockEnabled,
+} from "@/lib/api";
+import { iniciaisNome, labelPerfilUsuario } from "@/lib/dashboardUtils";
 
 type NavItem = {
-  to: string
-  label: string
-  icon: ComponentType
-  badge?: string
-}
+  to: string;
+  label: string;
+  icon: ComponentType;
+  badge?: string;
+};
 
 function GridIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <rect x="3" y="3" width="7" height="7" rx="1" />
       <rect x="14" y="3" width="7" height="7" rx="1" />
       <rect x="14" y="14" width="7" height="7" rx="1" />
       <rect x="3" y="14" width="7" height="7" rx="1" />
     </svg>
-  )
+  );
 }
 
 function PeopleIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </svg>
-  )
+  );
 }
 
 function AlertIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="10" />
       <line x1="12" y1="8" x2="12" y2="12" />
       <line x1="12" y1="16" x2="12.01" y2="16" />
     </svg>
-  )
+  );
 }
 
 function ChartIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <line x1="18" y1="20" x2="18" y2="10" />
       <line x1="12" y1="20" x2="12" y2="4" />
       <line x1="6" y1="20" x2="6" y2="14" />
     </svg>
-  )
+  );
 }
 
 function ServicesIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <rect x="3" y="4" width="18" height="14" rx="2" />
       <path d="M3 10h18" />
       <path d="M9 16h6" />
     </svg>
-  )
+  );
 }
 
 function CalculatorIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <rect x="4" y="2" width="16" height="20" rx="2" />
       <path d="M8 6h8" />
       <path d="M8 10h1" />
@@ -76,45 +142,85 @@ function CalculatorIcon() {
       <path d="M17 10h-1" />
       <path d="M17 14h-1" />
     </svg>
-  )
+  );
 }
 
 function EmailAttachIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
       <path d="M4 20h4" />
       <path d="M4 16v4" />
     </svg>
-  )
+  );
 }
 
 function UserIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
       <circle cx="12" cy="7" r="4" />
     </svg>
-  )
+  );
 }
 
 function WalletIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
       <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
       <path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z" />
     </svg>
-  )
+  );
 }
 
 function ChecklistIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M9 11l3 3L22 4" />
       <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
     </svg>
-  )
+  );
 }
 
 function NavPill({
@@ -127,8 +233,8 @@ function NavPill({
   return (
     <NavLink
       to={to}
-      end={to === '/dashboard'}
-      className={({ isActive }) => `app-nav-pill${isActive ? ' app-nav-pill--active' : ''}`}
+      end={to === "/dashboard"}
+      className={({ isActive }) => `app-nav-pill${isActive ? " app-nav-pill--active" : ""}`}
       onClick={onNavigate}
     >
       <span className="app-nav-pill__icon">
@@ -137,74 +243,83 @@ function NavPill({
       <span className="app-nav-pill__label">{label}</span>
       {badge && <span className="app-nav-pill__badge">{badge}</span>}
     </NavLink>
-  )
+  );
 }
 
 export default function Layout() {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const showSair = !isMockEnabled() && !!getAuthToken()
-  const userDisplay = getAuthUserDisplay() || 'Usuário'
-  const userProfile = getAuthUserProfile()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const isProprietaria = userProfile === 'PROPRIETARIA'
-  const isFuncionario = userProfile === 'FUNCIONARIO'
-  const podeVerEnvioBoletos = userProfile === 'PROPRIETARIA' || userProfile === 'RESPONSAVEL_FINANCEIRO'
-  const podeVerLivroCaixa = podeVerEnvioBoletos
+  const navigate = useNavigate();
+  const location = useLocation();
+  const showSair = !isMockEnabled() && !!getAuthToken();
+  const userDisplay = getAuthUserDisplay() || "Usuário";
+  const userProfile = getAuthUserProfile();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isProprietaria = userProfile === "PROPRIETARIA";
+  const isFuncionario = userProfile === "FUNCIONARIO";
+  const podeVerEnvioBoletos =
+    userProfile === "PROPRIETARIA" || userProfile === "RESPONSAVEL_FINANCEIRO";
+  const podeVerLivroCaixa = podeVerEnvioBoletos;
   const navItems: NavItem[] = isFuncionario
     ? [
-        { to: '/clientes', label: 'Clientes', icon: PeopleIcon },
-        { to: '/inadimplentes', label: 'Inadimplentes', icon: AlertIcon },
-        { to: '/tarefas', label: 'Tarefas', icon: ChecklistIcon },
+        { to: "/clientes", label: "Clientes", icon: PeopleIcon },
+        { to: "/inadimplentes", label: "Inadimplentes", icon: AlertIcon },
+        { to: "/tarefas", label: "Tarefas", icon: ChecklistIcon },
       ]
     : [
-        { to: '/dashboard', label: 'Dashboard', icon: GridIcon },
-        { to: '/clientes', label: 'Clientes', icon: PeopleIcon },
-        { to: '/inadimplentes', label: 'Inadimplentes', icon: AlertIcon },
-        { to: '/tarefas', label: 'Tarefas', icon: ChecklistIcon },
-        { to: '/servicos', label: 'Serviços', icon: ServicesIcon },
-        { to: '/reforma-tributaria', label: 'Simulador', icon: CalculatorIcon },
-        { to: '/relatorios', label: 'Relatórios', icon: ChartIcon },
-        ...(podeVerLivroCaixa ? [{ to: '/livro-caixa', label: 'Livro Caixa', icon: WalletIcon }] : []),
-        ...(podeVerEnvioBoletos ? [{ to: '/envio-boletos', label: 'Envio de boletos', icon: EmailAttachIcon }] : []),
-        ...(isProprietaria ? [{ to: '/usuarios', label: 'Usuários', icon: UserIcon }] : []),
-      ]
+        { to: "/dashboard", label: "Dashboard", icon: GridIcon },
+        { to: "/clientes", label: "Clientes", icon: PeopleIcon },
+        { to: "/inadimplentes", label: "Inadimplentes", icon: AlertIcon },
+        { to: "/tarefas", label: "Tarefas", icon: ChecklistIcon },
+        { to: "/servicos", label: "Serviços", icon: ServicesIcon },
+        { to: "/reforma-tributaria", label: "Simulador", icon: CalculatorIcon },
+        { to: "/relatorios", label: "Relatórios", icon: ChartIcon },
+        ...(podeVerLivroCaixa
+          ? [{ to: "/livro-caixa", label: "Livro Caixa", icon: WalletIcon }]
+          : []),
+        ...(podeVerEnvioBoletos
+          ? [{ to: "/envio-boletos", label: "Envio de boletos", icon: EmailAttachIcon }]
+          : []),
+        ...(isProprietaria ? [{ to: "/usuarios", label: "Usuários", icon: UserIcon }] : []),
+      ];
 
   function handleSair() {
-    clearAuthSession()
-    navigate('/login', { replace: true })
+    clearAuthSession();
+    navigate("/login", { replace: true });
   }
 
   function fecharMenuMobile() {
-    setMobileMenuOpen(false)
+    setMobileMenuOpen(false);
   }
 
   useEffect(() => {
-    setMobileMenuOpen(false)
-  }, [location.pathname])
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
-    document.body.style.overflow = mobileMenuOpen ? 'hidden' : ''
+    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
     return () => {
-      document.body.style.overflow = ''
-    }
-  }, [mobileMenuOpen])
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
 
   return (
-    <div className={`app-layout${mobileMenuOpen ? ' app-layout--nav-open' : ''}`}>
+    <div className={`app-layout${mobileMenuOpen ? " app-layout--nav-open" : ""}`}>
       <header className="app-header">
         <div className="app-header__bar">
           <button
             type="button"
             className="app-header__menu-btn"
             onClick={() => setMobileMenuOpen((open) => !open)}
-            aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
+            aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
             aria-expanded={mobileMenuOpen}
           >
             <MenuIcon open={mobileMenuOpen} />
           </button>
 
-          <Link to="/" className="app-header__brand" aria-label="Contabilidade São Judas Tadeu — ir para página institucional">
+          <Link
+            to="/"
+            className="app-header__brand"
+            aria-label="Contabilidade São Judas Tadeu — ir para página institucional"
+          >
             <span className="app-header__brand-logo">
               <LogoIcon />
             </span>
@@ -245,7 +360,10 @@ export default function Layout() {
             onClick={fecharMenuMobile}
             aria-label="Fechar menu"
           />
-          <nav className="app-header__nav app-header__nav--mobile" aria-label="Menu principal mobile">
+          <nav
+            className="app-header__nav app-header__nav--mobile"
+            aria-label="Menu principal mobile"
+          >
             <div className="app-header__mobile-user">
               <span className="app-header__user-avatar" aria-hidden="true">
                 {iniciaisNome(userDisplay)}
@@ -259,7 +377,11 @@ export default function Layout() {
               <NavPill key={item.to} {...item} onNavigate={fecharMenuMobile} />
             ))}
             {showSair && (
-              <button type="button" className="app-header__logout app-header__logout--mobile" onClick={handleSair}>
+              <button
+                type="button"
+                className="app-header__logout app-header__logout--mobile"
+                onClick={handleSair}
+              >
                 Sair
               </button>
             )}
@@ -273,12 +395,21 @@ export default function Layout() {
         </main>
       </div>
     </div>
-  )
+  );
 }
 
 function MenuIcon({ open }: { open: boolean }) {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
       {open ? (
         <>
           <line x1="18" y1="6" x2="6" y2="18" />
@@ -292,12 +423,19 @@ function MenuIcon({ open }: { open: boolean }) {
         </>
       )}
     </svg>
-  )
+  );
 }
 
 function LogoIcon() {
   return (
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <svg
+      width="32"
+      height="32"
+      viewBox="0 0 32 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
       <circle cx="4" cy="28" r="4" fill="#A43F9B" />
       <circle cx="12" cy="28" r="4" fill="#A43F9B" />
       <circle cx="20" cy="28" r="4" fill="#A43F9B" />
@@ -309,5 +447,5 @@ function LogoIcon() {
       <circle cx="28" cy="12" r="4" fill="#A43F9B" />
       <circle cx="28" cy="4" r="4" fill="#A43F9B" />
     </svg>
-  )
+  );
 }

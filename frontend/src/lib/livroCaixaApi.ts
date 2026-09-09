@@ -26,7 +26,8 @@ const BASE = "/api/livro-caixa";
 
 function getApiBaseUrl(): string {
   if (isMockEnabled()) return "";
-  return import.meta.env.VITE_API_URL !== undefined && String(import.meta.env.VITE_API_URL).trim() !== ""
+  return import.meta.env.VITE_API_URL !== undefined &&
+    String(import.meta.env.VITE_API_URL).trim() !== ""
     ? String(import.meta.env.VITE_API_URL).replace(/\/$/, "")
     : "http://localhost:8080";
 }
@@ -98,7 +99,12 @@ export function normalizeMovimentacaoFromApi(raw: Record<string, unknown>): Movi
     descricao: str(raw.descricao),
     valor: num(raw.valor),
     categoriaId: raw.categoriaId != null ? String(raw.categoriaId) : undefined,
-    categoriaNome: raw.categoriaNome != null ? String(raw.categoriaNome) : raw.categoria != null ? String(raw.categoria) : undefined,
+    categoriaNome:
+      raw.categoriaNome != null
+        ? String(raw.categoriaNome)
+        : raw.categoria != null
+          ? String(raw.categoria)
+          : undefined,
     formaPagamento: asFormaPagamento(raw.formaPagamento),
     status: asStatusMovimentacao(raw.status),
     dataMovimentacao: str(raw.dataMovimentacao),
@@ -110,7 +116,9 @@ export function normalizeMovimentacaoFromApi(raw: Record<string, unknown>): Movi
   };
 }
 
-export function normalizeMovimentacaoDetalheFromApi(raw: Record<string, unknown>): MovimentacaoDetalhe {
+export function normalizeMovimentacaoDetalheFromApi(
+  raw: Record<string, unknown>,
+): MovimentacaoDetalhe {
   // GET /movimentacoes/{id} retorna { movimentacao, anexos, historico }
   const nested =
     raw.movimentacao && typeof raw.movimentacao === "object"
@@ -190,7 +198,11 @@ export function normalizeMovimentacaoDetalheFromApi(raw: Record<string, unknown>
 
 export function normalizePaginaMovimentacoesFromApi(raw: unknown): PaginaMovimentacoes {
   const data = (raw ?? {}) as Record<string, unknown>;
-  const content = Array.isArray(data.content) ? data.content : Array.isArray(raw) ? (raw as unknown[]) : [];
+  const content = Array.isArray(data.content)
+    ? data.content
+    : Array.isArray(raw)
+      ? (raw as unknown[])
+      : [];
   return {
     content: content.map((item) => normalizeMovimentacaoFromApi(item as Record<string, unknown>)),
     totalElements: num(data.totalElements, content.length),
@@ -301,7 +313,9 @@ export function normalizeRelatorioFromApi(raw: unknown): RelatorioLivroCaixa {
     totalEntradas: num(data.totalEntradas),
     totalSaidas: num(data.totalSaidas),
     saldoFinal: num(data.saldoFinal),
-    movimentacoes: movimentacoes.map((m) => normalizeMovimentacaoFromApi(m as Record<string, unknown>)),
+    movimentacoes: movimentacoes.map((m) =>
+      normalizeMovimentacaoFromApi(m as Record<string, unknown>),
+    ),
     porCategoria: porCategoria.length
       ? porCategoria.map((c) => {
           const item = c as Record<string, unknown>;
@@ -315,7 +329,9 @@ export function normalizeRelatorioFromApi(raw: unknown): RelatorioLivroCaixa {
   };
 }
 
-function buildMovimentacoesQuery(params: ListarMovimentacoesParams): Record<string, string | number> {
+function buildMovimentacoesQuery(
+  params: ListarMovimentacoesParams,
+): Record<string, string | number> {
   const query: Record<string, string | number> = {
     page: params.page ?? 0,
     size: params.size ?? 20,
@@ -344,7 +360,9 @@ export async function obterDashboardLivroCaixa(): Promise<LivroCaixaDashboard> {
   }
 }
 
-export async function listarMovimentacoes(params: ListarMovimentacoesParams = {}): Promise<PaginaMovimentacoes> {
+export async function listarMovimentacoes(
+  params: ListarMovimentacoesParams = {},
+): Promise<PaginaMovimentacoes> {
   try {
     const r = await api.get(`${BASE}/movimentacoes`, { params: buildMovimentacoesQuery(params) });
     return normalizePaginaMovimentacoesFromApi(r.data);
@@ -362,7 +380,9 @@ export async function obterMovimentacao(id: string): Promise<MovimentacaoDetalhe
   }
 }
 
-export async function criarMovimentacao(payload: CriarMovimentacaoPayload): Promise<MovimentacaoDetalhe> {
+export async function criarMovimentacao(
+  payload: CriarMovimentacaoPayload,
+): Promise<MovimentacaoDetalhe> {
   try {
     const r = await api.post(`${BASE}/movimentacoes`, payload);
     return normalizeMovimentacaoDetalheFromApi(r.data as Record<string, unknown>);
@@ -371,7 +391,10 @@ export async function criarMovimentacao(payload: CriarMovimentacaoPayload): Prom
   }
 }
 
-export async function atualizarMovimentacao(id: string, payload: AtualizarMovimentacaoPayload): Promise<MovimentacaoDetalhe> {
+export async function atualizarMovimentacao(
+  id: string,
+  payload: AtualizarMovimentacaoPayload,
+): Promise<MovimentacaoDetalhe> {
   try {
     const r = await api.put(`${BASE}/movimentacoes/${id}`, payload);
     return normalizeMovimentacaoDetalheFromApi(r.data as Record<string, unknown>);
@@ -380,7 +403,10 @@ export async function atualizarMovimentacao(id: string, payload: AtualizarMovime
   }
 }
 
-export async function receberMovimentacao(id: string, payload: ReceberPagarPayload): Promise<MovimentacaoDetalhe> {
+export async function receberMovimentacao(
+  id: string,
+  payload: ReceberPagarPayload,
+): Promise<MovimentacaoDetalhe> {
   try {
     await api.patch(`${BASE}/movimentacoes/${id}/receber`, payload);
     return obterMovimentacao(id);
@@ -389,7 +415,10 @@ export async function receberMovimentacao(id: string, payload: ReceberPagarPaylo
   }
 }
 
-export async function pagarMovimentacao(id: string, payload: ReceberPagarPayload): Promise<MovimentacaoDetalhe> {
+export async function pagarMovimentacao(
+  id: string,
+  payload: ReceberPagarPayload,
+): Promise<MovimentacaoDetalhe> {
   try {
     await api.patch(`${BASE}/movimentacoes/${id}/pagar`, payload);
     return obterMovimentacao(id);
@@ -410,7 +439,11 @@ export async function cancelarMovimentacao(id: string): Promise<MovimentacaoDeta
 export async function listarCategorias(apenasAtivas = true): Promise<CategoriaLivroCaixa[]> {
   try {
     const r = await api.get(`${BASE}/categorias`, { params: apenasAtivas ? { ativas: true } : {} });
-    const list = Array.isArray(r.data) ? r.data : Array.isArray((r.data as Record<string, unknown>)?.content) ? (r.data as Record<string, unknown>).content as unknown[] : [];
+    const list = Array.isArray(r.data)
+      ? r.data
+      : Array.isArray((r.data as Record<string, unknown>)?.content)
+        ? ((r.data as Record<string, unknown>).content as unknown[])
+        : [];
     return list.map((item) => normalizeCategoriaFromApi(item as Record<string, unknown>));
   } catch (e: unknown) {
     throw new Error(getApiErrorMessage(e, "Não foi possível carregar as categorias."));
@@ -426,7 +459,10 @@ export async function criarCategoria(payload: CriarCategoriaPayload): Promise<Ca
   }
 }
 
-export async function atualizarCategoria(id: string, payload: AtualizarCategoriaPayload): Promise<CategoriaLivroCaixa> {
+export async function atualizarCategoria(
+  id: string,
+  payload: AtualizarCategoriaPayload,
+): Promise<CategoriaLivroCaixa> {
   try {
     const r = await api.put(`${BASE}/categorias/${id}`, payload);
     return normalizeCategoriaFromApi(r.data as Record<string, unknown>);
@@ -446,7 +482,11 @@ export async function desativarCategoria(id: string): Promise<void> {
 export async function listarContas(apenasAtivas = true): Promise<ContaLivroCaixa[]> {
   try {
     const r = await api.get(`${BASE}/contas`, { params: apenasAtivas ? { ativas: true } : {} });
-    const list = Array.isArray(r.data) ? r.data : Array.isArray((r.data as Record<string, unknown>)?.content) ? (r.data as Record<string, unknown>).content as unknown[] : [];
+    const list = Array.isArray(r.data)
+      ? r.data
+      : Array.isArray((r.data as Record<string, unknown>)?.content)
+        ? ((r.data as Record<string, unknown>).content as unknown[])
+        : [];
     return list.map((item) => normalizeContaFromApi(item as Record<string, unknown>));
   } catch (e: unknown) {
     throw new Error(getApiErrorMessage(e, "Não foi possível carregar as contas."));
@@ -462,7 +502,10 @@ export async function criarConta(payload: CriarContaPayload): Promise<ContaLivro
   }
 }
 
-export async function atualizarConta(id: string, payload: AtualizarContaPayload): Promise<ContaLivroCaixa> {
+export async function atualizarConta(
+  id: string,
+  payload: AtualizarContaPayload,
+): Promise<ContaLivroCaixa> {
   try {
     const r = await api.put(`${BASE}/contas/${id}`, payload);
     return normalizeContaFromApi(r.data as Record<string, unknown>);
@@ -479,7 +522,10 @@ export async function desativarConta(id: string): Promise<void> {
   }
 }
 
-export async function obterAnaliseLivroCaixa(dataInicio: string, dataFim: string): Promise<AnaliseLivroCaixa> {
+export async function obterAnaliseLivroCaixa(
+  dataInicio: string,
+  dataFim: string,
+): Promise<AnaliseLivroCaixa> {
   try {
     const r = await api.get(`${BASE}/analise`, { params: { dataInicio, dataFim } });
     return normalizeAnaliseFromApi(r.data);
@@ -488,7 +534,10 @@ export async function obterAnaliseLivroCaixa(dataInicio: string, dataFim: string
   }
 }
 
-export async function obterRelatorioLivroCaixa(dataInicio: string, dataFim: string): Promise<RelatorioLivroCaixa> {
+export async function obterRelatorioLivroCaixa(
+  dataInicio: string,
+  dataFim: string,
+): Promise<RelatorioLivroCaixa> {
   try {
     const r = await api.get(`${BASE}/relatorio`, { params: { dataInicio, dataFim } });
     return normalizeRelatorioFromApi(r.data);
@@ -497,7 +546,10 @@ export async function obterRelatorioLivroCaixa(dataInicio: string, dataFim: stri
   }
 }
 
-export async function enviarAnexoMovimentacao(movimentacaoId: string, arquivo: File): Promise<MovimentacaoDetalhe> {
+export async function enviarAnexoMovimentacao(
+  movimentacaoId: string,
+  arquivo: File,
+): Promise<MovimentacaoDetalhe> {
   try {
     const form = new FormData();
     form.append("arquivo", arquivo);
@@ -510,7 +562,11 @@ export async function enviarAnexoMovimentacao(movimentacaoId: string, arquivo: F
   }
 }
 
-export async function baixarAnexoMovimentacao(movimentacaoId: string, anexoId: string, nomeArquivo?: string): Promise<void> {
+export async function baixarAnexoMovimentacao(
+  movimentacaoId: string,
+  anexoId: string,
+  nomeArquivo?: string,
+): Promise<void> {
   const path = `${BASE}/movimentacoes/${movimentacaoId}/anexos/${anexoId}`;
   let blob: Blob;
   if (isMockEnabled()) {

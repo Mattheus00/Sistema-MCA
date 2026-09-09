@@ -41,8 +41,12 @@ export default function QuickSimulatorTab({ onError }: QuickSimulatorTabProps) {
   useEffect(() => {
     if (profile !== "PERSONALIZADA") {
       const rates = getDefaultRates(year, profile);
-      setCbsPercent(rates.cbs.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-      setIbsPercent(rates.ibs.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+      setCbsPercent(
+        rates.cbs.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      );
+      setIbsPercent(
+        rates.ibs.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      );
     }
   }, [year, profile]);
 
@@ -142,7 +146,11 @@ export default function QuickSimulatorTab({ onError }: QuickSimulatorTabProps) {
 
             <label className="tax-sim__label">
               Ano da simulação
-              <select className="tax-sim__select" value={year} onChange={(e) => setYear(e.target.value as SimulationYear)}>
+              <select
+                className="tax-sim__select"
+                value={year}
+                onChange={(e) => setYear(e.target.value as SimulationYear)}
+              >
                 {YEAR_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
@@ -207,19 +215,28 @@ export default function QuickSimulatorTab({ onError }: QuickSimulatorTabProps) {
             </div>
 
             <label className="tax-sim__checkbox">
-              <input type="checkbox" checked={useApi} onChange={(e) => setUseApi(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={useApi}
+                onChange={(e) => setUseApi(e.target.checked)}
+              />
               Validar também no servidor (quando disponível)
             </label>
 
-            <button type="button" className="btn btn--primary tax-sim__btn" onClick={() => void calcular()} disabled={loading}>
+            <button
+              type="button"
+              className="btn btn--primary tax-sim__btn"
+              onClick={() => void calcular()}
+              disabled={loading}
+            >
               {loading ? "Calculando…" : "Calcular impacto tributário"}
             </button>
           </div>
         </div>
 
         <TaxAlert>
-          Esta é uma simulação estimativa. O resultado pode mudar conforme CNAE, produto, serviço, NCM, município, UF,
-          regime tributário e regras de transição.
+          Esta é uma simulação estimativa. O resultado pode mudar conforme CNAE, produto, serviço,
+          NCM, município, UF, regime tributário e regras de transição.
         </TaxAlert>
 
         {result && <p className="tax-sim__explanation">{explanation}</p>}

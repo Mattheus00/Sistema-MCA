@@ -39,7 +39,9 @@ export default function CnpjRegimeTab({ onError }: CnpjRegimeTabProps) {
     setResult(null);
     setLoading(true);
     try {
-      const res = await api.get<{ nomeEmpresa?: string; regime?: string }>(`/api/tributos/regime/${digits}`);
+      const res = await api.get<{ nomeEmpresa?: string; regime?: string }>(
+        `/api/tributos/regime/${digits}`,
+      );
       setResult({
         nomeEmpresa: String(res.data?.nomeEmpresa ?? ""),
         regime: String(res.data?.regime ?? ""),
@@ -57,7 +59,9 @@ export default function CnpjRegimeTab({ onError }: CnpjRegimeTabProps) {
   return (
     <div className="tax-sim__card">
       <h2 className="tax-sim__card-title">Regime sugerido por CNPJ</h2>
-      <p className="tax-sim__card-desc">Consulta opcional para apoiar a definição do perfil tributário na simulação.</p>
+      <p className="tax-sim__card-desc">
+        Consulta opcional para apoiar a definição do perfil tributário na simulação.
+      </p>
       <div className="tax-sim__inline">
         <input
           className="tax-sim__input"
