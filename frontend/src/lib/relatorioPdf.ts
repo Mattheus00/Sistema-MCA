@@ -1,5 +1,5 @@
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
+import type { jsPDF } from "jspdf";
+import type autoTable from "jspdf-autotable";
 import type {
   AgingRelatorio,
   EfetividadeCobrancaRelatorio,
@@ -76,8 +76,19 @@ function labelPeriodoRanking(filtro?: string) {
   return "Período personalizado";
 }
 
-function criarDocumento(titulo: string) {
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+type AutoTable = typeof autoTable;
+
+/** Carrega jspdf/jspdf-autotable sob demanda para não pesar o bundle inicial. */
+async function carregarJsPdf(): Promise<{ jsPDF: typeof jsPDF; autoTable: AutoTable }> {
+  const [{ jsPDF }, { default: autoTable }] = await Promise.all([
+    import("jspdf"),
+    import("jspdf-autotable"),
+  ]);
+  return { jsPDF, autoTable };
+}
+
+function criarDocumento(JsPdf: typeof jsPDF, titulo: string) {
+  const doc = new JsPdf({ orientation: "portrait", unit: "mm", format: "a4" });
   const margem = 14;
   let y = 18;
 
@@ -153,13 +164,14 @@ function temDados(d: DadosRelatorioPdf): boolean {
 }
 
 /** Gera e baixa PDF apenas com os dados do relatório (sem captura da tela). */
-export function exportarRelatorioPdf(d: DadosRelatorioPdf): void {
+export async function exportarRelatorioPdf(d: DadosRelatorioPdf): Promise<void> {
   if (!temDados(d)) {
     throw new Error("Não há dados para gerar o PDF. Carregue o relatório e tente novamente.");
   }
 
+  const { jsPDF: JsPdf, autoTable } = await carregarJsPdf();
   const titulo = TITULOS[d.aba];
-  const { doc, margem, y: yInicial } = criarDocumento(titulo);
+  const { doc, margem, y: yInicial } = criarDocumento(JsPdf, titulo);
   let y = yInicial;
 
   if (d.aba === "ranking" && d.ranking?.length) {

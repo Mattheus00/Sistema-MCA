@@ -817,7 +817,7 @@ export default function Login() {
             )}
           </p>
 
-          {isMockEnabled() && (
+          {import.meta.env.DEV && isMockEnabled() && (
             <p className="page-login__mock-hint">
               Modo mock: proprietaria / financeiro / funcionario — senha 123456.
             </p>

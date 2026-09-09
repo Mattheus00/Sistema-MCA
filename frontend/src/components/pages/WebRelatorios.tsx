@@ -493,9 +493,9 @@ export default function WebRelatorios() {
     exportarCSV("aging", cabecalhos, linhas);
   };
 
-  function gerarRelatorioPdf(dados: DadosRelatorioPdf) {
+  async function gerarRelatorioPdf(dados: DadosRelatorioPdf) {
     try {
-      exportarRelatorioPdf(dados);
+      await exportarRelatorioPdf(dados);
     } catch (e: unknown) {
       setErro(e instanceof Error ? e.message : "Não foi possível gerar o PDF.");
     }

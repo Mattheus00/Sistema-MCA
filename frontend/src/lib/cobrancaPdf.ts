@@ -1,5 +1,3 @@
-import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
 import type { Inadimplencia } from "@/types/api";
 import { buildAvisoPendenciaHtml, fetchPixQrCodeDataUrl } from "@/lib/avisoPendenciaHtml";
 
@@ -159,6 +157,12 @@ async function renderHtmlToPdfBlob(html: string): Promise<Blob> {
 
     const cssHeight = Math.ceil(documento.scrollHeight);
     const blocks = collectPdfBlocks(documento);
+
+    // Bibliotecas pesadas carregadas sob demanda (fora do bundle inicial).
+    const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+      import("html2canvas"),
+      import("jspdf"),
+    ]);
 
     const canvas = await html2canvas(documento, {
       scale: 2,

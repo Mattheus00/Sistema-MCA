@@ -1,9 +1,14 @@
-import axios, { type AxiosError } from "axios";
+import axios, { type AxiosError, type AxiosInstance } from "axios";
 import type { ApiErrorBody, Inadimplencia, PerfilUsuario } from "@/types/api";
 import { normalizeInadimplenciaFromApi } from "@/lib/apiNormalizers";
-import { createMockClient, isMockEnabled } from "./mockApi";
 
-export { isMockEnabled } from "./mockApi";
+/**
+ * Mock em memória (VITE_USE_MOCK=true) só existe em desenvolvimento: o módulo `mockApi`
+ * é carregado por import dinâmico em `setupApiClient()` e não entra no bundle de produção.
+ */
+export const isMockEnabled = (): boolean =>
+  import.meta.env.DEV &&
+  (import.meta.env.VITE_USE_MOCK === "true" || import.meta.env.VITE_USE_MOCK === "1");
 
 /** URL base do backend. Evita requisições irem para o servidor do front (Vite). */
 const baseURL =
@@ -19,8 +24,24 @@ const axiosInstance = axios.create({
   },
 });
 
-/** Em modo mock (VITE_USE_MOCK=true) usa dados em memória; senão usa o backend real */
-export const api = isMockEnabled() ? (createMockClient() as typeof axiosInstance) : axiosInstance;
+/** Subconjunto do axios usado pela aplicação; o mock implementa a mesma interface. */
+export type ApiClient = Pick<AxiosInstance, "get" | "post" | "put" | "patch" | "delete">;
+
+/**
+ * Cliente HTTP da aplicação. Por padrão é o axios apontando para o backend; em modo mock
+ * (apenas dev) `setupApiClient()` troca pelo cliente em memória antes do primeiro render.
+ * `export let` mantém o binding vivo para todos os consumidores de `import { api }`.
+ */
+export let api: ApiClient = axiosInstance;
+
+/** Resolve o cliente HTTP (mock em dev quando habilitado). Deve rodar antes do `createRoot`. */
+export async function setupApiClient(): Promise<void> {
+  // `import.meta.env.DEV` literal aqui permite ao bundler eliminar o import em produção.
+  if (import.meta.env.DEV && isMockEnabled()) {
+    const { createMockClient } = await import("./mockApi");
+    api = createMockClient() as ApiClient;
+  }
+}
 
 /** Chave onde o token de autenticação é guardado (quando o backend exigir) */
 export const AUTH_TOKEN_KEY = "sgi_token";

@@ -419,8 +419,14 @@ function seedPortalMockData() {
   });
 }
 
-seedScreenshotDemoData();
-seedPortalMockData();
+let seeded = false;
+/** Popula os dados iniciais uma única vez; chamado apenas por `createMockClient`. */
+function seedMockData(): void {
+  if (seeded) return;
+  seeded = true;
+  seedScreenshotDemoData();
+  seedPortalMockData();
+}
 
 function nextIdCliente(): string {
   return String(nextId++);
@@ -650,6 +656,7 @@ function sincronizarDocumentosPortalParaStaff() {
 }
 
 export function createMockClient() {
+  seedMockData();
   return {
     get<T = unknown>(url: string, config?: { params?: Record<string, unknown> }) {
       if (url.startsWith("/api/livro-caixa")) {
@@ -1880,6 +1887,3 @@ export function createMockClient() {
     },
   };
 }
-
-export const isMockEnabled = () =>
-  import.meta.env.VITE_USE_MOCK === "true" || import.meta.env.VITE_USE_MOCK === "1";
