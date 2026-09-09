@@ -8,6 +8,7 @@ import ModalPagamento from "@/components/inadimplentes/ModalPagamento";
 import ModalPdfConsolidado from "@/components/inadimplentes/ModalPdfConsolidado";
 import { telefoneClienteHonorarios } from "@/hooks/honorariosClienteActions";
 import { useHonorariosCliente } from "@/hooks/useHonorariosCliente";
+import "@/styles/pages/inadimplentes.css";
 
 export default function WebInadimplentesHonorarios() {
   const {

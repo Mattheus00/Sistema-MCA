@@ -10,6 +10,7 @@ import { invalidateDashboard } from "@/lib/dashboardRefresh";
 import { formatCpfCnpj } from "@/lib/inadimplentesUtils";
 import type { Cliente, ServicoResumo } from "@/types/api";
 import ResponsiveList from "@/components/ui/ResponsiveList";
+import "@/styles/pages/inadimplentes.css";
 
 type MensalidadeRow = {
   rowId: number;

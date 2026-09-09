@@ -8,6 +8,7 @@ import { diasEmAtraso, isInadimplenciaEmAberto } from "@/lib/inadimplentesUtils"
 import type { Inadimplencia } from "@/types/api";
 import AdminItemCard from "@/components/ui/AdminItemCard";
 import ResponsiveList from "@/components/ui/ResponsiveList";
+import "@/styles/pages/inadimplentes.css";
 
 export default function WebInadimplentes() {
   const navigate = useNavigate();

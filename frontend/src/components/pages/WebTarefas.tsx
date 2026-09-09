@@ -35,6 +35,8 @@ import type {
   TarefaDetalhe,
   TarefaResumo,
 } from "@/types/tarefas";
+import "@/styles/pages/dashboard.css";
+import "@/styles/pages/tarefas.css";
 
 function IconAberto() {
   return (

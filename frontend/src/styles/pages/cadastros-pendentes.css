@@ -1,0 +1,40 @@
+/* Cadastros pendentes */
+
+.page-cadastros-pendentes {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.page-cadastros-pendentes__title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.page-cadastros-pendentes__erro {
+  margin: 0;
+  color: #dc2626;
+}
+
+/* Coluna AÃ§Ã£o: tÃ­tulo e botÃµes centralizados na coluna */
+
+.page-cadastros-pendentes__acao {
+  vertical-align: middle;
+  width: 1%;
+  white-space: nowrap;
+}
+
+.page-inadimplentes__tabela th.page-cadastros-pendentes__acao,
+.page-inadimplentes__tabela td.page-cadastros-pendentes__acao {
+  text-align: center;
+}
+
+.page-cadastros-pendentes__acao-inner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  gap: 8px;
+}

@@ -11,6 +11,7 @@ import Box from "@mui/material/Box";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import Typography from "@mui/material/Typography";
+import "@/styles/pages/relatorios.css";
 
 const ABAS = [
   { id: "ranking", label: "Ranking Devedores" },

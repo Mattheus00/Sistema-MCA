@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getApiErrorMessage } from "@/lib/api";
 import { cadastrarUsuario } from "@/lib/usuariosApi";
 import type { CadastroUsuarioPayload } from "@/types/api";
+import "@/styles/pages/cadastro-usuario.css";
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());

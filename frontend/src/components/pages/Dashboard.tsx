@@ -15,6 +15,7 @@ import {
   type PeriodoChart,
   type PeriodoEvolucao,
 } from "@/hooks/useDashboardData";
+import "@/styles/pages/dashboard.css";
 
 export default function Dashboard() {
   const [periodoChart, setPeriodoChart] = useState<PeriodoChart>(30);

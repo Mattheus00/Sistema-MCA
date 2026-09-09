@@ -1,0 +1,142 @@
+/* Cadastro de usuÃ¡rio */
+
+.page-cadastro-usuario {
+  max-width: 560px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+  padding: 28px;
+}
+
+.page-cadastro-usuario__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 24px;
+}
+
+.page-cadastro-usuario__form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.page-cadastro-usuario__form .modal__label {
+  margin-bottom: 4px;
+}
+
+.page-cadastro-usuario__row {
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+}
+
+.page-cadastro-usuario__row--toggle {
+  flex-wrap: wrap;
+}
+
+.page-cadastro-usuario__row--toggle .page-cadastro-usuario__field {
+  flex: 1;
+  min-width: 200px;
+}
+
+.page-cadastro-usuario__toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.page-cadastro-usuario__toggle-label {
+  font-size: 0.875rem;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.page-cadastro-usuario__toggle {
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background: #d1d5db;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.page-cadastro-usuario__toggle--on {
+  background: var(--cor-principal);
+}
+
+.page-cadastro-usuario__toggle-thumb {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+
+.page-cadastro-usuario__toggle--on .page-cadastro-usuario__toggle-thumb {
+  transform: translateX(20px);
+}
+
+.page-cadastro-usuario__row--two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.page-cadastro-usuario__field--with-add .modal__input {
+  flex: 1;
+}
+
+.page-cadastro-usuario__input-add {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.page-cadastro-usuario__input-add .modal__input {
+  flex: 1;
+  min-width: 0;
+}
+
+.page-cadastro-usuario__add-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid #e5e5e5;
+  background: #fff;
+  color: var(--cor-principal);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.page-cadastro-usuario__add-btn:hover {
+  background: #f5f5f5;
+  border-color: var(--cor-principal);
+}
+
+.page-cadastro-usuario__erro {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.page-cadastro-usuario__sucesso {
+  color: #059669;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.page-cadastro-usuario__botoes {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}

@@ -8,6 +8,7 @@ import {
   isMockEnabled,
 } from "@/lib/api";
 import { iniciaisNome, labelPerfilUsuario } from "@/lib/dashboardUtils";
+import "@/styles/components/layout.css";
 
 type NavItem = {
   to: string;

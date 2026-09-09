@@ -7,6 +7,9 @@ import { formatarData } from "@/lib/valorBrasil";
 import type { UsuarioAtivo } from "@/types/api";
 import AdminItemCard from "@/components/ui/AdminItemCard";
 import ResponsiveList from "@/components/ui/ResponsiveList";
+import "@/styles/pages/cadastros-pendentes.css";
+import "@/styles/pages/inadimplentes.css";
+import "@/styles/pages/usuarios-ativos.css";
 
 function labelPerfil(perfil: string): string {
   if (perfil === "PROPRIETARIA") return "Proprietária";

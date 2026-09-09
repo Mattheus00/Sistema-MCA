@@ -9,6 +9,7 @@ import UploadStep from "@/components/envio-boletos/UploadStep";
 import type { AbaPrincipal, EtapaNovo } from "@/hooks/envioBoletosTypes";
 import { useEnvioBoletosLote } from "@/hooks/useEnvioBoletosLote";
 import { useHistoricoLotes } from "@/hooks/useHistoricoLotes";
+import "@/styles/pages/envio-boletos.css";
 
 export default function WebEnvioBoletos() {
   const [aba, setAba] = useState<AbaPrincipal>("novo");

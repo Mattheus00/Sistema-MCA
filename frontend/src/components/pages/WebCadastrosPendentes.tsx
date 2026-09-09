@@ -6,6 +6,8 @@ import { formatarData } from "@/lib/valorBrasil";
 import type { PerfilUsuario, UsuarioPendente } from "@/types/api";
 import AdminItemCard from "@/components/ui/AdminItemCard";
 import ResponsiveList from "@/components/ui/ResponsiveList";
+import "@/styles/pages/cadastros-pendentes.css";
+import "@/styles/pages/inadimplentes.css";
 
 type PerfilAprovacao = Extract<PerfilUsuario, "RESPONSAVEL_FINANCEIRO" | "FUNCIONARIO">;
 

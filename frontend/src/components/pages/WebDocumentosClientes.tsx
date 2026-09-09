@@ -30,6 +30,7 @@ import type {
 } from "@/types/api";
 import AdminItemCard from "@/components/ui/AdminItemCard";
 import ResponsiveList from "@/components/ui/ResponsiveList";
+import "@/styles/pages/documentos-clientes.css";
 
 const TIPOS: TipoDocumentoCliente[] = [
   "COMPROVANTE",

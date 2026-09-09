@@ -9,6 +9,8 @@ import LivroCaixaRelatorio from "@/components/livro-caixa/LivroCaixaRelatorio";
 import LivroCaixaTabela from "@/components/livro-caixa/LivroCaixaTabela";
 import { useLivroCaixaMovimentacoes } from "@/hooks/useLivroCaixaMovimentacoes";
 import { invalidateLivroCaixa } from "@/lib/livroCaixaApi";
+import "@/styles/pages/dashboard.css";
+import "@/styles/pages/livro-caixa.css";
 
 export default function WebLivroCaixa() {
   const {

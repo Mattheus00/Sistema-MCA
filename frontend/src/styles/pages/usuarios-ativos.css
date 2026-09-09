@@ -1,0 +1,26 @@
+.page-usuarios-ativos__intro {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  max-width: 40rem;
+  line-height: 1.5;
+}
+
+.page-usuarios-ativos__sep {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.page-usuarios-ativos__login {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.page-usuarios-ativos__nao-revogar {
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.page-usuarios-ativos__modal-ident {
+  margin-top: 8px;
+}

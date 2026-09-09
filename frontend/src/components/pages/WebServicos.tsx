@@ -6,6 +6,7 @@ import { formatarReaisParaInput, parseValorReais } from "@/lib/valorBrasil";
 import { gerarHtmlRelatorioServicos } from "@/lib/relatorioServicos";
 import AdminItemCard from "@/components/ui/AdminItemCard";
 import ResponsiveList from "@/components/ui/ResponsiveList";
+import "@/styles/pages/servicos.css";
 
 type Servico = {
   id: string;

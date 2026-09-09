@@ -1,0 +1,410 @@
+@media (max-width: 768px) {
+  .page-documentos-clientes__head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+}
+
+/* ========== Documentos do portal (staff) ========== */
+
+.page-documentos-clientes {
+  max-width: 1200px;
+}
+
+.page-documentos-clientes__head {
+  margin-bottom: 24px;
+}
+
+.page-documentos-clientes__contexto {
+  margin: 0 0 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.page-documentos-clientes__titulo {
+  margin: 0 0 6px;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.page-documentos-clientes__subtitulo {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.page-documentos-clientes__erro {
+  margin: 0 0 16px;
+  color: #dc2626;
+  font-size: 0.9375rem;
+}
+
+.page-documentos-clientes__cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.page-documentos-clientes__card {
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.page-documentos-clientes__card:hover {
+  border-color: rgba(164, 63, 155, 0.35);
+}
+
+.page-documentos-clientes__card--ativa {
+  border-color: var(--cor-principal);
+  box-shadow: 0 0 0 1px rgba(164, 63, 155, 0.2);
+}
+
+.page-documentos-clientes__card-label {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.page-documentos-clientes__card-valor {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.page-documentos-clientes__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 16px;
+}
+
+.page-documentos-clientes__filtro-cliente {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.page-documentos-clientes__filtro-tipo {
+  flex: 0 1 200px;
+}
+
+.page-documentos-clientes__filtro-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.page-documentos-clientes__input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  font: inherit;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.page-documentos-clientes__autocomplete {
+  position: relative;
+}
+
+.page-documentos-clientes__limpar-cliente {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--cor-principal);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.page-documentos-clientes__sugestoes {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.page-documentos-clientes__sugestoes button {
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.page-documentos-clientes__sugestoes button:hover {
+  background: #f9fafb;
+}
+
+.page-documentos-clientes__tabela-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.page-documentos-clientes__tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.page-documentos-clientes__tabela th,
+.page-documentos-clientes__tabela td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--glass-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.page-documentos-clientes__tabela th {
+  background: #f8fafc;
+  font-weight: 600;
+}
+
+.page-documentos-clientes__vazio {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 24px !important;
+}
+
+.page-documentos-clientes__cliente-celula {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.page-documentos-clientes__cliente-celula span {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.page-documentos-clientes__arquivo {
+  display: block;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-documentos-clientes__badge {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.page-documentos-clientes__badge--novo {
+  background: #fce7f3;
+  color: #9d174d;
+}
+
+.page-documentos-clientes__badge--recebido {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.page-documentos-clientes__badge--analise {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.page-documentos-clientes__badge--arquivado {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.page-documentos-clientes__acoes-linha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.page-documentos-clientes__paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-documentos-clientes__modal {
+  max-width: 920px;
+  width: calc(100% - 32px);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+}
+
+.page-documentos-clientes__modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.page-documentos-clientes__modal-titulo-linha {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.page-documentos-clientes__modal-feedback {
+  margin: 0 0 16px;
+}
+
+.page-documentos-clientes__modal-meta {
+  margin: 6px 0 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.page-documentos-clientes__modal-fechar {
+  border: none;
+  background: transparent;
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.page-documentos-clientes__modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.page-documentos-clientes__secao-titulo {
+  margin: 0 0 10px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.page-documentos-clientes__meta-lista {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.page-documentos-clientes__meta-lista div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.page-documentos-clientes__meta-lista dt {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.page-documentos-clientes__meta-lista dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.page-documentos-clientes__mensagem-cliente {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid var(--glass-border);
+  white-space: pre-wrap;
+}
+
+.page-documentos-clientes__arquivo-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.page-documentos-clientes__textarea {
+  width: 100%;
+  min-height: 160px;
+  padding: 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  font: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.page-documentos-clientes__contador {
+  margin: 6px 0 12px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.page-documentos-clientes__respondido-info {
+  margin: 0 0 12px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.page-documentos-clientes__status-linha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.page-documentos-clientes__status-linha label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.page-documentos-clientes__status-salvando {
+  font-weight: 400;
+  color: var(--cor-texto-secundario, #64748b);
+}
+
+.page-documentos-clientes__status-linha select {
+  flex: 1;
+  min-width: 140px;
+}
+
+@media (max-width: 900px) {
+  .page-documentos-clientes__cards {
+    grid-template-columns: 1fr;
+  }
+
+  .page-documentos-clientes__modal-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -5,7 +5,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import PortalProtectedRoute from "@/components/portal/PortalProtectedRoute";
 import Login from "@/components/pages/Login";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
-import "./App.css";
+import "@/styles/components/shared.css";
 import "./styles/portal.css";
 
 // Páginas carregadas sob demanda (code splitting por rota).

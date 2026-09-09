@@ -1,0 +1,98 @@
+/* RelatÃ³rios â€“ Soft Light (MUI + overrides) */
+
+.page-relatorios {
+  max-width: 100%;
+  color: var(--text-primary);
+}
+
+.page-relatorios .MuiTypography-root {
+  color: inherit;
+}
+
+.page-relatorios .MuiTypography-body2 {
+  color: var(--text-secondary);
+}
+
+.page-relatorios .MuiCard-root {
+  background: #fff !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+}
+
+.page-relatorios .MuiCardHeader-root .MuiTypography-root {
+  color: var(--text-primary) !important;
+}
+
+.page-relatorios .MuiTableCell-root {
+  color: var(--text-primary) !important;
+  border-color: var(--glass-border) !important;
+}
+
+.page-relatorios .MuiTableHead-root .MuiTableCell-root {
+  color: var(--text-secondary) !important;
+  background: #f8fafc !important;
+}
+
+.page-relatorios .MuiTableRow-root:hover {
+  background: var(--glass-bg) !important;
+}
+
+.page-relatorios .MuiPaper-root {
+  background: #fff !important;
+  border: 1px solid var(--glass-border) !important;
+}
+
+.page-relatorios .MuiTextField-root .MuiOutlinedInput-root {
+  background: #fff !important;
+  border-color: var(--glass-border) !important;
+  color: var(--text-primary) !important;
+}
+
+.page-relatorios .MuiTextField-root .MuiOutlinedInput-root fieldset {
+  border-color: var(--glass-border) !important;
+}
+
+.page-relatorios .MuiTextField-root .MuiInputLabel-root,
+.page-relatorios .MuiTextField-root .MuiInputBase-input::placeholder {
+  color: var(--text-secondary) !important;
+}
+
+.page-relatorios .MuiTextField-root .MuiInputBase-input {
+  color: var(--text-primary) !important;
+}
+
+.page-relatorios .MuiTabs-indicator {
+  background: var(--cor-principal) !important;
+}
+
+.page-relatorios .MuiTab-root {
+  color: var(--text-secondary) !important;
+}
+
+.page-relatorios .MuiTab-root.Mui-selected {
+  color: var(--cor-principal) !important;
+}
+
+.page-relatorios .MuiButton-contained {
+  background: var(--cor-principal) !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 4px 14px var(--shadow-accent) !important;
+}
+
+.page-relatorios .MuiButton-outlined {
+  background: var(--glass-bg) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--glass-border) !important;
+}
+
+.page-relatorios .MuiButton-outlined:hover {
+  background: var(--glass-bg-10) !important;
+  border-color: var(--glass-border) !important;
+}
+
+.page-relatorios .MuiAlert-standardError {
+  background: #fee2e2 !important;
+  color: #b91c1c !important;
+  border: 1px solid #fecaca !important;
+}

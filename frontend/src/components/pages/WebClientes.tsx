@@ -4,6 +4,7 @@ import ClientesHeader from "@/components/clientes/ClientesHeader";
 import ClientesTabela from "@/components/clientes/ClientesTabela";
 import ModalExcluirCliente from "@/components/clientes/ModalExcluirCliente";
 import { useClientes } from "@/hooks/useClientes";
+import "@/styles/pages/clientes.css";
 
 export default function WebClientes() {
   const {

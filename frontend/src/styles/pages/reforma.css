@@ -1,0 +1,427 @@
+/* ========== Reforma TributÃ¡ria ========== */
+
+.page-reforma {
+  padding: 24px 20px;
+  max-width: 900px;
+  margin: 0 auto;
+  background: var(--glass-bg);
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+}
+
+.page-reforma__header {
+  margin-bottom: 24px;
+}
+
+.page-reforma__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+
+.page-reforma__subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.page-reforma__regime-cnpj {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+}
+
+.page-reforma__regime-cnpj-titulo {
+  font-size: 1rem;
+  margin: 0 0 8px;
+  color: var(--text-primary);
+}
+
+.page-reforma__regime-cnpj-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.page-reforma__regime-cnpj-form .page-reforma__input {
+  max-width: 260px;
+}
+
+.page-reforma__regime-cnpj-desc {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0 0 16px;
+}
+
+.page-reforma__regime-cnpj-result {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: var(--glass-bg-10);
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+}
+
+.page-reforma__regime-cnpj-result p {
+  margin: 0 0 8px;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+}
+
+.page-reforma__regime-cnpj-result p:last-child {
+  margin-bottom: 0;
+}
+
+.page-reforma__erro-inline {
+  margin-top: 8px;
+}
+
+.page-reforma .MuiTabs-indicator {
+  background: var(--cor-principal) !important;
+}
+
+.page-reforma .MuiTab-root {
+  color: var(--text-secondary) !important;
+  font-weight: 500;
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  min-height: 48px;
+}
+
+.page-reforma .MuiTab-root.Mui-selected {
+  color: var(--cor-principal) !important;
+  font-weight: 600;
+}
+
+.page-reforma__erro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #b91c1c;
+  font-size: 0.875rem;
+}
+
+.page-reforma__erro-fechar {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #b91c1c;
+  padding: 0 4px;
+}
+
+.page-reforma__conteudo {
+  margin-bottom: 24px;
+}
+
+.page-reforma__aba {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.page-reforma__card {
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+}
+
+.page-reforma__card-titulo {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 20px;
+}
+
+.page-reforma__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 400px;
+}
+
+.page-reforma__label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.page-reforma__input,
+.page-reforma__select {
+  padding: 10px 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  font-size: 1rem;
+  color: var(--text-primary);
+  background: #fff;
+}
+
+.page-reforma__input:focus,
+.page-reforma__select:focus {
+  outline: none;
+  border-color: var(--cor-principal);
+}
+
+.page-reforma__fieldset {
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 0;
+}
+
+.page-reforma__legend {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 0 8px;
+}
+
+.page-reforma__radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.page-reforma__radio:last-child {
+  margin-bottom: 0;
+}
+
+.page-reforma__btn {
+  align-self: flex-start;
+  margin-top: 8px;
+}
+
+.page-reforma__hint {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin: 0 0 16px;
+  padding: 8px 12px;
+  background: var(--glass-bg-10);
+  border-radius: 8px;
+}
+
+.page-reforma__nfe-itens {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.page-reforma__nfe-item {
+  display: grid;
+  grid-template-columns: 1fr 120px auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.page-reforma__input--desc {
+  min-width: 0;
+}
+
+.page-reforma__input--valor {
+  width: 100%;
+}
+
+.page-reforma__select--regime {
+  min-width: 0;
+}
+
+.page-reforma__btn-add {
+  align-self: flex-start;
+}
+
+.page-reforma__resultado {
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  border-left: 4px solid var(--cor-principal);
+}
+
+.page-reforma__resultado-titulo {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 16px;
+}
+
+.page-reforma__linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+}
+
+.page-reforma__linha strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.page-reforma__linha--cbs strong {
+  color: #0369a1;
+}
+
+.page-reforma__linha--ibs strong {
+  color: #0d9488;
+}
+
+.page-reforma__linha--total {
+  font-weight: 600;
+}
+
+.page-reforma__linha--total strong {
+  font-size: 1.0625rem;
+  color: var(--cor-principal);
+}
+
+.page-reforma__linha--destaque strong {
+  color: #059669;
+}
+
+.page-reforma__hr {
+  border: none;
+  border-top: 1px solid var(--glass-border);
+  margin: 12px 0;
+}
+
+/* Chat / Consulta IA */
+
+.page-reforma__aviso-ia {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  background: #fef3c7;
+  border-radius: 8px;
+  border-left: 3px solid #f59e0b;
+}
+
+.page-reforma__aba--chat .page-reforma__card {
+  max-width: 100%;
+}
+
+.page-reforma__chat-area {
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 16px;
+  margin-bottom: 20px;
+  background: var(--glass-bg-10);
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+}
+
+.page-reforma__chat-vazio {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  margin: 0;
+  text-align: center;
+  padding: 24px 16px;
+}
+
+.page-reforma__chat-msg {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  max-width: 90%;
+}
+
+.page-reforma__chat-msg--user {
+  margin-left: auto;
+  background: var(--cor-principal);
+  color: #fff;
+}
+
+.page-reforma__chat-msg--user .page-reforma__chat-role {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.page-reforma__chat-msg--assistant {
+  background: #fff;
+  border: 1px solid var(--glass-border);
+}
+
+.page-reforma__chat-role {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text-secondary);
+}
+
+.page-reforma__chat-texto {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.page-reforma__chat-typing {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.page-reforma__chat-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.page-reforma__input--textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.page-reforma__acoes {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .page-reforma__nfe-item {
+    grid-template-columns: 1fr auto;
+  }
+
+  .page-reforma__nfe-item .page-reforma__select--regime {
+    grid-column: 1;
+  }
+
+  .page-reforma__nfe-item .btn {
+    grid-column: 2;
+    grid-row: 1 / 3;
+  }
+}
+
+/* Conteúdo em largura total */
+
+.page-reforma.tax-sim {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+}
+
+.page-reforma.tax-sim .tax-sim__split {
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 440px);
+}

@@ -10,6 +10,8 @@ import NfeSimulationTab from "./NfeSimulationTab";
 import CashbackTab from "./CashbackTab";
 import AiHelpTab from "./AiHelpTab";
 import CnpjRegimeTab from "./CnpjRegimeTab";
+import "@/styles/pages/reforma.css";
+import "@/styles/pages/tax-simulator.css";
 
 export default function TaxSimulatorPage() {
   const [aba, setAba] = useState<TaxSimulatorTabId>("rapido");
