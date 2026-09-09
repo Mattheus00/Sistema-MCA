@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { getApiErrorMessage, getAuthUserProfile, isMockEnabled } from "@/lib/api";
 import {
-  api,
-  getApiErrorMessage,
-  getAuthUserProfile,
-  isMockEnabled,
-  normalizeListResponse,
-} from "@/lib/api";
-import { normalizeClienteFromApi, normalizeClienteToApi } from "@/lib/apiNormalizers";
+  atualizarCliente,
+  criarCliente,
+  excluirCliente,
+  listarTodosClientes,
+} from "@/lib/clientesApi";
 import { exportarRelatorioClientesExcel } from "@/lib/relatorioClientes";
 import type { Cliente } from "@/types/api";
 import AdminItemCard from "@/components/AdminItemCard";
@@ -62,59 +61,6 @@ const FORM_VAZIO: Cliente = {
 };
 
 type FiltroSituacaoCliente = "ATIVO" | "INATIVO";
-
-function buildListParams(
-  termoBusca: string | undefined,
-  page: number,
-  size: number,
-  status: FiltroSituacaoCliente,
-) {
-  const params: Record<string, string | number> = {
-    page,
-    size,
-    statusCliente: status,
-  };
-  const termo = termoBusca?.trim();
-  if (termo) params.busca = termo;
-  return params;
-}
-
-/** Busca todas as páginas Spring até esgotar (evita o teto antigo de 100). */
-async function listarTodasPaginas(
-  termo: string | undefined,
-  status: FiltroSituacaoCliente,
-): Promise<Cliente[]> {
-  const pageSize = 200;
-  const all: Cliente[] = [];
-  let page = 0;
-  let totalPages = 1;
-
-  while (page < totalPages) {
-    const r = await api.get("/api/clientes", {
-      params: buildListParams(termo, page, pageSize, status),
-    });
-    const data = r.data;
-    const rawList = normalizeListResponse<Record<string, unknown>>(data);
-    all.push(...rawList.map((c) => normalizeClienteFromApi(c)));
-
-    if (data && typeof data === "object" && !Array.isArray(data)) {
-      const body = data as { totalPages?: number; last?: boolean; totalElements?: number };
-      if (typeof body.totalPages === "number") {
-        totalPages = Math.max(1, body.totalPages);
-      } else if (body.last === true || rawList.length < pageSize) {
-        break;
-      } else {
-        totalPages = page + 2;
-      }
-    } else {
-      break;
-    }
-    page += 1;
-    // segurança: evita loop infinito se a API ignorar page
-    if (page > 50) break;
-  }
-  return all;
-}
 
 /** Filtro local apenas para modo mock (API real já filtra com `busca`). */
 function filtrarClientesPorTermoMock(lista: Cliente[], termo?: string): Cliente[] {
@@ -177,7 +123,7 @@ export default function WebClientes() {
         setLoading(true);
         setErro(null);
         const termo = termoBusca?.trim();
-        let list = await listarTodasPaginas(termo, status);
+        let list = await listarTodosClientes(termo, status);
         if (isMockEnabled() && termo) {
           list = filtrarClientesPorTermoMock(list, termo);
         }
@@ -223,17 +169,7 @@ export default function WebClientes() {
     if (!isValidEmail(form.email ?? "")) return setErro("E-mail inválido.");
     setErro(null);
     try {
-      const payload = isMockEnabled()
-        ? {
-            ...form,
-            codigo: form.codigo?.trim().toUpperCase() || undefined,
-            cpf: form.cpf?.trim() || undefined,
-            celular: form.celular?.replace(/\D/g, "") || undefined,
-          }
-        : normalizeClienteToApi(form);
-      const r = await api.post("/api/clientes", payload);
-      const raw = r?.data && typeof r.data === "object" ? r.data : {};
-      const novoCliente = normalizeClienteFromApi(raw as Record<string, unknown>);
+      const novoCliente = await criarCliente(form);
       setClientes((prev) => [novoCliente, ...prev.filter((c) => c.id !== novoCliente.id)]);
       setForm({ ...FORM_VAZIO });
       setModalAberto(false);
@@ -272,16 +208,7 @@ export default function WebClientes() {
     if (!isValidEmail(form.email ?? "")) return setErro("E-mail inválido.");
     setErro(null);
     try {
-      const payload = isMockEnabled()
-        ? {
-            ...form,
-            id: clienteEmEdicao.id,
-            codigo: form.codigo?.trim().toUpperCase() || undefined,
-            cpf: form.cpf?.trim() || undefined,
-            celular: form.celular?.replace(/\D/g, "") || undefined,
-          }
-        : normalizeClienteToApi({ ...form, id: clienteEmEdicao.id });
-      await api.patch(`/api/clientes/${clienteEmEdicao.id}`, payload);
+      await atualizarCliente(clienteEmEdicao.id, form);
       setForm({ ...FORM_VAZIO });
       setModalAberto(false);
       setClienteEmEdicao(null);
@@ -296,7 +223,7 @@ export default function WebClientes() {
     if (c.id == null) return;
     try {
       setErro(null);
-      await api.delete(`/api/clientes/${c.id}`);
+      await excluirCliente(c.id);
       setClienteParaExcluir(null);
       setClientes((prev) => prev.filter((item) => item.id !== c.id));
       setMensagemSucesso("Cliente excluído com sucesso.");

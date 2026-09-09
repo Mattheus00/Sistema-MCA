@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { AxiosError } from "axios";
-import { api, getApiErrorMessage } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api";
+import { consultarRegimeCnpj } from "@/lib/tributosApi";
 
 function maskCnpj(value: string): string {
   const n = value.replace(/\D/g, "").slice(0, 14);
@@ -39,12 +40,10 @@ export default function CnpjRegimeTab({ onError }: CnpjRegimeTabProps) {
     setResult(null);
     setLoading(true);
     try {
-      const res = await api.get<{ nomeEmpresa?: string; regime?: string }>(
-        `/api/tributos/regime/${digits}`,
-      );
+      const data = await consultarRegimeCnpj(digits);
       setResult({
-        nomeEmpresa: String(res.data?.nomeEmpresa ?? ""),
-        regime: String(res.data?.regime ?? ""),
+        nomeEmpresa: String(data?.nomeEmpresa ?? ""),
+        regime: String(data?.regime ?? ""),
       });
     } catch (e: unknown) {
       const status = (e as AxiosError | undefined)?.response?.status;

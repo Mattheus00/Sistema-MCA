@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { api, fetchAllInadimplentes, normalizeListResponse } from "@/lib/api";
-import {
-  normalizePagamentoInadimplenciaFromApi,
-  normalizeResumoFinanceiroFromApi,
-  normalizeResumoRelatorioFromApi,
-} from "@/lib/apiNormalizers";
+import { fetchAllInadimplentes, listarPagamentosDivida } from "@/lib/inadimplentesApi";
+import { obterAging, obterResumoFinanceiro, obterResumoRelatorio } from "@/lib/relatoriosApi";
 import { DASHBOARD_INVALIDATE_EVENT } from "@/lib/dashboardRefresh";
 import {
   calcularEvolucaoValorAberto,
@@ -14,10 +10,8 @@ import {
   mapAgingParaFaixas,
   mapInadimplenciasParaAtividades,
   somarBaixadoCancelado,
-  type AtividadeDashboard,
-  type FaixaInadimplenciaUi,
-  type PontoEvolucao,
 } from "@/lib/dashboardUtils";
+import type { AtividadeDashboard, FaixaInadimplenciaUi, PontoEvolucao } from "@/types/dashboard";
 import type { AgingRelatorio, Inadimplencia, ResumoFinanceiro, ResumoRelatorio } from "@/types/api";
 
 export type PeriodoChart = 30 | 60 | 90 | "total";
@@ -34,40 +28,6 @@ type DashboardState = {
   loadingChart: boolean;
   atualizando: boolean;
 };
-
-function cacheBust() {
-  return `_t=${Date.now()}`;
-}
-
-function urlResumoComPeriodo(periodo: PeriodoChart, t: string): string {
-  if (periodo === "total") return `/api/relatorios/resumo?${t}`;
-  return `/api/relatorios/resumo?dias=${periodo}&${t}`;
-}
-
-function normalizeAgingResponse(data: unknown): AgingRelatorio | null {
-  if (!data || typeof data !== "object") return null;
-  const raw = data as Record<string, unknown>;
-  const faixasRaw = Array.isArray(raw.faixas) ? (raw.faixas as Record<string, unknown>[]) : [];
-  const valorTotalGeral = Number(raw.valorTotalGeral ?? raw.valorTotal ?? 0);
-  const faixas = faixasRaw.map((f) => {
-    const valorTotal = Number(f.valorTotal ?? f.valor ?? 0);
-    const qtdDividas = Number(f.qtdDividas ?? f.quantidade ?? 0);
-    const percentualRaw = Number(f.percentual);
-    const percentual =
-      Number.isFinite(percentualRaw) && percentualRaw > 0
-        ? percentualRaw
-        : valorTotalGeral > 0
-          ? (valorTotal / valorTotalGeral) * 100
-          : 0;
-    return {
-      faixa: String(f.faixa ?? "-"),
-      qtdDividas,
-      valorTotal,
-      percentual,
-    };
-  });
-  return { faixas, valorTotalGeral };
-}
 
 export function useDashboardData(
   periodoChart: PeriodoChart,
@@ -90,7 +50,6 @@ export function useDashboardData(
 
   const carregar = useCallback(
     async (modo: "inicial" | "atualizar" = "inicial") => {
-      const t = cacheBust();
       setState((s) => ({
         ...s,
         erro: false,
@@ -101,33 +60,26 @@ export function useDashboardData(
 
       try {
         const [rResumo, rChart, rFinanceiro, rInad, rAging] = await Promise.allSettled([
-          api.get(`/api/relatorios/resumo?${t}`),
-          api.get(urlResumoComPeriodo(periodoChart, t)),
-          api.get("/api/relatorios/resumo-financeiro", {
-            params: { periodoInicio: dataInicio, periodoFim: dataFim, _t: Date.now() },
+          obterResumoRelatorio({ cacheBust: true }),
+          obterResumoRelatorio({
+            dias: periodoChart === "total" ? undefined : periodoChart,
+            cacheBust: true,
           }),
+          obterResumoFinanceiro(dataInicio, dataFim, { cacheBust: true }),
           fetchAllInadimplentes(),
-          api.get("/api/relatorios/aging", { params: { _t: Date.now() } }),
+          obterAging({ cacheBust: true }),
         ]);
 
-        const resumo =
-          rResumo.status === "fulfilled"
-            ? normalizeResumoRelatorioFromApi(rResumo.value.data)
-            : null;
-        const resumoChart =
-          rChart.status === "fulfilled" ? normalizeResumoRelatorioFromApi(rChart.value.data) : null;
-        const resumoFinanceiro =
-          rFinanceiro.status === "fulfilled"
-            ? normalizeResumoFinanceiroFromApi(rFinanceiro.value.data)
-            : null;
+        const resumo = rResumo.status === "fulfilled" ? rResumo.value : null;
+        const resumoChart = rChart.status === "fulfilled" ? rChart.value : null;
+        const resumoFinanceiro = rFinanceiro.status === "fulfilled" ? rFinanceiro.value : null;
 
         let inadimplentes: Inadimplencia[] = [];
         if (rInad.status === "fulfilled") {
           inadimplentes = rInad.value;
         }
 
-        const aging =
-          rAging.status === "fulfilled" ? normalizeAgingResponse(rAging.value.data) : null;
+        const aging = rAging.status === "fulfilled" ? rAging.value : null;
         const falhouTudo = !resumo && !resumoChart && inadimplentes.length === 0;
 
         setState({
@@ -198,12 +150,7 @@ export function useDashboardData(
     const base = mapInadimplenciasParaAtividades(state.inadimplentes);
     setAtividades(base);
     let ativo = true;
-    void enriquecerValoresAtividades(base, async (dividaId) => {
-      const r = await api.get(`/api/pagamentos/divida/${dividaId}`);
-      return normalizeListResponse<Record<string, unknown>>(r.data).map((raw) =>
-        normalizePagamentoInadimplenciaFromApi(raw),
-      );
-    }).then((enriquecidas) => {
+    void enriquecerValoresAtividades(base, listarPagamentosDivida).then((enriquecidas) => {
       if (ativo) setAtividades(enriquecidas);
     });
     return () => {

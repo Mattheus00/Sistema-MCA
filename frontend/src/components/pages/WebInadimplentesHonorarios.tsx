@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { getApiErrorMessage, getUsuarioLogadoLabel } from "@/lib/api";
+import { encodeConfirmadoPorComprovante } from "@/lib/apiNormalizers";
+import { obterCliente } from "@/lib/clientesApi";
 import {
-  api,
-  getApiErrorMessage,
-  isMockEnabled,
-  normalizeListResponse,
-  encodeConfirmadoPorComprovante,
-  getUsuarioLogadoLabel,
-} from "@/lib/api";
-import { normalizeClienteFromApi, normalizeInadimplenciaFromApi } from "@/lib/apiNormalizers";
+  cancelarInadimplencia,
+  confirmarPagamentoTotal,
+  enviarAvisoPendencia,
+  listarInadimplentes,
+  registrarPagamento,
+} from "@/lib/inadimplentesApi";
 import { invalidateDashboard } from "@/lib/dashboardRefresh";
 import {
   diasEmAtraso,
@@ -31,7 +32,7 @@ import {
 } from "@/lib/mailtoCobranca";
 import { gerarAvisoPendenciaPdfBlob, gerarEBaixarAvisoPendenciaPdf } from "@/lib/cobrancaPdf";
 import { parseValorReais } from "@/lib/valorBrasil";
-import type { Cliente, Inadimplencia, NotificacaoCobrancaResponse } from "@/types/api";
+import type { Cliente, Inadimplencia } from "@/types/api";
 import AdminItemCard from "@/components/AdminItemCard";
 import ResponsiveList from "@/components/ResponsiveList";
 
@@ -84,11 +85,8 @@ export default function WebInadimplentesHonorarios() {
       try {
         if (!silent) setLoading(true);
         setErro(null);
-        const r = await api.get("/api/inadimplentes", { params: { paginado: false } });
-        const rawList = normalizeListResponse<Record<string, unknown>>(r.data);
-        const todos = isMockEnabled()
-          ? (rawList as Inadimplencia[])
-          : rawList.map((item) => normalizeInadimplenciaFromApi(item));
+        // Backend não expõe filtro por cliente (GET /api/inadimplentes?clienteId=): lista tudo e filtra.
+        const todos = await listarInadimplentes();
         const doCliente = todos
           .filter((i) => i.clienteId === clienteId && !isInadimplenciaCancelada(i))
           .sort((a, b) => b.vencimento.localeCompare(a.vencimento));
@@ -106,19 +104,15 @@ export default function WebInadimplentesHonorarios() {
     if (!clienteId) return;
     void (async () => {
       try {
-        const r = await api.get("/api/clientes", { params: { page: 0, size: 500 } });
-        const list = normalizeListResponse<Record<string, unknown>>(r.data);
-        const found = list.map((c) => normalizeClienteFromApi(c)).find((c) => c.id === clienteId);
-        if (found) {
-          setCliente({
-            id: found.id ?? "",
-            nome: found.nome,
-            cpf: found.cpf,
-            email: found.email,
-            celular: found.celular,
-            telefone: found.telefone,
-          });
-        }
+        const found = await obterCliente(clienteId);
+        setCliente({
+          id: found.id ?? clienteId,
+          nome: found.nome,
+          cpf: found.cpf,
+          email: found.email,
+          celular: found.celular,
+          telefone: found.telefone,
+        });
       } catch {
         setCliente(null);
       }
@@ -208,7 +202,7 @@ export default function WebInadimplentesHonorarios() {
         // Registra o pagamento (com quem confirmou) antes de quitar —
         // igual ao parcial; depois do PATCH muitos backends rejeitam novo POST.
         if (valorRecebido > 0) {
-          await api.post("/api/pagamentos", {
+          await registrarPagamento({
             dividaId: i.id,
             valorPago: Math.round(valorRecebido * 100),
             dataPagamento,
@@ -218,8 +212,7 @@ export default function WebInadimplentesHonorarios() {
           });
         }
 
-        await api.patch(`/api/inadimplentes/${i.id}`, {
-          status: "Pago",
+        await confirmarPagamentoTotal(String(i.id), {
           desconto,
           metodoPagamento,
           observacao: observacao || undefined,
@@ -230,7 +223,7 @@ export default function WebInadimplentesHonorarios() {
         setMensagemSucesso("Pagamento total confirmado com sucesso.");
       } else {
         const valorReais = parseValorReais(modalPagamento.valorParcialDigitado);
-        await api.post("/api/pagamentos", {
+        await registrarPagamento({
           dividaId: i.id,
           valorPago: Math.round(valorReais * 100),
           dataPagamento: modalPagamento.dataPagamento || new Date().toISOString().slice(0, 10),
@@ -263,7 +256,7 @@ export default function WebInadimplentesHonorarios() {
     setInadimplenciaParaCancelar(null);
     try {
       setErro(null);
-      await api.delete(`/api/inadimplentes/${id}`);
+      await cancelarInadimplencia(String(id));
       setMensagemSucesso("Inadimplência cancelada.");
       invalidateDashboard();
       await listar();
@@ -385,14 +378,7 @@ export default function WebInadimplentesHonorarios() {
     setErro(null);
     try {
       const { blob, filename } = await gerarAvisoPendenciaPdfBlob(emAberto, nomeCliente);
-      const form = new FormData();
-      form.append("clienteId", clienteId);
-      form.append("arquivo", blob, filename);
-      const r = await api.post("/api/notificacoes/enviar-aviso-pendencia", form, {
-        headers: { "Content-Type": "multipart/form-data" },
-        timeout: 120_000,
-      });
-      const data = r.data as NotificacaoCobrancaResponse;
+      const data = await enviarAvisoPendencia(clienteId, blob, filename);
       const status = String(data?.statusEnvio ?? "").toUpperCase();
       if (status === "ENVIADO") {
         setModalPdfConsolidado(false);

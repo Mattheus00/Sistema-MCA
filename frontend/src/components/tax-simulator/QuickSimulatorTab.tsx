@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { api, getApiErrorMessage } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api";
+import { calcularTributo } from "@/lib/tributosApi";
 import { parseValorReais } from "@/lib/valorBrasil";
 import {
   getDefaultRates,
@@ -9,14 +10,16 @@ import {
   profileToApiCategory,
   simulateQuick,
   simulationTypeToApiTipo,
-  type OperationType,
-  type QuickSimulationResult,
-  type SimulationType,
-  type SimulationYear,
-  type TaxProfile,
   YEAR_OPTIONS,
   PROFILE_OPTIONS,
 } from "@/lib/taxSimulator";
+import type {
+  OperationType,
+  QuickSimulationResult,
+  SimulationType,
+  SimulationYear,
+  TaxProfile,
+} from "@/types/taxSimulator";
 import SimulationTypeCards from "./SimulationTypeCards";
 import SimulationResultCards from "./SimulationResultCards";
 import TaxAlert from "./TaxAlert";
@@ -85,19 +88,11 @@ export default function QuickSimulatorTab({ onError }: QuickSimulatorTabProps) {
 
     if (useApi) {
       try {
-        const res = await api.post<{
-          cbs?: number;
-          ibs?: number;
-          totalImpostos?: number;
-          valorSemImposto?: number;
-          valorFinal?: number;
-          valor?: number;
-        }>("/api/tributos/calcular", {
+        const data = await calcularTributo({
           valor,
           tipo: simulationTypeToApiTipo(simulationType),
           categoria: profileToApiCategory(profile),
         });
-        const data = res.data;
         const totalTax = data.totalImpostos ?? (data.cbs ?? 0) + (data.ibs ?? 0);
         const opVal = data.valor ?? valor;
         setResult({

@@ -1,24 +1,22 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  api,
-  decodeConfirmadoPorComprovante,
-  getApiErrorMessage,
-  getRelatorioErrorMessage,
-  isMockEnabled,
-  normalizeListResponse,
-} from "@/lib/api";
+import { getApiErrorMessage, getRelatorioErrorMessage } from "@/lib/api";
 import { exportarCSV } from "@/lib/exportarCsv";
 import { exportarRelatorioPdf, type DadosRelatorioPdf } from "@/lib/relatorioPdf";
 import {
-  normalizeClienteFromApi,
-  normalizeInadimplenciaFromApi,
-  normalizeInadimplenciaPeriodoFromApi,
-  normalizePagamentoInadimplenciaFromApi,
-  normalizePagamentosRecebidosFromApi,
+  decodeConfirmadoPorComprovante,
   mesReferenciaPagamentoRecebido,
-  normalizeRankingFromApi,
-  normalizeResumoFinanceiroFromApi,
 } from "@/lib/apiNormalizers";
+import { listarClientes } from "@/lib/clientesApi";
+import { listarInadimplentes, listarPagamentosDivida } from "@/lib/inadimplentesApi";
+import {
+  obterAging,
+  obterEfetividadeCobranca,
+  obterExtratoCliente,
+  obterInadimplenciaPeriodo,
+  obterPagamentosRecebidos,
+  obterRankingDevedores,
+  obterResumoFinanceiro,
+} from "@/lib/relatoriosApi";
 import type {
   Cliente,
   RankingDevedorItem,
@@ -77,32 +75,6 @@ function formatarPercentual(n: number | null | undefined, casas = 1) {
   return `${valor.toFixed(casas)}%`;
 }
 
-function normalizeAgingResponse(data: unknown): AgingRelatorio {
-  const raw = data && typeof data === "object" ? (data as Record<string, unknown>) : {};
-  const faixasRaw = Array.isArray(raw.faixas) ? (raw.faixas as Record<string, unknown>[]) : [];
-  const valorTotalBase = Number(raw.valorTotalGeral ?? raw.valorTotal ?? 0);
-  const valorTotalGeral = Number.isFinite(valorTotalBase) ? valorTotalBase : 0;
-  const faixas = faixasRaw.map((f) => {
-    const valorRaw = Number(f.valorTotal ?? f.valor ?? 0);
-    const valorTotal = Number.isFinite(valorRaw) ? valorRaw : 0;
-    const qtdRaw = Number(f.qtdDividas ?? f.quantidade ?? 0);
-    const qtdDividas = Number.isFinite(qtdRaw) ? qtdRaw : 0;
-    const percentualRaw = Number(f.percentual);
-    const percentual = Number.isFinite(percentualRaw)
-      ? percentualRaw
-      : valorTotalGeral > 0
-        ? (valorTotal / valorTotalGeral) * 100
-        : 0;
-    return {
-      faixa: String(f.faixa ?? "-"),
-      qtdDividas,
-      valorTotal,
-      percentual,
-    };
-  });
-  return { faixas, valorTotalGeral };
-}
-
 export default function WebRelatorios() {
   const [aba, setAba] = useState<AbaId>("ranking");
   const [erro, setErro] = useState<string | null>(null);
@@ -158,9 +130,7 @@ export default function WebRelatorios() {
     (async () => {
       setLoadingClientes(true);
       try {
-        const r = await api.get("/api/clientes", { params: { page: 0, size: 500 } });
-        const list = normalizeListResponse(r.data);
-        setClientes(list.map((c) => normalizeClienteFromApi(c as Record<string, unknown>)));
+        setClientes(await listarClientes({ page: 0, size: 500 }));
       } catch {
         setClientes([]);
       } finally {
@@ -173,17 +143,14 @@ export default function WebRelatorios() {
     setErro(null);
     setLoadingRanking(true);
     try {
-      const params = new URLSearchParams();
-      params.set("periodo", filtroPeriodo);
-      params.set("limit", String(filtroLimit));
-      if (filtroValorMin) params.set("valorMin", filtroValorMin);
-      if (filtroQtdDividas) params.set("qtdDividas", filtroQtdDividas);
-      if (filtroDiasAtraso) params.set("diasAtraso", filtroDiasAtraso);
-      const r = await api.get<RankingDevedorItem[] | { ranking?: unknown[] }>(
-        `/api/relatorios/ranking-devedores?${params}`,
-      );
       setRanking(
-        isMockEnabled() && Array.isArray(r.data) ? r.data : normalizeRankingFromApi(r.data),
+        await obterRankingDevedores({
+          periodo: filtroPeriodo,
+          limit: filtroLimit,
+          valorMin: filtroValorMin,
+          qtdDividas: filtroQtdDividas,
+          diasAtraso: filtroDiasAtraso,
+        }),
       );
     } catch (e: unknown) {
       setErro(getApiErrorMessage(e, "Falha ao carregar ranking"));
@@ -205,10 +172,7 @@ export default function WebRelatorios() {
     setErro(null);
     setLoadingExtrato(true);
     try {
-      const r = await api.get<ExtratoCliente>(
-        `/api/relatorios/extrato-cliente/${clienteExtratoId}`,
-      );
-      setExtrato(r.data);
+      setExtrato(await obterExtratoCliente(clienteExtratoId));
     } catch (e: unknown) {
       setErro(getApiErrorMessage(e, "Falha ao carregar extrato"));
       setExtrato(null);
@@ -226,14 +190,7 @@ export default function WebRelatorios() {
     setErro(null);
     setLoadingInadPeriodo(true);
     try {
-      const r = await api.get(
-        `/api/relatorios/inadimplencia-periodo?dataInicio=${dataInicio}&dataFim=${dataFim}`,
-      );
-      setInadPeriodo(
-        isMockEnabled()
-          ? (r.data as InadimplenciaPeriodoRelatorio)
-          : (normalizeInadimplenciaPeriodoFromApi(r.data) ?? null),
-      );
+      setInadPeriodo(await obterInadimplenciaPeriodo(dataInicio, dataFim));
     } catch (e: unknown) {
       setErro(getApiErrorMessage(e, "Falha ao carregar relatório"));
       setInadPeriodo(null);
@@ -251,12 +208,7 @@ export default function WebRelatorios() {
     setLoadingPagamentos(true);
     try {
       try {
-        const r = await api.get("/api/relatorios/pagamentos-recebidos", {
-          params: { dataInicio: dataInicioPag, dataFim: dataFimPag },
-        });
-        const normalizado = isMockEnabled()
-          ? (r.data as PagamentosRecebidosRelatorio)
-          : normalizePagamentosRecebidosFromApi(r.data);
+        const normalizado = await obterPagamentosRecebidos(dataInicioPag, dataFimPag);
         if (normalizado) {
           setPagamentos(normalizado);
           return;
@@ -266,22 +218,15 @@ export default function WebRelatorios() {
       }
 
       const [resumoRes, inadRes] = await Promise.allSettled([
-        api.get("/api/relatorios/resumo-financeiro", {
-          params: { periodoInicio: dataInicioPag, periodoFim: dataFimPag },
-        }),
-        api.get("/api/inadimplentes", { params: { paginado: false } }),
+        obterResumoFinanceiro(dataInicioPag, dataFimPag),
+        listarInadimplentes(),
       ]);
 
-      const resumo =
-        resumoRes.status === "fulfilled"
-          ? normalizeResumoFinanceiroFromApi(resumoRes.value.data)
-          : null;
+      const resumo = resumoRes.status === "fulfilled" ? resumoRes.value : null;
 
       const detalhamento: PagamentosRecebidosRelatorio["detalhamento"] = [];
       if (inadRes.status === "fulfilled") {
-        const lista = normalizeListResponse<Record<string, unknown>>(inadRes.value.data).map(
-          (raw) => normalizeInadimplenciaFromApi(raw),
-        );
+        const lista = inadRes.value;
         const inicio = new Date(dataInicioPag);
         const fim = new Date(dataFimPag);
         const naFaixa = (iso: string) => {
@@ -328,10 +273,7 @@ export default function WebRelatorios() {
           let metodo = "—";
           let valor = Number(i.valor ?? 0);
           try {
-            const rPag = await api.get(`/api/pagamentos/divida/${i.id}`);
-            const pags = normalizeListResponse<Record<string, unknown>>(rPag.data).map((raw) =>
-              normalizePagamentoInadimplenciaFromApi(raw),
-            );
+            const pags = await listarPagamentosDivida(String(i.id));
             const ultimo = pags.sort((a, b) =>
               String(b.dataPagamento).localeCompare(String(a.dataPagamento)),
             )[0];
@@ -386,8 +328,7 @@ export default function WebRelatorios() {
     setErro(null);
     setLoadingAging(true);
     try {
-      const r = await api.get("/api/relatorios/aging");
-      setAging(normalizeAgingResponse(r.data));
+      setAging((await obterAging()) ?? { faixas: [], valorTotalGeral: 0 });
     } catch (e: unknown) {
       setErro(getRelatorioErrorMessage(e, "Falha ao carregar aging"));
       setAging(null);
@@ -404,10 +345,7 @@ export default function WebRelatorios() {
     setErro(null);
     setLoadingEfetividade(true);
     try {
-      const r = await api.get<EfetividadeCobrancaRelatorio>(
-        `/api/relatorios/efetividade-cobranca?mes=${mesEfetividade}`,
-      );
-      setEfetividade(r.data);
+      setEfetividade(await obterEfetividadeCobranca(mesEfetividade));
     } catch (e: unknown) {
       setErro(getRelatorioErrorMessage(e, "Falha ao carregar efetividade"));
       setEfetividade(null);

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { api, getApiErrorMessage, normalizeListResponse } from "@/lib/api";
-import { normalizeClienteFromApi, normalizePaginaLotesEnvioFromApi } from "@/lib/apiNormalizers";
+import { getApiErrorMessage } from "@/lib/api";
+import { listarClientes } from "@/lib/clientesApi";
 import {
   abrirPdfItem,
   atualizarClienteItem,
@@ -11,6 +11,7 @@ import {
   criarLoteEnvioBoletos,
   enviarLoteEnvioBoletos,
   ignorarItemEnvioBoleto,
+  listarHistoricoLotes,
   validarLoteEnvioBoletos,
 } from "@/lib/envioBoletosApi";
 import {
@@ -226,12 +227,12 @@ export default function WebEnvioBoletos() {
   async function carregarClientes(termo?: string) {
     try {
       setLoadingClientes(true);
-      const params: Record<string, string | number> = { page: 0, size: 50, statusCliente: "ATIVO" };
-      if (termo?.trim()) params.busca = termo.trim();
-      const r = await api.get("/api/clientes", { params });
-      const list = normalizeListResponse<Record<string, unknown>>(r.data).map(
-        normalizeClienteFromApi,
-      );
+      const list = await listarClientes({
+        page: 0,
+        size: 50,
+        statusCliente: "ATIVO",
+        busca: termo?.trim() || undefined,
+      });
       setClientes(list);
     } catch (e: unknown) {
       setErro(getApiErrorMessage(e, "Falha ao buscar clientes."));
@@ -275,12 +276,13 @@ export default function WebEnvioBoletos() {
       try {
         setLoading(true);
         setErro(null);
-        const params: Record<string, string | number> = { page, size: 10 };
-        if (filtroStatus.trim()) params.status = filtroStatus.trim();
-        if (filtroDataInicio) params.dataInicio = filtroDataInicio;
-        if (filtroDataFim) params.dataFim = filtroDataFim;
-        const r = await api.get("/api/lotes-envio-boletos", { params });
-        const pagina = normalizePaginaLotesEnvioFromApi(r.data);
+        const pagina = await listarHistoricoLotes({
+          page,
+          size: 10,
+          status: filtroStatus,
+          dataInicio: filtroDataInicio,
+          dataFim: filtroDataFim,
+        });
         setHistorico(pagina.content);
         setHistoricoTotalPaginas(Math.max(1, pagina.totalPages));
         setHistoricoPagina(pagina.number);

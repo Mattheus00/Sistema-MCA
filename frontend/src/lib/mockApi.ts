@@ -789,6 +789,20 @@ export function createMockClient() {
         }
         return Promise.reject(new Error(`Mock: rota portal não encontrada: ${url}`));
       }
+      const matchClienteId = url.match(/^\/api\/clientes\/([\w-]+)$/);
+      if (matchClienteId) {
+        const c = getCliente(matchClienteId[1]);
+        if (!c) return Promise.reject(new Error("Cliente não encontrado."));
+        return Promise.resolve({
+          data: {
+            ...c,
+            id: String(c.id),
+            clienteId: String(c.id),
+            cpfCnpj: c.cpf,
+            statusCliente: mapSituacaoToStatusCliente(c.situacao ?? "Ativo"),
+          },
+        } as { data: T });
+      }
       if (url.startsWith("/api/clientes")) {
         const urlObj = new URL(url, "http://mock.local");
         const params = config?.params ?? {};

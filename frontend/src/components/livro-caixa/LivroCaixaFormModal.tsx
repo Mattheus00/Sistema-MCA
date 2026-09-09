@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { api, normalizeListResponse } from "@/lib/api";
-import { normalizeClienteFromApi } from "@/lib/apiNormalizers";
+import { listarClientes } from "@/lib/clientesApi";
 import { formatarReaisParaInput, parseValorReais } from "@/lib/valorBrasil";
 import {
   FORMAS_PAGAMENTO,
@@ -247,15 +246,13 @@ export default function LivroCaixaFormModal({
   const carregarClientes = useCallback(async (termo: string) => {
     setCarregandoClientes(true);
     try {
-      const params: Record<string, string | number> = {
-        page: 0,
-        size: 50,
-        statusCliente: "ATIVO",
-      };
-      if (termo.trim()) params.termo = termo.trim();
-      const r = await api.get("/api/clientes", { params });
       setListaClientes(
-        normalizeListResponse<Record<string, unknown>>(r.data).map(normalizeClienteFromApi),
+        await listarClientes({
+          page: 0,
+          size: 50,
+          statusCliente: "ATIVO",
+          termo: termo.trim() || undefined,
+        }),
       );
     } catch {
       setListaClientes([]);

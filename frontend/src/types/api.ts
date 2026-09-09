@@ -229,6 +229,15 @@ export type EfetividadeCobrancaRelatorio = {
   comparativoAnterior?: { periodo: string; taxaConversao: number; variacaoPp: number };
 };
 
+/** Espelha ServicoResponseDTO (serviços do escritório) */
+export type ServicoResumo = {
+  servicoId: string;
+  nome: string;
+  descricao?: string | null;
+  valorPadrao?: number | null;
+  ativo?: boolean | null;
+};
+
 /** Resposta paginada comum (ajuste se o backend usar outro padrão) */
 export type PageResponse<T> = {
   content: T[];

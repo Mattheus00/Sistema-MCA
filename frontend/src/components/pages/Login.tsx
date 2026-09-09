@@ -1,12 +1,17 @@
 import { useId, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  api,
   getApiErrorMessage,
   isMockEnabled,
   isRememberMePreferred,
   setAuthSession,
 } from "@/lib/api";
+import {
+  login as loginApi,
+  redefinirSenha,
+  registrar,
+  validarLoginRecuperacao as validarLoginRecuperacaoApi,
+} from "@/lib/authApi";
 import type { LoginResponse, PerfilUsuario } from "@/types/api";
 import type { AxiosError } from "axios";
 import "@/styles/login.css";
@@ -351,9 +356,7 @@ export default function Login() {
 
     setLoading(true);
     try {
-      const payload = { login: loginTrimmed, senha };
-      const res = await api.post<LoginResponse>("/api/auth/login", payload);
-      const data = res.data;
+      const data: LoginResponse = await loginApi({ login: loginTrimmed, senha });
       const token = data?.token ?? (data as { accessToken?: string }).accessToken;
       if (token) {
         const perfil = extrairPerfil(data);
@@ -405,7 +408,7 @@ export default function Login() {
 
     setLoading(true);
     try {
-      await api.post("/api/auth/register", {
+      await registrar({
         nome: nomeTrim,
         login: loginTrim,
         senha: senhaCadastro,
@@ -494,19 +497,14 @@ export default function Login() {
         setPassoRecuperacao(2);
         return;
       }
-      const res = await api.post<{ encontrado?: boolean; login?: string; nome?: string }>(
-        "/api/auth/validar-login-recuperacao",
-        {
-          login: loginTrim,
-        },
-      );
-      if (!res.data?.encontrado) {
+      const data = await validarLoginRecuperacaoApi(loginTrim);
+      if (!data?.encontrado) {
         setErroRecuperacao("Usuário não encontrado");
         return;
       }
       // 200: mantém fluxo local de duas etapas
-      setLoginRecuperacao(String(res.data.login ?? loginTrim));
-      setNomeRecuperacao(String(res.data.nome ?? ""));
+      setLoginRecuperacao(String(data.login ?? loginTrim));
+      setNomeRecuperacao(String(data.nome ?? ""));
       setPassoRecuperacao(2);
     } catch (e: unknown) {
       aplicarErroRecuperacao(e, "Não foi possível validar o login");
@@ -530,7 +528,7 @@ export default function Login() {
     setLoadingRecuperacao(true);
     try {
       if (!isMockEnabled()) {
-        await api.post("/api/auth/redefinir-senha", {
+        await redefinirSenha({
           login: loginTrim,
           novaSenha: novaSenhaRecuperacao,
           confirmarSenha: confirmarSenhaRecuperacao,

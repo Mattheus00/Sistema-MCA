@@ -1,6 +1,9 @@
 /**
  * Normaliza respostas e payloads entre backend (API real) e tipos do frontend.
- * Usar quando VITE_USE_MOCK=false para compatibilidade com o backend.
+ *
+ * Cada normalizer documenta qual DTO Java (backend/src/main/java/com/pucminas/sgi/dto/response)
+ * ele espelha. Só são lidos os nomes de campo que o backend realmente devolve; quando o mock
+ * em memória (`mockApi.ts`) ainda usa outro nome, o alias é mantido e marcado como "mock".
  */
 
 import { formatarMesAno } from "@/lib/inadimplentesUtils";
@@ -32,10 +35,14 @@ import type {
   TipoDocumentoCliente,
 } from "@/types/api";
 
-/** Prefixo gravado em `comprovante` para persistir quem confirmou. */
-const CONFIRMADO_POR_COMPROVANTE_PREFIX = "user:";
+/** Prefixo gravado em `comprovante` para persistir quem confirmou (PagamentoResponseDTO não tem esse campo). */
+export const CONFIRMADO_POR_COMPROVANTE_PREFIX = "user:";
 
-function decodeConfirmadoPorComprovante(
+export function encodeConfirmadoPorComprovante(label: string): string {
+  return `${CONFIRMADO_POR_COMPROVANTE_PREFIX}${label.trim()}`;
+}
+
+export function decodeConfirmadoPorComprovante(
   comprovante: string | null | undefined,
 ): string | undefined {
   if (!comprovante) return undefined;
@@ -45,43 +52,31 @@ function decodeConfirmadoPorComprovante(
   return nome || undefined;
 }
 
-/** Backend pode retornar clienteId em vez de id, statusCliente em vez de situacao, criadoEm/atualizadoEm */
+const str = (v: unknown): string | undefined => (v != null ? String(v) : undefined);
+const num = (v: unknown): number | undefined => (v != null ? Number(v) : undefined);
+/** Number() seguro: retorna 0 para null/undefined/NaN. */
+const numOr0 = (v: unknown): number => {
+  const n = Number(v ?? 0);
+  return Number.isFinite(n) ? n : 0;
+};
+
+/** Espelha ClienteResponseDTO (clienteId, cpfCnpj, statusCliente, saldoDevedor, criadoEm/atualizadoEm). Mock: id, cpf, situacao, saldoDevedorTotal, createdAt/updatedAt. */
 export function normalizeClienteFromApi(raw: Record<string, unknown>): Cliente {
   const id = raw.id ?? raw.clienteId;
   const situacao = raw.situacao ?? mapStatusClienteToSituacao(String(raw.statusCliente ?? ""));
   return {
-    id: id != null ? String(id) : undefined,
-    codigo: raw.codigo != null ? String(raw.codigo) : undefined,
+    id: str(id),
+    codigo: str(raw.codigo),
     nome: String(raw.nome ?? ""),
-    email: raw.email != null ? String(raw.email) : undefined,
-    cpf: raw.cpf != null ? String(raw.cpf) : raw.cpfCnpj != null ? String(raw.cpfCnpj) : undefined,
-    telefone:
-      raw.telefone != null
-        ? String(raw.telefone)
-        : raw.telefoneFixo != null
-          ? String(raw.telefoneFixo)
-          : undefined,
-    celular: raw.celular != null ? String(raw.celular) : undefined,
-    endereco: raw.endereco != null ? String(raw.endereco) : undefined,
+    email: str(raw.email),
+    cpf: str(raw.cpf ?? raw.cpfCnpj),
+    telefone: str(raw.telefone),
+    celular: str(raw.celular),
+    endereco: str(raw.endereco),
     situacao: situacao as Cliente["situacao"],
-    saldoDevedorTotal:
-      raw.saldoDevedorTotal != null
-        ? Number(raw.saldoDevedorTotal)
-        : raw.saldoDevedor != null
-          ? Number(raw.saldoDevedor)
-          : undefined,
-    createdAt:
-      raw.createdAt != null
-        ? String(raw.createdAt)
-        : raw.criadoEm != null
-          ? String(raw.criadoEm)
-          : undefined,
-    updatedAt:
-      raw.updatedAt != null
-        ? String(raw.updatedAt)
-        : raw.atualizadoEm != null
-          ? String(raw.atualizadoEm)
-          : undefined,
+    saldoDevedorTotal: num(raw.saldoDevedorTotal ?? raw.saldoDevedor),
+    createdAt: str(raw.createdAt ?? raw.criadoEm),
+    updatedAt: str(raw.updatedAt ?? raw.atualizadoEm),
   };
 }
 
@@ -93,7 +88,7 @@ function mapStatusClienteToSituacao(status: string): string {
   return status || "Ativo";
 }
 
-/** Payload para backend: statusCliente em maiúsculas, cpfCnpj (backend aceita cpf como alias) */
+/** Payload para backend (ClienteDTO): statusCliente em maiúsculas, cpfCnpj (backend aceita cpf como alias) */
 export function normalizeClienteToApi(c: Partial<Cliente>): Record<string, unknown> {
   const situacao = c.situacao ?? "Ativo";
   const statusCliente =
@@ -118,68 +113,36 @@ export function normalizeClienteToApi(c: Partial<Cliente>): Record<string, unkno
 
 /** Backend retorna valores monetários em reais (ex.: 1000 = R$ 1.000,00). Não multiplicar/dividir por 100. */
 const VALOR_CENTAVOS = false;
+const conv = (v: number) => (VALOR_CENTAVOS ? v / 100 : v);
 
-/** Extrai nome/login do usuário que confirmou o pagamento a partir de campos comuns da API. */
+/**
+ * Usuário que confirmou o pagamento: `confirmadoPor` (mock) ou, no backend, o prefixo
+ * `user:` gravado em `comprovante` (PagamentoResponseDTO não possui campo dedicado).
+ */
 function extrairConfirmadoPor(raw: Record<string, unknown>): string | undefined {
-  const candidatos = [
-    raw.confirmadoPor,
-    raw.confirmadoPorNome,
-    raw.registradoPor,
-    raw.registradoPorNome,
-    raw.criadoPor,
-    raw.criadoPorNome,
-    raw.usuarioNome,
-    raw.usuarioLogin,
-    raw.nomeUsuario,
-    raw.loginUsuario,
-    raw.operadorNome,
-    raw.operador,
-    raw.usuarioConfirmacao,
-    raw.createdBy,
-    raw.createdByName,
-  ];
-  for (const c of candidatos) {
-    if (c != null && String(c).trim()) return String(c).trim();
-  }
-  const usuario = raw.usuario;
-  if (usuario && typeof usuario === "object") {
-    const u = usuario as Record<string, unknown>;
-    const nome = u.nome ?? u.login ?? u.name ?? u.username;
-    if (nome != null && String(nome).trim()) return String(nome).trim();
-  }
-  const fromComprovante = decodeConfirmadoPorComprovante(
-    raw.comprovante != null ? String(raw.comprovante) : undefined,
-  );
-  if (fromComprovante) return fromComprovante;
-
-  const obs = raw.observacao != null ? String(raw.observacao) : "";
-  const matchObs = obs.match(/Confirmado por:\s*(.+)/i);
-  if (matchObs?.[1]?.trim()) return matchObs[1].trim();
-
-  return undefined;
+  const direto = raw.confirmadoPor;
+  if (direto != null && String(direto).trim()) return String(direto).trim();
+  return decodeConfirmadoPorComprovante(str(raw.comprovante));
 }
 
-/** Pagamentos embutidos na dívida: valorPago em reais (DTO de resposta). */
+/** Espelha PagamentoResponseDTO (pagamentoId, dividaId, protocoloDivida, valorPago em reais, dataPagamento, metodoPagamento, comprovante, criadoEm). */
 export function normalizePagamentoInadimplenciaFromApi(
   raw: Record<string, unknown>,
 ): PagamentoInadimplencia {
-  const valorBruto = Number(raw.valorPago ?? raw.valor ?? 0);
-  const valorPago = Number.isFinite(valorBruto) ? valorBruto : 0;
-  const id =
-    raw.pagamentoId != null ? String(raw.pagamentoId) : raw.id != null ? String(raw.id) : undefined;
   return {
-    pagamentoId: id,
-    dividaId: raw.dividaId != null ? String(raw.dividaId) : undefined,
-    protocoloDivida: raw.protocoloDivida != null ? String(raw.protocoloDivida) : undefined,
-    valorPago,
+    pagamentoId: str(raw.pagamentoId),
+    dividaId: str(raw.dividaId),
+    protocoloDivida: str(raw.protocoloDivida),
+    valorPago: numOr0(raw.valorPago),
     dataPagamento: String(raw.dataPagamento ?? ""),
-    metodoPagamento: raw.metodoPagamento != null ? String(raw.metodoPagamento) : undefined,
-    comprovante: raw.comprovante != null ? String(raw.comprovante) : undefined,
-    criadoEm: raw.criadoEm != null ? String(raw.criadoEm) : undefined,
+    metodoPagamento: str(raw.metodoPagamento),
+    comprovante: str(raw.comprovante),
+    criadoEm: str(raw.criadoEm),
     confirmadoPor: extrairConfirmadoPor(raw),
   };
 }
 
+/** InadimplenciaService devolve "Pago" | "Acordo" | "EmAberto"; mock pode usar "PARCIAL". */
 function normalizeStatusInadimplenciaFromApi(raw: unknown): Inadimplencia["status"] {
   const s = String(raw ?? "EmAberto")
     .trim()
@@ -191,38 +154,11 @@ function normalizeStatusInadimplenciaFromApi(raw: unknown): Inadimplencia["statu
   return "EmAberto";
 }
 
-function normalizeVencimentoFromApi(raw: Record<string, unknown>): string {
-  const candidatos = [
-    raw.vencimento,
-    raw.dataVencimento,
-    raw.dataVencimentoOriginal,
-    raw.mesReferencia,
-  ];
-  for (const candidato of candidatos) {
-    if (candidato == null) continue;
-    const texto = String(candidato).trim();
-    if (!texto) continue;
-    if (/^\d{4}-\d{2}/.test(texto)) return texto;
-    const br = texto.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-    if (br) return `${br[3]}-${br[2]}-${br[1]}`;
-  }
-  return "";
-}
-
+/** Espelha InadimplenciaResponseDTO (id, clienteId, clienteNome, valorOriginal, juros, valor, vencimento, descricao, status, createdAt, updatedAt, pagamentos[]). Mock: + valorDevedor. */
 export function normalizeInadimplenciaFromApi(raw: Record<string, unknown>): Inadimplencia {
-  const valor = Number(raw.valor ?? raw.valorDevedor ?? 0);
-  const valorOriginal = raw.valorOriginal != null ? Number(raw.valorOriginal) : undefined;
-  const juros = raw.juros != null ? Number(raw.juros) : undefined;
-  const valorDevedor = raw.valorDevedor != null ? Number(raw.valorDevedor) : undefined;
-  const multaDiaPercent =
-    (raw.multaDiaPercent as number | undefined) ??
-    (raw.multaDiariaPercent as number | undefined) ??
-    (raw.multaPercent as number | undefined);
-  const jurosMesPercent =
-    (raw.jurosMesPercent as number | undefined) ??
-    (raw.jurosAoMesPercent as number | undefined) ??
-    (raw.jurosPercent as number | undefined);
-  const conv = (v: number) => (VALOR_CENTAVOS ? v / 100 : v);
+  const valorOriginal = num(raw.valorOriginal);
+  const juros = num(raw.juros);
+  const valorDevedor = num(raw.valorDevedor);
   const pagamentosRaw = raw.pagamentos;
   let pagamentos: PagamentoInadimplencia[] | undefined;
   if (Array.isArray(pagamentosRaw)) {
@@ -231,36 +167,23 @@ export function normalizeInadimplenciaFromApi(raw: Record<string, unknown>): Ina
       .map((p) => normalizePagamentoInadimplenciaFromApi(p));
   }
   return {
-    id: raw.id != null ? String(raw.id) : undefined,
+    id: str(raw.id),
     clienteId: raw.clienteId != null ? String(raw.clienteId) : "",
-    clienteNome: raw.clienteNome != null ? String(raw.clienteNome) : undefined,
-    valor: conv(valor),
+    clienteNome: str(raw.clienteNome),
+    valor: conv(numOr0(raw.valor)),
     valorOriginal: valorOriginal != null ? conv(valorOriginal) : undefined,
     juros: juros != null ? conv(juros) : undefined,
     valorDevedor: valorDevedor != null ? conv(valorDevedor) : undefined,
-    detalhesJuros: raw.detalhesJuros != null ? String(raw.detalhesJuros) : undefined,
-    multaDiaPercent: multaDiaPercent != null ? Number(multaDiaPercent) : undefined,
-    jurosMesPercent: jurosMesPercent != null ? Number(jurosMesPercent) : undefined,
-    vencimento: normalizeVencimentoFromApi(raw),
-    descricao: raw.descricao != null ? String(raw.descricao) : undefined,
+    vencimento: String(raw.vencimento ?? "").trim(),
+    descricao: str(raw.descricao),
     status: normalizeStatusInadimplenciaFromApi(raw.status),
-    createdAt:
-      raw.createdAt != null
-        ? String(raw.createdAt)
-        : raw.criadoEm != null
-          ? String(raw.criadoEm)
-          : undefined,
-    updatedAt:
-      raw.updatedAt != null
-        ? String(raw.updatedAt)
-        : raw.atualizadoEm != null
-          ? String(raw.atualizadoEm)
-          : undefined,
+    createdAt: str(raw.createdAt),
+    updatedAt: str(raw.updatedAt),
     pagamentos,
   };
 }
 
-/** Payload para POST inadimplentes: valor em reais */
+/** Payload para POST inadimplentes (InadimplenciaPayloadDTO): valor em reais */
 export function normalizeInadimplenciaToApi(p: {
   clienteId: string;
   valor: number;
@@ -275,7 +198,11 @@ export function normalizeInadimplenciaToApi(p: {
   };
 }
 
-/** Backend retorna { limite, ranking: [] }; ranking[].nomeCliente, saldoDevedor. Campos opcionais: qtdDividas, mediaDiasAtraso, status */
+/**
+ * Espelha RankingDevedoresDTO { limite, ranking: ItemRankingDTO[] } com
+ * ItemRankingDTO (clienteId, nomeCliente, cpfCnpj, saldoDevedor, posicao).
+ * O DTO não traz qtdDividas/mediaDiasAtraso/status — ficam nos valores padrão.
+ */
 export function normalizeRankingFromApi(data: unknown): RankingDevedorItem[] {
   if (!data || typeof data !== "object" || !("ranking" in data)) return [];
   const arr = (data as { ranking?: unknown[] }).ranking;
@@ -285,78 +212,68 @@ export function normalizeRankingFromApi(data: unknown): RankingDevedorItem[] {
     return {
       posicao: Number(r.posicao ?? i + 1),
       clienteId: r.clienteId != null ? String(r.clienteId) : "",
-      clienteNome: String(r.nomeCliente ?? r.clienteNome ?? ""),
+      clienteNome: String(r.nomeCliente ?? ""),
       cpfCnpj: String(r.cpfCnpj ?? ""),
-      valorDevido: Number(r.saldoDevedor ?? r.valorDevido ?? 0),
-      qtdDividas: Number(r.quantidadeDividas ?? r.qtdDividas ?? 0),
-      mediaDiasAtraso: Number(r.mediaDiasAtraso ?? 0),
-      status: (r.status as RankingDevedorItem["status"]) ?? "Recente",
+      valorDevido: numOr0(r.saldoDevedor),
+      qtdDividas: 0,
+      mediaDiasAtraso: 0,
+      status: "Recente",
     };
   });
 }
 
-/** Backend retorna periodoInicio, periodoFim, totalClientesInadimplentes, valorTotalInadimplente, itens[] */
+/**
+ * Espelha RelatorioInadimplentesDTO (periodoInicio, periodoFim, totalClientesInadimplentes,
+ * valorTotalInadimplente, itens: ItemInadimplenteDTO[] { nomeCliente, cpfCnpj, quantidadeDividas,
+ * saldoDevedor, dataVencimentoMaisAntiga }). O DTO não traz clienteId/statusPior nem o valor
+ * vencido no período (mantido 0 — pendência de backend).
+ */
 export function normalizeInadimplenciaPeriodoFromApi(
   data: unknown,
 ): InadimplenciaPeriodoRelatorio | null {
   if (!data || typeof data !== "object") return null;
   const d = data as Record<string, unknown>;
-  const itens = d.itens ?? d.detalhamento;
-  const arr = Array.isArray(itens) ? itens : [];
-  const detalhamento = arr.map((x: Record<string, unknown>) => ({
-    clienteId: x.clienteId != null ? String(x.clienteId) : "",
-    clienteNome: String(x.nomeCliente ?? x.clienteNome ?? ""),
+  const arr = Array.isArray(d.itens) ? (d.itens as Record<string, unknown>[]) : [];
+  const detalhamento = arr.map((x) => ({
+    clienteId: "",
+    clienteNome: String(x.nomeCliente ?? ""),
     cpfCnpj: String(x.cpfCnpj ?? ""),
-    qtdDividas: Number(x.quantidadeDividas ?? x.qtdDividas ?? 0),
-    valorTotal: Number(x.saldoDevedor ?? x.valorTotal ?? 0),
-    statusPior:
-      (x.statusPior as InadimplenciaPeriodoRelatorio["detalhamento"][0]["statusPior"]) ??
-      "EM_ABERTO",
+    qtdDividas: numOr0(x.quantidadeDividas),
+    valorTotal: numOr0(x.saldoDevedor),
+    statusPior: "EM_ABERTO" as const,
   }));
   return {
-    dataInicio: String(d.periodoInicio ?? d.dataInicio ?? ""),
-    dataFim: String(d.periodoFim ?? d.dataFim ?? ""),
-    totalClientes: Number(d.totalClientesInadimplentes ?? d.totalClientes ?? 0),
-    valorTotal: Number(d.valorTotalInadimplente ?? d.valorTotal ?? 0),
-    dividasVencidasNoPeriodo: Number(d.dividasVencidasNoPeriodo ?? arr.length),
-    valorVencidoNoPeriodo: Number(d.valorVencidoNoPeriodo ?? d.valorTotal ?? 0),
+    dataInicio: String(d.periodoInicio ?? ""),
+    dataFim: String(d.periodoFim ?? ""),
+    totalClientes: numOr0(d.totalClientesInadimplentes),
+    valorTotal: numOr0(d.valorTotalInadimplente),
+    dividasVencidasNoPeriodo: arr.length,
+    valorVencidoNoPeriodo: 0,
     detalhamento,
   };
 }
 
-/** Backend pode retornar totalRecebido (resumo-financeiro) ou totalPago (resumo legado). */
+/** Espelha ResumoFinanceiroDTO (periodoInicio, periodoFim, totalRecebido, totalEmAberto). */
 export function normalizeResumoFinanceiroFromApi(data: unknown): ResumoFinanceiro | null {
   if (!data || typeof data !== "object") return null;
   const d = data as Record<string, unknown>;
-  const conv = (v: number) => (VALOR_CENTAVOS ? v / 100 : v);
   return {
-    totalEmAberto: conv(Number(d.totalEmAberto ?? 0)),
-    totalRecebido: conv(Number(d.totalRecebido ?? d.totalPago ?? 0)),
-    periodoInicio:
-      d.periodoInicio != null
-        ? String(d.periodoInicio)
-        : d.dataInicio != null
-          ? String(d.dataInicio)
-          : undefined,
-    periodoFim:
-      d.periodoFim != null
-        ? String(d.periodoFim)
-        : d.dataFim != null
-          ? String(d.dataFim)
-          : undefined,
+    totalEmAberto: conv(numOr0(d.totalEmAberto)),
+    totalRecebido: conv(numOr0(d.totalRecebido)),
+    periodoInicio: str(d.periodoInicio),
+    periodoFim: str(d.periodoFim),
   };
 }
 
-/** Normaliza GET /api/relatorios/resumo (dashboard). Valores monetários em reais quando VALOR_CENTAVOS=false. */
+/** Espelha ResumoRelatorioDTO (totalClientes, totalDividas, totalEmAberto, totalPago) — GET /api/relatorios/resumo. */
 export function normalizeResumoRelatorioFromApi(data: unknown): ResumoRelatorio | null {
   if (!data || typeof data !== "object") return null;
   const d = data as Record<string, unknown>;
-  const conv = (v: number) => (VALOR_CENTAVOS ? v / 100 : v);
   return {
-    totalClientes: Number(d.totalClientes ?? 0),
-    totalDividas: Number(d.totalDividas ?? 0),
-    totalEmAberto: conv(Number(d.totalEmAberto ?? 0)),
-    totalPago: conv(Number(d.totalPago ?? d.totalRecebido ?? 0)),
+    totalClientes: numOr0(d.totalClientes),
+    totalDividas: numOr0(d.totalDividas),
+    totalEmAberto: conv(numOr0(d.totalEmAberto)),
+    totalPago: conv(numOr0(d.totalPago)),
   };
 }
 
@@ -376,59 +293,41 @@ export function mesReferenciaPagamentoRecebido(item: PagamentoRecebidoItem): str
   return "—";
 }
 
+/**
+ * Sem DTO no backend: `GET /api/relatorios/pagamentos-recebidos` não existe (pendência de backend).
+ * Espelha o formato do mock (PagamentoRecebidoItem): data, clienteNome, protocolo, valor, metodo,
+ * saldoRestante, mesReferencia, vencimento, confirmadoPor.
+ */
 export function normalizePagamentoRecebidoItemFromApi(
   raw: Record<string, unknown>,
 ): PagamentoRecebidoItem {
-  const conv = (v: number) => (VALOR_CENTAVOS ? v / 100 : v);
-  const valorBruto = Number(raw.valor ?? raw.valorPago ?? raw.valorRecebido ?? 0);
-  const vencimento =
-    raw.vencimento != null
-      ? String(raw.vencimento)
-      : raw.mesReferencia != null && /^\d{4}-\d{2}/.test(String(raw.mesReferencia))
-        ? String(raw.mesReferencia)
-        : undefined;
-  const mesReferencia =
-    raw.mesReferencia != null && !/^\d{4}-\d{2}/.test(String(raw.mesReferencia))
-      ? String(raw.mesReferencia)
-      : raw.mes != null
-        ? String(raw.mes)
-        : raw.referencia != null
-          ? String(raw.referencia)
-          : undefined;
   return {
-    data: String(raw.data ?? raw.dataPagamento ?? ""),
-    clienteNome: String(raw.clienteNome ?? raw.nomeCliente ?? "—"),
+    data: String(raw.data ?? ""),
+    clienteNome: String(raw.clienteNome ?? "—"),
     protocolo: String(raw.protocolo ?? ""),
-    valor: Number.isFinite(valorBruto) ? conv(valorBruto) : 0,
-    metodo: String(raw.metodo ?? raw.metodoPagamento ?? "—"),
-    saldoRestante: conv(Number(raw.saldoRestante ?? 0)),
-    mesReferencia,
-    vencimento,
+    valor: conv(numOr0(raw.valor)),
+    metodo: String(raw.metodo ?? "—"),
+    saldoRestante: conv(numOr0(raw.saldoRestante)),
+    mesReferencia: str(raw.mesReferencia),
+    vencimento: str(raw.vencimento),
     confirmadoPor: extrairConfirmadoPor(raw),
   };
 }
 
-/** Normaliza GET /api/relatorios/pagamentos-recebidos. */
+/** Sem DTO no backend (ver normalizePagamentoRecebidoItemFromApi); espelha PagamentosRecebidosRelatorio do mock. */
 export function normalizePagamentosRecebidosFromApi(
   data: unknown,
 ): PagamentosRecebidosRelatorio | null {
   if (!data || typeof data !== "object") return null;
   const d = data as Record<string, unknown>;
-  const conv = (v: number) => (VALOR_CENTAVOS ? v / 100 : v);
   const listaRaw = Array.isArray(d.detalhamento)
-    ? d.detalhamento
-    : Array.isArray(d.pagamentos)
-      ? d.pagamentos
-      : Array.isArray(d.itens)
-        ? d.itens
-        : [];
-  const detalhamento = (listaRaw as Record<string, unknown>[]).map(
-    normalizePagamentoRecebidoItemFromApi,
-  );
-  const valorTotalBruto = Number(d.valorTotal ?? d.totalRecebido ?? d.valorTotalRecebido ?? 0);
+    ? (d.detalhamento as Record<string, unknown>[])
+    : [];
+  const detalhamento = listaRaw.map(normalizePagamentoRecebidoItemFromApi);
+  const valorTotalBruto = Number(d.valorTotal ?? 0);
   return {
-    dataInicio: String(d.dataInicio ?? d.periodoInicio ?? ""),
-    dataFim: String(d.dataFim ?? d.periodoFim ?? ""),
+    dataInicio: String(d.dataInicio ?? ""),
+    dataFim: String(d.dataFim ?? ""),
     totalPagamentos: Number(d.totalPagamentos ?? detalhamento.length),
     valorTotal: Number.isFinite(valorTotalBruto)
       ? conv(valorTotalBruto)
@@ -436,8 +335,8 @@ export function normalizePagamentosRecebidosFromApi(
     porMetodo: Array.isArray(d.porMetodo)
       ? (d.porMetodo as Record<string, unknown>[]).map((m) => ({
           metodo: String(m.metodo ?? ""),
-          valor: conv(Number(m.valor ?? 0)),
-          percentual: Number(m.percentual ?? 0),
+          valor: conv(numOr0(m.valor)),
+          percentual: numOr0(m.percentual),
         }))
       : [],
     detalhamento,
@@ -469,63 +368,29 @@ function normalizeStatusItem(raw: unknown): StatusItemEnvioBoleto {
   return "PENDENTE";
 }
 
+/**
+ * Espelha ItemEnvioBoletoResponse (envioBoletoId, clienteId, clienteNome, documentoMascarado,
+ * nomeArquivoOriginal, emailDestinatario, metodoIdentificacao, confiancaIdentificacao, status,
+ * tamanhoArquivo, simulado, mensagemErro). Mock: itemId, tamanhoBytes, bloqueado, motivoBloqueio, erro.
+ */
 export function normalizeItemEnvioBoletoFromApi(raw: Record<string, unknown>): ItemEnvioBoleto {
-  const envioBoletoId = String(raw.envioBoletoId ?? raw.itemId ?? raw.id ?? "");
+  const envioBoletoId = String(raw.envioBoletoId ?? raw.itemId ?? "");
   return {
     envioBoletoId,
     itemId: envioBoletoId,
-    nomeArquivoOriginal: String(raw.nomeArquivoOriginal ?? raw.nomeArquivo ?? raw.arquivo ?? ""),
-    tamanhoBytes:
-      raw.tamanhoBytes != null
-        ? Number(raw.tamanhoBytes)
-        : raw.tamanho != null
-          ? Number(raw.tamanho)
-          : undefined,
-    clienteId: raw.clienteId != null ? String(raw.clienteId) : undefined,
-    clienteNome:
-      raw.clienteNome != null
-        ? String(raw.clienteNome)
-        : raw.nomeCliente != null
-          ? String(raw.nomeCliente)
-          : undefined,
-    documentoMascarado:
-      raw.documentoMascarado != null
-        ? String(raw.documentoMascarado)
-        : raw.cpfCnpj != null
-          ? String(raw.cpfCnpj)
-          : raw.cpf != null
-            ? String(raw.cpf)
-            : undefined,
-    emailDestinatario:
-      raw.emailDestinatario != null
-        ? String(raw.emailDestinatario)
-        : raw.email != null
-          ? String(raw.email)
-          : undefined,
-    metodoIdentificacao:
-      raw.metodoIdentificacao != null
-        ? String(raw.metodoIdentificacao)
-        : raw.metodo != null
-          ? String(raw.metodo)
-          : undefined,
-    confiancaIdentificacao: normalizeConfianca(
-      raw.confiancaIdentificacao ?? raw.confianca ?? raw.nivelConfianca,
-    ),
+    nomeArquivoOriginal: String(raw.nomeArquivoOriginal ?? ""),
+    tamanhoBytes: num(raw.tamanhoBytes ?? raw.tamanhoArquivo),
+    clienteId: str(raw.clienteId),
+    clienteNome: str(raw.clienteNome),
+    documentoMascarado: str(raw.documentoMascarado),
+    emailDestinatario: str(raw.emailDestinatario),
+    metodoIdentificacao: str(raw.metodoIdentificacao),
+    confiancaIdentificacao: normalizeConfianca(raw.confiancaIdentificacao),
     status: normalizeStatusItem(raw.status),
-    bloqueado: raw.bloqueado === true || String(raw.bloqueado ?? "").toLowerCase() === "true",
-    motivoBloqueio:
-      raw.motivoBloqueio != null
-        ? String(raw.motivoBloqueio)
-        : raw.motivo != null
-          ? String(raw.motivo)
-          : undefined,
-    erro:
-      raw.erro != null
-        ? String(raw.erro)
-        : raw.mensagemErro != null
-          ? String(raw.mensagemErro)
-          : undefined,
-    simulado: raw.simulado === true || String(raw.simulado ?? "").toLowerCase() === "true",
+    bloqueado: raw.bloqueado === true,
+    motivoBloqueio: str(raw.motivoBloqueio),
+    erro: str(raw.erro ?? raw.mensagemErro),
+    simulado: raw.simulado === true,
   };
 }
 
@@ -554,53 +419,50 @@ function buildResumoFromItens(itens: ItemEnvioBoleto[]): ResumoLoteEnvioBoleto {
   };
 }
 
+/** Espelha ResumoLoteEnvioResponse (semEmail, prontosParaEnvio, ignorados, enviados, erros, duplicados, bloqueados, aguardandoCorrecao). */
 function normalizeResumoLoteFromApi(
   raw: Record<string, unknown> | undefined,
   itens: ItemEnvioBoleto[],
 ): ResumoLoteEnvioBoleto {
   if (!raw) return buildResumoFromItens(itens);
   return {
-    semEmail: Number(raw.semEmail ?? 0),
-    prontosParaEnvio: Number(raw.prontosParaEnvio ?? raw.prontos ?? 0),
-    ignorados: Number(raw.ignorados ?? 0),
-    enviados: Number(raw.enviados ?? 0),
-    erros: Number(raw.erros ?? 0),
-    duplicados: Number(raw.duplicados ?? 0),
-    bloqueados: Number(raw.bloqueados ?? 0),
-    aguardandoCorrecao: Number(raw.aguardandoCorrecao ?? 0),
-    naoIdentificados: Number(raw.naoIdentificados ?? 0),
+    semEmail: numOr0(raw.semEmail),
+    prontosParaEnvio: numOr0(raw.prontosParaEnvio),
+    ignorados: numOr0(raw.ignorados),
+    enviados: numOr0(raw.enviados),
+    erros: numOr0(raw.erros),
+    duplicados: numOr0(raw.duplicados),
+    bloqueados: numOr0(raw.bloqueados),
+    aguardandoCorrecao: numOr0(raw.aguardandoCorrecao),
+    naoIdentificados: 0,
   };
 }
 
+/** Espelha ValidacaoLoteResponse (podeEnviar). Mock: bloqueios[{ itemId, motivo }]. */
 export function normalizeValidacaoLoteFromApi(
   raw: Record<string, unknown> | undefined,
 ): ValidacaoLoteEnvioBoleto | undefined {
   if (!raw) return undefined;
-
-  const validacaoAninhada =
-    raw.validacao && typeof raw.validacao === "object"
-      ? (raw.validacao as Record<string, unknown>)
-      : undefined;
-
   const bloqueiosRaw = Array.isArray(raw.bloqueios)
     ? (raw.bloqueios as Record<string, unknown>[])
-    : validacaoAninhada && Array.isArray(validacaoAninhada.bloqueios)
-      ? (validacaoAninhada.bloqueios as Record<string, unknown>[])
-      : [];
-
-  const podeEnviarRaw = raw.podeEnviar ?? validacaoAninhada?.podeEnviar;
-
+    : [];
+  const podeEnviarRaw = raw.podeEnviar;
   if (podeEnviarRaw === undefined && bloqueiosRaw.length === 0) return undefined;
-
   return {
-    podeEnviar: podeEnviarRaw === true || String(podeEnviarRaw ?? "").toLowerCase() === "true",
+    podeEnviar: podeEnviarRaw === true,
     bloqueios: bloqueiosRaw.map((b) => ({
-      itemId: String(b.itemId ?? b.envioBoletoId ?? b.id ?? ""),
-      motivo: String(b.motivo ?? b.mensagem ?? ""),
+      itemId: String(b.itemId ?? b.envioBoletoId ?? ""),
+      motivo: String(b.motivo ?? ""),
     })),
   };
 }
 
+/**
+ * Espelha LoteEnvioBoletoResponse (loteId, status, usuarioResponsavelNome, quantidadeTotal,
+ * quantidadeIdentificada, quantidadePendente, criadoEm, dataFinalizacao, itens, resumo) e também
+ * ValidacaoLoteResponse (loteId, podeEnviar, resumo, itens) e EnviarLoteResponse (statusLote,
+ * resultados, enviados/erros/ignorados). Mock: enviadoEm, criadoPor.
+ */
 export function normalizeLoteEnvioBoletoFromApi(raw: Record<string, unknown>): LoteEnvioBoleto {
   let itensRaw = Array.isArray(raw.itens) ? (raw.itens as Record<string, unknown>[]) : [];
   if (itensRaw.length === 0 && Array.isArray(raw.resultados)) {
@@ -621,22 +483,12 @@ export function normalizeLoteEnvioBoletoFromApi(raw: Record<string, unknown>): L
         }
       : undefined);
   return {
-    loteId: String(raw.loteId ?? raw.id ?? ""),
+    loteId: String(raw.loteId ?? ""),
     status: String(raw.status ?? raw.statusLote ?? "CONFERENCIA"),
-    criadoEm:
-      raw.criadoEm != null
-        ? String(raw.criadoEm)
-        : raw.createdAt != null
-          ? String(raw.createdAt)
-          : undefined,
-    enviadoEm: raw.enviadoEm != null ? String(raw.enviadoEm) : undefined,
-    criadoPor: raw.criadoPor != null ? String(raw.criadoPor) : undefined,
-    quantidadeTotal:
-      raw.quantidadeTotal != null
-        ? Number(raw.quantidadeTotal)
-        : raw.totalItens != null
-          ? Number(raw.totalItens)
-          : itens.length,
+    criadoEm: str(raw.criadoEm),
+    enviadoEm: str(raw.enviadoEm ?? raw.dataFinalizacao),
+    criadoPor: str(raw.criadoPor ?? raw.usuarioResponsavelNome),
+    quantidadeTotal: raw.quantidadeTotal != null ? Number(raw.quantidadeTotal) : itens.length,
     quantidadeIdentificada:
       raw.quantidadeIdentificada != null
         ? Number(raw.quantidadeIdentificada)
@@ -654,65 +506,37 @@ export function normalizeLoteEnvioBoletoFromApi(raw: Record<string, unknown>): L
   };
 }
 
+/** Espelha HistoricoLoteResponse (loteId, status, usuarioResponsavelNome, quantidadeTotal, quantidadeEnviada, quantidadeComErro, totalItens, enviados, erros, criadoPor, criadoEm, dataFinalizacao). Mock: enviadoEm. */
 export function normalizeLoteResumoFromApi(raw: Record<string, unknown>): LoteEnvioBoletoResumo {
   return {
-    loteId: String(raw.loteId ?? raw.id ?? ""),
+    loteId: String(raw.loteId ?? ""),
     status: String(raw.status ?? ""),
-    criadoEm: raw.criadoEm != null ? String(raw.criadoEm) : undefined,
-    enviadoEm:
-      raw.dataFinalizacao != null
-        ? String(raw.dataFinalizacao)
-        : raw.enviadoEm != null
-          ? String(raw.enviadoEm)
-          : undefined,
-    criadoPor:
-      raw.criadoPor != null
-        ? String(raw.criadoPor)
-        : raw.usuarioResponsavelNome != null
-          ? String(raw.usuarioResponsavelNome)
-          : undefined,
-    totalItens:
-      raw.totalItens != null
-        ? Number(raw.totalItens)
-        : raw.quantidadeTotal != null
-          ? Number(raw.quantidadeTotal)
-          : undefined,
-    enviados:
-      raw.enviados != null
-        ? Number(raw.enviados)
-        : raw.quantidadeEnviada != null
-          ? Number(raw.quantidadeEnviada)
-          : undefined,
-    erros:
-      raw.erros != null
-        ? Number(raw.erros)
-        : raw.quantidadeComErro != null
-          ? Number(raw.quantidadeComErro)
-          : undefined,
+    criadoEm: str(raw.criadoEm),
+    enviadoEm: str(raw.dataFinalizacao ?? raw.enviadoEm),
+    criadoPor: str(raw.criadoPor ?? raw.usuarioResponsavelNome),
+    totalItens: num(raw.totalItens ?? raw.quantidadeTotal),
+    enviados: num(raw.enviados ?? raw.quantidadeEnviada),
+    erros: num(raw.erros ?? raw.quantidadeComErro),
   };
 }
 
+/** Espelha ResultadoEnvioItemResponse (envioBoletoId, clienteId, clienteNome, emailDestinatario, nomeArquivoOriginal, status, simulado, reenvio, mensagemErro, dataEnvio). */
 function normalizeResultadoEnvioItemFromApi(raw: Record<string, unknown>): ResultadoEnvioItem {
   return {
-    envioBoletoId: String(raw.envioBoletoId ?? raw.itemId ?? ""),
-    clienteId: raw.clienteId != null ? String(raw.clienteId) : undefined,
-    clienteNome: raw.clienteNome != null ? String(raw.clienteNome) : undefined,
-    emailDestinatario: raw.emailDestinatario != null ? String(raw.emailDestinatario) : undefined,
-    nomeArquivoOriginal:
-      raw.nomeArquivoOriginal != null ? String(raw.nomeArquivoOriginal) : undefined,
-    status: raw.status != null ? String(raw.status) : undefined,
+    envioBoletoId: String(raw.envioBoletoId ?? ""),
+    clienteId: str(raw.clienteId),
+    clienteNome: str(raw.clienteNome),
+    emailDestinatario: str(raw.emailDestinatario),
+    nomeArquivoOriginal: str(raw.nomeArquivoOriginal),
+    status: str(raw.status),
     simulado: Boolean(raw.simulado),
     reenvio: Boolean(raw.reenvio),
-    mensagemErro:
-      raw.mensagemErro != null
-        ? String(raw.mensagemErro)
-        : raw.erro != null
-          ? String(raw.erro)
-          : null,
-    dataEnvio: raw.dataEnvio != null ? String(raw.dataEnvio) : undefined,
+    mensagemErro: raw.mensagemErro != null ? String(raw.mensagemErro) : null,
+    dataEnvio: str(raw.dataEnvio),
   };
 }
 
+/** Espelha ResultadoEnvioLoteResponse (loteId, status, criadoEm, dataFinalizacao, quantidade*, enviados[], comErro[], naoEnviados[]). */
 export function normalizeResultadoEnvioLoteFromApi(
   raw: Record<string, unknown>,
 ): ResultadoEnvioLote {
@@ -722,21 +546,21 @@ export function normalizeResultadoEnvioLoteFromApi(
       : [];
 
   return {
-    loteId: String(raw.loteId ?? raw.id ?? ""),
-    status: raw.status != null ? String(raw.status) : undefined,
-    criadoEm: raw.criadoEm != null ? String(raw.criadoEm) : undefined,
-    dataFinalizacao: raw.dataFinalizacao != null ? String(raw.dataFinalizacao) : undefined,
-    quantidadeTotal: raw.quantidadeTotal != null ? Number(raw.quantidadeTotal) : undefined,
-    quantidadeEnviada: raw.quantidadeEnviada != null ? Number(raw.quantidadeEnviada) : undefined,
-    quantidadeComErro: raw.quantidadeComErro != null ? Number(raw.quantidadeComErro) : undefined,
-    quantidadeNaoEnviada:
-      raw.quantidadeNaoEnviada != null ? Number(raw.quantidadeNaoEnviada) : undefined,
+    loteId: String(raw.loteId ?? ""),
+    status: str(raw.status),
+    criadoEm: str(raw.criadoEm),
+    dataFinalizacao: str(raw.dataFinalizacao),
+    quantidadeTotal: num(raw.quantidadeTotal),
+    quantidadeEnviada: num(raw.quantidadeEnviada),
+    quantidadeComErro: num(raw.quantidadeComErro),
+    quantidadeNaoEnviada: num(raw.quantidadeNaoEnviada),
     enviados: mapLista(raw.enviados),
     comErro: mapLista(raw.comErro),
     naoEnviados: mapLista(raw.naoEnviados),
   };
 }
 
+/** Page<HistoricoLoteResponse> do Spring (ou array direto no mock). */
 export function normalizePaginaLotesEnvioFromApi(data: unknown): PaginaLotesEnvioBoleto {
   if (data && typeof data === "object" && "content" in data) {
     const body = data as Record<string, unknown>;
@@ -787,51 +611,40 @@ function normalizeTipoDocumentoCliente(raw: unknown): TipoDocumentoCliente {
   return validos.includes(t as TipoDocumentoCliente) ? (t as TipoDocumentoCliente) : "OUTRO";
 }
 
+/** Espelha PortalDocumentoDTO (documentoId, clienteId, clienteNome, clienteCodigo, dividaId, protocoloDivida, tipo, status, nomeOriginal, contentType, tamanhoBytes, observacaoCliente, respostaEscritorio, respondidoEm, respondidoPorNome, enviadoEm) — visão staff. */
 export function normalizeDocumentoClienteFromApi(raw: Record<string, unknown>): DocumentoCliente {
   return {
-    documentoId: String(raw.documentoId ?? raw.id ?? ""),
-    clienteId: raw.clienteId != null ? String(raw.clienteId) : undefined,
-    clienteNome: raw.clienteNome != null ? String(raw.clienteNome) : undefined,
-    clienteCodigo:
-      raw.clienteCodigo != null
-        ? String(raw.clienteCodigo)
-        : raw.codigo != null
-          ? String(raw.codigo)
-          : undefined,
-    dividaId: raw.dividaId != null ? String(raw.dividaId) : undefined,
-    protocoloDivida: raw.protocoloDivida != null ? String(raw.protocoloDivida) : undefined,
+    documentoId: String(raw.documentoId ?? ""),
+    clienteId: str(raw.clienteId),
+    clienteNome: str(raw.clienteNome),
+    clienteCodigo: str(raw.clienteCodigo),
+    dividaId: str(raw.dividaId),
+    protocoloDivida: str(raw.protocoloDivida),
     tipo: normalizeTipoDocumentoCliente(raw.tipo),
     status: normalizeStatusDocumentoCliente(raw.status),
-    nomeOriginal: String(
-      raw.nomeOriginal ?? raw.nomeArquivo ?? raw.nomeArquivoOriginal ?? "arquivo",
-    ),
-    contentType: String(raw.contentType ?? raw.mimeType ?? "application/octet-stream"),
-    tamanhoBytes: Number(raw.tamanhoBytes ?? raw.tamanho ?? 0),
-    observacaoCliente:
-      raw.observacaoCliente != null
-        ? String(raw.observacaoCliente)
-        : raw.observacao != null
-          ? String(raw.observacao)
-          : undefined,
-    respostaEscritorio: raw.respostaEscritorio != null ? String(raw.respostaEscritorio) : undefined,
-    respondidoEm: raw.respondidoEm != null ? String(raw.respondidoEm) : undefined,
-    respondidoPorNome: raw.respondidoPorNome != null ? String(raw.respondidoPorNome) : undefined,
-    enviadoEm: String(raw.enviadoEm ?? raw.criadoEm ?? raw.createdAt ?? new Date().toISOString()),
+    nomeOriginal: String(raw.nomeOriginal ?? "arquivo"),
+    contentType: String(raw.contentType ?? "application/octet-stream"),
+    tamanhoBytes: numOr0(raw.tamanhoBytes),
+    observacaoCliente: str(raw.observacaoCliente),
+    respostaEscritorio: str(raw.respostaEscritorio),
+    respondidoEm: str(raw.respondidoEm),
+    respondidoPorNome: str(raw.respondidoPorNome),
+    enviadoEm: String(raw.enviadoEm ?? new Date().toISOString()),
   };
 }
 
+/** Espelha ResumoDocumentosClientesDTO (recebidos, pendentes, novos, emAnalise, arquivados). */
 export function normalizeResumoDocumentosClientesFromApi(data: unknown): ResumoDocumentosClientes {
   const raw = (data ?? {}) as Record<string, unknown>;
-  const recebidos = Number(raw.recebidos ?? 0);
-  const pendentes = raw.pendentes != null ? Number(raw.pendentes) : Number(raw.novos ?? 0);
   return {
-    pendentes,
-    recebidos,
-    emAnalise: Number(raw.emAnalise ?? raw.em_analise ?? 0),
-    arquivados: Number(raw.arquivados ?? 0),
+    pendentes: raw.pendentes != null ? Number(raw.pendentes) : numOr0(raw.novos),
+    recebidos: numOr0(raw.recebidos),
+    emAnalise: numOr0(raw.emAnalise),
+    arquivados: numOr0(raw.arquivados),
   };
 }
 
+/** Page<PortalDocumentoDTO> do Spring (ou array direto no mock). */
 export function normalizePaginaDocumentosClientesFromApi(data: unknown): PaginaDocumentosClientes {
   if (data && typeof data === "object" && "content" in data) {
     const body = data as Record<string, unknown>;
@@ -858,35 +671,19 @@ export function normalizePaginaDocumentosClientesFromApi(data: unknown): PaginaD
   };
 }
 
+/** Espelha PortalDocumentoDTO (documentoId, nomeOriginal, observacaoCliente, enviadoEm) — visão do cliente. Mock: id, nomeArquivo, observacao, criadoEm. */
 export function normalizeDocumentoPortalFromApi(raw: Record<string, unknown>): PortalDocumento {
   return {
     id: String(raw.documentoId ?? raw.id ?? ""),
     tipo: normalizeTipoDocumentoCliente(raw.tipo),
-    nomeArquivo:
-      raw.nomeOriginal != null
-        ? String(raw.nomeOriginal)
-        : raw.nomeArquivo != null
-          ? String(raw.nomeArquivo)
-          : raw.nomeArquivoOriginal != null
-            ? String(raw.nomeArquivoOriginal)
-            : undefined,
+    nomeArquivo: str(raw.nomeOriginal ?? raw.nomeArquivo),
     status: normalizeStatusDocumentoCliente(raw.status),
-    observacao:
-      raw.observacaoCliente != null
-        ? String(raw.observacaoCliente)
-        : raw.observacao != null
-          ? String(raw.observacao)
-          : undefined,
-    dividaId: raw.dividaId != null ? String(raw.dividaId) : undefined,
-    criadoEm:
-      raw.enviadoEm != null
-        ? String(raw.enviadoEm)
-        : raw.criadoEm != null
-          ? String(raw.criadoEm)
-          : undefined,
-    respostaEscritorio: raw.respostaEscritorio != null ? String(raw.respostaEscritorio) : undefined,
-    respondidoEm: raw.respondidoEm != null ? String(raw.respondidoEm) : undefined,
-    respondidoPorNome: raw.respondidoPorNome != null ? String(raw.respondidoPorNome) : undefined,
+    observacao: str(raw.observacaoCliente ?? raw.observacao),
+    dividaId: str(raw.dividaId),
+    criadoEm: str(raw.enviadoEm ?? raw.criadoEm),
+    respostaEscritorio: str(raw.respostaEscritorio),
+    respondidoEm: str(raw.respondidoEm),
+    respondidoPorNome: str(raw.respondidoPorNome),
   };
 }
 

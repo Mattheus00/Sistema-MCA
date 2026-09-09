@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { formatarDataHoraDashboard, formatarMoedaDashboard } from "@/lib/dashboardUtils";
-import type { AtividadeDashboard } from "@/lib/dashboardUtils";
+import type { AtividadeDashboard } from "@/types/dashboard";
 import AdminItemCard from "@/components/AdminItemCard";
 import ResponsiveList from "@/components/ResponsiveList";
 

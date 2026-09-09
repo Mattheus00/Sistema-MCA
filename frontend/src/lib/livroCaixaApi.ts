@@ -1,4 +1,10 @@
-import { api, getAuthToken, getApiErrorMessage, isMockEnabled } from "@/lib/api";
+import {
+  api,
+  getAuthToken,
+  getApiErrorMessage,
+  isMockEnabled,
+  normalizeListResponse,
+} from "@/lib/api";
 import type {
   AnaliseLivroCaixa,
   AtualizarCategoriaPayload,
@@ -198,11 +204,7 @@ export function normalizeMovimentacaoDetalheFromApi(
 
 export function normalizePaginaMovimentacoesFromApi(raw: unknown): PaginaMovimentacoes {
   const data = (raw ?? {}) as Record<string, unknown>;
-  const content = Array.isArray(data.content)
-    ? data.content
-    : Array.isArray(raw)
-      ? (raw as unknown[])
-      : [];
+  const content = normalizeListResponse<unknown>(raw);
   return {
     content: content.map((item) => normalizeMovimentacaoFromApi(item as Record<string, unknown>)),
     totalElements: num(data.totalElements, content.length),
@@ -439,12 +441,7 @@ export async function cancelarMovimentacao(id: string): Promise<MovimentacaoDeta
 export async function listarCategorias(apenasAtivas = true): Promise<CategoriaLivroCaixa[]> {
   try {
     const r = await api.get(`${BASE}/categorias`, { params: apenasAtivas ? { ativas: true } : {} });
-    const list = Array.isArray(r.data)
-      ? r.data
-      : Array.isArray((r.data as Record<string, unknown>)?.content)
-        ? ((r.data as Record<string, unknown>).content as unknown[])
-        : [];
-    return list.map((item) => normalizeCategoriaFromApi(item as Record<string, unknown>));
+    return normalizeListResponse<Record<string, unknown>>(r.data).map(normalizeCategoriaFromApi);
   } catch (e: unknown) {
     throw new Error(getApiErrorMessage(e, "Não foi possível carregar as categorias."));
   }
@@ -482,12 +479,7 @@ export async function desativarCategoria(id: string): Promise<void> {
 export async function listarContas(apenasAtivas = true): Promise<ContaLivroCaixa[]> {
   try {
     const r = await api.get(`${BASE}/contas`, { params: apenasAtivas ? { ativas: true } : {} });
-    const list = Array.isArray(r.data)
-      ? r.data
-      : Array.isArray((r.data as Record<string, unknown>)?.content)
-        ? ((r.data as Record<string, unknown>).content as unknown[])
-        : [];
-    return list.map((item) => normalizeContaFromApi(item as Record<string, unknown>));
+    return normalizeListResponse<Record<string, unknown>>(r.data).map(normalizeContaFromApi);
   } catch (e: unknown) {
     throw new Error(getApiErrorMessage(e, "Não foi possível carregar as contas."));
   }

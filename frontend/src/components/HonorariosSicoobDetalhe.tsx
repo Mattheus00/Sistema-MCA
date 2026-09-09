@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, normalizeListResponse } from "@/lib/api";
-import { normalizePagamentoInadimplenciaFromApi } from "@/lib/apiNormalizers";
+import { listarPagamentosDivida, listarPagamentosPorQuery } from "@/lib/inadimplentesApi";
 import { formatarData, formatarMoeda, ordenarPagamentosPorData } from "@/lib/inadimplentesUtils";
 import { listarCobrancasPorDivida } from "@/lib/sicoobApi";
 import type { CobrancaSicoob, PagamentoInadimplencia } from "@/types/api";
@@ -78,15 +77,10 @@ export default function HonorariosSicoobDetalhe({
 
   const carregarPagamentos = useCallback(async () => {
     try {
-      const res = await api.get(`/api/pagamentos/divida/${dividaId}`);
-      const data = res.data;
-      const raw = Array.isArray(data) ? data : normalizeListResponse<Record<string, unknown>>(data);
-      return raw.map((p) => normalizePagamentoInadimplenciaFromApi(p as Record<string, unknown>));
+      return await listarPagamentosDivida(dividaId);
     } catch {
       try {
-        const res = await api.get("/api/pagamentos", { params: { dividaId } });
-        const raw = normalizeListResponse<Record<string, unknown>>(res.data);
-        return raw.map((p) => normalizePagamentoInadimplenciaFromApi(p));
+        return await listarPagamentosPorQuery(dividaId);
       } catch {
         return [];
       }

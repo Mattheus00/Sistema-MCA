@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { api } from "@/lib/api";
+import { consultarIaTributos } from "@/lib/tributosApi";
 
 type MensagemIA = { role: "user" | "assistant"; texto: string };
 
@@ -25,11 +25,7 @@ export default function AiHelpTab({ onError }: AiHelpTabProps) {
     setPergunta("");
     setMensagens((prev) => [...prev, { role: "user", texto }]);
     try {
-      const res = await api.post<{ sucesso?: boolean; resposta?: string; erro?: string | null }>(
-        "/api/tributos/consulta-ia",
-        { pergunta: texto },
-      );
-      const data = res.data;
+      const data = await consultarIaTributos(texto);
       const resp =
         data?.sucesso === false && data?.erro
           ? data.erro

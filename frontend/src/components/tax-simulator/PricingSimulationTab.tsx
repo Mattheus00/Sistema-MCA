@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { api } from "@/lib/api";
+import { calcularTributo } from "@/lib/tributosApi";
 import { parseValorReais } from "@/lib/valorBrasil";
 import {
   formatarMoeda,
@@ -42,17 +42,14 @@ export default function PricingSimulationTab({ onError }: PricingSimulationTabPr
     });
 
     try {
-      const res = await api.post<{ precoVenda?: number; valorFinal?: number }>(
-        "/api/tributos/calcular",
-        {
-          tipo: "MARGEM_LUCRO",
-          valor: 0,
-          categoria: profileToApiCategory("PADRAO"),
-          custoAquisicao: custo + despesas,
-          margemDesejada: margem / 100,
-        },
-      );
-      const apiPrice = res.data.precoVenda ?? res.data.valorFinal;
+      const data = await calcularTributo({
+        tipo: "MARGEM_LUCRO",
+        valor: 0,
+        categoria: profileToApiCategory("PADRAO"),
+        custoAquisicao: custo + despesas,
+        margemDesejada: margem / 100,
+      });
+      const apiPrice = data.precoVenda ?? data.valorFinal;
       if (local && apiPrice != null && apiPrice > 0) {
         const estimatedTaxes = apiPrice * (aliq / 100);
         const estimatedProfit = apiPrice - custo - despesas - estimatedTaxes;

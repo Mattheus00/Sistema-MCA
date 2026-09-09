@@ -1,10 +1,11 @@
 import { api, getAuthToken, isMockEnabled } from "@/lib/api";
 import {
   normalizeLoteEnvioBoletoFromApi,
+  normalizePaginaLotesEnvioFromApi,
   normalizeResultadoEnvioLoteFromApi,
   normalizeValidacaoLoteFromApi,
 } from "@/lib/apiNormalizers";
-import type { LoteEnvioBoleto, ResultadoEnvioLote } from "@/types/api";
+import type { LoteEnvioBoleto, PaginaLotesEnvioBoleto, ResultadoEnvioLote } from "@/types/api";
 
 function getApiBaseUrl(): string {
   if (isMockEnabled()) return "";
@@ -30,7 +31,31 @@ export async function criarLoteEnvioBoletos(files: File[]): Promise<LoteEnvioBol
     headers: { "Content-Type": "multipart/form-data" },
     timeout: 120_000,
   });
-  return normalizeLoteEnvioBoletoFromApi(r.data as Record<string, unknown>);
+  const data = (r.data ?? {}) as Record<string, unknown>;
+  // Backend responde CriarLoteEnvioResponse { loteId, lote }; o mock devolve o lote direto.
+  const lote =
+    data.lote && typeof data.lote === "object" ? (data.lote as Record<string, unknown>) : data;
+  return normalizeLoteEnvioBoletoFromApi(lote);
+}
+
+export type FiltrosHistoricoLotes = {
+  page: number;
+  size?: number;
+  status?: string;
+  dataInicio?: string;
+  dataFim?: string;
+};
+
+/** GET /api/lotes-envio-boletos → Page<HistoricoLoteResponse>. */
+export async function listarHistoricoLotes(
+  filtros: FiltrosHistoricoLotes,
+): Promise<PaginaLotesEnvioBoleto> {
+  const params: Record<string, string | number> = { page: filtros.page, size: filtros.size ?? 10 };
+  if (filtros.status?.trim()) params.status = filtros.status.trim();
+  if (filtros.dataInicio) params.dataInicio = filtros.dataInicio;
+  if (filtros.dataFim) params.dataFim = filtros.dataFim;
+  const r = await api.get("/api/lotes-envio-boletos", { params });
+  return normalizePaginaLotesEnvioFromApi(r.data);
 }
 
 export async function consultarLoteEnvioBoletos(loteId: string): Promise<LoteEnvioBoleto> {

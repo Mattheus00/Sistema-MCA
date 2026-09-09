@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { api, getApiErrorMessage, normalizeListResponse } from "@/lib/api";
-import { normalizeClienteFromApi } from "@/lib/apiNormalizers";
+import { getApiErrorMessage } from "@/lib/api";
+import { listarClientes } from "@/lib/clientesApi";
 import {
   abrirArquivoDocumento,
   atualizarStatusDocumento,
@@ -135,12 +135,12 @@ export default function WebDocumentosClientes() {
     buscaTimer.current = setTimeout(() => {
       void (async () => {
         try {
-          const r = await api.get("/api/clientes", {
-            params: { termo: clienteBusca.trim(), page: 0, size: 20, statusCliente: "ATIVO" },
+          const list = await listarClientes({
+            termo: clienteBusca.trim(),
+            page: 0,
+            size: 20,
+            statusCliente: "ATIVO",
           });
-          const list = normalizeListResponse<Record<string, unknown>>(r.data).map(
-            normalizeClienteFromApi,
-          );
           setClientesSugestoes(list);
         } catch {
           setClientesSugestoes([]);

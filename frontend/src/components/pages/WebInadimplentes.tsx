@@ -1,14 +1,8 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useLocation } from "react-router-dom";
-import {
-  api,
-  getApiErrorMessage,
-  getAuthUserProfile,
-  isMockEnabled,
-  normalizeListResponse,
-} from "@/lib/api";
-import { normalizeInadimplenciaFromApi } from "@/lib/apiNormalizers";
+import { getApiErrorMessage, getAuthUserProfile } from "@/lib/api";
+import { listarInadimplentes, obterConfigJuros, salvarConfigJuros } from "@/lib/inadimplentesApi";
 import { invalidateDashboard } from "@/lib/dashboardRefresh";
 import { diasEmAtraso, isInadimplenciaEmAberto } from "@/lib/inadimplentesUtils";
 import type { Inadimplencia } from "@/types/api";
@@ -41,13 +35,7 @@ export default function WebInadimplentes() {
     try {
       setLoading(true);
       setErro(null);
-      const r = await api.get("/api/inadimplentes", { params: { paginado: false } });
-      const rawList = normalizeListResponse<Record<string, unknown>>(r.data);
-      setItens(
-        isMockEnabled()
-          ? (rawList as Inadimplencia[])
-          : rawList.map((item) => normalizeInadimplenciaFromApi(item)),
-      );
+      setItens(await listarInadimplentes());
     } catch (e: unknown) {
       setErro(getApiErrorMessage(e, "Falha ao listar inadimplências"));
     } finally {
@@ -166,8 +154,7 @@ export default function WebInadimplentes() {
     setModalAjustarJurosAberto(true);
     try {
       setLoadingJurosGlobal(true);
-      const res = await api.get("/api/config/juros");
-      const cfg = res.data ?? {};
+      const cfg = await obterConfigJuros();
       setJurosGlobal({
         multa: (Number(cfg.multaDiaria ?? 0.0033) * 100).toString().replace(".", ","),
         juros: (Number(cfg.jurosMensal ?? 0.02) * 100).toString().replace(".", ","),
@@ -184,7 +171,7 @@ export default function WebInadimplentes() {
       setLoadingJurosGlobal(true);
       const multa = parsePct(jurosGlobal.multa);
       const jurosMes = parsePct(jurosGlobal.juros);
-      await api.put("/api/config/juros", {
+      await salvarConfigJuros({
         multaDiaria: multa / 100,
         capMultaPercentual: 0.0999,
         jurosMensal: jurosMes / 100,
@@ -203,7 +190,7 @@ export default function WebInadimplentes() {
   async function desativarJurosGlobal() {
     try {
       setLoadingJurosGlobal(true);
-      await api.put("/api/config/juros", {
+      await salvarConfigJuros({
         multaDiaria: 0,
         capMultaPercentual: 0,
         jurosMensal: 0,

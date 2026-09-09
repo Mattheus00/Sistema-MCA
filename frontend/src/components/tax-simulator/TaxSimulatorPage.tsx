@@ -1,7 +1,8 @@
 import { useState, type SyntheticEvent } from "react";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
-import { TAX_SIMULATOR_TABS, type TaxSimulatorTabId } from "@/lib/taxSimulator";
+import { TAX_SIMULATOR_TABS } from "@/lib/taxSimulator";
+import type { TaxSimulatorTabId } from "@/types/taxSimulator";
 import QuickSimulatorTab from "./QuickSimulatorTab";
 import PricingSimulationTab from "./PricingSimulationTab";
 import TaxCreditTab from "./TaxCreditTab";

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { api } from "@/lib/api";
+import { validarCreditoTributo } from "@/lib/tributosApi";
 import { parseValorReais } from "@/lib/valorBrasil";
 import {
   formatarMoeda,
@@ -43,7 +43,7 @@ export default function TaxCreditTab({ onError }: TaxCreditTabProps) {
     const local = simulateTaxCredit(input);
 
     try {
-      await api.post("/api/tributos/creditos/validar", {
+      await validarCreditoTributo({
         valorVenda: vSales,
         valorCompras: vPurchases,
         categoria: profileToApiCategory("PADRAO"),

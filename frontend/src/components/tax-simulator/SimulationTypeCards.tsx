@@ -1,4 +1,5 @@
-import { SIMULATION_TYPE_OPTIONS, type SimulationType } from "@/lib/taxSimulator";
+import { SIMULATION_TYPE_OPTIONS } from "@/lib/taxSimulator";
+import type { SimulationType } from "@/types/taxSimulator";
 
 type SimulationTypeCardsProps = {
   value: SimulationType;

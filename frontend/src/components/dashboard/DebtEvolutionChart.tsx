@@ -9,7 +9,7 @@ import {
   YAxis,
 } from "recharts";
 import { formatarMoedaDashboard } from "@/lib/dashboardUtils";
-import type { PontoEvolucao } from "@/lib/dashboardUtils";
+import type { PontoEvolucao } from "@/types/dashboard";
 import type { PeriodoEvolucao } from "@/hooks/useDashboardData";
 
 const OPCOES: { valor: PeriodoEvolucao; rotulo: string }[] = [

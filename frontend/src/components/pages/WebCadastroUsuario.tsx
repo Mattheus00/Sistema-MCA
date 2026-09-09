@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { api, getApiErrorMessage } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api";
+import { cadastrarUsuario } from "@/lib/usuariosApi";
 import type { CadastroUsuarioPayload } from "@/types/api";
 
 function isValidEmail(email: string): boolean {
@@ -103,7 +104,7 @@ export default function WebCadastroUsuario() {
         planta: form.planta,
       };
       if (form.senha) payload.senha = form.senha;
-      await api.post("/api/usuarios", payload);
+      await cadastrarUsuario(payload);
       setSucesso(true);
       setForm({
         nome: "",

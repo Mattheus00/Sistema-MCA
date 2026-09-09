@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { AxiosError } from "axios";
-import { api, getApiErrorMessage, normalizeListResponse } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api";
+import { aprovarUsuario, listarUsuariosPendentes } from "@/lib/usuariosApi";
 import type { PerfilUsuario, UsuarioPendente } from "@/types/api";
 import AdminItemCard from "@/components/AdminItemCard";
 import ResponsiveList from "@/components/ResponsiveList";
@@ -30,8 +31,7 @@ export default function WebCadastrosPendentes({ embedded = false }: WebCadastros
     setLoading(true);
     setErro(null);
     try {
-      const res = await api.get("/api/usuarios/pendentes");
-      const lista = normalizeListResponse<UsuarioPendente>(res.data);
+      const lista = await listarUsuariosPendentes();
       setItens(lista);
       setPerfisAprovacao((prev) => {
         const next = { ...prev };
@@ -64,10 +64,7 @@ export default function WebCadastrosPendentes({ embedded = false }: WebCadastros
     setAprovandoId(usuarioId);
     setErro(null);
     try {
-      await api.patch(
-        `/api/usuarios/${usuarioId}/aprovar?perfil=${encodeURIComponent(perfil)}`,
-        {},
-      );
+      await aprovarUsuario(usuarioId, perfil);
       setMensagemSucesso("Cadastro aprovado com sucesso.");
       await listar();
     } catch (e: unknown) {

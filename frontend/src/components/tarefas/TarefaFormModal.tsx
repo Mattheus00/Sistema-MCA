@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { api, getAuthUserDisplay, normalizeListResponse } from "@/lib/api";
-import { normalizeClienteFromApi } from "@/lib/apiNormalizers";
+import { getAuthUserDisplay } from "@/lib/api";
+import { listarClientes } from "@/lib/clientesApi";
 import { labelPrioridadeTarefa, labelStatusTarefa, STATUS_KANBAN } from "@/lib/tarefasUtils";
 import type { Cliente } from "@/types/api";
 import type {
@@ -189,15 +189,13 @@ export default function TarefaFormModal({
   const carregarClientes = useCallback(async (termo: string) => {
     setCarregandoClientes(true);
     try {
-      const params: Record<string, string | number> = {
-        page: 0,
-        size: 50,
-        statusCliente: "ATIVO",
-      };
-      if (termo.trim()) params.termo = termo.trim();
-      const r = await api.get("/api/clientes", { params });
       setListaClientes(
-        normalizeListResponse<Record<string, unknown>>(r.data).map(normalizeClienteFromApi),
+        await listarClientes({
+          page: 0,
+          size: 50,
+          statusCliente: "ATIVO",
+          termo: termo.trim() || undefined,
+        }),
       );
     } catch {
       setListaClientes([]);

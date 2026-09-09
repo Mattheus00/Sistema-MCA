@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
-import { api, getApiErrorMessage, getAuthUserLogin, normalizeListResponse } from "@/lib/api";
+import { getApiErrorMessage, getAuthUserLogin } from "@/lib/api";
+import { listarUsuariosAtivos, revogarUsuario } from "@/lib/usuariosApi";
 import type { UsuarioAtivo } from "@/types/api";
 import AdminItemCard from "@/components/AdminItemCard";
 import ResponsiveList from "@/components/ResponsiveList";
@@ -38,9 +39,7 @@ export default function WebUsuariosAtivos({ embedded = false }: WebUsuariosAtivo
     setLoading(true);
     setErro(null);
     try {
-      const res = await api.get<UsuarioAtivo[] | unknown>("/api/usuarios/ativos");
-      const lista = normalizeListResponse<UsuarioAtivo>(res.data);
-      setItens(lista);
+      setItens(await listarUsuariosAtivos());
     } catch (e: unknown) {
       if (isAxiosError(e) && e.response?.status === 401) {
         navigate("/login", { replace: true });
@@ -73,7 +72,7 @@ export default function WebUsuariosAtivos({ embedded = false }: WebUsuariosAtivo
     setRevogandoId(usuarioId);
     setErro(null);
     try {
-      await api.patch(`/api/usuarios/${usuarioId}/revogar`, {});
+      await revogarUsuario(usuarioId);
       setMensagemSucesso("Acesso revogado com sucesso.");
       setConfirmar(null);
       await listar();

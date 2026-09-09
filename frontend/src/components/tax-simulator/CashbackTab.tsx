@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { api, getApiErrorMessage } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api";
+import { calcularCashback } from "@/lib/tributosApi";
 import { parseValorReais } from "@/lib/valorBrasil";
 import { formatarMoeda } from "@/lib/taxSimulator";
 
@@ -24,13 +25,11 @@ export default function CashbackTab({ onError }: CashbackTabProps) {
     setLoading(true);
     setResultado(null);
     try {
-      const res = await api.get<{ cashbackCBS?: number }>("/api/tributos/cashback", {
-        params: {
-          valorCompra: v,
-          percentualDevolucao: !Number.isNaN(pct) && pct >= 0 && pct <= 100 ? pct / 100 : 0.01,
-        },
-      });
-      setResultado(res.data?.cashbackCBS ?? 0);
+      const data = await calcularCashback(
+        v,
+        !Number.isNaN(pct) && pct >= 0 && pct <= 100 ? pct / 100 : 0.01,
+      );
+      setResultado(data?.cashbackCBS ?? 0);
     } catch (e: unknown) {
       onError(getApiErrorMessage(e, "Erro ao calcular cashback."));
     } finally {

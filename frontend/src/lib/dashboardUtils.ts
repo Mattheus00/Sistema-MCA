@@ -1,4 +1,5 @@
 import type { AgingRelatorio, Inadimplencia } from "@/types/api";
+import type { AtividadeDashboard, FaixaInadimplenciaUi, PontoEvolucao } from "@/types/dashboard";
 import { isInadimplenciaEmAberto, saldoDevedorItem } from "@/lib/inadimplentesUtils";
 
 const MOEDA = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -78,8 +79,6 @@ export function somarBaixadoCancelado(itens: Inadimplencia[]): number {
     })
     .reduce((acc, i) => acc + (i.valor ?? 0), 0);
 }
-
-export type PontoEvolucao = { mes: string; mesLabel: string; valor: number };
 
 function extrairMesReferencia(iso: string): string | null {
   const texto = iso.trim();
@@ -176,14 +175,6 @@ export function calcularEvolucaoValorAberto(
   return pontosCumulativos(incrementos, mesesJanelaRolante(meses));
 }
 
-export type FaixaInadimplenciaUi = {
-  id: string;
-  rotulo: string;
-  valor: number;
-  percentual: number;
-  cor: "verde" | "amarelo" | "laranja" | "vermelho";
-};
-
 export function mapAgingParaFaixas(aging: AgingRelatorio | null): FaixaInadimplenciaUi[] {
   if (!aging?.faixas?.length) return [];
   const mapaCor = (faixa: string): FaixaInadimplenciaUi["cor"] => {
@@ -201,16 +192,6 @@ export function mapAgingParaFaixas(aging: AgingRelatorio | null): FaixaInadimple
     cor: mapaCor(f.faixa),
   }));
 }
-
-export type AtividadeDashboard = {
-  id: string;
-  titulo: string;
-  descricao: string;
-  usuario?: string;
-  dataHora?: string;
-  status?: string;
-  valor?: number;
-};
 
 /** Valor exibido na atividade: em pagamentos usa o recebido, não o saldo restante (que fica 0). */
 function valorParaAtividade(item: Inadimplencia, pago: boolean): number {

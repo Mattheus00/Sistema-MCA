@@ -1,6 +1,5 @@
 import axios, { type AxiosError, type AxiosInstance } from "axios";
-import type { ApiErrorBody, Inadimplencia, PerfilUsuario } from "@/types/api";
-import { normalizeInadimplenciaFromApi } from "@/lib/apiNormalizers";
+import type { ApiErrorBody, PerfilUsuario } from "@/types/api";
 
 /**
  * Mock em memória (VITE_USE_MOCK=true) só existe em desenvolvimento: o módulo `mockApi`
@@ -139,29 +138,12 @@ export function setAuthSession(data: AuthSessionData, manterConectado: boolean):
   browserStorage("local")?.setItem(REMEMBER_ME_KEY, manterConectado ? "1" : "0");
 }
 
-/** Prefixo gravado em `comprovante` para persistir quem confirmou (DTO do backend não tem esse campo). */
-export const CONFIRMADO_POR_COMPROVANTE_PREFIX = "user:";
-
 /** Nome/login do usuário autenticado para exibição e auditoria de pagamento. */
 export function getUsuarioLogadoLabel(): string {
   if (typeof window === "undefined") return "";
   if (!getAuthToken()) return "";
   const storage = getAuthStorage();
   return (storage.getItem(USER_DISPLAY_KEY) || storage.getItem(USER_LOGIN_KEY) || "").trim();
-}
-
-export function encodeConfirmadoPorComprovante(label: string): string {
-  return `${CONFIRMADO_POR_COMPROVANTE_PREFIX}${label.trim()}`;
-}
-
-export function decodeConfirmadoPorComprovante(
-  comprovante: string | null | undefined,
-): string | undefined {
-  if (!comprovante) return undefined;
-  const s = comprovante.trim();
-  if (!s.toLowerCase().startsWith(CONFIRMADO_POR_COMPROVANTE_PREFIX)) return undefined;
-  const nome = s.slice(CONFIRMADO_POR_COMPROVANTE_PREFIX.length).trim();
-  return nome || undefined;
 }
 
 if (!isMockEnabled()) {
@@ -221,72 +203,43 @@ export function getRelatorioErrorMessage(error: unknown, fallback: string): stri
 }
 
 /**
- * Garante que a resposta é um array (content paginado ou array direto).
+ * Garante que a resposta é um array: aceita array direto ou objeto com a lista em uma das
+ * chaves informadas (por padrão `content`, formato `Page` do Spring). A primeira chave que
+ * contiver um array é usada.
  */
-export function normalizeListResponse<T>(data: unknown): T[] {
-  if (Array.isArray(data)) return data;
-  if (
-    data &&
-    typeof data === "object" &&
-    "content" in data &&
-    Array.isArray((data as { content: T[] }).content)
-  ) {
-    return (data as { content: T[] }).content;
+export function normalizeListResponse<T>(
+  data: unknown,
+  keys: readonly string[] = ["content"],
+): T[] {
+  if (Array.isArray(data)) return data as T[];
+  if (data && typeof data === "object") {
+    const body = data as Record<string, unknown>;
+    for (const key of keys) {
+      const lista = body[key];
+      if (Array.isArray(lista)) return lista as T[];
+    }
   }
   return [];
 }
 
-function mapInadimplenciaResponseItem(raw: Record<string, unknown>): Inadimplencia {
-  return isMockEnabled() ? (raw as Inadimplencia) : normalizeInadimplenciaFromApi(raw);
-}
+/** Metadados de paginação (`Page` do Spring) quando a resposta não é um array direto. */
+export type PageMeta = {
+  totalPages?: number;
+  totalElements?: number;
+  last?: boolean;
+  number?: number;
+  size?: number;
+};
 
-/** Carrega todas as inadimplências, percorrendo páginas quando a API retorna PageResponse. */
-export async function fetchAllInadimplentes(): Promise<Inadimplencia[]> {
-  const first = await api.get("/api/inadimplentes", { params: { paginado: false } });
-  const data = first.data;
-
-  if (Array.isArray(data)) {
-    return data.map((item) => mapInadimplenciaResponseItem(item as Record<string, unknown>));
-  }
-
-  if (
-    data &&
-    typeof data === "object" &&
-    Array.isArray((data as { content?: unknown[] }).content)
-  ) {
-    const body = data as {
-      content: Record<string, unknown>[];
-      totalPages?: number;
-      last?: boolean;
-      size?: number;
-    };
-    const all = body.content.map(mapInadimplenciaResponseItem);
-    const pageSize = body.size && body.size > 0 ? body.size : Math.max(body.content.length, 200);
-    let page = 1;
-    let totalPages = body.totalPages ?? 1;
-
-    while (page < totalPages) {
-      const r = await api.get("/api/inadimplentes", {
-        params: { paginado: true, page, size: pageSize },
-      });
-      const pageData = r.data as {
-        content?: Record<string, unknown>[];
-        totalPages?: number;
-        last?: boolean;
-      };
-      const chunk = Array.isArray(pageData.content)
-        ? pageData.content.map(mapInadimplenciaResponseItem)
-        : [];
-      if (chunk.length === 0) break;
-      all.push(...chunk);
-      if (pageData.last === true) break;
-      if (typeof pageData.totalPages === "number") totalPages = pageData.totalPages;
-      page += 1;
-      if (page > 100) break;
-    }
-
-    return all;
-  }
-
-  return normalizeListResponse<Record<string, unknown>>(data).map(mapInadimplenciaResponseItem);
+export function extractPageMeta(data: unknown): PageMeta {
+  if (!data || typeof data !== "object" || Array.isArray(data)) return {};
+  const body = data as Record<string, unknown>;
+  const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : undefined);
+  return {
+    totalPages: num(body.totalPages),
+    totalElements: num(body.totalElements),
+    last: typeof body.last === "boolean" ? body.last : undefined,
+    number: num(body.number),
+    size: num(body.size),
+  };
 }

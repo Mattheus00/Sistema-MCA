@@ -1,4 +1,4 @@
-import { api, getApiErrorMessage } from "@/lib/api";
+import { api, getApiErrorMessage, normalizeListResponse } from "@/lib/api";
 import type {
   AtualizarTarefaPayload,
   ChecklistItem,
@@ -132,11 +132,7 @@ export function normalizeTarefaDetalheFromApi(raw: Record<string, unknown>): Tar
 
 function normalizePagina(raw: unknown): PaginaTarefas {
   const data = (raw ?? {}) as Record<string, unknown>;
-  const content = Array.isArray(data.content)
-    ? data.content
-    : Array.isArray(raw)
-      ? (raw as unknown[])
-      : [];
+  const content = normalizeListResponse<unknown>(raw);
   return {
     content: content.map((item) => normalizeTarefaFromApi(item as Record<string, unknown>)),
     totalElements: num(data.totalElements, content.length),
@@ -156,15 +152,15 @@ function normalizeIndicadores(raw: unknown): IndicadoresTarefas {
   };
 }
 
+/** Chaves em que uma coluna do kanban pode carregar a lista de tarefas. */
+const CHAVES_TAREFAS_COLUNA = ["tarefas", "items", "content"] as const;
+
 function isKanbanColunaShape(item: Record<string, unknown>): boolean {
-  return Array.isArray(item.tarefas) || Array.isArray(item.items) || Array.isArray(item.content);
+  return CHAVES_TAREFAS_COLUNA.some((k) => Array.isArray(item[k]));
 }
 
 function extrairTarefasDaColuna(coluna: Record<string, unknown>): unknown[] {
-  if (Array.isArray(coluna.tarefas)) return coluna.tarefas;
-  if (Array.isArray(coluna.items)) return coluna.items;
-  if (Array.isArray(coluna.content)) return coluna.content;
-  return [];
+  return normalizeListResponse<unknown>(coluna, CHAVES_TAREFAS_COLUNA);
 }
 
 /** Remove a coluna Backlog da UI e agrupa essas tarefas em A Fazer. */
@@ -324,13 +320,7 @@ export async function obterIndicadoresTarefas(
 export async function listarResponsaveisTarefas(): Promise<ResponsavelTarefa[]> {
   try {
     const r = await api.get(`${BASE}/responsaveis`);
-    const list = Array.isArray(r.data)
-      ? r.data
-      : Array.isArray((r.data as Record<string, unknown>)?.content)
-        ? ((r.data as Record<string, unknown>).content as unknown[])
-        : [];
-    return list.map((item) => {
-      const raw = item as Record<string, unknown>;
+    return normalizeListResponse<Record<string, unknown>>(r.data).map((raw) => {
       const id = raw.id ?? raw.usuarioId ?? raw.responsavelId;
       return {
         id: id != null ? String(id) : "",
@@ -358,13 +348,7 @@ export async function obterResumoColaboradores(
 ): Promise<ResumoColaborador[]> {
   try {
     const r = await api.get(`${BASE}/resumo-colaboradores`, { params: buildQuery(params) });
-    const list = Array.isArray(r.data)
-      ? r.data
-      : Array.isArray((r.data as Record<string, unknown>)?.content)
-        ? ((r.data as Record<string, unknown>).content as unknown[])
-        : [];
-    return list.map((item) => {
-      const raw = item as Record<string, unknown>;
+    return normalizeListResponse<Record<string, unknown>>(r.data).map((raw) => {
       return {
         responsavelId: str(raw.responsavelId ?? raw.usuarioId ?? raw.id),
         responsavelNome: str(raw.responsavelNome ?? raw.nome),

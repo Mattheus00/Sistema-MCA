@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { api, getApiErrorMessage, isMockEnabled, normalizeListResponse } from "@/lib/api";
+import { getApiErrorMessage, isMockEnabled } from "@/lib/api";
+import { atualizarServico, criarServico, listarTodosServicos } from "@/lib/servicosApi";
 import { formatarReaisParaInput, parseValorReais } from "@/lib/valorBrasil";
 import { gerarHtmlRelatorioServicos } from "@/lib/relatorioServicos";
 import AdminItemCard from "@/components/AdminItemCard";
@@ -112,23 +113,12 @@ export default function WebServicos() {
     try {
       setLoading(true);
       setErroLista(null);
-      let r;
-      try {
-        r = await api.get("/api/servicos/todos");
-      } catch (e: unknown) {
-        if ((e as { response?: { status?: number } })?.response?.status === 404) {
-          r = await api.get("/api/servicos");
-        } else {
-          throw e;
-        }
-      }
-      const raw = normalizeListResponse<Record<string, unknown>>(r.data);
-      const list: Servico[] = raw.map((s) => ({
-        id: String(s.servicoId ?? s.id ?? ""),
-        titulo: String(s.nome ?? s.titulo ?? ""),
-        descricao: s.descricao != null ? String(s.descricao) : undefined,
+      const list: Servico[] = (await listarTodosServicos()).map((s) => ({
+        id: s.servicoId,
+        titulo: s.nome,
+        descricao: s.descricao ?? undefined,
         ativo: s.ativo !== false,
-        valorPadrao: typeof s.valorPadrao === "number" ? s.valorPadrao : null,
+        valorPadrao: s.valorPadrao ?? null,
       }));
       setServicos(list);
     } catch (e: unknown) {
@@ -229,9 +219,9 @@ export default function WebServicos() {
         ...(valorParaApi != null && { valorPadrao: valorParaApi }),
       };
       if (editando) {
-        await api.put(`/api/servicos/${editando.id}`, body);
+        await atualizarServico(editando.id, body);
       } else {
-        await api.post("/api/servicos", body);
+        await criarServico(body);
       }
       fecharModal();
       await listar();
@@ -255,7 +245,7 @@ export default function WebServicos() {
       return;
     }
     try {
-      await api.put(`/api/servicos/${servico.id}`, {
+      await atualizarServico(servico.id, {
         nome: servico.titulo,
         descricao: servico.descricao ?? undefined,
         ativo: false,

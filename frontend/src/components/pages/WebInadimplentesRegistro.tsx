@@ -1,21 +1,15 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
-import { api, getApiErrorMessage, isMockEnabled, normalizeListResponse } from "@/lib/api";
+import { getApiErrorMessage, isMockEnabled } from "@/lib/api";
 import { parseValorReais } from "@/lib/valorBrasil";
-import { normalizeClienteFromApi, normalizeInadimplenciaToApi } from "@/lib/apiNormalizers";
+import { listarClientes } from "@/lib/clientesApi";
+import { criarInadimplencia } from "@/lib/inadimplentesApi";
+import { listarServicos } from "@/lib/servicosApi";
 import { invalidateDashboard } from "@/lib/dashboardRefresh";
 import { formatCpfCnpj } from "@/lib/inadimplentesUtils";
-import type { Cliente } from "@/types/api";
+import type { Cliente, ServicoResumo } from "@/types/api";
 import ResponsiveList from "@/components/ResponsiveList";
-
-type ServicoResumo = {
-  servicoId: string;
-  nome: string;
-  descricao?: string | null;
-  valorPadrao?: number | null;
-  ativo?: boolean | null;
-};
 
 type MensalidadeRow = {
   rowId: number;
@@ -76,13 +70,14 @@ export default function WebInadimplentesRegistro() {
 
   async function carregarClientes() {
     try {
-      const r = await api.get("/api/clientes", { params: { page: 0, size: 500 } });
-      const list = normalizeListResponse<Record<string, unknown>>(r.data);
+      const list = await listarClientes({ page: 0, size: 500 });
       setClientes(
-        list.map((c) => {
-          const norm = normalizeClienteFromApi(c);
-          return { id: norm.id ?? "", nome: norm.nome, cpf: norm.cpf, email: norm.email };
-        }),
+        list.map((norm) => ({
+          id: norm.id ?? "",
+          nome: norm.nome,
+          cpf: norm.cpf,
+          email: norm.email,
+        })),
       );
     } catch {
       setClientes([]);
@@ -96,22 +91,7 @@ export default function WebInadimplentesRegistro() {
     }
     try {
       setLoadingServicos(true);
-      const r = await api.get("/api/servicos");
-      const data = Array.isArray(r.data)
-        ? r.data
-        : r.data &&
-            (r.data as { content?: unknown[] }).content &&
-            Array.isArray((r.data as { content: unknown[] }).content)
-          ? (r.data as { content: unknown[] }).content
-          : [];
-      const list: ServicoResumo[] = (data as Record<string, unknown>[]).map((s) => ({
-        servicoId: String(s.servicoId ?? ""),
-        nome: String(s.nome ?? ""),
-        descricao: s.descricao != null ? String(s.descricao) : null,
-        valorPadrao: s.valorPadrao != null ? Number(s.valorPadrao) : null,
-        ativo: s.ativo != null ? Boolean(s.ativo) : true,
-      }));
-      setServicos(list);
+      setServicos(await listarServicos());
     } catch {
       setServicos([]);
     } finally {
@@ -224,20 +204,12 @@ export default function WebInadimplentesRegistro() {
     setSalvando(true);
     try {
       for (const item of itensParaSalvar) {
-        const basePayload = isMockEnabled()
-          ? {
-              clienteId,
-              valor: item.valor,
-              vencimento: item.vencimento,
-              descricao: item.descricao,
-            }
-          : normalizeInadimplenciaToApi({
-              clienteId,
-              valor: item.valor,
-              vencimento: item.vencimento,
-              descricao: item.descricao,
-            });
-        await api.post("/api/inadimplentes", basePayload);
+        await criarInadimplencia({
+          clienteId,
+          valor: item.valor,
+          vencimento: item.vencimento,
+          descricao: item.descricao,
+        });
       }
       invalidateDashboard();
       navigate("/inadimplentes", {

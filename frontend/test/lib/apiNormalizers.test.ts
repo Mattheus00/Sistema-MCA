@@ -1,13 +1,18 @@
 import { describe, it, expect } from "vitest";
 import {
+  CONFIRMADO_POR_COMPROVANTE_PREFIX,
+  decodeConfirmadoPorComprovante,
+  encodeConfirmadoPorComprovante,
   normalizeClienteFromApi,
   normalizeClienteToApi,
   normalizeInadimplenciaFromApi,
   normalizeInadimplenciaToApi,
+  normalizePagamentoInadimplenciaFromApi,
   normalizeRankingFromApi,
   normalizeInadimplenciaPeriodoFromApi,
   normalizeLoteResumoFromApi,
   normalizeResultadoEnvioLoteFromApi,
+  normalizeResumoFinanceiroFromApi,
   normalizeResumoRelatorioFromApi,
 } from "@/lib/apiNormalizers";
 
@@ -149,19 +154,23 @@ describe("normalizeRankingFromApi", () => {
     expect(normalizeRankingFromApi({ outro: [] })).toEqual([]);
   });
 
-  it("mapeia ranking com nomeCliente e saldoDevedor", () => {
+  it("mapeia ItemRankingDTO (nomeCliente, saldoDevedor, posicao) para RankingDevedorItem", () => {
     const data = {
+      limite: 20,
       ranking: [
-        { clienteId: "c1", nomeCliente: "João", saldoDevedor: 5000 },
-        { clienteId: "c2", clienteNome: "Maria", valorDevido: 3000 },
+        { clienteId: "c1", nomeCliente: "João", cpfCnpj: "123", saldoDevedor: 5000, posicao: 1 },
+        { clienteId: "c2", nomeCliente: "Maria", cpfCnpj: "456", saldoDevedor: 3000 },
       ],
     };
     const list = normalizeRankingFromApi(data);
     expect(list).toHaveLength(2);
     expect(list[0].clienteNome).toBe("João");
     expect(list[0].valorDevido).toBe(5000);
+    expect(list[0].posicao).toBe(1);
     expect(list[1].clienteNome).toBe("Maria");
     expect(list[1].valorDevido).toBe(3000);
+    // posicao ausente → índice + 1
+    expect(list[1].posicao).toBe(2);
   });
 });
 
@@ -208,14 +217,64 @@ describe("normalizeResumoRelatorioFromApi", () => {
     });
   });
 
-  it("aceita totalRecebido como alias de totalPago", () => {
+  it("totalPago ausente vira 0 (ResumoRelatorioDTO não tem alias totalRecebido)", () => {
     const r = normalizeResumoRelatorioFromApi({
       totalClientes: 1,
       totalDividas: 1,
       totalEmAberto: 100,
-      totalRecebido: 50,
     });
-    expect(r?.totalPago).toBe(50);
+    expect(r?.totalPago).toBe(0);
+  });
+});
+
+describe("normalizeResumoFinanceiroFromApi", () => {
+  it("espelha ResumoFinanceiroDTO (totalRecebido, totalEmAberto, periodo)", () => {
+    const r = normalizeResumoFinanceiroFromApi({
+      periodoInicio: "2026-01-01",
+      periodoFim: "2026-01-31",
+      totalRecebido: 50,
+      totalEmAberto: 100,
+    });
+    expect(r?.totalRecebido).toBe(50);
+    expect(r?.totalEmAberto).toBe(100);
+    expect(r?.periodoInicio).toBe("2026-01-01");
+  });
+});
+
+describe("confirmadoPor via comprovante", () => {
+  it("encode/decode são inversos com o prefixo user:", () => {
+    const enc = encodeConfirmadoPorComprovante("  Maria  ");
+    expect(enc).toBe(`${CONFIRMADO_POR_COMPROVANTE_PREFIX}Maria`);
+    expect(decodeConfirmadoPorComprovante(enc)).toBe("Maria");
+  });
+
+  it("decode ignora comprovantes sem prefixo ou vazios", () => {
+    expect(decodeConfirmadoPorComprovante("recibo-123.pdf")).toBeUndefined();
+    expect(decodeConfirmadoPorComprovante("user:")).toBeUndefined();
+    expect(decodeConfirmadoPorComprovante(null)).toBeUndefined();
+  });
+
+  it("normalizePagamentoInadimplenciaFromApi extrai confirmadoPor do comprovante (PagamentoResponseDTO)", () => {
+    const p = normalizePagamentoInadimplenciaFromApi({
+      pagamentoId: "p1",
+      dividaId: "d1",
+      valorPago: 80,
+      dataPagamento: "2026-02-01",
+      metodoPagamento: "PIX",
+      comprovante: "user:Joana",
+    });
+    expect(p.valorPago).toBe(80);
+    expect(p.confirmadoPor).toBe("Joana");
+  });
+
+  it("prioriza confirmadoPor direto (formato do mock)", () => {
+    const p = normalizePagamentoInadimplenciaFromApi({
+      valorPago: 10,
+      dataPagamento: "2026-02-01",
+      confirmadoPor: "Ana",
+      comprovante: "user:Outra",
+    });
+    expect(p.confirmadoPor).toBe("Ana");
   });
 });
 

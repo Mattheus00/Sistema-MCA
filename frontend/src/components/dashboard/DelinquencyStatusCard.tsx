@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { formatarMoedaDashboard, formatarPercentualDashboard } from "@/lib/dashboardUtils";
-import type { FaixaInadimplenciaUi } from "@/lib/dashboardUtils";
+import type { FaixaInadimplenciaUi } from "@/types/dashboard";
 
 type DelinquencyStatusCardProps = {
   faixas: FaixaInadimplenciaUi[];
