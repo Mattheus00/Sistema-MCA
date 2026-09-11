@@ -36,13 +36,32 @@ class ProdStartupValidatorTest {
     @ValueSource(strings = {"0123456789abcdef0123456789abcdef", "áááááááááááááááá"})
     void aceitaSegredoSinteticoDe32BytesIncluindoUnicode(String segredo) {
         assertThat(segredo.getBytes(StandardCharsets.UTF_8)).hasSize(32);
-        ProdStartupValidator validator = criarValidator(segredo);
+        ProdStartupValidator validator = criarValidator(segredo, true, "");
 
         assertThatNoException().isThrownBy(validator::validate);
     }
 
+    @org.junit.jupiter.api.Test
+    void webhookSemSegredoEmProducaoNaoImpedeOBoot() {
+        ProdStartupValidator validator = criarValidator("0123456789abcdef0123456789abcdef", false, " ");
+        assertThatNoException().isThrownBy(validator::validate);
+    }
+
+    @org.junit.jupiter.api.Test
+    void webhookEmMockContinuaAceitandoSegredoVazio() {
+        ProdStartupValidator validator = criarValidator("0123456789abcdef0123456789abcdef", true, "");
+        assertThatNoException().isThrownBy(validator::validate);
+    }
+
     private ProdStartupValidator criarValidator(String segredo) {
-        ProdStartupValidator validator = new ProdStartupValidator();
+        return criarValidator(segredo, true, "");
+    }
+
+    private ProdStartupValidator criarValidator(String segredo, boolean mock, String webhookSecret) {
+        SicoobProperties sicoob = new SicoobProperties();
+        sicoob.setMock(mock);
+        sicoob.setWebhookSecret(webhookSecret);
+        ProdStartupValidator validator = new ProdStartupValidator(sicoob);
         ReflectionTestUtils.setField(validator, "jwtSecret", segredo);
         ReflectionTestUtils.setField(validator, "datasourceUrl", "jdbc:postgresql://localhost/banco_sintetico");
         return validator;

@@ -14,6 +14,7 @@ import java.util.Map;
 
 /**
  * Corrige CHECK de status_envio em notificacao_email no SQLite para incluir ESGOTADO.
+ * Pode ser removida quando todos os devs recriarem {@code data/sgi.db}.
  */
 @Component
 @Order(2)
@@ -32,12 +33,7 @@ public class NotificacaoStatusMigration {
 
     @EventListener(ApplicationReadyEvent.class)
     public void runMigration() {
-        try {
-            String url = dataSource.getConnection().getMetaData().getURL();
-            if (url == null || !url.contains("sqlite")) {
-                return;
-            }
-        } catch (Exception e) {
+        if (!SqliteSchemaSupport.isSqlite(dataSource)) {
             return;
         }
 

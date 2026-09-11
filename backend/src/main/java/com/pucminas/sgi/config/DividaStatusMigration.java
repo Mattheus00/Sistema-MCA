@@ -16,6 +16,7 @@ import java.util.Map;
  * Corrige o CHECK constraint da tabela divida no SQLite para incluir o status CANCELADA.
  * O Hibernate criou o CHECK apenas com os valores antigos; como o SQLite não permite
  * ALTER TABLE para mudar CHECK, recriamos a tabela com o constraint atualizado.
+ * Pode ser removida quando todos os devs recriarem {@code data/sgi.db}.
  */
 @Component
 @Order(0)
@@ -34,13 +35,7 @@ public class DividaStatusMigration {
 
     @EventListener(ApplicationReadyEvent.class)
     public void runMigration() {
-        try {
-            String url = dataSource.getConnection().getMetaData().getURL();
-            if (!url.contains("sqlite")) {
-                return;
-            }
-        } catch (Exception e) {
-            log.trace("Não é SQLite, migração de status_divida ignorada.");
+        if (!SqliteSchemaSupport.isSqlite(dataSource)) {
             return;
         }
 

@@ -8,7 +8,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.pucminas.sgi.security.StaffAuth;
 
 import java.util.List;
 import java.util.UUID;
@@ -25,24 +27,28 @@ public class ServicoController {
     }
 
     @GetMapping
+    @PreAuthorize(StaffAuth.STAFF)
     @Operation(summary = "Listar serviços ativos", description = "Retorna apenas serviços ativos, para uso em modal de seleção ao registrar dívida")
     public ResponseEntity<List<ServicoResponseDTO>> listarAtivos() {
         return ResponseEntity.ok(servicoService.listarAtivos());
     }
 
     @GetMapping("/todos")
+    @PreAuthorize(StaffAuth.STAFF)
     @Operation(summary = "Listar todos os serviços", description = "Inclui inativos (uso administrativo)")
     public ResponseEntity<List<ServicoResponseDTO>> listarTodos() {
         return ResponseEntity.ok(servicoService.listarTodos());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize(StaffAuth.STAFF)
     @Operation(summary = "Buscar serviço por ID")
     public ResponseEntity<ServicoResponseDTO> buscar(@PathVariable UUID id) {
         return ResponseEntity.ok(servicoService.buscarPorId(id));
     }
 
     @PostMapping
+    @PreAuthorize(StaffAuth.FINANCEIRO)
     @Operation(summary = "Criar novo serviço")
     public ResponseEntity<ServicoResponseDTO> criar(@Valid @RequestBody ServicoDTO dto) {
         ServicoResponseDTO created = servicoService.criar(dto);
@@ -50,6 +56,7 @@ public class ServicoController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize(StaffAuth.FINANCEIRO)
     @Operation(summary = "Atualizar serviço")
     public ResponseEntity<ServicoResponseDTO> atualizar(@PathVariable UUID id, @Valid @RequestBody ServicoDTO dto) {
         return ResponseEntity.ok(servicoService.atualizar(id, dto));

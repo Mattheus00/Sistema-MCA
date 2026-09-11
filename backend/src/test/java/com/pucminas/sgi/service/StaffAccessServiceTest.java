@@ -62,6 +62,20 @@ class StaffAccessServiceTest {
         assertFalse(staffAccessService.isRotaPermitidaParaFuncionario("GET", "/api/clientes/ranking-devedores"));
         assertFalse(staffAccessService.isRotaPermitidaParaFuncionario("POST", "/api/honorarios/reajustes/simular"));
         assertFalse(staffAccessService.isRotaPermitidaParaFuncionario("GET", "/api/usuarios/ativos"));
+        assertFalse(staffAccessService.isRotaPermitidaParaFuncionario("GET", "/api/pagamentos-extra"));
+        assertFalse(staffAccessService.isRotaPermitidaParaFuncionario("GET", "/api/dividas-extra"));
+        assertFalse(staffAccessService.isRotaPermitidaParaFuncionario("GET", "/api/inadimplentes-extra"));
+    }
+
+    @Test
+    @DisplayName("prefixos de cobrança exigem segmento de path, não startsWith ambíguo")
+    void prefixosDeCobrancaNaoSaoAmbiguos() {
+        assertTrue(staffAccessService.isRotaPermitidaParaFuncionario("GET", "/api/pagamentos"));
+        assertTrue(staffAccessService.isRotaPermitidaParaFuncionario("GET", "/api/pagamentos/" + ID_FUNC));
+        assertTrue(staffAccessService.isRotaPermitidaParaFuncionario("GET", "/api/dividas"));
+        assertTrue(staffAccessService.isRotaPermitidaParaFuncionario("GET", "/api/dividas/" + ID_FUNC));
+        assertTrue(staffAccessService.isRotaPermitidaParaFuncionario("GET", "/api/inadimplentes"));
+        assertTrue(staffAccessService.isRotaPermitidaParaFuncionario("GET", "/api/inadimplentes/" + ID_FUNC));
     }
 
     @Test

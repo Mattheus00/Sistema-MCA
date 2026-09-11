@@ -14,6 +14,7 @@ import java.util.Map;
 
 /**
  * Corrige o CHECK constraint da tabela usuario no SQLite para incluir PENDENTE_APROVACAO.
+ * Pode ser removida quando todos os devs recriarem {@code data/sgi.db}.
  */
 @Component
 @Order(1)
@@ -32,13 +33,7 @@ public class UsuarioStatusMigration {
 
     @EventListener(ApplicationReadyEvent.class)
     public void runMigration() {
-        try {
-            String url = dataSource.getConnection().getMetaData().getURL();
-            if (!url.contains("sqlite")) {
-                return;
-            }
-        } catch (Exception e) {
-            log.trace("Nao e SQLite, migracao de status_usuario ignorada.");
+        if (!SqliteSchemaSupport.isSqlite(dataSource)) {
             return;
         }
 

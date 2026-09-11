@@ -17,14 +17,17 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import com.pucminas.sgi.security.StaffAuth;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @RestController
+@PreAuthorize(StaffAuth.FINANCEIRO)
 @Tag(name = "Documentos do cliente", description = "Visualização de documentos enviados pelo portal (escritório)")
 public class DocumentoClienteController {
 

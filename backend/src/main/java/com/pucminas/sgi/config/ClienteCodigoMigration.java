@@ -14,6 +14,7 @@ import java.util.Map;
 /**
  * Adiciona a coluna {@code codigo} na tabela cliente (SQLite existente).
  * Executa antes dos demais runners de importação/seed.
+ * Pode ser removida quando todos os devs recriarem {@code data/sgi.db}.
  */
 @Component
 @Order(0)
@@ -29,13 +30,7 @@ public class ClienteCodigoMigration implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        try {
-            String url = dataSource.getConnection().getMetaData().getURL();
-            if (!url.contains("sqlite")) {
-                return;
-            }
-        } catch (Exception e) {
-            log.trace("Nao e SQLite, migracao de codigo ignorada.");
+        if (!SqliteSchemaSupport.isSqlite(dataSource)) {
             return;
         }
 

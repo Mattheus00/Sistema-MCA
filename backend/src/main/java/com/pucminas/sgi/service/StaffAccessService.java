@@ -141,13 +141,13 @@ public class StaffAccessService {
             return Set.of("GET", "POST", "PUT", "PATCH").contains(method);
         }
 
-        if (path.startsWith("/api/inadimplentes")) {
+        if (path.startsWith("/api/inadimplentes/") || path.equals("/api/inadimplentes")) {
             return true;
         }
-        if (path.startsWith("/api/pagamentos")) {
+        if (path.equals("/api/pagamentos") || path.startsWith("/api/pagamentos/")) {
             return true;
         }
-        if (path.startsWith("/api/dividas")) {
+        if (path.equals("/api/dividas") || path.startsWith("/api/dividas/")) {
             return true;
         }
 

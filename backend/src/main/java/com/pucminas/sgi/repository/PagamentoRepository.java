@@ -22,4 +22,15 @@ public interface PagamentoRepository extends JpaRepository<Pagamento, UUID> {
 
     @Query("SELECT COALESCE(SUM(p.valorPago), 0) FROM Pagamento p WHERE p.divida.dividaId = :dividaId")
     java.math.BigDecimal sumValorPagoByDividaId(@Param("dividaId") UUID dividaId);
+
+    @Query("SELECT COALESCE(SUM(p.valorPago), 0) FROM Pagamento p")
+    java.math.BigDecimal sumValorPago();
+
+    @Query("SELECT COALESCE(SUM(p.valorPago), 0) FROM Pagamento p WHERE p.dataPagamento BETWEEN :inicio AND :fim")
+    java.math.BigDecimal sumValorPagoBetween(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
+
+    long countByDataPagamentoBetween(LocalDate inicio, LocalDate fim);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "divida")
+    List<Pagamento> findTop50ByDivida_Cliente_ClienteIdOrderByDataPagamentoDesc(UUID clienteId);
 }

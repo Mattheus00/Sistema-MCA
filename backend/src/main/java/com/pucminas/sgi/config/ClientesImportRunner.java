@@ -5,6 +5,7 @@ import com.pucminas.sgi.enums.StatusCliente;
 import com.pucminas.sgi.repository.ClienteRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
@@ -19,10 +20,11 @@ import java.time.LocalDateTime;
 
 /**
  * Importa clientes do arquivo data/clientes-importar.txt (formato legado).
- * Desativado: use {@link ClientesRelatorioImportRunner} com clientes-relatorio.csv.
+ * Só executa com {@code sgi.import.enabled=true}. Prefira {@link ClientesRelatorioImportRunner}.
  */
-// @Component
+@Component
 @Order(2)
+@ConditionalOnProperty(name = "sgi.import.enabled", havingValue = "true")
 public class ClientesImportRunner implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(ClientesImportRunner.class);

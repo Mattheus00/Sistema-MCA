@@ -7,7 +7,9 @@ import com.pucminas.sgi.dto.request.ValidarLoginRequestDTO;
 import com.pucminas.sgi.dto.response.LoginResponseDTO;
 import com.pucminas.sgi.dto.response.UsuarioResponseDTO;
 import com.pucminas.sgi.dto.response.ValidarLoginResponseDTO;
+import com.pucminas.sgi.entity.TokenRevogado;
 import com.pucminas.sgi.entity.Usuario;
+import com.pucminas.sgi.repository.TokenRevogadoRepository;
 import com.pucminas.sgi.entity.TokenRecuperacaoSenha;
 import com.pucminas.sgi.repository.TokenRecuperacaoSenhaRepository;
 import com.pucminas.sgi.dto.request.SolicitarRecuperacaoSenhaDTO;
@@ -48,6 +50,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
 
     private final TokenRecuperacaoSenhaRepository tokenRepository;
+    private final TokenRevogadoRepository tokenRevogadoRepository;
     private final EmailGateway emailGateway;
     private final Clock clock;
     private final SecureRandom secureRandom = new SecureRandom();
@@ -63,11 +66,13 @@ public class AuthService {
     public AuthService(UsuarioRepository usuarioRepository,
                        JwtTokenProvider jwtTokenProvider,
                        PasswordEncoder passwordEncoder, TokenRecuperacaoSenhaRepository tokenRepository,
+                       TokenRevogadoRepository tokenRevogadoRepository,
                        EmailGateway emailGateway, Clock clock) {
         this.usuarioRepository = usuarioRepository;
         this.jwtTokenProvider = jwtTokenProvider;
         this.passwordEncoder = passwordEncoder;
         this.tokenRepository = tokenRepository;
+        this.tokenRevogadoRepository = tokenRevogadoRepository;
         this.emailGateway = emailGateway;
         this.clock = clock;
     }
@@ -110,6 +115,28 @@ public class AuthService {
                 .nome(usuario.getNome())
                 .login(usuario.getTelefone())
                 .build();
+    }
+
+    /** Blacklist do {@code jti}. Tokens antigos sem jti só são descartados no cliente. */
+    @Transactional
+    public void revogarToken(String tokenBruto) {
+        if (tokenBruto == null || tokenBruto.isBlank()) {
+            return;
+        }
+        JwtTokenProvider.JwtClaims claims = jwtTokenProvider.getClaims(tokenBruto);
+        if (claims == null || claims.jti() == null || claims.jti().isBlank()) {
+            return;
+        }
+        LocalDateTime expiraEm = claims.expiration() != null
+                ? LocalDateTime.ofInstant(claims.expiration().toInstant(), clock.getZone())
+                : LocalDateTime.now(clock).plusDays(1);
+        if (!tokenRevogadoRepository.existsById(claims.jti())) {
+            tokenRevogadoRepository.save(TokenRevogado.builder()
+                    .jti(claims.jti())
+                    .expiraEm(expiraEm)
+                    .build());
+        }
+        log.info("Token revogado no logout.");
     }
 
     public JwtTokenProvider.JwtClaims validarToken(String token) {

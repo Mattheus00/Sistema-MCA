@@ -13,6 +13,7 @@ import java.util.Map;
 
 /**
  * Adiciona {@code portal_habilitado} em bancos SQLite existentes (compatível com ALTER sem NOT NULL).
+ * Pode ser removida quando todos os devs recriarem {@code data/sgi.db}.
  */
 @Component
 @Order(0)
@@ -28,12 +29,7 @@ public class ClientePortalHabilitadoMigration implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        try {
-            String url = dataSource.getConnection().getMetaData().getURL();
-            if (!url.contains("sqlite")) {
-                return;
-            }
-        } catch (Exception e) {
+        if (!SqliteSchemaSupport.isSqlite(dataSource)) {
             return;
         }
 

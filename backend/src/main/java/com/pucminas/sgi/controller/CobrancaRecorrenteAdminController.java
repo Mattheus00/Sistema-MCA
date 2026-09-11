@@ -9,11 +9,14 @@ import com.pucminas.sgi.service.GeracaoCobrancaRecorrenteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.pucminas.sgi.security.StaffAuth;
 
 import java.time.YearMonth;
 
 @RestController
+@PreAuthorize(StaffAuth.FINANCEIRO)
 @Tag(name = "Admin - cobranças recorrentes", description = "Execução manual de rotinas de cobrança")
 public class CobrancaRecorrenteAdminController {
 

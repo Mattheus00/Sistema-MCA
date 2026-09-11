@@ -16,9 +16,13 @@ import com.pucminas.sgi.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.util.StringUtils;
+import com.pucminas.sgi.security.StaffAuth;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -94,16 +98,27 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    @Operation(summary = "Logout", description = "Invalida token (cliente deve descartar o token)")
-    public ResponseEntity<Void> logout() {
+    @PreAuthorize(StaffAuth.STAFF)
+    @Operation(summary = "Logout", description = "Invalida o token atual (jti) e o cliente deve descartá-lo")
+    public ResponseEntity<Void> logout(HttpServletRequest request) {
+        authService.revogarToken(extrairBearer(request));
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/me")
+    @PreAuthorize(StaffAuth.STAFF)
     @Operation(summary = "Dados do usuário", description = "Retorna dados do usuário autenticado")
     public ResponseEntity<UsuarioResponseDTO> me(Authentication authentication) {
         UUID usuarioId = (UUID) authentication.getPrincipal();
         UsuarioResponseDTO dto = authService.dadosUsuario(usuarioId);
         return ResponseEntity.ok(dto);
+    }
+
+    private static String extrairBearer(HttpServletRequest request) {
+        String bearer = request.getHeader("Authorization");
+        if (StringUtils.hasText(bearer) && bearer.startsWith("Bearer ")) {
+            return bearer.substring(7);
+        }
+        return null;
     }
 }

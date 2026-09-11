@@ -24,7 +24,9 @@ class AuthServiceTest {
     PasswordEncoder encoder = mock(PasswordEncoder.class);
     EmailGateway email = mock(EmailGateway.class);
     Clock clock = Clock.fixed(Instant.parse("2026-09-11T00:00:00Z"), ZoneOffset.UTC);
-    AuthService service = new AuthService(usuarios, mock(JwtTokenProvider.class), encoder, tokens, email, clock);
+    JwtTokenProvider jwt = mock(JwtTokenProvider.class);
+    TokenRevogadoRepository revogados = mock(TokenRevogadoRepository.class);
+    AuthService service = new AuthService(usuarios, jwt, encoder, tokens, revogados, email, clock);
     LocalDateTime agora = LocalDateTime.now(clock);
 
     @BeforeEach void configurar() { ReflectionTestUtils.setField(service, "frontendUrl", "https://example.com/"); }
@@ -105,6 +107,30 @@ class AuthServiceTest {
         assertThatThrownBy(() -> service.redefinirSenhaSemToken(new RedefinirSenhaRequestDTO("teste", "nova1", "nova1")))
                 .isInstanceOf(BusinessRuleException.class);
         verifyNoInteractions(usuarios, encoder);
+    }
+
+    @Test void logoutPersisteJtiNaBlacklist() {
+        UUID usuarioId = UUID.randomUUID();
+        Date expiracao = Date.from(Instant.parse("2026-09-12T00:00:00Z"));
+        when(jwt.getClaims("tok")).thenReturn(
+                new JwtTokenProvider.JwtClaims(usuarioId, "login", com.pucminas.sgi.enums.Perfil.FUNCIONARIO,
+                        "Nome", "jti-1", expiracao));
+        when(revogados.existsById("jti-1")).thenReturn(false);
+
+        service.revogarToken("tok");
+
+        ArgumentCaptor<TokenRevogado> salvo = ArgumentCaptor.forClass(TokenRevogado.class);
+        verify(revogados).save(salvo.capture());
+        assertThat(salvo.getValue().getJti()).isEqualTo("jti-1");
+        assertThat(salvo.getValue().getExpiraEm()).isEqualTo(LocalDateTime.ofInstant(expiracao.toInstant(), clock.getZone()));
+    }
+
+    @Test void logoutSemJtiNaoPersiste() {
+        when(jwt.getClaims("antigo")).thenReturn(
+                new JwtTokenProvider.JwtClaims(UUID.randomUUID(), "login", com.pucminas.sgi.enums.Perfil.FUNCIONARIO,
+                        "Nome", null, null));
+        service.revogarToken("antigo");
+        verify(revogados, never()).save(any());
     }
 
     @Test void legadoExplicitamenteHabilitadoMantemContrato() {

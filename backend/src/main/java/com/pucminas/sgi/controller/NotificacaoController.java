@@ -9,8 +9,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.pucminas.sgi.security.StaffAuth;
 
 import java.util.List;
 import java.util.Map;
@@ -28,6 +30,7 @@ public class NotificacaoController {
     }
 
     @PostMapping("/enviar-cobranca")
+    @PreAuthorize(StaffAuth.FINANCEIRO)
     @Operation(summary = "Enviar email de cobrança")
     public ResponseEntity<NotificacaoResponseDTO> enviarCobranca(@Valid @RequestBody EnviarCobrancaRequestDTO dto) {
         NotificacaoResponseDTO response = notificationService.enviarCobrancaEmail(dto.getClienteId(), dto.getDividaId());
@@ -35,6 +38,7 @@ public class NotificacaoController {
     }
 
     @PostMapping(value = "/enviar-aviso-pendencia", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize(StaffAuth.STAFF)
     @Operation(summary = "Enviar aviso de pendência (PDF) por e-mail SMTP para o cliente")
     public ResponseEntity<NotificacaoResponseDTO> enviarAvisoPendencia(
             @RequestParam("clienteId") UUID clienteId,
@@ -46,6 +50,7 @@ public class NotificacaoController {
     }
 
     @GetMapping("/cliente/{clienteId}")
+    @PreAuthorize(StaffAuth.STAFF)
     @Operation(summary = "Histórico de notificações do cliente")
     public ResponseEntity<List<NotificacaoResponseDTO>> historicoCliente(@PathVariable UUID clienteId) {
         List<NotificacaoResponseDTO> list = notificationService.consultarHistoricoNotificacoes(clienteId);
@@ -53,6 +58,7 @@ public class NotificacaoController {
     }
 
     @PostMapping("/reprocessar-falhas")
+    @PreAuthorize(StaffAuth.FINANCEIRO)
     @Operation(summary = "Reenviar notificações com falha")
     public ResponseEntity<Map<String, Integer>> reprocessarFalhas() {
         int enviados = notificationService.reprocessarFalhas();

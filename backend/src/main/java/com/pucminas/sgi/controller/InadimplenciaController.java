@@ -12,7 +12,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.pucminas.sgi.security.StaffAuth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +26,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/inadimplentes")
+@PreAuthorize(StaffAuth.STAFF)
 @Tag(name = "Inadimplentes", description = "Listagem e registro de inadimplências (dívidas)")
 public class InadimplenciaController {
 

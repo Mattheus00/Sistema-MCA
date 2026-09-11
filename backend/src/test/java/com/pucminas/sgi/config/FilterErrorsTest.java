@@ -24,10 +24,10 @@ class FilterErrorsTest {
 
     @Test void usuarioInativoRetorna401SemExecutarController() throws Exception {
         UUID id = UUID.randomUUID();
-        when(jwt.getClaims("teste")).thenReturn(new JwtTokenProvider.JwtClaims(id, "login", Perfil.FUNCIONARIO, "Teste"));
+        when(jwt.getClaims("teste")).thenReturn(new JwtTokenProvider.JwtClaims(id, "login", Perfil.FUNCIONARIO, "Teste", null, null));
         when(usuarios.findById(id)).thenReturn(Optional.of(Usuario.builder().statusUsuario(StatusUsuario.INATIVO).build()));
         MockHttpServletResponse response = new MockHttpServletResponse();
-        new JwtAuthenticationFilter(jwt, usuarios, mapper).doFilter(request("/api/clientes", true), response, chain);
+        new JwtAuthenticationFilter(jwt, usuarios, mapper, mock(TokenRevogadoRepository.class)).doFilter(request("/api/clientes", true), response, chain);
         verificar(response, 401, "/api/clientes");
         verifyNoInteractions(chain);
     }
@@ -35,13 +35,13 @@ class FilterErrorsTest {
         when(jwt.getClaims("teste")).thenThrow(new IllegalStateException("segredo-interno"));
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("antigo", null, List.of()));
         MockHttpServletResponse response = new MockHttpServletResponse();
-        new JwtAuthenticationFilter(jwt, usuarios, mapper).doFilter(request("/api/clientes", true), response, chain);
+        new JwtAuthenticationFilter(jwt, usuarios, mapper, mock(TokenRevogadoRepository.class)).doFilter(request("/api/clientes", true), response, chain);
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
         assertThat(response.getContentAsString()).doesNotContain("segredo-interno", "teste");
         verify(chain).doFilter(any(), any());
     }
     @Test void limiteRetorna429ComErrorResponseCompleto() throws Exception {
-        RateLimitFilter filtro = new RateLimitFilter(mapper);
+        RateLimitFilter filtro = new RateLimitFilter(mapper, 20);
         MockHttpServletResponse response = null;
         for (int i = 0; i < 21; i++) {
             response = new MockHttpServletResponse();
@@ -49,6 +49,34 @@ class FilterErrorsTest {
         }
         verificar(response, 429, "/api/auth/recuperar-senha/solicitar");
         verify(chain, times(20)).doFilter(any(), any());
+    }
+
+    @Test void xForwardedForNaoContornaOLimite() throws Exception {
+        RateLimitFilter filtro = new RateLimitFilter(mapper, 2);
+        MockHttpServletRequest primeira = request("/api/auth/login", false);
+        primeira.addHeader("X-Forwarded-For", "8.8.8.8");
+        MockHttpServletRequest segunda = request("/api/auth/login", false);
+        segunda.addHeader("X-Forwarded-For", "1.1.1.1");
+        filtro.doFilter(primeira, new MockHttpServletResponse(), chain);
+        filtro.doFilter(segunda, new MockHttpServletResponse(), chain);
+        MockHttpServletResponse terceira = new MockHttpServletResponse();
+        MockHttpServletRequest req3 = request("/api/auth/login", false);
+        req3.addHeader("X-Forwarded-For", "9.9.9.9");
+        filtro.doFilter(req3, terceira, chain);
+        verificar(terceira, 429, "/api/auth/login");
+    }
+
+    @Test void tokenRevogadoRetorna401() throws Exception {
+        UUID id = UUID.randomUUID();
+        TokenRevogadoRepository revogados = mock(TokenRevogadoRepository.class);
+        when(jwt.getClaims("teste")).thenReturn(
+                new JwtTokenProvider.JwtClaims(id, "login", Perfil.FUNCIONARIO, "Teste", "jti-1", new Date()));
+        when(revogados.existsById("jti-1")).thenReturn(true);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        new JwtAuthenticationFilter(jwt, usuarios, mapper, revogados)
+                .doFilter(request("/api/clientes", true), response, chain);
+        verificar(response, 401, "/api/clientes");
+        verifyNoInteractions(chain);
     }
     @Test void interceptorEscapaAspasENovasLinhasComObjectMapper() throws Exception {
         StaffAccessService staff = mock(StaffAccessService.class);

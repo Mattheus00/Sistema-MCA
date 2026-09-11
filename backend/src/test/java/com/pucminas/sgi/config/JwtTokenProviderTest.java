@@ -66,8 +66,13 @@ class JwtTokenProviderTest {
 
         String token = provider.generateToken(usuarioId, "login-sintetico", Perfil.FUNCIONARIO, "Usuario sintetico");
 
-        assertThat(provider.getClaims(token)).isEqualTo(new JwtTokenProvider.JwtClaims(
-                usuarioId, "login-sintetico", Perfil.FUNCIONARIO, "Usuario sintetico"));
+        JwtTokenProvider.JwtClaims claims = provider.getClaims(token);
+        assertThat(claims.usuarioId()).isEqualTo(usuarioId);
+        assertThat(claims.telefone()).isEqualTo("login-sintetico");
+        assertThat(claims.perfil()).isEqualTo(Perfil.FUNCIONARIO);
+        assertThat(claims.nome()).isEqualTo("Usuario sintetico");
+        assertThat(claims.jti()).isNotBlank();
+        assertThat(claims.expiration()).isNotNull();
         assertThat(provider.validateToken(token)).isTrue();
         assertThat(provider.getPortalClaims(token)).isNull();
         assertThat(provider.isPortalToken(token)).isFalse();

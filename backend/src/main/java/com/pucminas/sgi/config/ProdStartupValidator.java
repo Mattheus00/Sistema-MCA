@@ -30,6 +30,12 @@ public class ProdStartupValidator {
     @Value("${spring.datasource.url}")
     private String datasourceUrl;
 
+    private final SicoobProperties sicoobProperties;
+
+    public ProdStartupValidator(SicoobProperties sicoobProperties) {
+        this.sicoobProperties = sicoobProperties;
+    }
+
     @EventListener(ApplicationReadyEvent.class)
     public void validate() {
         if (jwtSecret == null || jwtSecret.isBlank() || segredoPadraoDeDesenvolvimento(jwtSecret)) {
@@ -38,6 +44,10 @@ public class ProdStartupValidator {
         }
         if (jwtSecret.getBytes(StandardCharsets.UTF_8).length < 32) {
             throw new IllegalStateException("JWT_SECRET deve ter pelo menos 32 bytes em UTF-8 em producao.");
+        }
+        if (!sicoobProperties.isMock()
+                && (sicoobProperties.getWebhookSecret() == null || sicoobProperties.getWebhookSecret().isBlank())) {
+            log.error("sicoob.webhook-secret está vazio com sicoob.mock=false. Webhooks serão rejeitados com 401.");
         }
         log.info("Perfil prod ativo. Banco: {}", datasourceUrl);
     }

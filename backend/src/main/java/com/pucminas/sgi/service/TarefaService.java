@@ -423,7 +423,7 @@ public class TarefaService {
             return solicitante;
         }
         if (responsavelId == null) {
-            throw new BusinessRuleException("Responsável é obrigatório.");
+            return solicitante;
         }
         return requireUsuarioAtivo(responsavelId);
     }

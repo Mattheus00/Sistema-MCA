@@ -15,13 +15,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.pucminas.sgi.security.StaffAuth;
 
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/clientes")
+@PreAuthorize(StaffAuth.STAFF)
 @Tag(name = "Clientes", description = "CRUD e listagem de clientes")
 public class ClienteController {
 
@@ -39,6 +42,7 @@ public class ClienteController {
     }
 
     @GetMapping("/ranking-devedores")
+    @PreAuthorize(StaffAuth.FINANCEIRO)
     @Operation(summary = "Top 10 maiores devedores")
     public ResponseEntity<List<ClienteResponseDTO>> rankingDevedores(@RequestParam(defaultValue = "10") int limite) {
         List<ClienteResponseDTO> list = clienteService.rankingMaioresDevedores(limite);
@@ -67,6 +71,7 @@ public class ClienteController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize(StaffAuth.FINANCEIRO)
     @Operation(summary = "Excluir cliente (soft delete - marca como inativo)")
     public ResponseEntity<Void> excluir(@PathVariable UUID id) {
         clienteService.excluirCliente(id);

@@ -64,7 +64,10 @@ class RelatorioServiceTest {
                 .statusDivida(StatusDivida.VENCIDA)
                 .protocolo("DIV-1")
                 .build();
-        when(dividaRepository.findByStatusDividaIn(StatusDivida.emAberto())).thenReturn(List.of(divida));
+        when(dividaRepository.findByStatusDividaInAndVencimentoBetween(
+                StatusDivida.emAberto(),
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 12, 31))).thenReturn(List.of(divida));
 
         RelatorioInadimplentesDTO rel = relatorioService.gerarRelatorioInadimplentes(
                 LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31), null);
@@ -88,9 +91,10 @@ class RelatorioServiceTest {
                 .protocolo("DIV-X")
                 .build();
         when(clienteRepository.count()).thenReturn(5L);
-        when(dividaRepository.findAll()).thenReturn(List.of(divida));
+        when(dividaRepository.findByStatusDividaNotIn(List.of(StatusDivida.QUITADA, StatusDivida.CANCELADA)))
+                .thenReturn(List.of(divida));
         when(dividaService.getValorEJurosReais(divida)).thenReturn(new BigDecimal[]{new BigDecimal("100.00"), BigDecimal.ZERO});
-        when(pagamentoRepository.findAll()).thenReturn(Collections.emptyList());
+        when(pagamentoRepository.sumValorPago()).thenReturn(BigDecimal.ZERO);
 
         ResumoRelatorioDTO resumo = relatorioService.gerarResumo(null);
 

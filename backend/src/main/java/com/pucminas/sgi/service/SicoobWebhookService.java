@@ -10,6 +10,7 @@ import com.pucminas.sgi.exception.BusinessRuleException;
 import com.pucminas.sgi.repository.CobrancaSicoobRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +45,15 @@ public class SicoobWebhookService {
 
     public void validarSegredo(String secretHeader) {
         String esperado = properties.getWebhookSecret();
+        if (!properties.isMock()) {
+            if (esperado == null || esperado.isBlank()) {
+                throw new BadCredentialsException("Webhook Sicoob: segredo não configurado.");
+            }
+            if (secretHeader == null || !esperado.equals(secretHeader)) {
+                throw new BadCredentialsException("Webhook Sicoob: segredo inválido.");
+            }
+            return;
+        }
         if (esperado == null || esperado.isBlank()) {
             return;
         }

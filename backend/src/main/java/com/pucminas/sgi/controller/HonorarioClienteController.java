@@ -11,7 +11,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.pucminas.sgi.security.StaffAuth;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,18 +32,21 @@ public class HonorarioClienteController {
     }
 
     @GetMapping("/api/clientes/{clienteId}/honorarios")
+    @PreAuthorize(StaffAuth.STAFF)
     @Operation(summary = "Listar histórico de honorários do cliente")
     public ResponseEntity<List<HonorarioClienteResponseDTO>> historico(@PathVariable UUID clienteId) {
         return ResponseEntity.ok(honorarioService.listarHistorico(clienteId));
     }
 
     @GetMapping("/api/clientes/{clienteId}/honorarios/atual")
+    @PreAuthorize(StaffAuth.STAFF)
     @Operation(summary = "Consultar honorário atual do cliente")
     public ResponseEntity<HonorarioClienteResponseDTO> atual(@PathVariable UUID clienteId) {
         return ResponseEntity.ok(honorarioService.consultarAtual(clienteId));
     }
 
     @PostMapping("/api/clientes/{clienteId}/honorarios")
+    @PreAuthorize(StaffAuth.FINANCEIRO)
     @Operation(summary = "Cadastrar novo valor de honorário")
     public ResponseEntity<HonorarioClienteResponseDTO> cadastrar(@PathVariable UUID clienteId,
                                                                  @Valid @RequestBody HonorarioClienteDTO dto) {
@@ -49,12 +54,14 @@ public class HonorarioClienteController {
     }
 
     @PostMapping("/api/honorarios/reajustes/simular")
+    @PreAuthorize(StaffAuth.FINANCEIRO)
     @Operation(summary = "Simular reajuste de honorários em lote")
     public ResponseEntity<ReajusteHonorarioResumoDTO> simular(@Valid @RequestBody ReajusteHonorarioRequestDTO dto) {
         return ResponseEntity.ok(reajusteService.simular(dto));
     }
 
     @PostMapping("/api/honorarios/reajustes/aplicar")
+    @PreAuthorize(StaffAuth.FINANCEIRO)
     @Operation(summary = "Aplicar reajuste de honorários em lote")
     public ResponseEntity<ReajusteHonorarioResumoDTO> aplicar(@Valid @RequestBody ReajusteHonorarioRequestDTO dto) {
         return ResponseEntity.ok(reajusteService.aplicar(dto));

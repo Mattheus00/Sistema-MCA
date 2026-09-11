@@ -10,6 +10,7 @@ import com.pucminas.sgi.enums.StatusDivida;
 import com.pucminas.sgi.exception.DuplicateResourceException;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
 import com.pucminas.sgi.repository.ClienteRepository;
+import com.pucminas.sgi.repository.ClienteSpecs;
 import com.pucminas.sgi.repository.DividaRepository;
 import com.pucminas.sgi.util.MoneyUtil;
 import com.pucminas.sgi.util.TelefoneClienteUtil;
@@ -189,16 +190,7 @@ public class ClienteService {
     @Transactional(readOnly = true)
     public Page<ClienteResponseDTO> listarClientes(String busca, StatusCliente status, Pageable pageable) {
         String termo = (busca != null && !busca.isBlank()) ? busca.trim() : null;
-        String digitos = termo != null ? TelefoneClienteUtil.apenasDigitos(termo) : null;
-        if (digitos != null && digitos.isEmpty()) {
-            digitos = null;
-        }
-        String termoLike = termo != null ? "%" + termo.toLowerCase() + "%" : null;
-        String digitosLike = digitos != null ? "%" + digitos + "%" : null;
-        boolean filtrarStatus = status != null;
-        boolean excluirInativo = status == null;
-        return clienteRepository.buscar(
-                        status, filtrarStatus, excluirInativo, StatusCliente.INATIVO, termoLike, digitosLike, pageable)
+        return clienteRepository.findAll(ClienteSpecs.buscar(termo, status), pageable)
                 .map(this::toResponse);
     }
 

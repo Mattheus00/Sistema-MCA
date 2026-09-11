@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -96,13 +97,8 @@ class ClienteServiceTest {
                 .saldoDevedor(BigDecimal.ZERO)
                 .build();
         Page<Cliente> page = new PageImpl<>(List.of(ativo));
-        when(clienteRepository.buscar(
-                org.mockito.ArgumentMatchers.eq(null),
-                org.mockito.ArgumentMatchers.eq(false),
-                org.mockito.ArgumentMatchers.eq(true),
-                org.mockito.ArgumentMatchers.eq(StatusCliente.INATIVO),
-                org.mockito.ArgumentMatchers.eq(null),
-                org.mockito.ArgumentMatchers.eq(null),
+        when(clienteRepository.findAll(
+                org.mockito.ArgumentMatchers.<Specification<Cliente>>any(),
                 org.mockito.ArgumentMatchers.eq(PageRequest.of(0, 20))))
                 .thenReturn(page);
         when(dividaRepository.findByCliente_ClienteIdOrderByVencimentoAsc(CLIENTE_ID)).thenReturn(List.of());

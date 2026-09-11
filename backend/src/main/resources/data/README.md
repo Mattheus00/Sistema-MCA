@@ -12,9 +12,10 @@ arquivo ausente é ignorado, com diagnóstico em DEBUG.
   e-mail. Cabeçalho `NOME DA EMPRESA;E-MAIL`. O importador mantém o mapeamento
   de nomes legado e só atualiza clientes encontrados.
 
-Não coloque dados reais neste README. O relatório só é importado com o cadastro
-de clientes vazio; a atualização de e-mails preserva endereços já iguais.
-O marcador `.clientes-relatorio-hash` é gravado no diretório externo configurado.
+Não coloque dados reais neste README. Os importadores só rodam com
+`sgi.import.enabled=true` (default false). O relatório é idempotente por
+`codigo` e não apaga cadastros existentes; a atualização de e-mails preserva
+endereços já iguais.
 
 `mvn spring-boot:run` continua lendo `application-local.properties` dos recursos
 locais. Esse arquivo é excluído do JAR e do contexto Docker; para executar um JAR

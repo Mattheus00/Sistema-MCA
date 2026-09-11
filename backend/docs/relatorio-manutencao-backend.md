@@ -181,6 +181,141 @@ contas já existentes e manutenção dos dados originais nas contas novas.
 - Não enviar mensagens reais durante a verificação: `EmailGateway` foi mockado.
 - Concluir somente a Fase 2 neste ciclo, conforme a solicitação mais recente.
 
+## Fase 3 — Autorização e endurecimento
+
+### Alterações
+
+- `@EnableMethodSecurity` em `SecurityConfig` e `@PreAuthorize` nos controllers de
+  staff, reproduzindo a whitelist atual de `StaffAccessService` (`StaffAuth.STAFF`
+  vs `StaffAuth.FINANCEIRO`). `StaffAccessInterceptor` permanece como camada
+  redundante. Prefixos de `/api/pagamentos`, `/api/dividas` e `/api/inadimplentes`
+  passaram a `equals || startsWith(path + "/")`.
+- `ROLE_*` do JWT passa a ser consultado pelo method security. Controllers sem
+  `Authentication` (e-mail, Sicoob, cobrança recorrente admin, etc.) ficam
+  restritos a `PROPRIETARIA`/`RESPONSAVEL_FINANCEIRO`, salvo os GET já liberados
+  na whitelist (juros, serviços, honorários).
+- `RateLimitFilter` usa `request.getRemoteAddr()` (com
+  `server.forward-headers-strategy=framework`), limpa janelas vencidas e lê
+  `sgi.rate-limit.requests-per-minute` (default 20). `X-Forwarded-For` não
+  contorna o limite.
+- Webhook Sicoob: com `sicoob.mock=false` e segredo vazio, responde 401.
+  `ProdStartupValidator` registra ERROR no boot. Em mock o comportamento anterior
+  permanece.
+- Os quatro importadores só sobem com `sgi.import.enabled=true` (default false).
+  Removidos `deleteAll()` e o arquivo-marcador; o relatório é idempotente por
+  `codigo`.
+- Logout implementa blacklist mínima (`token_revogado` com `jti` + expiração),
+  checada em `JwtAuthenticationFilter`. Tokens antigos sem `jti` continuam
+  no-op no servidor; o cliente descarta o token.
+- `spring.jpa.open-in-view=false` na base e em produção. Sem
+  `LazyInitializationException` na suíte (não há `@SpringBootTest` de fatia web
+  com sessão aberta). N+1 fica para a Fase 4.
+- `TarefaService.resolverResponsavelCriacao`: gestor com `responsavelId` nulo
+  assume o próprio solicitante. Id preenchido continua validando usuário ativo.
+
+### Arquivos principais
+
+- Segurança: `SecurityConfig`, `StaffAuth`, controllers de staff, `StaffAccessService`,
+  `JwtAuthenticationFilter`, `JwtTokenProvider`, `AuthController`, `AuthService`,
+  `TokenRevogado` / `TokenRevogadoRepository`, `RateLimitFilter`.
+- Sicoob/importação: `SicoobWebhookService`, `ProdStartupValidator`, os quatro
+  `*ImportRunner`, `application.properties` / `application-prod.properties`.
+- Tarefas: `TarefaService`.
+- Testes: `StaffAuthorizationMvcTest`, `FilterErrorsTest`, `AuthServiceTest`,
+  `TarefaServiceTest`, `SicoobWebhookServiceTest`, `ClientesImportacaoExternaTest`,
+  `ProdStartupValidatorTest`.
+
+### Validação
+
+- Resultado: `fixed` para o escopo solicitado nesta fase.
+- `mvn -q test -l target/phase3-test.log`: PASSOU — 251 testes, zero falhas,
+  zero erros e zero ignorados. Inclui `StaffAuthorizationMvcTest` com
+  `@WithMockUser(roles = "FUNCIONARIO")` (200 em GET de juros, 403 em PUT).
+- `git diff --check`: PASSOU; frontend e configuração local fora do diff.
+- Decisão de logout: blacklist de `jti` (não apenas doc client-side).
+  Tokens emitidos antes desta fase não têm `jti`; o logout servidor é no-op
+  e o cliente continua descartando o token.
+
+### Decisões
+
+- Method security espelha a whitelist atual; não amplia nem restringe acesso.
+- Interceptor permanece nesta fase (defesa em profundidade).
+- Sem dependência nova para expiração do rate limit (mapa + limpeza periódica).
+- Frontend: logout continua HTTP 200; criação de tarefa com `responsavelId`
+  omitido passa a funcionar no backend. Nenhum prompt de frontend necessário.
+
+## Fase 4 — Persistência: Flyway e queries
+
+### Alterações
+
+- Flyway só no PostgreSQL (`application-prod.properties`): `enabled=true`,
+  `locations=classpath:db/migration/postgresql`, `baseline-on-migrate=true`,
+  `baseline-version=1`. SQLite local permanece com `ddl-auto=update` e
+  `spring.flyway.enabled=false`. Produção passa a `ddl-auto=validate`.
+- `V1__baseline.sql` espelha o schema atual (clientes, dívidas, portal, boletos,
+  livro caixa, tarefas e recuperação de senha). `V2__token_revogado.sql` cria a
+  blacklist JWT da Fase 3, ausente no banco do Render no momento do baseline.
+- Removido `PostgresPortalSchemaBootstrap`. As 8 `*Migration` SQLite foram
+  mantidas para `sgi.db` antigo; a detecção de dialeto fecha a `Connection` em
+  try-with-resources (`SqliteSchemaSupport`). Podem sair quando todos recriarem
+  o SQLite local.
+- `ClienteRepository.buscar` virou `ClienteSpecs` + `JpaSpecificationExecutor`
+  (evita `:param IS NULL OR` no Postgres). `HonorarioClienteRepository` usa
+  `IS NULL OR` em coluna, não em parâmetro — permanece. Removido
+  `setStatusCanceladaNative`; `setStatusDivida` cobre os dois bancos.
+- N+1: `@EntityGraph`/`JOIN FETCH` em dívidas (`cliente`), pagamentos (`divida`)
+  e listagem do Livro Caixa (`categoria`, `cliente`, `conta`). Relatórios de
+  pagamento/efetividade usam `SUM`/`COUNT` no repositório. Juros de mora do
+  dashboard continuam em memória (dependem de `JurosConfig` e dias de atraso).
+- SQL verbose saiu da base (`show-sql=false`). `DEBUG`/`TRACE` do Hibernate
+  ficam só no perfil local (`application-local.properties`).
+- Testcontainers (`postgresql` + `junit-jupiter`) atrás de
+  `-Dsgi.testcontainers=true`. Sem a flag a suíte local não sobe Docker.
+
+### Deploy no Render (banco existente — não recria dados)
+
+Auto-deploy continua desligado. O Postgres de produção **não** deve receber
+`ddl-auto=update`. Primeiro boot com este código:
+
+1. Confirmar `SPRING_PROFILES_ACTIVE=prod` e `DATABASE_URL` inalterados.
+2. Publicar o backend. No boot o Flyway encontra schema populado **sem**
+   `flyway_schema_history`, registra `V1` como **BASELINE** (não executa o SQL
+   da V1) e aplica só a **V2** (`CREATE TABLE token_revogado`).
+3. O Hibernate valida o mapeamento contra as tabelas já existentes + V2.
+   Se `validate` falhar, **não** voltar `ddl-auto=update`; corrigir mapping ou
+   uma V3 estritamente aditiva.
+4. Conferir histórico (MCP `query_render_postgres` ou `psql`):
+
+```sql
+SELECT installed_rank, version, description, type, success
+FROM flyway_schema_history
+ORDER BY installed_rank;
+```
+
+Esperado: `1` / `<< Flyway Baseline >>` / `BASELINE`; `2` / `token revogado` /
+`SUCCESS`. Conferir `to_regclass('token_revogado')` e contagens de `cliente` e
+`usuario` iguais às de antes do deploy.
+
+5. Instância **vazia** (não é o caso do Render): Flyway executa V1 e V2 e
+   o `validate` exige que o DDL bata com as entidades.
+
+### Validação
+
+- Docker **não está disponível** neste ambiente (`docker` ausente no PATH).
+  Os ITs Postgres (`PostgresRepositoryIT`, `PostgresFlywaySchemaIT`) ficam
+  ignorados sem `-Dsgi.testcontainers=true` e sem daemon Docker. Rodar depois
+  com Docker: `mvn test -Dsgi.testcontainers=true`.
+- Resultado: `mvn -q test -l target/phase4-test.log` PASSOU — **251 testes**,
+  zero falhas, zero erros, zero ignorados (mesma suíte da Fase 3). Os ITs
+  Postgres compilam, mas a condição de sistema os exclui da execução.
+
+### Decisões
+
+- Baseline V1 não altera o banco populado; a única DDL nova em produção é V2.
+- Migrações SQLite continuam só no perfil local até recriação unânime de
+  `data/sgi.db`.
+- Testcontainers opt-in para não quebrar `mvn test` sem Docker.
+
 ## Próximas fases
 
-Fases 3 a 7 ainda não iniciadas.
+Fases 5 a 7 ainda não iniciadas.

@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 /**
  * Remove unicidade embutida em {@code cpf_cnpj} no SQLite (coluna {@code UNIQUE} na tabela).
  * Apenas dropar o índice não basta — é necessário recriar a tabela {@code cliente}.
+ * Pode ser removida quando todos os devs recriarem {@code data/sgi.db}.
  */
 @Component
 @Order(1)
@@ -33,13 +34,7 @@ public class ClienteCpfCnpjNonUniqueMigration implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        try {
-            String url = dataSource.getConnection().getMetaData().getURL();
-            if (!url.contains("sqlite")) {
-                return;
-            }
-        } catch (Exception e) {
-            log.trace("Nao e SQLite, migracao cpf_cnpj ignorada.");
+        if (!SqliteSchemaSupport.isSqlite(dataSource)) {
             return;
         }
 

@@ -8,7 +8,9 @@ import com.pucminas.sgi.service.JurosConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.pucminas.sgi.security.StaffAuth;
 
 @RestController
 @RequestMapping("/api/config/juros")
@@ -22,6 +24,7 @@ public class JurosConfigController {
     }
 
     @GetMapping
+    @PreAuthorize(StaffAuth.STAFF)
     @Operation(summary = "Obter configuração de juros")
     public ResponseEntity<JurosConfigDTO> get() {
         JurosConfig cfg = jurosConfigService.getAtual();
@@ -34,6 +37,7 @@ public class JurosConfigController {
     }
 
     @PutMapping
+    @PreAuthorize(StaffAuth.FINANCEIRO)
     @Operation(summary = "Atualizar configuração de juros")
     public ResponseEntity<JurosConfigDTO> atualizar(@Valid @RequestBody JurosConfigDTO body) {
         JurosConfig cfg = jurosConfigService.atualizar(body);

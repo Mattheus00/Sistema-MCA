@@ -18,7 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.util.DigestUtils;
+import java.util.Optional;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -53,7 +53,7 @@ class ClientesImportacaoExternaTest {
     @BeforeEach
     void criarImportadores() {
         emails = new ClientesEmailImportRunner(clienteRepository);
-        relatorio = new ClientesRelatorioImportRunner(clienteRepository, dividaRepository, pagamentoRepository);
+        relatorio = new ClientesRelatorioImportRunner(clienteRepository);
     }
 
     @Test
@@ -61,6 +61,30 @@ class ClientesImportacaoExternaTest {
         executarImportadores();
 
         verifyNoInteractions(clienteRepository, dividaRepository, pagamentoRepository);
+    }
+
+    @Test
+    void beansDeImportacaoNaoSobemSemFlag() {
+        org.springframework.boot.test.context.runner.ApplicationContextRunner runner =
+                new org.springframework.boot.test.context.runner.ApplicationContextRunner()
+                        .withUserConfiguration(ClientesRelatorioImportRunner.class, ClientesEmailImportRunner.class,
+                                ServicosImportRunner.class, ClientesImportRunner.class)
+                        .withBean(ClienteRepository.class, () -> clienteRepository)
+                        .withBean(com.pucminas.sgi.repository.ServicoRepository.class,
+                                () -> org.mockito.Mockito.mock(com.pucminas.sgi.repository.ServicoRepository.class));
+
+        runner.withPropertyValues("sgi.import.enabled=false")
+                .run(ctx -> org.assertj.core.api.Assertions.assertThat(ctx)
+                        .doesNotHaveBean(ClientesRelatorioImportRunner.class)
+                        .doesNotHaveBean(ClientesEmailImportRunner.class)
+                        .doesNotHaveBean(ServicosImportRunner.class)
+                        .doesNotHaveBean(ClientesImportRunner.class));
+        runner.withPropertyValues("sgi.import.enabled=true")
+                .run(ctx -> org.assertj.core.api.Assertions.assertThat(ctx)
+                        .hasSingleBean(ClientesRelatorioImportRunner.class)
+                        .hasSingleBean(ClientesEmailImportRunner.class)
+                        .hasSingleBean(ServicosImportRunner.class)
+                        .hasSingleBean(ClientesImportRunner.class));
     }
 
     @ParameterizedTest
@@ -122,11 +146,12 @@ class ClientesImportacaoExternaTest {
     }
 
     @Test
-    void importaRelatorioExternoSinteticoESalvaMarcadorNoMesmoDiretorio() throws Exception {
+    void importaRelatorioExternoSinteticoENaoReinsereCodigoExistente() throws Exception {
         configurarDiretorio(diretorioTemporario.toString());
         String csv = "codigo,nome,celular,email,cpf_cnpj\n"
                 + "teste-001,Empresa sintetica de teste,,contato@example.com,12345678901\n";
         Files.writeString(diretorioTemporario.resolve("clientes-relatorio.csv"), csv, StandardCharsets.UTF_8);
+        when(clienteRepository.findByCodigo("TESTE-001")).thenReturn(Optional.empty());
 
         relatorio.run();
 
@@ -137,31 +162,31 @@ class ClientesImportacaoExternaTest {
         assertThat(cliente.getNome()).isEqualTo("Empresa sintetica de teste");
         assertThat(cliente.getEmail()).isEqualTo("contato@example.com");
         assertThat(cliente.getStatusCliente()).isEqualTo(StatusCliente.ATIVO);
-        assertThat(Files.readString(diretorioTemporario.resolve(".clientes-relatorio-hash")))
-                .isEqualTo(DigestUtils.md5DigestAsHex(csv.getBytes(StandardCharsets.UTF_8)));
 
         clearInvocations(clienteRepository, dividaRepository, pagamentoRepository);
+        when(clienteRepository.findByCodigo("TESTE-001"))
+                .thenReturn(Optional.of(Cliente.builder().codigo("TESTE-001").build()));
         relatorio.run();
 
-        verifyNoInteractions(clienteRepository, dividaRepository, pagamentoRepository);
+        verify(clienteRepository).findByCodigo("TESTE-001");
+        verifyNoMoreInteractions(clienteRepository);
+        verifyNoInteractions(dividaRepository, pagamentoRepository);
     }
 
     @Test
-    void preservaBancoPreenchidoQuandoConteudoDoRelatorioMuda() throws Exception {
+    void naoApagaClientesExistentesAoImportarCodigoJaCadastrado() throws Exception {
         configurarDiretorio(diretorioTemporario.toString());
         String csv = "codigo,nome,celular,email,cpf_cnpj\n"
                 + "teste-002,Outra empresa sintetica,,teste@example.com,12345678901\n";
         Files.writeString(diretorioTemporario.resolve("clientes-relatorio.csv"), csv, StandardCharsets.UTF_8);
-        Files.writeString(diretorioTemporario.resolve(".clientes-relatorio-hash"), "hash-anterior");
-        when(clienteRepository.count()).thenReturn(7L);
+        when(clienteRepository.findByCodigo("TESTE-002"))
+                .thenReturn(Optional.of(Cliente.builder().codigo("TESTE-002").build()));
 
         relatorio.run();
 
-        verify(clienteRepository).count();
+        verify(clienteRepository).findByCodigo("TESTE-002");
         verifyNoMoreInteractions(clienteRepository);
         verifyNoInteractions(dividaRepository, pagamentoRepository);
-        assertThat(Files.readString(diretorioTemporario.resolve(".clientes-relatorio-hash")))
-                .isEqualTo(DigestUtils.md5DigestAsHex(csv.getBytes(StandardCharsets.UTF_8)));
     }
 
     private void configurarDiretorio(String diretorio) {

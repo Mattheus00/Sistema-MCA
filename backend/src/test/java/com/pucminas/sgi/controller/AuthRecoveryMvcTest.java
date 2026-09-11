@@ -17,16 +17,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AuthController.class)
-@Import({SecurityConfig.class, WebMvcConfig.class})
+@Import({SecurityConfig.class, WebMvcConfig.class, JwtAuthenticationFilter.class, PortalJwtAuthenticationFilter.class})
 class AuthRecoveryMvcTest {
     @Autowired MockMvc mvc;
     @MockBean AuthService authService;
     @MockBean UsuarioService usuarioService;
     @MockBean JwtTokenProvider jwtTokenProvider;
+    @MockBean TokenRevogadoRepository tokenRevogadoRepository;
     @MockBean UsuarioRepository usuarioRepository;
     @MockBean ClienteRepository clienteRepository;
     @MockBean ClientePortalCredencialRepository credencialRepository;
     @MockBean StaffAccessService staffAccessService;
+    @MockBean StaffAccessInterceptor staffAccessInterceptor;
 
     @Test void solicitarSemAutenticacaoRetornaMensagemNeutra() throws Exception {
         when(authService.solicitarRecuperacaoSenha(any())).thenReturn(

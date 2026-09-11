@@ -14,6 +14,7 @@ import java.util.Map;
 
 /**
  * Atualiza CHECK de metodo_identificacao em envio_boleto para incluir CODIGO_CLIENTE.
+ * Pode ser removida quando todos os devs recriarem {@code data/sgi.db}.
  */
 @Component
 @Order(1)
@@ -34,12 +35,7 @@ public class EnvioBoletoMetodoIdentificacaoMigration {
 
     @EventListener(ApplicationReadyEvent.class)
     public void runMigration() {
-        try {
-            String url = dataSource.getConnection().getMetaData().getURL();
-            if (!url.contains("sqlite")) {
-                return;
-            }
-        } catch (Exception e) {
+        if (!SqliteSchemaSupport.isSqlite(dataSource)) {
             return;
         }
 

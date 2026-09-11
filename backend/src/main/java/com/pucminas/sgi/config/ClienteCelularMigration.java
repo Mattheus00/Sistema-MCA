@@ -14,6 +14,7 @@ import java.util.Map;
 
 /**
  * Adiciona a coluna {@code celular} na tabela cliente (SQLite existente).
+ * Pode ser removida quando todos os devs recriarem {@code data/sgi.db}.
  */
 @Component
 @Order(0)
@@ -29,13 +30,7 @@ public class ClienteCelularMigration {
 
     @EventListener(ApplicationReadyEvent.class)
     public void runMigration() {
-        try {
-            String url = dataSource.getConnection().getMetaData().getURL();
-            if (!url.contains("sqlite")) {
-                return;
-            }
-        } catch (Exception e) {
-            log.trace("Nao e SQLite, migracao de celular ignorada.");
+        if (!SqliteSchemaSupport.isSqlite(dataSource)) {
             return;
         }
 

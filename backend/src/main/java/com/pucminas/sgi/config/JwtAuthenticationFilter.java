@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.pucminas.sgi.entity.Usuario;
 import com.pucminas.sgi.enums.StatusUsuario;
+import com.pucminas.sgi.repository.TokenRevogadoRepository;
 import com.pucminas.sgi.repository.UsuarioRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -38,11 +39,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final ObjectMapper objectMapper;
     private final JwtTokenProvider jwtTokenProvider;
     private final UsuarioRepository usuarioRepository;
+    private final TokenRevogadoRepository tokenRevogadoRepository;
 
-    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, UsuarioRepository usuarioRepository, ObjectMapper objectMapper) {
+    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider,
+                                   UsuarioRepository usuarioRepository,
+                                   ObjectMapper objectMapper,
+                                   TokenRevogadoRepository tokenRevogadoRepository) {
         this.objectMapper = objectMapper;
         this.jwtTokenProvider = jwtTokenProvider;
         this.usuarioRepository = usuarioRepository;
+        this.tokenRevogadoRepository = tokenRevogadoRepository;
     }
 
     @Override
@@ -61,6 +67,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 JwtTokenProvider.JwtClaims claims = jwtTokenProvider.getClaims(token);
                 if (claims == null) {
                     SecurityContextHolder.clearContext();
+                } else if (claims.jti() != null && tokenRevogadoRepository.existsById(claims.jti())) {
+                    SecurityContextHolder.clearContext();
+                    ApiErrorWriter.write(objectMapper, request, response, HttpStatus.UNAUTHORIZED, "Autenticação inválida.");
+                    return;
                 } else {
                     Usuario usuario = usuarioRepository.findById(claims.usuarioId()).orElse(null);
                     if (usuario == null || usuario.getStatusUsuario() != StatusUsuario.ATIVO) {

@@ -13,7 +13,9 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.pucminas.sgi.security.StaffAuth;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -21,6 +23,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/dividas")
+@PreAuthorize(StaffAuth.STAFF)
 @Tag(name = "Dívidas", description = "Registro e consulta de dívidas")
 public class DividaController {
 

@@ -53,6 +53,7 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + jwtExpirationMs);
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(usuarioId.toString())
                 .claim("telefone", telefone)
                 .claim("perfil", perfil.name())
@@ -87,11 +88,14 @@ public class JwtTokenProvider {
             if (TIPO_AUTH_PORTAL.equals(claims.get(CLAIM_TIPO_AUTH, String.class))) {
                 return null;
             }
+            Date expiration = claims.getExpiration();
             return new JwtClaims(
                     UUID.fromString(claims.getSubject()),
                     claims.get("telefone", String.class),
                     Perfil.valueOf(claims.get("perfil", String.class)),
-                    claims.get("nome", String.class)
+                    claims.get("nome", String.class),
+                    claims.getId(),
+                    expiration
             );
         } catch (JwtException | IllegalArgumentException e) {
             log.debug("Token inválido: {}", e.getMessage());
@@ -134,7 +138,7 @@ public class JwtTokenProvider {
         return getClaims(token) != null;
     }
 
-    public record JwtClaims(UUID usuarioId, String telefone, Perfil perfil, String nome) {}
+    public record JwtClaims(UUID usuarioId, String telefone, Perfil perfil, String nome, String jti, Date expiration) {}
 
     public record PortalJwtClaims(UUID clienteId, String nome) {}
 }

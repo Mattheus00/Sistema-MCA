@@ -4,6 +4,10 @@ import com.pucminas.sgi.entity.LivroCaixaMovimentacao;
 import com.pucminas.sgi.enums.LivroCaixaOrigemMovimentacao;
 import com.pucminas.sgi.enums.LivroCaixaStatusMovimentacao;
 import com.pucminas.sgi.enums.LivroCaixaTipoMovimentacao;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -25,6 +29,9 @@ public interface LivroCaixaMovimentacaoRepository extends JpaRepository<LivroCai
     boolean existsByOrigemAndOrigemId(LivroCaixaOrigemMovimentacao origem, UUID origemId);
 
     Optional<LivroCaixaMovimentacao> findByOrigemAndOrigemId(LivroCaixaOrigemMovimentacao origem, UUID origemId);
+
+    @EntityGraph(attributePaths = {"categoria", "cliente", "conta"})
+    Page<LivroCaixaMovimentacao> findAll(Specification<LivroCaixaMovimentacao> spec, Pageable pageable);
 
     @Query("""
             SELECT m FROM LivroCaixaMovimentacao m
