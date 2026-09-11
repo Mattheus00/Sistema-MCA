@@ -26,6 +26,8 @@ public final class PublicRoutes {
             Stream.of(
                     "/api/sicoob/webhook/**",
                     "/health",
+                    "/actuator/health",
+                    "/actuator/health/**",
                     "/api-docs/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html"

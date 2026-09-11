@@ -5,7 +5,6 @@ import com.pucminas.sgi.dto.response.ResumoRelatorioDTO;
 import com.pucminas.sgi.entity.Cliente;
 import com.pucminas.sgi.entity.Divida;
 import com.pucminas.sgi.enums.StatusDivida;
-import com.pucminas.sgi.exception.ExportacaoRelatorioException;
 import com.pucminas.sgi.repository.ClienteRepository;
 import com.pucminas.sgi.repository.DividaRepository;
 import com.pucminas.sgi.repository.NotificacaoEmailRepository;
@@ -27,6 +26,8 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,6 +44,8 @@ class RelatorioServiceTest {
     private NotificacaoEmailRepository notificacaoEmailRepository;
     @Mock
     private DividaService dividaService;
+    @Mock
+    RelatorioExportService relatorioExportService;
 
     @InjectMocks
     private RelatorioService relatorioService;
@@ -133,8 +136,10 @@ class RelatorioServiceTest {
     }
 
     @Test
-    @DisplayName("exportarRelatorioPDF retorna recurso não vazio")
+    @DisplayName("exportarRelatorioPDF delega para RelatorioExportService")
     void exportarPdf() throws Exception {
+        when(relatorioExportService.exportarPdf(eq("inadimplentes"), any(LocalDate.class), any(LocalDate.class)))
+                .thenReturn(new org.springframework.core.io.ByteArrayResource(new byte[]{1, 2, 3}));
         Resource resource = relatorioService.exportarRelatorioPDF(
                 "inadimplentes", LocalDate.now().minusMonths(1), LocalDate.now());
         assertNotNull(resource);
@@ -142,8 +147,10 @@ class RelatorioServiceTest {
     }
 
     @Test
-    @DisplayName("exportarRelatorioExcel retorna recurso não vazio")
+    @DisplayName("exportarRelatorioExcel delega para RelatorioExportService")
     void exportarExcel() throws Exception {
+        when(relatorioExportService.exportarExcel(eq("inadimplentes"), any(LocalDate.class), any(LocalDate.class)))
+                .thenReturn(new org.springframework.core.io.ByteArrayResource(new byte[]{1, 2, 3}));
         Resource resource = relatorioService.exportarRelatorioExcel(
                 "inadimplentes", LocalDate.now().minusMonths(1), LocalDate.now());
         assertNotNull(resource);

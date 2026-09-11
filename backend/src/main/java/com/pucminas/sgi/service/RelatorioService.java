@@ -12,14 +12,12 @@ import com.pucminas.sgi.entity.Divida;
 import com.pucminas.sgi.entity.NotificacaoEmail;
 import com.pucminas.sgi.entity.Pagamento;
 import com.pucminas.sgi.enums.StatusDivida;
-import com.pucminas.sgi.exception.ExportacaoRelatorioException;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
 import com.pucminas.sgi.repository.ClienteRepository;
 import com.pucminas.sgi.repository.DividaRepository;
 import com.pucminas.sgi.repository.NotificacaoEmailRepository;
 import com.pucminas.sgi.repository.PagamentoRepository;
 import com.pucminas.sgi.util.MoneyUtil;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +51,7 @@ public class RelatorioService {
     private final PagamentoRepository pagamentoRepository;
     private final NotificacaoEmailRepository notificacaoEmailRepository;
     private final DividaService dividaService;
+    private final RelatorioExportService relatorioExportService;
 
 
     @Transactional(readOnly = true)
@@ -352,48 +351,11 @@ public class RelatorioService {
 
     @Transactional(readOnly = true)
     public Resource exportarRelatorioPDF(String tipoRelatorio, LocalDate periodoInicio, LocalDate periodoFim) {
-        byte[] pdf = gerarPDF(tipoRelatorio, periodoInicio, periodoFim);
-        return new ByteArrayResource(pdf);
+        return relatorioExportService.exportarPdf(tipoRelatorio, periodoInicio, periodoFim);
     }
 
     @Transactional(readOnly = true)
     public Resource exportarRelatorioExcel(String tipoRelatorio, LocalDate periodoInicio, LocalDate periodoFim) {
-        byte[] xlsx = gerarExcel(tipoRelatorio, periodoInicio, periodoFim);
-        return new ByteArrayResource(xlsx);
-    }
-
-    private byte[] gerarPDF(String tipo, LocalDate inicio, LocalDate fim) {
-        try {
-            java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
-            com.lowagie.text.Document document = new com.lowagie.text.Document();
-            com.lowagie.text.pdf.PdfWriter.getInstance(document, baos);
-            document.open();
-            document.add(new com.lowagie.text.Paragraph("Relatório SGI - " + tipo, com.lowagie.text.FontFactory.getFont(com.lowagie.text.FontFactory.HELVETICA, 16)));
-            document.add(new com.lowagie.text.Paragraph("Período: " + inicio + " a " + fim));
-            document.add(new com.lowagie.text.Paragraph("Gerado em: " + java.time.LocalDateTime.now()));
-            document.close();
-            return baos.toByteArray();
-        } catch (Exception e) {
-            log.error("Falha ao gerar PDF do relatório {}: {}", tipo, e.getMessage(), e);
-            throw new ExportacaoRelatorioException("Não foi possível gerar o PDF do relatório.", e);
-        }
-    }
-
-    private byte[] gerarExcel(String tipo, LocalDate inicio, LocalDate fim) {
-        try {
-            org.apache.poi.ss.usermodel.Workbook wb = new org.apache.poi.xssf.usermodel.XSSFWorkbook();
-            org.apache.poi.ss.usermodel.Sheet sheet = wb.createSheet("Relatório");
-            org.apache.poi.ss.usermodel.Row row0 = sheet.createRow(0);
-            row0.createCell(0).setCellValue("Relatório SGI - " + tipo);
-            org.apache.poi.ss.usermodel.Row row1 = sheet.createRow(1);
-            row1.createCell(0).setCellValue("Período: " + inicio + " a " + fim);
-            java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
-            wb.write(out);
-            wb.close();
-            return out.toByteArray();
-        } catch (Exception e) {
-            log.error("Falha ao gerar Excel do relatório {}: {}", tipo, e.getMessage(), e);
-            throw new ExportacaoRelatorioException("Não foi possível gerar o Excel do relatório.", e);
-        }
+        return relatorioExportService.exportarExcel(tipoRelatorio, periodoInicio, periodoFim);
     }
 }

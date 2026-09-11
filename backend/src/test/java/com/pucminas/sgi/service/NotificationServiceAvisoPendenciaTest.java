@@ -73,7 +73,8 @@ class NotificationServiceAvisoPendenciaTest {
 
         NotificationService service = new NotificationService(
                 notificacaoRepository, clienteRepository, dividaRepository,
-                emailGateway, boletoArquivoValidator, "Escritório Teste", 5);
+                emailGateway, boletoArquivoValidator, mock(com.pucminas.sgi.service.email.CobrancaEmailComposer.class),
+                "Escritório Teste", 5);
 
         var res = service.enviarAvisoPendenciaPdf(clienteId, pdf);
 
@@ -98,7 +99,8 @@ class NotificationServiceAvisoPendenciaTest {
 
         NotificationService service = new NotificationService(
                 notificacaoRepository, clienteRepository, dividaRepository,
-                emailGateway, boletoArquivoValidator, "Escritório", 5);
+                emailGateway, boletoArquivoValidator, mock(com.pucminas.sgi.service.email.CobrancaEmailComposer.class),
+                "Escritório", 5);
 
         MockMultipartFile pdf = new MockMultipartFile(
                 "arquivo", "aviso.pdf", "application/pdf", "%PDF-1.4".getBytes());
@@ -115,7 +117,8 @@ class NotificationServiceAvisoPendenciaTest {
 
         NotificationService service = new NotificationService(
                 notificacaoRepository, clienteRepository, dividaRepository,
-                emailGateway, boletoArquivoValidator, "Escritório", 5);
+                emailGateway, boletoArquivoValidator, mock(com.pucminas.sgi.service.email.CobrancaEmailComposer.class),
+                "Escritório", 5);
 
         MockMultipartFile pdf = new MockMultipartFile(
                 "arquivo", "aviso.pdf", "application/pdf", "%PDF-1.4".getBytes());

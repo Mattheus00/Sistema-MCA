@@ -19,7 +19,7 @@ services:
       name: sgi-data
       mountPath: /var/data
       sizeGB: 1
-    healthCheckPath: /health
+    healthCheckPath: /actuator/health
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod

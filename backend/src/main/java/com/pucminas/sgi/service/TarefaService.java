@@ -1,14 +1,12 @@
 package com.pucminas.sgi.service;
 
 import com.pucminas.sgi.dto.request.MoverTarefaRequestDTO;
-import com.pucminas.sgi.dto.request.TarefaChecklistItemRequestDTO;
 import com.pucminas.sgi.dto.request.TarefaRequestDTO;
 import com.pucminas.sgi.dto.response.*;
 import com.pucminas.sgi.entity.Tarefa;
 import com.pucminas.sgi.entity.TarefaChecklistItem;
 import com.pucminas.sgi.entity.TarefaHistorico;
 import com.pucminas.sgi.entity.Usuario;
-import com.pucminas.sgi.enums.Perfil;
 import com.pucminas.sgi.enums.PrioridadeTarefa;
 import com.pucminas.sgi.enums.StatusTarefa;
 import com.pucminas.sgi.enums.StatusUsuario;
@@ -30,11 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.pucminas.sgi.exception.AccessDeniedBusinessException;
 
 import java.time.Clock;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,13 +37,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class TarefaService {
-
-    private static final List<StatusTarefa> STATUS_ABERTOS = List.of(
-            StatusTarefa.BACKLOG,
-            StatusTarefa.A_FAZER,
-            StatusTarefa.EM_ANDAMENTO,
-            StatusTarefa.EM_REVISAO
-    );
 
     private final TarefaRepository tarefaRepository;
     private final TarefaChecklistRepository checklistRepository;
@@ -255,120 +243,6 @@ public class TarefaService {
         Usuario usuario = staffAccessService.assertPodeAcessarTarefas(usuarioId);
         Tarefa tarefa = carregarComAcesso(usuario, tarefaId);
         tarefaRepository.delete(tarefa);
-    }
-
-    @Transactional
-    public TarefaChecklistItemResponseDTO adicionarChecklist(UUID usuarioId, UUID tarefaId,
-                                                             TarefaChecklistItemRequestDTO dto) {
-        Usuario usuario = staffAccessService.assertPodeAcessarTarefas(usuarioId);
-        Tarefa tarefa = carregarComAcesso(usuario, tarefaId);
-        int ordem = (int) checklistRepository.countByTarefaId(tarefaId);
-        TarefaChecklistItem item = checklistRepository.save(TarefaChecklistItem.builder()
-                .tarefa(tarefa)
-                .descricao(dto.getDescricao().trim())
-                .ordem(ordem)
-                .concluido(false)
-                .build());
-        registrarHistorico(tarefa, usuario, "CHECKLIST",
-                usuario.getNome() + " adicionou item do checklist: " + item.getDescricao());
-        return tarefaMapper.toChecklistDto(item);
-    }
-
-    @Transactional
-    public TarefaChecklistItemResponseDTO alternarChecklist(UUID usuarioId, UUID tarefaId, UUID itemId) {
-        Usuario usuario = staffAccessService.assertPodeAcessarTarefas(usuarioId);
-        Tarefa tarefa = carregarComAcesso(usuario, tarefaId);
-        TarefaChecklistItem item = checklistRepository.findById(itemId)
-                .orElseThrow(() -> new ResourceNotFoundException("Item do checklist", itemId));
-        if (!tarefaId.equals(item.getTarefaId())) {
-            throw new ResourceNotFoundException("Item do checklist", itemId);
-        }
-        item.setConcluido(!item.isConcluido());
-        item = checklistRepository.save(item);
-        registrarHistorico(tarefa, usuario, "CHECKLIST",
-                usuario.getNome() + (item.isConcluido() ? " concluiu" : " reabriu")
-                        + " item do checklist: " + item.getDescricao());
-        return tarefaMapper.toChecklistDto(item);
-    }
-
-    @Transactional
-    public void removerChecklist(UUID usuarioId, UUID tarefaId, UUID itemId) {
-        Usuario usuario = staffAccessService.assertPodeAcessarTarefas(usuarioId);
-        Tarefa tarefa = carregarComAcesso(usuario, tarefaId);
-        TarefaChecklistItem item = checklistRepository.findById(itemId)
-                .orElseThrow(() -> new ResourceNotFoundException("Item do checklist", itemId));
-        if (!tarefaId.equals(item.getTarefaId())) {
-            throw new ResourceNotFoundException("Item do checklist", itemId);
-        }
-        checklistRepository.delete(item);
-        registrarHistorico(tarefa, usuario, "CHECKLIST",
-                usuario.getNome() + " removeu item do checklist: " + item.getDescricao());
-    }
-
-    @Transactional(readOnly = true)
-    public TarefaIndicadoresDTO indicadores(UUID usuarioId, UUID responsavelIdFiltro, boolean visaoEquipe) {
-        Usuario usuario = staffAccessService.assertPodeAcessarTarefas(usuarioId);
-        UUID responsavelEfetivo = resolverFiltroResponsavel(usuario, responsavelIdFiltro, visaoEquipe);
-        LocalDate hoje = LocalDate.now(clock);
-        LocalDateTime inicioSemana = hoje.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).atStartOfDay();
-        LocalDateTime fimSemana = hoje.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).atTime(LocalTime.MAX);
-
-        long emAberto;
-        long emAndamento;
-        long atrasadas;
-        long concluidasNaSemana;
-        if (responsavelEfetivo != null) {
-            emAberto = tarefaRepository.countByResponsavel_UsuarioIdAndStatusIn(responsavelEfetivo, STATUS_ABERTOS);
-            emAndamento = tarefaRepository.countByResponsavel_UsuarioIdAndStatusIn(
-                    responsavelEfetivo, List.of(StatusTarefa.EM_ANDAMENTO));
-            atrasadas = tarefaRepository.countByResponsavel_UsuarioIdAndStatusInAndDataVencimentoBefore(
-                    responsavelEfetivo, STATUS_ABERTOS, hoje);
-            concluidasNaSemana = tarefaRepository.countByResponsavel_UsuarioIdAndStatusAndConcluidoEmBetween(
-                    responsavelEfetivo, StatusTarefa.CONCLUIDO, inicioSemana, fimSemana);
-        } else {
-            emAberto = tarefaRepository.countByStatusIn(STATUS_ABERTOS);
-            emAndamento = tarefaRepository.countByStatusIn(List.of(StatusTarefa.EM_ANDAMENTO));
-            atrasadas = tarefaRepository.countByStatusInAndDataVencimentoBefore(STATUS_ABERTOS, hoje);
-            concluidasNaSemana = tarefaRepository.countByStatusAndConcluidoEmBetween(
-                    StatusTarefa.CONCLUIDO, inicioSemana, fimSemana);
-        }
-        return TarefaIndicadoresDTO.builder()
-                .emAberto(emAberto)
-                .emAndamento(emAndamento)
-                .atrasadas(atrasadas)
-                .concluidasNaSemana(concluidasNaSemana)
-                .build();
-    }
-
-    @Transactional(readOnly = true)
-    public List<TarefaResumoColaboradorDTO> resumoColaboradores(UUID usuarioId) {
-        Usuario usuario = staffAccessService.assertPodeAcessarTarefas(usuarioId);
-        if (!staffAccessService.podeGerenciarEquipeTarefas(usuario)) {
-            throw new AccessDeniedBusinessException("Sem permissão para visualizar resumo da equipe.");
-        }
-        LocalDate hoje = LocalDate.now(clock);
-        return usuarioRepository.findByStatusUsuarioOrderByNomeAsc(StatusUsuario.ATIVO).stream()
-                .map(u -> {
-                    long total = tarefaRepository.countByResponsavel_UsuarioIdAndStatusIn(u.getUsuarioId(),
-                            List.of(StatusTarefa.BACKLOG, StatusTarefa.A_FAZER, StatusTarefa.EM_ANDAMENTO,
-                                    StatusTarefa.EM_REVISAO, StatusTarefa.CONCLUIDO));
-                    long atrasadas = tarefaRepository.countByResponsavel_UsuarioIdAndStatusInAndDataVencimentoBefore(
-                            u.getUsuarioId(), STATUS_ABERTOS, hoje);
-                    long emAndamento = tarefaRepository.countByResponsavel_UsuarioIdAndStatusIn(
-                            u.getUsuarioId(), List.of(StatusTarefa.EM_ANDAMENTO));
-                    long concluidas = tarefaRepository.countByResponsavel_UsuarioIdAndStatusIn(
-                            u.getUsuarioId(), List.of(StatusTarefa.CONCLUIDO));
-                    return TarefaResumoColaboradorDTO.builder()
-                            .usuarioId(u.getUsuarioId())
-                            .nome(u.getNome())
-                            .totalTarefas(total)
-                            .atrasadas(atrasadas)
-                            .emAndamento(emAndamento)
-                            .concluidas(concluidas)
-                            .build();
-                })
-                .filter(r -> r.getTotalTarefas() > 0)
-                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)

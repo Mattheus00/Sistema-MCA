@@ -12,14 +12,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Health check para load balancers e Render (inclui checagem básica do banco).
+ * Compatibilidade com o health check histórico do Render ({@code GET /health}).
+ * O endpoint oficial passa a ser {@code /actuator/health}.
  */
 @RestController
 @RequiredArgsConstructor
 public class HealthController {
 
     private final DataSource dataSource;
-
 
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {

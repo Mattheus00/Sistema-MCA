@@ -13,9 +13,7 @@ import com.pucminas.sgi.repository.ClienteRepository;
 import com.pucminas.sgi.repository.DividaRepository;
 import com.pucminas.sgi.repository.NotificacaoEmailRepository;
 import com.pucminas.sgi.service.email.AvisoPendenciaEmailTemplateBuilder;
-import com.pucminas.sgi.service.email.CobrancaEmailHtmlBuilder;
-import com.pucminas.sgi.util.MoneyUtil;
-import com.pucminas.sgi.service.BoletoArquivoValidator;
+import com.pucminas.sgi.service.email.CobrancaEmailComposer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +36,7 @@ public class NotificationService {
     private final DividaRepository dividaRepository;
     private final EmailGateway emailGateway;
     private final BoletoArquivoValidator boletoArquivoValidator;
+    private final CobrancaEmailComposer cobrancaEmailComposer;
     private final String nomeEscritorioCobranca;
     private final int maxTentativasEmail;
 
@@ -46,6 +45,7 @@ public class NotificationService {
                                DividaRepository dividaRepository,
                                EmailGateway emailGateway,
                                BoletoArquivoValidator boletoArquivoValidator,
+                               CobrancaEmailComposer cobrancaEmailComposer,
                                @Value("${cobranca.email.nome-escritorio:Contabilidade São Judas Tadeu}") String nomeEscritorioCobranca,
                                @Value("${sgi.email.max-tentativas:5}") int maxTentativasEmail) {
         this.notificacaoRepository = notificacaoRepository;
@@ -53,6 +53,7 @@ public class NotificationService {
         this.dividaRepository = dividaRepository;
         this.emailGateway = emailGateway;
         this.boletoArquivoValidator = boletoArquivoValidator;
+        this.cobrancaEmailComposer = cobrancaEmailComposer;
         this.nomeEscritorioCobranca = nomeEscritorioCobranca;
         this.maxTentativasEmail = Math.max(1, maxTentativasEmail);
     }
@@ -67,76 +68,11 @@ public class NotificationService {
         if (!emailGateway.hasConfigAtiva()) {
             throw new BusinessRuleException("Nenhuma configuração SMTP ativa. Configure o envio de emails em /api/email-config.");
         }
-        BigDecimal valorDevido;
-        String protocolo;
-        String vencimento;
-        String descricao;
-        String assunto;
-        String corpo;
-        Divida dividaUnica = null;
-        List<Divida> dividasAgregadas = null;
 
-        if (dividaId != null) {
-            Divida d = dividaRepository.findById(dividaId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Dívida", dividaId));
-            if (!d.getCliente().getClienteId().equals(clienteId)) {
-                throw new BusinessRuleException("Dívida não pertence ao cliente informado.");
-            }
-            if (d.getValorDevedor().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new BusinessRuleException("Dívida já está quitada.");
-            }
-            dividaUnica = d;
-            valorDevido = d.getValorDevedor();
-            protocolo = d.getProtocolo();
-            vencimento = d.getVencimento().toString();
-            descricao = d.getDescricao() != null ? d.getDescricao() : "-";
-            assunto = "Cobrança - Débito em Aberto - " + protocolo;
-
-            StringBuilder corpoBuilder = new StringBuilder();
-            corpoBuilder.append("Prezado(a) ").append(cliente.getNome()).append(",\n\n");
-            corpoBuilder.append("Identificamos um débito em aberto no valor de R$ ")
-                    .append(MoneyUtil.centavosParaReais(valorDevido)).append(".\n\n");
-            corpoBuilder.append("Protocolo: ").append(protocolo)
-                    .append("\nVencimento: ").append(vencimento)
-                    .append("\nDescrição: ").append(descricao);
-            if (d.getItensServicos() != null && !d.getItensServicos().isEmpty()) {
-                corpoBuilder.append("\n\nServiços prestados:\n");
-                d.getItensServicos().forEach(item -> corpoBuilder.append("  - ")
-                        .append(item.getServico().getNome())
-                        .append(": R$ ")
-                        .append(MoneyUtil.centavosParaReais(item.getValor()))
-                        .append("\n"));
-            }
-            corpoBuilder.append("\n\nPor favor, regularize sua situação.\n\nAtenciosamente,\nEscritório de Contabilidade");
-            corpo = corpoBuilder.toString();
-        } else {
-            List<Divida> abertas = new ArrayList<>(
-                    dividaRepository.findByCliente_ClienteIdAndStatusDivida(clienteId, com.pucminas.sgi.enums.StatusDivida.EM_ABERTO));
-            abertas.addAll(dividaRepository.findByCliente_ClienteIdAndStatusDivida(
-                    clienteId, com.pucminas.sgi.enums.StatusDivida.PARCIAL));
-            abertas.addAll(dividaRepository.findByCliente_ClienteIdAndStatusDivida(
-                    clienteId, com.pucminas.sgi.enums.StatusDivida.VENCIDA));
-            dividasAgregadas = abertas;
-            valorDevido = abertas.stream().map(Divida::getValorDevedor).reduce(BigDecimal.ZERO, BigDecimal::add);
-            if (valorDevido.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new BusinessRuleException("Cliente não possui débitos em aberto.");
-            }
-            StringBuilder corpoBuilder = new StringBuilder();
-            corpoBuilder.append("Prezado(a) ").append(cliente.getNome()).append(",\n\n");
-            corpoBuilder.append("Identificamos débitos em aberto no valor total de R$ ")
-                    .append(MoneyUtil.centavosParaReais(valorDevido)).append(".\n\n");
-            for (Divida d : abertas) {
-                corpoBuilder.append("Protocolo: ").append(d.getProtocolo())
-                        .append(" - Vencimento: ").append(d.getVencimento())
-                        .append(" - Valor: R$ ").append(MoneyUtil.centavosParaReais(d.getValorDevedor())).append("\n");
-            }
-            corpoBuilder.append("\nPor favor, regularize sua situação.\n\nAtenciosamente,\nEscritório de Contabilidade");
-            protocolo = "-";
-            vencimento = "-";
-            descricao = "Múltiplos débitos";
-            assunto = "Cobrança - Débitos em Aberto";
-            corpo = corpoBuilder.toString();
-        }
+        CobrancaEmailComposer.CobrancaEmailContexto ctx = cobrancaEmailComposer.montar(cliente, dividaId);
+        String assunto = ctx.assunto();
+        String corpo = cobrancaEmailComposer.renderizarTexto(ctx);
+        String htmlCorpo = cobrancaEmailComposer.renderizarHtml(nomeEscritorioCobranca, ctx);
 
         NotificacaoEmail notif = NotificacaoEmail.builder()
                 .clienteId(clienteId)
@@ -145,42 +81,12 @@ public class NotificationService {
                 .emailDestino(cliente.getEmail())
                 .assunto(assunto)
                 .corpoEmail(corpo)
-                .valorComunicado(valorDevido)
+                .corpoHtml(htmlCorpo)
+                .valorComunicado(ctx.valorDevido())
                 .statusEnvio(StatusEnvio.PENDENTE)
                 .tentativas(0)
                 .proximaTentativa(LocalDateTime.now())
                 .build();
-        notif = notificacaoRepository.save(notif);
-
-        String htmlCorpo;
-        if (dividaUnica != null) {
-            BigDecimal jurosCentavos = dividaUnica.getValorDevedor()
-                    .subtract(dividaUnica.getValorOriginal()).max(BigDecimal.ZERO);
-            htmlCorpo = CobrancaEmailHtmlBuilder.htmlCobrancaDividaUnica(
-                    nomeEscritorioCobranca,
-                    cliente.getNome(),
-                    dividaUnica.getProtocolo(),
-                    dividaUnica.getVencimento(),
-                    CobrancaEmailHtmlBuilder.centavosParaReais(jurosCentavos),
-                    CobrancaEmailHtmlBuilder.centavosParaReais(dividaUnica.getValorDevedor()));
-        } else {
-            BigDecimal jurosTotalCentavos = dividasAgregadas.stream()
-                    .map(d -> d.getValorDevedor().subtract(d.getValorOriginal()).max(BigDecimal.ZERO))
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            List<CobrancaEmailHtmlBuilder.LinhaResumo> linhas = dividasAgregadas.stream()
-                    .map(d -> new CobrancaEmailHtmlBuilder.LinhaResumo(
-                            d.getProtocolo(),
-                            d.getVencimento(),
-                            CobrancaEmailHtmlBuilder.centavosParaReais(d.getValorDevedor())))
-                    .toList();
-            htmlCorpo = CobrancaEmailHtmlBuilder.htmlCobrancaAgregada(
-                    nomeEscritorioCobranca,
-                    cliente.getNome(),
-                    linhas,
-                    CobrancaEmailHtmlBuilder.centavosParaReais(jurosTotalCentavos),
-                    CobrancaEmailHtmlBuilder.centavosParaReais(valorDevido));
-        }
-        notif.setCorpoHtml(htmlCorpo);
         notif = notificacaoRepository.save(notif);
 
         try {

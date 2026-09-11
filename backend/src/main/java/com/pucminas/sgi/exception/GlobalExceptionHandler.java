@@ -51,9 +51,16 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), request.getRequestURI());
     }
 
-    @ExceptionHandler(DuplicateResourceException.class)
-    public ResponseEntity<ErrorResponse> handleDuplicate(DuplicateResourceException ex, HttpServletRequest request) {
+    @ExceptionHandler({DuplicateResourceException.class, ConflictException.class})
+    public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.CONFLICT, "Conflict", ex.getMessage(), request.getRequestURI());
+    }
+
+    @ExceptionHandler(org.springframework.orm.ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLock(
+            org.springframework.orm.ObjectOptimisticLockingFailureException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.CONFLICT, "Conflict",
+                "O registro foi alterado por outra operação. Atualize e tente novamente.", request.getRequestURI());
     }
 
     @ExceptionHandler(BusinessRuleException.class)

@@ -13,7 +13,7 @@ import com.pucminas.sgi.dto.response.MensagemResponseDTO;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -26,15 +26,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import({SecurityConfig.class, WebMvcConfig.class, JwtAuthenticationFilter.class, PortalJwtAuthenticationFilter.class})
 class AuthRecoveryMvcTest {
     @Autowired MockMvc mvc;
-    @MockBean AuthService authService;
-    @MockBean UsuarioService usuarioService;
-    @MockBean JwtTokenProvider jwtTokenProvider;
-    @MockBean TokenRevogadoRepository tokenRevogadoRepository;
-    @MockBean UsuarioRepository usuarioRepository;
-    @MockBean ClienteRepository clienteRepository;
-    @MockBean ClientePortalCredencialRepository credencialRepository;
-    @MockBean StaffAccessService staffAccessService;
-    @MockBean StaffAccessInterceptor staffAccessInterceptor;
+    @MockitoBean AuthService authService;
+    @MockitoBean UsuarioService usuarioService;
+    @MockitoBean JwtTokenProvider jwtTokenProvider;
+    @MockitoBean TokenRevogadoRepository tokenRevogadoRepository;
+    @MockitoBean UsuarioRepository usuarioRepository;
+    @MockitoBean ClienteRepository clienteRepository;
+    @MockitoBean ClientePortalCredencialRepository credencialRepository;
+    @MockitoBean StaffAccessService staffAccessService;
+    @MockitoBean StaffAccessInterceptor staffAccessInterceptor;
 
     @Test void solicitarSemAutenticacaoRetornaMensagemNeutra() throws Exception {
         when(authService.solicitarRecuperacaoSenha(any())).thenReturn(

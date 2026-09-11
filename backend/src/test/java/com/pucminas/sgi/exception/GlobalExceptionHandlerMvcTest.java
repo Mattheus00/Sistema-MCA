@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class GlobalExceptionHandlerMvcTest extends ControllerMvcTestSupport {
     @Autowired MockMvc mvc;
     @ParameterizedTest
-    @CsvSource({"status,403", "spring,409", "dominio,403", "acesso,403", "auth,401", "constraint,400"})
+    @CsvSource({"status,403", "spring,409", "conflito,409", "dominio,403", "acesso,403", "auth,401", "constraint,400"})
     void excecoesMantemStatusECorpoPadrao(String tipo, int statusEsperado) throws Exception {
         mvc.perform(get("/probe/erro/" + tipo)).andExpect(status().is(statusEsperado))
                 .andExpect(jsonPath("$.status").value(statusEsperado)).andExpect(jsonPath("$.timestamp").isString())
@@ -73,6 +73,7 @@ class GlobalExceptionHandlerMvcTest extends ControllerMvcTestSupport {
             switch (tipo) {
                 case "status" -> throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permissão negada");
                 case "spring" -> throw new ErrorResponseException(HttpStatus.CONFLICT);
+                case "conflito" -> throw new ConflictException("Lote já está em envio.");
                 case "dominio" -> throw new AccessDeniedBusinessException("Acesso negado pelo domínio");
                 case "acesso" -> throw new AccessDeniedException("negado");
                 case "auth" -> throw new AuthenticationCredentialsNotFoundException("negado");

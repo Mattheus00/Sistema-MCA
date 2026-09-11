@@ -373,9 +373,189 @@ Esperado: `1` / `<< Flyway Baseline >>` / `BASELINE`; `2` / `token revogado` /
 
 ### Pendências de frontend
 
-- Nenhuma. Contratos JSON preservados (`JurosConfigDTO` igual; controller agora
+- Nenhuma nesta fase. Contratos JSON preservados (`JurosConfigDTO` igual; controller agora
   recebe o DTO já montado no service).
 
-## Próximas fases
+## Fase 6 — God classes e transações
 
-Fases 6 e 7 ainda não iniciadas.
+### Lote de boletos
+
+- `enviarLote` deixou de enviar SMTP dentro de `@Transactional` + `synchronized`.
+  O lock em memória (`locksPorLote`) foi removido.
+- Três passos: (a) transação marca o lote como em envio (`PROCESSANDO`) e carrega
+  os itens com `@Lock(PESSIMISTIC_WRITE)` via `LoteEnvioBoletoRepository.lockById`;
+  (b) SMTP fora da transação, coletando resultados; (c) nova transação persiste
+  status final. 409 (`ConflictException` / `ErrorResponse`) se o lote já está
+  `PROCESSANDO`.
+- Extraídos `LoteEnvioBoletoValidacaoService`, `LoteEnvioBoletoRelatorioService`
+  (CSV) e `LoteEnvioBoletoEnvioService` (orquestração). A fachada
+  `LoteEnvioBoletoService` ficou com 269 linhas (< 300).
+
+### Tarefas, Livro Caixa, notificação e relatórios
+
+- `TarefaIndicadoresService` (indicadores + resumo por colaborador) e
+  `TarefaChecklistService`. `TarefaService` 559 → 317 linhas.
+- `LivroCaixaDashboardService` (dashboard + `analise`) e
+  `LivroCaixaRelatorioService`. `LivroCaixaMovimentacaoService` 522 → 288 linhas.
+- `CobrancaEmailComposer`: montagem de contexto, texto e HTML.
+  `NotificationService.enviarCobrancaEmail` só orquestra persistência e envio.
+- `RelatorioExportService` isola PDF (OpenPDF) e Excel (POI). `RelatorioService`
+  continua como fachada dos relatórios JSON (um service por relatório fica para
+  depois; a exportação já saiu da classe).
+
+### Testes Mockito
+
+Caminhos principais dos services extraídos, e os três que não tinham cobertura:
+
+- `LoteEnvioBoletoEnvioServiceTest` (409 em envio, SMTP ok, SMTP com erro)
+- `LoteEnvioBoletoValidacaoServiceTest`, `LoteEnvioBoletoRelatorioServiceTest`,
+  `LoteEnvioBoletoServiceTest`
+- `TarefaIndicadoresServiceTest`, `TarefaChecklistServiceTest`, `TarefaServiceTest`
+- `LivroCaixaDashboardServiceTest`, `LivroCaixaRelatorioServiceTest`,
+  `LivroCaixaMovimentacaoServiceTest`
+- `CobrancaEmailComposerTest`, `NotificationServiceCobrancaTest`,
+  `RelatorioExportServiceTest`
+
+### Arquivos principais
+
+Novos: `LoteEnvioBoletoEnvioService`, `LoteEnvioBoletoValidacaoService`,
+`LoteEnvioBoletoRelatorioService`, `TarefaIndicadoresService`,
+`TarefaChecklistService`, `LivroCaixaDashboardService`,
+`LivroCaixaRelatorioService`, `RelatorioExportService`,
+`CobrancaEmailComposer`, `ConflictException`.
+Alterados: `LoteEnvioBoletoService` / `Repository`, `TarefaService`,
+`TarefaController`, `LivroCaixaMovimentacaoService`, `LivroCaixaController`,
+`NotificationService`, `RelatorioService`, `GlobalExceptionHandler`.
+
+### Validação
+
+- `mvn -q test -l target/phase6-7-test.log` (suíte conjunta com a Fase 7):
+  **280 testes**, zero falhas, zero erros, zero ignorados. ITs Postgres
+  continuam opt-in (`-Dsgi.testcontainers=true`).
+- Nenhuma alteração em `frontend/`. Nenhum SQL de produção. Seeder inalterado
+  quanto a logins/senhas existentes.
+
+### Decisões
+
+- O status JSON de envio em andamento permanece `PROCESSANDO` (constante
+  `EM_ENVIO` no service). O frontend não precisa migrar o enum.
+- Não foi criado um service por tipo de relatório; só a exportação PDF/Excel
+  saiu para `RelatorioExportService`.
+- Lock pessimista no banco no lugar do `synchronized` por lote (o mapa em
+  memória nunca era limpo e não serializava entre instâncias).
+
+## Fase 7 — Dependências e cobertura
+
+### Dependências
+
+| Artefato | Antes | Agora |
+|---|---|---|
+| `spring-boot-starter-parent` | 3.2.2 | **3.5.12** |
+| `jjwt` (api/impl/jackson) | 0.12.3 (3 vezes) | property `${jjwt.version}` **0.13.0** |
+| `sqlite-jdbc` | 3.45.0.0 | **3.53.2.1** |
+| `springdoc-openapi-starter-webmvc-ui` | 2.3.0 | **2.8.17** |
+| `openpdf` | 1.3.39 | **2.4.0** (`com.github.librepdf`) |
+| `poi-ooxml` | 5.2.5 | **5.5.1** |
+| Flyway | 10.22.0 (Fase 4) | **inalterado** (já permitido) |
+
+Novas dependências pedidas: `spring-boot-starter-actuator`,
+`spring-boot-configuration-processor` (optional; há 4 `*Properties`),
+`jacoco-maven-plugin` 0.8.13. Nenhuma outra dependência foi adicionada.
+
+Breaking changes: a suíte passou com Boot 3.5 / springdoc 2.8 / OpenPDF 2.4 /
+JJWT 0.13. `@MockBean` (removido no Boot 3.4+) foi trocado por `@MockitoBean`
+nos `@WebMvcTest`. `UserDetailsServiceAutoConfiguration` continua excluída
+para não gerar senha aleatória no boot.
+
+### Actuator e health
+
+- Expostos só `health`; `management.endpoints.access.default=none` e
+  `management.endpoint.health.access=unrestricted`. Detalhes ocultos.
+- `GET /actuator/health` é público (`PublicRoutes`).
+- `HealthController` **permanece** em `GET /health` (mesmo JSON
+  `{status, database}`) para o dashboard Render ainda apontar para a rota
+  antiga. Os dois `render.yaml` usam `healthCheckPath: /actuator/health`.
+- `HealthController` não ficou 100% redundante: o serviço já existente no
+  painel do Render **não lê o yaml automaticamente**.
+
+### JaCoCo
+
+- `check` na fase `test`, mínimo **40% de linhas**.
+- Relatório HTML/XML completo (todas as camadas). O gate exclui
+  `dto`, `entity`, `repository`, `bootstrap`, `integration`, `listener` e
+  `SgiApplication` — boilerplate, clients HTTP e runners de boot.
+
+Cobertura de **linhas** (JaCoCo após esta fase; não havia plugin antes):
+
+| Camada | Linhas cobertas | Total | % |
+|---|---|---|---|
+| service (+ email) | 1519 | 4203 | 36,1% |
+| controller | 51 | 370 | 13,8% |
+| security | 216 | 297 | 72,7% |
+| exception | 75 | 103 | 72,8% |
+| mapper | 134 | 338 | 39,6% |
+| config | 49 | 106 | 46,2% |
+| util | 142 | 223 | 63,7% |
+| enums | 135 | 155 | 87,1% |
+| bootstrap | 218 | 649 | 33,6% |
+| entity / repository / dto | 4 | 181 | 2,2% |
+| integration.sicoob | 0 | 203 | 0,0% |
+| listener | 0 | 14 | 0,0% |
+| **Bundle bruto** | **2546** | **6847** | **37,2%** |
+| **Gate (sem excludes acima)** | ~2323 | ~5797 | **~40,1%** |
+
+Antes: sem JaCoCo (Fase 5 = 251 testes). Depois: 280 testes, gate 40% cumprido.
+Subir o mínimo depois, sobretudo em `service` e `controller`.
+
+### Validação
+
+- Comando: `mvn -q test -l target/phase6-7-test.log`
+- Resultado: **PASSOU** — 280 testes, 0 falhas, 0 erros, 0 ignorados;
+  `jacoco:check` ok. ITs Testcontainers seguem fora sem Docker.
+- `frontend/` não foi alterado. Nenhuma migration destrutiva. Seeder não
+  reseta senha/login/perfil de contas existentes.
+
+## Pendências de frontend
+
+Contratos mantidos no backend; o front precisa migrar quando for o caso:
+
+1. Recuperação de senha do escritório: `POST /api/auth/recuperar-senha/solicitar`
+   (`login`) e `POST /api/auth/recuperar-senha/redefinir` (`token`, `novaSenha`,
+   `confirmarSenha`). Os endpoints legados só existem com
+   `sgi.auth.password-recovery-enabled=true` (off em produção). Link esperado:
+   `{sgi.frontend-url}/redefinir-senha?token=...`.
+2. Portal: `POST /api/portal/auth/recuperar-senha` já existia; conferir se a
+   UI usa a mensagem neutra e o mesmo formato `ErrorResponse`.
+3. Cadastro de usuário: campo `email` opcional já no DTO; passar a enviar se a
+   tela ainda não envia (necessário para recuperação por e-mail).
+4. Envio de lote de boletos: HTTP **409** com `ErrorResponse` quando o lote já
+   está em envio (`PROCESSANDO`). O status JSON **não mudou** de nome.
+5. Health: o front não chama `/health`. Não há campo JSON novo obrigatório.
+
+## Pendências de infra
+
+1. No dashboard do Render do serviço **já criado**, conferir Health Check Path:
+   yaml novo = `/actuator/health`; se o painel ainda tiver `/health`, a rota
+   antiga continua válida após este deploy. Atualizar o painel para
+   `/actuator/health` na próxima publicação.
+2. Variáveis: `JWT_SECRET` (obrigatório, ≥ 32 bytes), `DATABASE_URL`,
+   `SPRING_PROFILES_ACTIVE=prod`, `SGI_FRONTEND_URL`, `CORS_ALLOWED_ORIGINS`,
+   SMTP, discos `SGI_BOLETOS_STORAGE_PATH` / `SGI_DOCUMENTOS_STORAGE_PATH`.
+   `SICOOB_CLIENT_ID` e `sicoob.webhook-secret` não estão nos yaml — configurar
+   no painel se a integração real estiver ligada (`sicoob.mock=false`).
+3. Histórico Git ainda contém CSVs de clientes. Planejar `git filter-repo` se o
+   repositório for público; clones existentes precisam ser re-clonados. Nenhuma
+   reescrita foi executada.
+4. `sgi.auth.password-recovery-enabled` está `false` em produção: a recuperação
+   nova (token por e-mail) é a via suportada; os endpoints legados ficam off.
+5. Actuator: não expor `env`, `beans`, `heapdump` etc. Só `health` está na
+   `exposure.include`.
+
+## Decisões (Fases 6–7)
+
+- Compatibilidade: `/health` + `/actuator/health`; status de lote `PROCESSANDO`.
+- JaCoCo 40% no código de aplicação, não no bundle bruto (37,2%), para o gate
+  não ser inflado nem travado por entidades/DTOs/clientes Sicoob.
+- Relatórios: exportação extraída; um bean por relatório JSON fica para depois.
+- Dependências extras além da lista: nenhuma nesta fase (Flyway já na Fase 4).
+- `@MockitoBean` no lugar de `@MockBean` para o Boot 3.5.

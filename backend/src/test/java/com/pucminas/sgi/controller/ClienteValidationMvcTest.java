@@ -5,7 +5,7 @@ import com.pucminas.sgi.support.ControllerMvcTestSupport;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.*;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.mockito.Mockito.*;
@@ -16,7 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class ClienteValidationMvcTest extends ControllerMvcTestSupport {
     @Autowired MockMvc mvc;
-    @MockBean ClienteService clientes;
+    @MockitoBean ClienteService clientes;
     String id = "11111111-1111-1111-1111-111111111111";
     @Test void patchSemNomeECpfContinuaAceito() throws Exception {
         mvc.perform(patch("/api/clientes/" + id).contentType(MediaType.APPLICATION_JSON).content("{\"email\":\"novo@example.com\"}"))

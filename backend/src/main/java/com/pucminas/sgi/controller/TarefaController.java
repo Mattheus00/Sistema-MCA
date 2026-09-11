@@ -6,6 +6,8 @@ import com.pucminas.sgi.dto.request.TarefaRequestDTO;
 import com.pucminas.sgi.dto.response.*;
 import com.pucminas.sgi.enums.PrioridadeTarefa;
 import com.pucminas.sgi.enums.StatusTarefa;
+import com.pucminas.sgi.service.TarefaChecklistService;
+import com.pucminas.sgi.service.TarefaIndicadoresService;
 import com.pucminas.sgi.service.TarefaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,6 +37,8 @@ import java.util.UUID;
 public class TarefaController {
 
     private final TarefaService tarefaService;
+    private final TarefaIndicadoresService indicadoresService;
+    private final TarefaChecklistService checklistService;
 
 
     @GetMapping
@@ -79,14 +83,14 @@ public class TarefaController {
             @RequestParam(defaultValue = "false") boolean visaoEquipe,
             @RequestParam(required = false) UUID responsavelId) {
         UUID usuarioId = (UUID) authentication.getPrincipal();
-        return ResponseEntity.ok(tarefaService.indicadores(usuarioId, responsavelId, visaoEquipe));
+        return ResponseEntity.ok(indicadoresService.indicadores(usuarioId, responsavelId, visaoEquipe));
     }
 
     @GetMapping("/resumo-colaboradores")
     @Operation(summary = "Resumo por colaborador (somente gestores)")
     public ResponseEntity<List<TarefaResumoColaboradorDTO>> resumoColaboradores(Authentication authentication) {
         UUID usuarioId = (UUID) authentication.getPrincipal();
-        return ResponseEntity.ok(tarefaService.resumoColaboradores(usuarioId));
+        return ResponseEntity.ok(indicadoresService.resumoColaboradores(usuarioId));
     }
 
     @GetMapping("/responsaveis")
@@ -154,7 +158,7 @@ public class TarefaController {
             @PathVariable UUID id,
             @Valid @RequestBody TarefaChecklistItemRequestDTO dto) {
         UUID usuarioId = (UUID) authentication.getPrincipal();
-        return ResponseEntity.status(HttpStatus.CREATED).body(tarefaService.adicionarChecklist(usuarioId, id, dto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(checklistService.adicionar(usuarioId, id, dto));
     }
 
     @PatchMapping("/{id}/checklist/{itemId}/toggle")
@@ -164,7 +168,7 @@ public class TarefaController {
             @PathVariable UUID id,
             @PathVariable UUID itemId) {
         UUID usuarioId = (UUID) authentication.getPrincipal();
-        return ResponseEntity.ok(tarefaService.alternarChecklist(usuarioId, id, itemId));
+        return ResponseEntity.ok(checklistService.alternar(usuarioId, id, itemId));
     }
 
     @DeleteMapping("/{id}/checklist/{itemId}")
@@ -174,7 +178,7 @@ public class TarefaController {
             @PathVariable UUID id,
             @PathVariable UUID itemId) {
         UUID usuarioId = (UUID) authentication.getPrincipal();
-        tarefaService.removerChecklist(usuarioId, id, itemId);
+        checklistService.remover(usuarioId, id, itemId);
         return ResponseEntity.noContent().build();
     }
 }

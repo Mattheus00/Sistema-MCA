@@ -7,7 +7,9 @@ import com.pucminas.sgi.enums.FormaPagamentoLivroCaixa;
 import com.pucminas.sgi.enums.LivroCaixaStatusMovimentacao;
 import com.pucminas.sgi.enums.LivroCaixaTipoMovimentacao;
 import com.pucminas.sgi.service.LivroCaixaAnexoService;
+import com.pucminas.sgi.service.LivroCaixaDashboardService;
 import com.pucminas.sgi.service.LivroCaixaMovimentacaoService;
+import com.pucminas.sgi.service.LivroCaixaRelatorioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -38,6 +40,8 @@ import java.util.UUID;
 public class LivroCaixaController {
 
     private final LivroCaixaMovimentacaoService movimentacaoService;
+    private final LivroCaixaDashboardService dashboardService;
+    private final LivroCaixaRelatorioService relatorioService;
     private final LivroCaixaAnexoService anexoService;
 
 
@@ -45,7 +49,7 @@ public class LivroCaixaController {
     @Operation(summary = "Dashboard com saldos e totais do mês")
     public ResponseEntity<LivroCaixaDashboardDTO> dashboard(Authentication authentication) {
         UUID usuarioId = (UUID) authentication.getPrincipal();
-        return ResponseEntity.ok(movimentacaoService.dashboard(usuarioId));
+        return ResponseEntity.ok(dashboardService.dashboard(usuarioId));
     }
 
     @GetMapping("/movimentacoes")
@@ -157,7 +161,7 @@ public class LivroCaixaController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
         UUID usuarioId = (UUID) authentication.getPrincipal();
-        return ResponseEntity.ok(movimentacaoService.analise(usuarioId, dataInicio, dataFim));
+        return ResponseEntity.ok(dashboardService.analise(usuarioId, dataInicio, dataFim));
     }
 
     @GetMapping("/relatorio")
@@ -171,7 +175,7 @@ public class LivroCaixaController {
             @RequestParam(required = false) UUID categoriaId,
             @RequestParam(required = false) UUID contaId) {
         UUID usuarioId = (UUID) authentication.getPrincipal();
-        return ResponseEntity.ok(movimentacaoService.relatorio(
+        return ResponseEntity.ok(relatorioService.relatorio(
                 usuarioId, dataInicio, dataFim, tipo, status, categoriaId, contaId));
     }
 }

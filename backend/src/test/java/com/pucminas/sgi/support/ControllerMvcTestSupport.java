@@ -6,28 +6,28 @@ import com.pucminas.sgi.security.PortalJwtAuthenticationFilter;
 import com.pucminas.sgi.repository.TokenRevogadoRepository;
 import com.pucminas.sgi.repository.UsuarioRepository;
 import com.pucminas.sgi.security.StaffAccessService;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 /**
  * Beans de segurança exigidos pelo contexto parcial do {@code @WebMvcTest}.
  */
 public abstract class ControllerMvcTestSupport {
 
-    @MockBean
+    @MockitoBean
     protected StaffAccessService staffAccessService;
 
-    @MockBean
+    @MockitoBean
     protected JwtTokenProvider jwtTokenProvider;
 
-    @MockBean
+    @MockitoBean
     protected JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @MockBean
+    @MockitoBean
     protected PortalJwtAuthenticationFilter portalJwtAuthenticationFilter;
 
-    @MockBean
+    @MockitoBean
     protected UsuarioRepository usuarioRepository;
 
-    @MockBean
+    @MockitoBean
     protected TokenRevogadoRepository tokenRevogadoRepository;
 }
