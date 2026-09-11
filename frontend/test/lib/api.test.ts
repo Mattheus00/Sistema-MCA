@@ -1,14 +1,18 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
+  api,
   clearAuthSession,
+  ensureAuthUserId,
   getApiErrorMessage,
   getAuthToken,
+  getAuthUserId,
   getRelatorioErrorMessage,
   isRememberMePreferred,
   normalizeListResponse,
   setAuthSession,
   AUTH_TOKEN_KEY,
   USER_DISPLAY_KEY,
+  USER_ID_KEY,
   USER_LOGIN_KEY,
   USER_PROFILE_KEY,
 } from "@/lib/api";
@@ -110,11 +114,22 @@ describe("auth session helpers", () => {
   });
 
   it("salva sessão em localStorage quando manter conectado", () => {
-    setAuthSession({ token: "t1", display: "João", login: "joao", profile: "PROPRIETARIA" }, true);
+    setAuthSession(
+      {
+        token: "t1",
+        display: "João",
+        login: "joao",
+        profile: "PROPRIETARIA",
+        usuarioId: "u-1",
+      },
+      true,
+    );
     expect(localStorage.getItem(AUTH_TOKEN_KEY)).toBe("t1");
     expect(localStorage.getItem(USER_DISPLAY_KEY)).toBe("João");
+    expect(localStorage.getItem(USER_ID_KEY)).toBe("u-1");
     expect(sessionStorage.getItem(AUTH_TOKEN_KEY)).toBeNull();
     expect(getAuthToken()).toBe("t1");
+    expect(getAuthUserId()).toBe("u-1");
     expect(isRememberMePreferred()).toBe(true);
   });
 
@@ -143,5 +158,20 @@ describe("auth session helpers", () => {
     localStorage.setItem(AUTH_TOKEN_KEY, "local");
     sessionStorage.setItem(AUTH_TOKEN_KEY, "session");
     expect(getAuthToken()).toBe("session");
+  });
+
+  it("busca /api/auth/me quando a sessão não tem usuarioId", async () => {
+    setAuthSession({ token: "t1", display: "João", login: "joao", profile: "PROPRIETARIA" }, true);
+    expect(getAuthUserId()).toBeNull();
+    const spy = vi.spyOn(api, "get").mockResolvedValue({
+      data: { usuarioId: "u-99", login: "joao", nome: "João", perfil: "PROPRIETARIA" },
+    } as never);
+    try {
+      await expect(ensureAuthUserId()).resolves.toBe("u-99");
+      expect(getAuthUserId()).toBe("u-99");
+      expect(spy).toHaveBeenCalledWith("/api/auth/me");
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

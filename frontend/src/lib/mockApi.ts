@@ -47,6 +47,7 @@ const store = {
       ultimoAcesso: null as string | null,
       criadoEm: "2026-01-01T09:00:00",
       senha: "123456",
+      email: undefined as string | undefined,
     },
     {
       usuarioId: "u-financeiro",
@@ -659,6 +660,20 @@ export function createMockClient() {
   seedMockData();
   return {
     get<T = unknown>(url: string, config?: { params?: Record<string, unknown> }) {
+      if (url === "/api/auth/me" || url.startsWith("/api/auth/me?")) {
+        const user = getCurrentUserByToken();
+        if (!user) return Promise.reject(new Error("Não autorizado."));
+        return Promise.resolve({
+          data: {
+            usuarioId: user.usuarioId,
+            login: user.login,
+            nome: user.nome,
+            perfil: user.perfil,
+            telefone: user.telefone,
+            statusUsuario: user.statusUsuario,
+          },
+        } as { data: T });
+      }
       if (url.startsWith("/api/livro-caixa")) {
         const params = config?.params ?? {};
         const data = mockLivroCaixaGet(url, params);
@@ -1374,10 +1389,18 @@ export function createMockClient() {
         } as { data: T });
       }
       if (url === "/api/auth/register") {
-        const payload = (body ?? {}) as { nome?: string; login?: string; senha?: string };
+        const payload = (body ?? {}) as {
+          nome?: string;
+          login?: string;
+          senha?: string;
+          email?: string;
+        };
         const nome = String(payload.nome ?? "").trim();
         const login = String(payload.login ?? "").trim();
         const senha = String(payload.senha ?? "");
+        const email = String(payload.email ?? "")
+          .trim()
+          .toLowerCase();
         if (!nome || !login || !senha) {
           return Promise.reject(new Error("Nome, login e senha são obrigatórios."));
         }
@@ -1396,8 +1419,77 @@ export function createMockClient() {
           ultimoAcesso: null,
           criadoEm: new Date().toISOString(),
           senha,
+          email: email || undefined,
         });
         return Promise.resolve({ data: { ok: true } } as { data: T });
+      }
+      if (url === "/api/auth/solicitar-redefinicao") {
+        return Promise.resolve({
+          data: {
+            mensagem:
+              "Se a conta tiver e-mail cadastrado, você receberá um link para redefinir a senha.",
+          },
+        } as { data: T });
+      }
+      if (url === "/api/auth/confirmar-redefinicao") {
+        const payload = (body ?? {}) as {
+          token?: string;
+          novaSenha?: string;
+          confirmarSenha?: string;
+        };
+        const token = String(payload.token ?? "").trim();
+        const novaSenha = String(payload.novaSenha ?? "");
+        const confirmarSenha = String(payload.confirmarSenha ?? "");
+        if (!token) return Promise.reject(new Error("Link inválido ou expirado."));
+        if (!novaSenha || !confirmarSenha) {
+          return Promise.reject(new Error("Nova senha e confirmação são obrigatórias."));
+        }
+        if (novaSenha !== confirmarSenha) {
+          return Promise.reject(new Error("Confirmação de senha não confere."));
+        }
+        if (!token.startsWith("mock-reset-")) {
+          return Promise.reject(new Error("Link inválido ou expirado."));
+        }
+        const login = token.slice("mock-reset-".length);
+        const user = store.usuarios.find((u) => u.login === login);
+        if (!user) return Promise.reject(new Error("Link inválido ou expirado."));
+        user.senha = novaSenha;
+        return Promise.resolve({
+          data: { mensagem: "Senha alterada com sucesso." },
+        } as { data: T });
+      }
+      if (url === "/api/auth/validar-login-recuperacao") {
+        const payload = (body ?? {}) as { login?: string };
+        const login = String(payload.login ?? "").trim();
+        const user = store.usuarios.find((u) => u.login === login);
+        if (!user) return Promise.reject(new Error("Usuário não encontrado"));
+        return Promise.resolve({
+          data: {
+            encontrado: true,
+            login: user.login,
+            nome: user.nome,
+            mensagem: "Login encontrado. Você já pode definir uma nova senha.",
+          },
+        } as { data: T });
+      }
+      if (url === "/api/auth/redefinir-senha") {
+        const payload = (body ?? {}) as {
+          login?: string;
+          novaSenha?: string;
+          confirmarSenha?: string;
+        };
+        const login = String(payload.login ?? "").trim();
+        const novaSenha = String(payload.novaSenha ?? "");
+        const confirmarSenha = String(payload.confirmarSenha ?? "");
+        if (novaSenha !== confirmarSenha) {
+          return Promise.reject(new Error("Confirmação de senha não confere."));
+        }
+        const user = store.usuarios.find((u) => u.login === login);
+        if (!user) return Promise.reject(new Error("Usuário não encontrado"));
+        user.senha = novaSenha;
+        return Promise.resolve({
+          data: { mensagem: "Senha alterada com sucesso." },
+        } as { data: T });
       }
       if (url === "/api/usuarios") {
         const payload = (body ?? {}) as {
@@ -1435,6 +1527,7 @@ export function createMockClient() {
           ultimoAcesso: null,
           criadoEm: new Date().toISOString(),
           senha,
+          email: login,
         });
         return Promise.resolve({ data: { usuarioId: novoId, ok: true } } as { data: T });
       }

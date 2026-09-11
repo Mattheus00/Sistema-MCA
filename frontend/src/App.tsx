@@ -10,6 +10,7 @@ import "./styles/portal.css";
 
 // Páginas carregadas sob demanda (code splitting por rota).
 const LandingPage = lazy(() => import("@/components/pages/LandingPage"));
+const RedefinirSenha = lazy(() => import("@/components/pages/RedefinirSenha"));
 const PortalLayout = lazy(() => import("@/components/portal/PortalLayout"));
 const PortalLogin = lazy(() => import("@/components/portal/PortalLogin"));
 const PortalPrimeiroAcesso = lazy(() => import("@/components/portal/PortalPrimeiroAcesso"));
@@ -41,6 +42,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/redefinir-senha" element={<RedefinirSenha />} />
         <Route path="/portal/login" element={<PortalLogin />} />
         <Route path="/portal/primeiro-acesso" element={<PortalPrimeiroAcesso />} />
         <Route path="/portal/recuperar-senha" element={<PortalRecuperarSenha />} />

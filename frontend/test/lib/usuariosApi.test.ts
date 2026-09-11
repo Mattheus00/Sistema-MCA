@@ -43,9 +43,9 @@ describe("usuariosApi", () => {
     vi.mocked(api.get).mockResolvedValueOnce(ok([{ id: "1", nome: "Ana", login: "ana" }]));
     expect((await listarUsuariosPendentes())[0].nome).toBe("Ana");
     vi.mocked(api.get).mockResolvedValueOnce(
-      ok({ content: [{ id: "2", nome: "João", login: "joao" }] }),
+      ok({ content: [{ usuarioId: "2", nome: "João", login: "joao" }] }),
     );
-    expect((await listarUsuariosAtivos())[0].id).toBe("2");
+    expect((await listarUsuariosAtivos())[0]?.usuarioId).toBe("2");
     vi.mocked(api.patch).mockResolvedValue(ok({}));
     await aprovarUsuario("1", "FUNCIONARIO");
     expect(String(vi.mocked(api.patch).mock.calls[0][0])).toContain("aprovar");

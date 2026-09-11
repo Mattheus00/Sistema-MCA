@@ -88,7 +88,8 @@ describe("portalApi", () => {
         movimentacoes: [{ data: "2026-01-01", descricao: "Pgto", valor: 10, tipo: "CREDITO" }],
       }),
     );
-    expect((await fetchPortalExtrato()).movimentacoes[0].descricao).toBe("Pgto");
+    const extrato = await fetchPortalExtrato();
+    expect(extrato.movimentacoes?.[0]?.descricao).toBe("Pgto");
     vi.mocked(api.get).mockResolvedValueOnce(
       ok({ content: [{ documentoId: "doc1", tipo: "COMPROVANTE" }] }),
     );

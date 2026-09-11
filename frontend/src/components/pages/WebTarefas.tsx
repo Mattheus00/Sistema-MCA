@@ -5,7 +5,7 @@ import TarefaFormModal from "@/components/tarefas/TarefaFormModal";
 import TarefasCalendario from "@/components/tarefas/TarefasCalendario";
 import TarefasKanban from "@/components/tarefas/TarefasKanban";
 import TarefasLista from "@/components/tarefas/TarefasLista";
-import { getAuthUserProfile } from "@/lib/api";
+import { ensureAuthUserId, getAuthUserId, getAuthUserProfile } from "@/lib/api";
 import {
   atualizarTarefa,
   criarTarefa,
@@ -143,6 +143,7 @@ export default function WebTarefas() {
   const [detalhe, setDetalhe] = useState<TarefaDetalhe | null>(null);
   const [carregandoDetalhe, setCarregandoDetalhe] = useState(false);
   const [salvando, setSalvando] = useState(false);
+  const [usuarioId, setUsuarioId] = useState(() => getAuthUserId() ?? "");
 
   const filtrosBase = useMemo(
     () => ({
@@ -223,6 +224,12 @@ export default function WebTarefas() {
   }, [isGestor]);
 
   useEffect(() => {
+    void ensureAuthUserId().then((id) => {
+      if (id) setUsuarioId(id);
+    });
+  }, []);
+
+  useEffect(() => {
     void carregarIndicadores();
   }, [carregarIndicadores]);
 
@@ -281,7 +288,17 @@ export default function WebTarefas() {
         setSucesso("Tarefa atualizada.");
       } else {
         await criarTarefa(payload);
-        setSucesso("Tarefa criada.");
+        const idLogado = getAuthUserId() ?? usuarioId;
+        const atribuidaAOutro =
+          isGestor &&
+          !visaoEquipe &&
+          Boolean(payload.responsavelId) &&
+          payload.responsavelId !== idLogado;
+        setSucesso(
+          atribuidaAOutro
+            ? "Tarefa criada. Ela aparece na Visão de equipe porque o responsável é outro colaborador."
+            : "Tarefa criada.",
+        );
       }
       setModalForm(null);
       await Promise.all([carregarIndicadores(), carregarConteudo()]);
@@ -545,7 +562,8 @@ export default function WebTarefas() {
         modo={modalForm === "editar" ? "editar" : "criar"}
         tarefa={modalForm === "editar" ? detalhe : null}
         responsaveis={responsaveis}
-        podeEscolherResponsavel={isGestor && (modalForm === "editar" || visaoEquipe)}
+        podeEscolherResponsavel={isGestor}
+        responsavelPadraoId={usuarioId}
         salvando={salvando}
         onFechar={() => !salvando && setModalForm(null)}
         onSalvar={salvarForm}

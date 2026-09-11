@@ -8,6 +8,8 @@ vi.mock("@/lib/authApi", () => ({
   registrar: vi.fn(),
   validarLoginRecuperacao: vi.fn(),
   redefinirSenha: vi.fn(),
+  solicitarRedefinicao: vi.fn(),
+  confirmarRedefinicao: vi.fn(),
 }));
 
 describe("Login", () => {

@@ -3,7 +3,12 @@ import { useNavigate } from "react-router-dom";
 import CampoSenha from "@/components/auth/CampoSenha";
 import { UserIcon } from "@/components/auth/LoginIcons";
 import { extrairNomeOuLogin, extrairPerfil } from "@/components/auth/loginAuth";
-import { getApiErrorMessage, isRememberMePreferred, setAuthSession } from "@/lib/api";
+import {
+  ensureAuthUserId,
+  getApiErrorMessage,
+  isRememberMePreferred,
+  setAuthSession,
+} from "@/lib/api";
 import { login as loginApi } from "@/lib/authApi";
 import type { LoginResponse } from "@/types/api";
 
@@ -73,6 +78,7 @@ export default function LoginForm({
           },
           manterConectado,
         );
+        await ensureAuthUserId();
         navigate(perfil === "FUNCIONARIO" ? "/clientes" : "/dashboard", { replace: true });
       } else {
         onErro("Resposta inválida do servidor (token não retornado).");

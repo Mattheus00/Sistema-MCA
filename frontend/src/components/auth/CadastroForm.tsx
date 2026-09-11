@@ -22,6 +22,7 @@ export default function CadastroForm({
   onCadastrado,
 }: CadastroFormProps) {
   const [nomeCadastro, setNomeCadastro] = useState("");
+  const [emailCadastro, setEmailCadastro] = useState("");
   const [loginCadastro, setLoginCadastro] = useState("");
   const [senhaCadastro, setSenhaCadastro] = useState("");
   const [mostrarSenhaCadastro, setMostrarSenhaCadastro] = useState(false);
@@ -32,9 +33,18 @@ export default function CadastroForm({
     onMensagemSucesso(null);
 
     const nomeTrim = nomeCadastro.trim();
+    const emailTrim = emailCadastro.trim().toLowerCase();
     const loginTrim = loginCadastro.trim();
     if (!nomeTrim) {
       onErro("Nome é obrigatório.");
+      return;
+    }
+    if (!emailTrim) {
+      onErro("E-mail é obrigatório.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrim)) {
+      onErro("E-mail inválido.");
       return;
     }
     if (!loginTrim) {
@@ -50,6 +60,7 @@ export default function CadastroForm({
     try {
       await registrar({
         nome: nomeTrim,
+        email: emailTrim,
         login: loginTrim,
         senha: senhaCadastro,
       });
@@ -91,6 +102,28 @@ export default function CadastroForm({
             className="page-login__input"
             disabled={loading}
             aria-label="Nome completo"
+          />
+        </div>
+      </div>
+
+      <div className="page-login__field">
+        <label className="page-login__label" htmlFor="signup-email">
+          E-mail
+        </label>
+        <div className="page-login__input-wrap">
+          <span className="page-login__input-icon" aria-hidden="true">
+            <UserIcon />
+          </span>
+          <input
+            id="signup-email"
+            type="email"
+            autoComplete="email"
+            placeholder="Digite seu e-mail"
+            value={emailCadastro}
+            onChange={(e) => setEmailCadastro(e.target.value)}
+            className="page-login__input"
+            disabled={loading}
+            aria-label="E-mail"
           />
         </div>
       </div>

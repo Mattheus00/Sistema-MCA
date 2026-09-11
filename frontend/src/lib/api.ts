@@ -51,6 +51,8 @@ export const USER_DISPLAY_KEY = "sgi_user_display";
 export const USER_LOGIN_KEY = "sgi_user_login";
 /** Chave onde o perfil do usuário autenticado é guardado */
 export const USER_PROFILE_KEY = "sgi_user_profile";
+/** Id do usuário autenticado (GET /api/auth/me → usuarioId) */
+export const USER_ID_KEY = "sgi_user_id";
 /** Preferência do checkbox "Manter conectado" (sempre em localStorage) */
 export const REMEMBER_ME_KEY = "sgi_remember_me";
 
@@ -59,6 +61,7 @@ const AUTH_SESSION_KEYS = [
   USER_DISPLAY_KEY,
   USER_LOGIN_KEY,
   USER_PROFILE_KEY,
+  USER_ID_KEY,
 ] as const;
 
 export type AuthSessionData = {
@@ -66,6 +69,7 @@ export type AuthSessionData = {
   display: string;
   login: string;
   profile?: PerfilUsuario | null;
+  usuarioId?: string | null;
 };
 
 function browserStorage(kind: "local" | "session"): Storage | null {
@@ -119,6 +123,47 @@ export function getAuthUserProfile(): string | null {
   return getAuthStorage().getItem(USER_PROFILE_KEY);
 }
 
+export function getAuthUserId(): string | null {
+  const id = getAuthStorage().getItem(USER_ID_KEY);
+  const trimmed = id?.trim() ?? "";
+  return trimmed || null;
+}
+
+function persistAuthUserId(usuarioId: string): void {
+  const id = usuarioId.trim();
+  if (!id) return;
+  getAuthStorage().setItem(USER_ID_KEY, id);
+}
+
+let ensureAuthUserIdPromise: Promise<string | null> | null = null;
+
+/**
+ * Garante o `usuarioId` da sessão. Login não devolve o id; busca GET /api/auth/me
+ * na primeira vez que o storage ainda não tiver `sgi_user_id`.
+ */
+export async function ensureAuthUserId(): Promise<string | null> {
+  const existing = getAuthUserId();
+  if (existing) return existing;
+  if (!getAuthToken()) return null;
+  if (!ensureAuthUserIdPromise) {
+    ensureAuthUserIdPromise = (async () => {
+      try {
+        const r = await api.get<{ usuarioId?: string | number | null }>("/api/auth/me");
+        const raw = r.data?.usuarioId;
+        const id = raw == null ? "" : String(raw).trim();
+        if (!id) return null;
+        persistAuthUserId(id);
+        return id;
+      } catch {
+        return null;
+      } finally {
+        ensureAuthUserIdPromise = null;
+      }
+    })();
+  }
+  return ensureAuthUserIdPromise;
+}
+
 /** Padrão do checkbox: marcado (comportamento anterior do app). */
 export function isRememberMePreferred(): boolean {
   const local = browserStorage("local");
@@ -135,6 +180,7 @@ export function setAuthSession(data: AuthSessionData, manterConectado: boolean):
   storage.setItem(USER_DISPLAY_KEY, data.display);
   storage.setItem(USER_LOGIN_KEY, data.login);
   if (data.profile) storage.setItem(USER_PROFILE_KEY, data.profile);
+  if (data.usuarioId) storage.setItem(USER_ID_KEY, data.usuarioId.trim());
   browserStorage("local")?.setItem(REMEMBER_ME_KEY, manterConectado ? "1" : "0");
 }
 

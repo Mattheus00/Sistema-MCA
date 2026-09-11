@@ -20,6 +20,8 @@ type TarefaFormModalProps = {
   tarefa?: TarefaDetalhe | null;
   responsaveis: ResponsavelTarefa[];
   podeEscolherResponsavel: boolean;
+  /** Id do usuário logado para pré-selecionar o responsável na criação (gestor). */
+  responsavelPadraoId?: string;
   salvando: boolean;
   onFechar: () => void;
   onSalvar: (payload: CriarTarefaPayload) => Promise<void>;
@@ -172,6 +174,7 @@ export default function TarefaFormModal({
   tarefa,
   responsaveis,
   podeEscolherResponsavel,
+  responsavelPadraoId,
   salvando,
   onFechar,
   onSalvar,
@@ -216,6 +219,12 @@ export default function TarefaFormModal({
     setListaClientes([]);
     setForm(modo === "editar" && tarefa ? formFromTarefa(tarefa) : formInicial());
   }, [aberto, modo, tarefa]);
+
+  useEffect(() => {
+    if (!aberto || modo !== "criar" || !podeEscolherResponsavel) return;
+    if (!responsavelPadraoId) return;
+    setForm((f) => (f.responsavelId ? f : { ...f, responsavelId: responsavelPadraoId }));
+  }, [aberto, modo, podeEscolherResponsavel, responsavelPadraoId]);
 
   useEffect(() => {
     if (!aberto) return;
@@ -342,7 +351,7 @@ export default function TarefaFormModal({
       prioridade: form.prioridade,
     };
     if (form.descricao.trim()) payload.descricao = form.descricao.trim();
-    if (podeEscolherResponsavel && form.responsavelId) payload.responsavelId = form.responsavelId;
+    if (podeEscolherResponsavel) payload.responsavelId = form.responsavelId;
     if (form.clienteId && form.clienteBusca.trim()) payload.categoria = form.clienteBusca.trim();
     if (form.dataInicio) payload.dataInicio = form.dataInicio;
     if (form.dataVencimento) payload.dataVencimento = form.dataVencimento;

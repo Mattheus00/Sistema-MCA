@@ -296,6 +296,16 @@ export type LoginResponse = {
 
 export type PerfilUsuario = "PROPRIETARIA" | "RESPONSAVEL_FINANCEIRO" | "FUNCIONARIO";
 
+/** Resposta de GET /api/auth/me (UsuarioResponseDTO). */
+export type UsuarioLogado = {
+  usuarioId: string;
+  login: string;
+  nome: string;
+  perfil: PerfilUsuario | string;
+  telefone?: string | null;
+  statusUsuario?: string;
+};
+
 export type UsuarioPendente = {
   usuarioId: string;
   login: string;

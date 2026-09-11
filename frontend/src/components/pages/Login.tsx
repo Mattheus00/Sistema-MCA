@@ -30,13 +30,12 @@ export default function Login() {
     setModalRecuperacaoAberto(true);
   }
 
-  function concluirRecuperacaoSenha(loginTrim: string) {
+  function concluirSolicitacaoRecuperacao() {
     setModalRecuperacaoAberto(false);
-    setMensagemSucesso("Senha alterada com sucesso.");
+    setMensagemSucesso(
+      "Se a conta tiver e-mail cadastrado, você receberá um link para redefinir a senha.",
+    );
     setModo("login");
-    setLogin(loginTrim);
-    setReiniciarSenha((n) => n + 1);
-    setTimeout(() => loginInputRef.current?.focus(), 0);
   }
 
   return (
@@ -210,7 +209,7 @@ export default function Login() {
         <RecuperarSenhaForm
           loginInicial={login}
           onFechar={() => setModalRecuperacaoAberto(false)}
-          onConcluido={concluirRecuperacaoSenha}
+          onConcluido={concluirSolicitacaoRecuperacao}
         />
       )}
     </div>

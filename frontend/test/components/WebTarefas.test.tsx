@@ -1,9 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import WebTarefas from "@/components/pages/WebTarefas";
+import { setAuthSession } from "@/lib/api";
 import * as tarefasApi from "@/lib/tarefasApi";
 import type { TarefaResumo } from "@/types/tarefas";
+
+vi.mock("@/lib/clientesApi", () => ({
+  listarClientes: vi.fn().mockResolvedValue([]),
+}));
 
 vi.mock("@/lib/tarefasApi", () => ({
   atualizarTarefa: vi.fn(),
@@ -75,5 +80,37 @@ describe("WebTarefas", () => {
     });
     expect(screen.getByText("Em aberto")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /nova tarefa/i })).toBeInTheDocument();
+  });
+
+  it("gestor em Minhas tarefas vê o select de responsável pré-selecionado", async () => {
+    setAuthSession(
+      {
+        token: "tok",
+        display: "Claudia",
+        login: "claudia",
+        profile: "PROPRIETARIA",
+        usuarioId: "u-prop",
+      },
+      true,
+    );
+    vi.mocked(tarefasApi.listarResponsaveisTarefas).mockResolvedValue([
+      { id: "u-prop", nome: "Claudia", perfil: "PROPRIETARIA" },
+      { id: "u-func", nome: "João", perfil: "FUNCIONARIO" },
+    ]);
+
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /minhas tarefas/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /nova tarefa/i }));
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /nova tarefa/i })).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByRole("option", { name: "Claudia" })).toBeInTheDocument();
+      expect(screen.getByLabelText(/responsável/i)).toHaveValue("u-prop");
+    });
+    expect(screen.getByLabelText(/responsável/i).tagName).toBe("SELECT");
   });
 });
