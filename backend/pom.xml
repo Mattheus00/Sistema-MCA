@@ -120,10 +120,34 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <excludes>
+                    <exclude>data/*.csv</exclude>
+                    <exclude>application-local.properties</exclude>
+                </excludes>
+            </resource>
+        </resources>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <!-- Protege também builds incrementais com recursos antigos em target/. -->
+                    <excludes>
+                        <exclude>data/*.csv</exclude>
+                        <exclude>application-local.properties</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <!-- spring-boot:run mantém a configuração local no desenvolvimento. -->
+                    <addResources>true</addResources>
+                </configuration>
             </plugin>
         </plugins>
     </build>

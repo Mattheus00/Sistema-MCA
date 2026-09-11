@@ -8,20 +8,17 @@ import com.pucminas.sgi.repository.PagamentoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -29,7 +26,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Substitui o cadastro de clientes pelo arquivo {@code data/clientes-relatorio.csv}
+ * Importa clientes de {@code clientes-relatorio.csv} no diretório externo configurado
  * (codigo,nome,celular,email,cpf_cnpj). Reimporta apenas quando o conteúdo do CSV mudar.
  */
 @Component
@@ -37,12 +34,15 @@ import java.util.Set;
 public class ClientesRelatorioImportRunner implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(ClientesRelatorioImportRunner.class);
-    private static final String ARQUIVO = "data/clientes-relatorio.csv";
-    private static final String HASH_MARKER = "data/.clientes-relatorio-hash";
+    private static final String ARQUIVO = "clientes-relatorio.csv";
+    private static final String HASH_MARKER = ".clientes-relatorio-hash";
 
     private final ClienteRepository clienteRepository;
     private final DividaRepository dividaRepository;
     private final PagamentoRepository pagamentoRepository;
+
+    @Value("${sgi.import.clientes-dir:}")
+    private String clientesDir = "";
 
     public ClientesRelatorioImportRunner(ClienteRepository clienteRepository,
                                            DividaRepository dividaRepository,
@@ -61,13 +61,19 @@ public class ClientesRelatorioImportRunner implements CommandLineRunner {
     @Transactional
     public void importarSeExistirArquivo() {
         try {
-            var resource = new ClassPathResource(ARQUIVO);
-            if (!resource.exists()) {
+            if (clientesDir == null || clientesDir.isBlank()) {
+                log.debug("Importação de clientes desativada: sgi.import.clientes-dir vazio.");
+                return;
+            }
+            Path diretorio = Path.of(clientesDir);
+            Path arquivo = diretorio.resolve(ARQUIVO);
+            if (!Files.isDirectory(diretorio) || !Files.isRegularFile(arquivo)) {
+                log.debug("Importação de clientes ignorada: diretório ou arquivo externo inexistente.");
                 return;
             }
 
             String hashAtual;
-            try (InputStream in = resource.getInputStream()) {
+            try (InputStream in = Files.newInputStream(arquivo)) {
                 hashAtual = DigestUtils.md5DigestAsHex(in);
             }
             if (hashJaImportado(hashAtual)) {
@@ -96,7 +102,7 @@ public class ClientesRelatorioImportRunner implements CommandLineRunner {
             int erros = 0;
             Set<String> codigosUsados = new HashSet<>();
 
-            try (var reader = new BufferedReader(new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8))) {
+            try (var reader = Files.newBufferedReader(arquivo, StandardCharsets.UTF_8)) {
                 String line = reader.readLine();
                 if (line == null) {
                     return;
@@ -161,7 +167,7 @@ public class ClientesRelatorioImportRunner implements CommandLineRunner {
     }
 
     private boolean hashJaImportado(String hashAtual) throws Exception {
-        Path marker = Paths.get(HASH_MARKER);
+        Path marker = Path.of(clientesDir).resolve(HASH_MARKER);
         if (!Files.exists(marker)) {
             return false;
         }
@@ -170,7 +176,7 @@ public class ClientesRelatorioImportRunner implements CommandLineRunner {
     }
 
     private void salvarHashImportado(String hash) throws Exception {
-        Path marker = Paths.get(HASH_MARKER);
+        Path marker = Path.of(clientesDir).resolve(HASH_MARKER);
         Files.createDirectories(marker.getParent());
         Files.writeString(marker, hash, StandardCharsets.UTF_8);
     }

@@ -3,6 +3,7 @@ target/
 
 # Configuração local (contém chaves e dados sensíveis - NUNCA commitar)
 src/main/resources/application-local.properties
+src/main/resources/data/*.csv
 
 # Banco local
 data/*.db

@@ -6,22 +6,22 @@ import com.pucminas.sgi.util.TelefoneClienteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Atualiza e-mails de clientes a partir de data/clientes-emails.csv (NOME;E-MAIL).
+ * Atualiza e-mails a partir de clientes-emails.csv (NOME;E-MAIL) no diretório externo configurado.
  * Executa após importação de clientes/serviços. Idempotente: não sobrescreve e-mail já igual.
  */
 @Component
@@ -29,7 +29,7 @@ import java.util.Map;
 public class ClientesEmailImportRunner implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(ClientesEmailImportRunner.class);
-    private static final String ARQUIVO = "data/clientes-emails.csv";
+    private static final String ARQUIVO = "clientes-emails.csv";
 
     private static final Map<String, String> MAPEAMENTO_NOME = new LinkedHashMap<>();
 
@@ -82,6 +82,9 @@ public class ClientesEmailImportRunner implements CommandLineRunner {
 
     private final ClienteRepository clienteRepository;
 
+    @Value("${sgi.import.clientes-dir:}")
+    private String clientesDir = "";
+
     public ClientesEmailImportRunner(ClienteRepository clienteRepository) {
         this.clienteRepository = clienteRepository;
     }
@@ -95,8 +98,14 @@ public class ClientesEmailImportRunner implements CommandLineRunner {
     @Transactional
     public void importarSeExistirArquivo() {
         try {
-            var resource = new ClassPathResource(ARQUIVO);
-            if (!resource.exists()) {
+            if (clientesDir == null || clientesDir.isBlank()) {
+                log.debug("Importação de e-mails desativada: sgi.import.clientes-dir vazio.");
+                return;
+            }
+            Path diretorio = Path.of(clientesDir);
+            Path arquivo = diretorio.resolve(ARQUIVO);
+            if (!Files.isDirectory(diretorio) || !Files.isRegularFile(arquivo)) {
+                log.debug("Importação de e-mails ignorada: diretório ou arquivo externo inexistente.");
                 return;
             }
             int atualizados = 0;
@@ -104,8 +113,7 @@ public class ClientesEmailImportRunner implements CommandLineRunner {
             int semCliente = 0;
             int invalidos = 0;
 
-            try (var reader = new BufferedReader(
-                    new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8))) {
+            try (var reader = Files.newBufferedReader(arquivo, StandardCharsets.UTF_8)) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     line = line.trim();
