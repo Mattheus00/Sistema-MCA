@@ -97,6 +97,7 @@ public class PostgresPortalSchemaBootstrap {
             log.info("Bootstrap de schema Postgres (portal/documentos/perfil) concluído.");
             ensureLivroCaixaSchema();
             ensureTarefasSchema();
+            ensureRecuperacaoSenhaSchema();
         } catch (Exception e) {
             log.error("Falha no bootstrap de schema Postgres: {}", e.getMessage(), e);
         }
@@ -258,6 +259,28 @@ public class PostgresPortalSchemaBootstrap {
             log.info("Bootstrap de schema Postgres (Gestão de Tarefas) concluído.");
         } catch (Exception e) {
             log.error("Falha no bootstrap Gestão de Tarefas Postgres: {}", e.getMessage(), e);
+        }
+    }
+
+    /** Coluna opcional de e-mail e tabela de tokens da recuperação de senha (Fase 2). */
+    private void ensureRecuperacaoSenhaSchema() {
+        try {
+            jdbc.execute("ALTER TABLE usuario ADD COLUMN IF NOT EXISTS email VARCHAR(255)");
+            jdbc.execute("""
+                    CREATE TABLE IF NOT EXISTS token_recuperacao_senha (
+                        id UUID PRIMARY KEY,
+                        usuario_id UUID NOT NULL,
+                        token_hash VARCHAR(64) NOT NULL,
+                        expira_em TIMESTAMP NOT NULL,
+                        usado_em TIMESTAMP,
+                        CONSTRAINT uk_token_recup_hash UNIQUE (token_hash)
+                    )
+                    """);
+            jdbc.execute("CREATE INDEX IF NOT EXISTS idx_token_recup_usuario ON token_recuperacao_senha(usuario_id)");
+            jdbc.execute("CREATE INDEX IF NOT EXISTS idx_token_recup_expira ON token_recuperacao_senha(expira_em)");
+            log.info("Bootstrap de schema Postgres (recuperação de senha) concluído.");
+        } catch (Exception e) {
+            log.error("Falha no bootstrap recuperação de senha Postgres: {}", e.getMessage(), e);
         }
     }
 }

@@ -33,6 +33,8 @@ services:
         value: /var/data/documentos-clientes
       - key: JWT_SECRET
         generateValue: true
+      - key: SGI_FRONTEND_URL
+        value: https://sistema-mca.vercel.app
       - key: CORS_ALLOWED_ORIGINS
         sync: false
       - key: SMTP_HOST
