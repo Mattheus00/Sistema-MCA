@@ -8,6 +8,19 @@ import com.pucminas.sgi.dto.response.LoginResponseDTO;
 import com.pucminas.sgi.dto.response.UsuarioResponseDTO;
 import com.pucminas.sgi.dto.response.ValidarLoginResponseDTO;
 import com.pucminas.sgi.entity.Usuario;
+import com.pucminas.sgi.entity.TokenRecuperacaoSenha;
+import com.pucminas.sgi.repository.TokenRecuperacaoSenhaRepository;
+import com.pucminas.sgi.dto.request.SolicitarRecuperacaoSenhaDTO;
+import com.pucminas.sgi.dto.request.RedefinirSenhaTokenDTO;
+import com.pucminas.sgi.dto.response.MensagemResponseDTO;
+import org.springframework.security.authentication.BadCredentialsException;
+import java.time.Clock;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Base64;
+import java.util.HexFormat;
 import com.pucminas.sgi.enums.StatusUsuario;
 import com.pucminas.sgi.exception.BusinessRuleException;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
@@ -34,15 +47,29 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${sgi.auth.password-recovery-enabled:true}")
+    private final TokenRecuperacaoSenhaRepository tokenRepository;
+    private final EmailGateway emailGateway;
+    private final Clock clock;
+    private final SecureRandom secureRandom = new SecureRandom();
+    public static final String MENSAGEM_RECUPERACAO =
+            "Se o login possuir um e-mail cadastrado, você receberá as instruções para redefinir sua senha.";
+
+    @Value("${sgi.frontend-url:http://localhost:5173}")
+    private String frontendUrl;
+
+    @Value("${sgi.auth.password-recovery-enabled:false}")
     private boolean passwordRecoveryEnabled;
 
     public AuthService(UsuarioRepository usuarioRepository,
                        JwtTokenProvider jwtTokenProvider,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder, TokenRecuperacaoSenhaRepository tokenRepository,
+                       EmailGateway emailGateway, Clock clock) {
         this.usuarioRepository = usuarioRepository;
         this.jwtTokenProvider = jwtTokenProvider;
         this.passwordEncoder = passwordEncoder;
+        this.tokenRepository = tokenRepository;
+        this.emailGateway = emailGateway;
+        this.clock = clock;
     }
 
     private void ensurePasswordRecoveryEnabled() {
@@ -56,18 +83,18 @@ public class AuthService {
     public LoginResponseDTO autenticar(LoginDTO dto) {
         String identificador = dto.getIdentificador();
         if (identificador == null || identificador.isBlank()) {
-            throw new org.springframework.security.authentication.BadCredentialsException("Login é obrigatório");
+            throw new BadCredentialsException("Login é obrigatório");
         }
         Usuario usuario = usuarioRepository.findByTelefone(identificador)
-                .orElseThrow(() -> new org.springframework.security.authentication.BadCredentialsException("Login ou senha inválidos"));
+                .orElseThrow(() -> new BadCredentialsException("Login ou senha inválidos"));
         if (usuario.getStatusUsuario() == StatusUsuario.PENDENTE_APROVACAO) {
-            throw new org.springframework.security.authentication.BadCredentialsException("Cadastro pendente de aprovação da proprietária.");
+            throw new BadCredentialsException("Cadastro pendente de aprovação da proprietária.");
         }
         if (usuario.getStatusUsuario() != StatusUsuario.ATIVO) {
-            throw new org.springframework.security.authentication.BadCredentialsException("Usuário inativo.");
+            throw new BadCredentialsException("Usuário inativo.");
         }
         if (!passwordEncoder.matches(dto.getSenha(), usuario.getSenha())) {
-            throw new org.springframework.security.authentication.BadCredentialsException("Login ou senha inválidos");
+            throw new BadCredentialsException("Login ou senha inválidos");
         }
         String token = jwtTokenProvider.generateToken(
                 usuario.getUsuarioId(),
@@ -116,6 +143,8 @@ public class AuthService {
                 .build();
     }
 
+    /** @deprecated Use solicitarRecuperacaoSenha com token enviado por e-mail. */
+    @Deprecated
     @Transactional(readOnly = true)
     public ValidarLoginResponseDTO validarLoginRecuperacao(ValidarLoginRequestDTO dto) {
         ensurePasswordRecoveryEnabled();
@@ -130,6 +159,8 @@ public class AuthService {
                 .build();
     }
 
+    /** @deprecated Use redefinirSenhaComToken; o fluxo legado exige habilitação explícita. */
+    @Deprecated
     @Transactional
     public void redefinirSenhaSemToken(RedefinirSenhaRequestDTO dto) {
         ensurePasswordRecoveryEnabled();
@@ -142,5 +173,68 @@ public class AuthService {
         usuario.setSenha(passwordEncoder.encode(dto.getNovaSenha()));
         usuarioRepository.save(usuario);
         log.info("Senha redefinida via recuperação para login: {}", login);
+    }
+
+    @Transactional
+    public MensagemResponseDTO solicitarRecuperacaoSenha(SolicitarRecuperacaoSenhaDTO dto) {
+        String login = dto.getLogin() == null ? "" : dto.getLogin().trim();
+        usuarioRepository.findByTelefone(login).ifPresent(usuario -> {
+            if (usuario.getEmail() == null || usuario.getEmail().isBlank()) {
+                log.warn("Recuperação solicitada para usuário sem e-mail cadastrado: {}", usuario.getUsuarioId());
+                return;
+            }
+            byte[] bytes = new byte[32];
+            secureRandom.nextBytes(bytes);
+            String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+            tokenRepository.save(TokenRecuperacaoSenha.builder()
+                    .usuario(usuario).tokenHash(hashToken(token))
+                    .expiraEm(LocalDateTime.now(clock).plusMinutes(30)).build());
+            String link = frontendUrl.replaceAll("/+$", "") + "/redefinir-senha?token=" + token;
+            try {
+                emailGateway.enviar(usuario.getEmail(), "Recuperação de senha",
+                        "Use o link para redefinir sua senha em até 30 minutos: " + link
+                                + "\nSe não solicitou esta alteração, ignore este e-mail.", null);
+            } catch (RuntimeException ex) {
+                // A indisponibilidade de SMTP não revela se o login existe. Não registrar token/corpo.
+                log.warn("Falha no envio da recuperação de senha: {}", ex.getClass().getSimpleName());
+            }
+        });
+        return MensagemResponseDTO.builder().mensagem(MENSAGEM_RECUPERACAO).build();
+    }
+
+    @Transactional
+    public void redefinirSenhaComToken(RedefinirSenhaTokenDTO dto) {
+        if (dto.getNovaSenha() == null || !dto.getNovaSenha().equals(dto.getConfirmarSenha())) {
+            throw new BusinessRuleException("Confirmação de senha não confere.");
+        }
+        if (dto.getNovaSenha().isBlank() || dto.getNovaSenha().length() < 4 || dto.getNovaSenha().length() > 255) {
+            throw new BusinessRuleException("Nova senha deve ter entre 4 e 255 caracteres.");
+        }
+        if (dto.getToken() == null || dto.getToken().isBlank()) {
+            throw tokenInvalido();
+        }
+        TokenRecuperacaoSenha recuperacao = tokenRepository.findByTokenHash(hashToken(dto.getToken()))
+                .orElseThrow(this::tokenInvalido);
+        LocalDateTime agora = LocalDateTime.now(clock);
+        if (recuperacao.getUsadoEm() != null || !recuperacao.getExpiraEm().isAfter(agora)
+                || tokenRepository.consumirSeValido(recuperacao.getId(), agora) != 1) {
+            throw tokenInvalido();
+        }
+        Usuario usuario = recuperacao.getUsuario();
+        usuario.setSenha(passwordEncoder.encode(dto.getNovaSenha()));
+        usuarioRepository.save(usuario);
+    }
+
+    private BusinessRuleException tokenInvalido() {
+        return new BusinessRuleException("Token inválido ou expirado.");
+    }
+
+    private String hashToken(String token) {
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                    .digest(token.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("SHA-256 indisponível.", ex);
+        }
     }
 }

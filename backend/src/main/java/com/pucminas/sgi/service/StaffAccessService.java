@@ -6,13 +6,12 @@ import com.pucminas.sgi.enums.StatusUsuario;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
 import com.pucminas.sgi.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
+import com.pucminas.sgi.exception.AccessDeniedBusinessException;
 
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
-import static org.springframework.http.HttpStatus.FORBIDDEN;
 
 /**
  * Regras de acesso do escritório por perfil (inclui FUNCIONARIO limitado).
@@ -44,7 +43,7 @@ public class StaffAccessService {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário", usuarioId));
         if (usuario.getStatusUsuario() != StatusUsuario.ATIVO) {
-            throw new ResponseStatusException(FORBIDDEN, "Usuário inativo.");
+            throw new AccessDeniedBusinessException("Usuário inativo.");
         }
         return usuario;
     }
@@ -52,7 +51,7 @@ public class StaffAccessService {
     public Usuario assertStaff(UUID usuarioId) {
         Usuario usuario = requireUsuarioAtivo(usuarioId);
         if (usuario.getPerfil() == null) {
-            throw new ResponseStatusException(FORBIDDEN, "Perfil sem permissão.");
+            throw new AccessDeniedBusinessException("Perfil sem permissão.");
         }
         return usuario;
     }
@@ -60,7 +59,7 @@ public class StaffAccessService {
     public Usuario assertPodeOperarCobranca(UUID usuarioId) {
         Usuario usuario = assertStaff(usuarioId);
         if (!PERFIS_COBRANCA.contains(usuario.getPerfil())) {
-            throw new ResponseStatusException(FORBIDDEN, "Perfil sem permissão para cobrança.");
+            throw new AccessDeniedBusinessException("Perfil sem permissão para cobrança.");
         }
         return usuario;
     }
@@ -68,7 +67,7 @@ public class StaffAccessService {
     public Usuario assertPodeGerenciarClientesCompleto(UUID usuarioId) {
         Usuario usuario = assertStaff(usuarioId);
         if (!PERFIS_FINANCEIRO_COMPLETO.contains(usuario.getPerfil())) {
-            throw new ResponseStatusException(FORBIDDEN, "Perfil sem permissão para esta operação de clientes.");
+            throw new AccessDeniedBusinessException("Perfil sem permissão para esta operação de clientes.");
         }
         return usuario;
     }
@@ -76,7 +75,7 @@ public class StaffAccessService {
     public Usuario assertPodeAcessoFinanceiroCompleto(UUID usuarioId) {
         Usuario usuario = assertStaff(usuarioId);
         if (!PERFIS_FINANCEIRO_COMPLETO.contains(usuario.getPerfil())) {
-            throw new ResponseStatusException(FORBIDDEN, "Perfil sem permissão para esta área.");
+            throw new AccessDeniedBusinessException("Perfil sem permissão para esta área.");
         }
         return usuario;
     }
@@ -99,7 +98,7 @@ public class StaffAccessService {
     public Usuario assertPodeAdmin(UUID usuarioId) {
         Usuario usuario = assertStaff(usuarioId);
         if (usuario.getPerfil() != Perfil.PROPRIETARIA) {
-            throw new ResponseStatusException(FORBIDDEN, "Apenas a proprietária pode realizar esta operação.");
+            throw new AccessDeniedBusinessException("Apenas a proprietária pode realizar esta operação.");
         }
         return usuario;
     }
@@ -114,7 +113,7 @@ public class StaffAccessService {
             return;
         }
         if (!isRotaPermitidaParaFuncionario(httpMethod, requestUri)) {
-            throw new ResponseStatusException(FORBIDDEN, "Perfil Funcionário sem permissão para esta área.");
+            throw new AccessDeniedBusinessException("Perfil Funcionário sem permissão para esta área.");
         }
     }
 

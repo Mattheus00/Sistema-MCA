@@ -13,12 +13,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
+import com.pucminas.sgi.exception.AccessDeniedBusinessException;
 
 import java.util.List;
 import java.util.UUID;
 
-import static org.springframework.http.HttpStatus.FORBIDDEN;
 
 @Service
 public class UsuarioService {
@@ -52,6 +51,7 @@ public class UsuarioService {
                 .telefone(telefone)
                 .senha(senhaHash)
                 .nome(dto.getNome())
+                .email(dto.getEmail() == null || dto.getEmail().isBlank() ? null : dto.getEmail().trim())
                 .perfil(perfil)
                 .statusUsuario(Boolean.FALSE.equals(dto.getAtivo()) ? StatusUsuario.INATIVO : StatusUsuario.ATIVO)
                 .build();
@@ -77,6 +77,7 @@ public class UsuarioService {
                 .telefone(login)
                 .senha(passwordEncoder.encode(dto.getSenha()))
                 .nome(dto.getNome())
+                .email(dto.getEmail() == null || dto.getEmail().isBlank() ? null : dto.getEmail().trim())
                 .perfil(Perfil.RESPONSAVEL_FINANCEIRO)
                 .statusUsuario(StatusUsuario.PENDENTE_APROVACAO)
                 .build();
@@ -103,7 +104,7 @@ public class UsuarioService {
         Usuario aprovador = usuarioRepository.findById(aprovadorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário aprovador", aprovadorId));
         if (aprovador.getPerfil() != Perfil.PROPRIETARIA) {
-            throw new ResponseStatusException(FORBIDDEN, "Apenas a proprietária pode aprovar cadastros.");
+            throw new AccessDeniedBusinessException("Apenas a proprietária pode aprovar cadastros.");
         }
         Usuario u = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário", usuarioId));
@@ -130,15 +131,15 @@ public class UsuarioService {
         Usuario revogador = usuarioRepository.findById(revogadorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário", revogadorId));
         if (revogador.getPerfil() != Perfil.PROPRIETARIA) {
-            throw new ResponseStatusException(FORBIDDEN, "Apenas a proprietária pode revogar acesso.");
+            throw new AccessDeniedBusinessException("Apenas a proprietária pode revogar acesso.");
         }
         if (alvoId.equals(revogadorId)) {
-            throw new ResponseStatusException(FORBIDDEN, "Não é possível revogar o próprio acesso.");
+            throw new AccessDeniedBusinessException("Não é possível revogar o próprio acesso.");
         }
         Usuario alvo = usuarioRepository.findById(alvoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário", alvoId));
         if (alvo.getPerfil() == Perfil.PROPRIETARIA) {
-            throw new ResponseStatusException(FORBIDDEN, "Não é possível revogar o acesso de outra proprietária.");
+            throw new AccessDeniedBusinessException("Não é possível revogar o acesso de outra proprietária.");
         }
         if (alvo.getStatusUsuario() == StatusUsuario.INATIVO) {
             return toResponse(alvo);
@@ -159,7 +160,7 @@ public class UsuarioService {
         Usuario u = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário", usuarioId));
         if (u.getPerfil() != Perfil.PROPRIETARIA) {
-            throw new ResponseStatusException(FORBIDDEN, "Apenas a proprietária pode realizar esta operação.");
+            throw new AccessDeniedBusinessException("Apenas a proprietária pode realizar esta operação.");
         }
     }
 

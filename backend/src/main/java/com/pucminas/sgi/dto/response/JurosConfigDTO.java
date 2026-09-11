@@ -1,5 +1,7 @@
 package com.pucminas.sgi.dto.response;
 
+import jakarta.validation.constraints.PositiveOrZero;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,8 +15,11 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class JurosConfigDTO {
 
+    @PositiveOrZero(message = "Taxas não podem ser negativas")
     private BigDecimal multaDiaria;
+    @PositiveOrZero(message = "Taxas não podem ser negativas")
     private BigDecimal capMultaPercentual;
+    @PositiveOrZero(message = "Taxas não podem ser negativas")
     private BigDecimal jurosMensal;
 }
 

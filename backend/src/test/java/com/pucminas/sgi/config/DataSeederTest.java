@@ -194,7 +194,7 @@ class DataSeederTest {
 
     private Usuario copiar(Usuario usuario) {
         return new Usuario(usuario.getUsuarioId(), usuario.getTelefone(), usuario.getSenha(),
-                usuario.getNome(), usuario.getPerfil(), usuario.getStatusUsuario(),
+                usuario.getNome(), usuario.getEmail(), usuario.getPerfil(), usuario.getStatusUsuario(),
                 usuario.getUltimoAcesso(), usuario.getCriadoEm());
     }
 

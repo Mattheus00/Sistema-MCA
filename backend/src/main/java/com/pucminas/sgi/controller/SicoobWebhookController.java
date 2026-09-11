@@ -1,5 +1,9 @@
 package com.pucminas.sgi.controller;
 
+import jakarta.validation.constraints.NotBlank;
+
+import jakarta.validation.Valid;
+
 import com.pucminas.sgi.service.SicoobWebhookService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,7 +29,7 @@ public class SicoobWebhookController {
     @Operation(summary = "Receber notificação de Pix recebido")
     public ResponseEntity<Void> webhookPix(
             @RequestHeader(value = "X-Sicoob-Webhook-Secret", required = false) String secret,
-            @RequestBody String payload) {
+            @NotBlank(message = "Corpo da requisição inválido.") @Valid @RequestBody String payload) {
         webhookService.validarSegredo(secret);
         webhookService.processarPixWebhook(payload);
         return ResponseEntity.ok().build();

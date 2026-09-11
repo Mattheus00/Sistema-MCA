@@ -1,5 +1,7 @@
 package com.pucminas.sgi.dto.request;
 
+import jakarta.validation.constraints.PositiveOrZero;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,6 +18,7 @@ import java.time.LocalDate;
 public class InadimplenciaStatusDTO {
     private String status; // "Pago"
     /** Desconto concedido em REAIS (ex.: 100.50). */
+    @PositiveOrZero(message = "Desconto não pode ser negativo")
     private BigDecimal desconto;
     /** Obrigatório na confirmação do pagamento. */
     private String metodoPagamento;

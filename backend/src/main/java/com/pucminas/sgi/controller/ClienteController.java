@@ -1,5 +1,7 @@
 package com.pucminas.sgi.controller;
 
+import org.springframework.validation.annotation.Validated;
+
 import com.pucminas.sgi.dto.request.ClienteDTO;
 import com.pucminas.sgi.dto.response.ClienteResponseDTO;
 import com.pucminas.sgi.dto.response.DividaResponseDTO;
@@ -31,7 +33,7 @@ public class ClienteController {
 
     @PostMapping
     @Operation(summary = "Cadastrar cliente")
-    public ResponseEntity<ClienteResponseDTO> cadastrar(@Valid @RequestBody ClienteDTO dto) {
+    public ResponseEntity<ClienteResponseDTO> cadastrar(@Validated(ClienteDTO.Completo.class) @RequestBody ClienteDTO dto) {
         ClienteResponseDTO response = clienteService.cadastrarCliente(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -52,14 +54,14 @@ public class ClienteController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Atualizar cliente")
-    public ResponseEntity<ClienteResponseDTO> atualizar(@PathVariable UUID id, @Valid @RequestBody ClienteDTO dto) {
+    public ResponseEntity<ClienteResponseDTO> atualizar(@PathVariable UUID id, @Validated(ClienteDTO.Completo.class) @RequestBody ClienteDTO dto) {
         ClienteResponseDTO response = clienteService.atualizarCliente(id, dto);
         return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{id}")
     @Operation(summary = "Atualização parcial do cliente (campos enviados; com nome+cpfCnpj substitui opcionais)")
-    public ResponseEntity<ClienteResponseDTO> atualizarParcial(@PathVariable UUID id, @RequestBody ClienteDTO dto) {
+    public ResponseEntity<ClienteResponseDTO> atualizarParcial(@PathVariable UUID id, @Valid @RequestBody ClienteDTO dto) {
         ClienteResponseDTO response = clienteService.atualizarClientePartial(id, dto);
         return ResponseEntity.ok(response);
     }

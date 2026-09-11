@@ -1,12 +1,15 @@
 package com.pucminas.sgi.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pucminas.sgi.exception.ApiErrorWriter;
+import org.springframework.http.HttpStatus;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -25,6 +28,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @Order(Ordered.HIGHEST_PRECEDENCE + 20)
 public class RateLimitFilter extends OncePerRequestFilter {
 
+    private final ObjectMapper objectMapper;
+    public RateLimitFilter(ObjectMapper objectMapper) { this.objectMapper = objectMapper; }
+
     private static final int MAX_REQUESTS = 20;
     private static final long WINDOW_MS = 60_000L;
 
@@ -40,6 +46,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 || path.equals("/api/auth/register")
                 || path.equals("/api/auth/validar-login-recuperacao")
                 || path.equals("/api/auth/redefinir-senha")
+                || path.equals("/api/auth/recuperar-senha/solicitar")
+                || path.equals("/api/auth/recuperar-senha/redefinir")
                 || path.equals("/api/portal/auth/login")
                 || path.equals("/api/portal/auth/ativar")
                 || path.equals("/api/portal/auth/recuperar-senha"));
@@ -57,11 +65,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 timestamps.pollFirst();
             }
             if (timestamps.size() >= MAX_REQUESTS) {
-                response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-                response.setContentType("application/json;charset=UTF-8");
-                response.getWriter().write(
-                        "{\"status\":429,\"error\":\"Too Many Requests\","
-                                + "\"message\":\"Muitas tentativas. Aguarde um minuto e tente novamente.\"}");
+                ApiErrorWriter.write(objectMapper, request, response, HttpStatus.TOO_MANY_REQUESTS,
+                        "Muitas tentativas. Aguarde um minuto e tente novamente.");
                 return;
             }
             timestamps.addLast(now);

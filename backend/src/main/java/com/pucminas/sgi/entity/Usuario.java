@@ -35,6 +35,9 @@ public class Usuario {
     @Column(nullable = false)
     private String nome;
 
+    @Column(length = 255)
+    private String email;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Perfil perfil;

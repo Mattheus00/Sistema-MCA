@@ -4,6 +4,19 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.ErrorResponseException;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import jakarta.validation.ConstraintViolationException;
+import java.util.Arrays;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -77,10 +90,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
         String message = "Parâmetro inválido na requisição.";
-        if (ex.getName() != null && ex.getName().equals("status")) {
-            message = "Status inválido. Valores aceitos: RECEBIDO, EM_ANALISE, ARQUIVADO (ou ENVIADO como alias de RECEBIDO).";
-        } else if (ex.getName() != null && ex.getName().equals("id") && request.getRequestURI() != null && request.getRequestURI().contains("inadimplentes")) {
-            message = "ID inválido para inadimplência. Use o UUID da dívida (campo id da listagem).";
+        if (ex.getRequiredType() != null && ex.getRequiredType().isEnum()) {
+            message = "Parâmetro '" + ex.getName() + "' inválido. Valores aceitos: "
+                    + Arrays.stream(ex.getRequiredType().getEnumConstants())
+                    .map(Object::toString).collect(Collectors.joining(", ")) + ".";
         } else if (ex.getRequiredType() != null && UUID.class.isAssignableFrom(ex.getRequiredType())) {
             message = "ID inválido. Use o UUID retornado pela API.";
         }
@@ -94,29 +107,9 @@ public class GlobalExceptionHandler {
                 "O banco de dados está ocupado. Aguarde alguns segundos e tente novamente.", request.getRequestURI());
     }
 
-    @ExceptionHandler(org.springframework.dao.DataAccessException.class)
-    public ResponseEntity<ErrorResponse> handleDataAccess(org.springframework.dao.DataAccessException ex,
-                                                          HttpServletRequest request) {
-        Throwable root = ex;
-        while (root.getCause() != null && root.getCause() != root) {
-            root = root.getCause();
-        }
-        String detail = root.getMessage() != null ? root.getMessage() : ex.getMessage();
-        log.error("Erro de banco em {}: {}", request.getRequestURI(), detail, ex);
-        String message = "Erro de banco de dados.";
-        if (detail != null) {
-            String d = detail.toLowerCase();
-            if (d.contains("documento_cliente") && (d.contains("does not exist") || d.contains("undefined table"))) {
-                message = "Schema incompleto (documentos). Reinicie o backend para aplicar as tabelas ou contate o suporte.";
-            } else if (d.contains("could not determine data type of parameter")) {
-                message = "Erro de consulta no banco (filtros). Atualize o backend para a versão mais recente.";
-            } else if (d.contains("not null") || d.contains("valor_comunicado")) {
-                message = "Falha ao gravar notificação de e-mail (constraint). Tente novamente após atualizar o backend.";
-            } else if (detail.length() <= 220) {
-                message = "Erro de banco: " + detail;
-            }
-        }
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", message, request.getRequestURI());
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ErrorResponse> handleDataAccess(DataAccessException ex, HttpServletRequest request) {
+        return erroInterno(ex, request);
     }
 
     @ExceptionHandler(org.springframework.web.multipart.support.MissingServletRequestPartException.class)
@@ -135,22 +128,80 @@ public class GlobalExceptionHandler {
                 "Arquivo PDF excede o tamanho máximo permitido.", request.getRequestURI());
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGeneric(Exception ex, HttpServletRequest request) {
-        log.error("Erro não tratado em {}: {}", request.getRequestURI(), ex.toString(), ex);
-        String detail = ex.getMessage();
-        String message = "Ocorreu um erro interno. Tente novamente ou contate o suporte.";
-        if (detail != null && !detail.isBlank() && detail.length() <= 220
-                && !(ex instanceof NullPointerException)) {
-            message = message + " Detalhe: " + detail;
-        } else if (ex instanceof NullPointerException) {
-            message = message + " Detalhe: NullPointerException.";
-        }
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error",
-                message, request.getRequestURI());
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handleResponseStatus(ResponseStatusException ex, HttpServletRequest request) {
+        return statusResponse(ex.getStatusCode(), ex.getReason(), request);
     }
 
-    private ResponseEntity<ErrorResponse> buildResponse(HttpStatus status, String error, String message, String path) {
+    @ExceptionHandler(ErrorResponseException.class)
+    public ResponseEntity<ErrorResponse> handleErrorResponse(ErrorResponseException ex, HttpServletRequest request) {
+        return statusResponse(ex.getStatusCode(), ex.getBody().getDetail(), request);
+    }
+
+    @ExceptionHandler({AccessDeniedBusinessException.class, AccessDeniedException.class})
+    public ResponseEntity<ErrorResponse> handleAccessDenied(RuntimeException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.FORBIDDEN, "Forbidden",
+                ex instanceof AccessDeniedBusinessException ? ex.getMessage() : "Acesso negado.", request.getRequestURI());
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.UNAUTHORIZED, "Unauthorized", "Autenticação necessária.", request.getRequestURI());
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleUnreadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST, "Bad Request", "Corpo da requisição inválido.", request.getRequestURI());
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingParameter(MissingServletRequestParameterException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST, "Bad Request",
+                "Parâmetro obrigatório ausente: " + ex.getParameterName() + ".", request.getRequestURI());
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResource(NoResourceFoundException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.NOT_FOUND, "Not Found", "Recurso não encontrado.", request.getRequestURI());
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMethod(HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.METHOD_NOT_ALLOWED, "Method Not Allowed", "Método HTTP não permitido.", request.getRequestURI());
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraint(ConstraintViolationException ex, HttpServletRequest request) {
+        String message = ex.getConstraintViolations().stream()
+                .map(v -> v.getPropertyPath() + ": " + v.getMessage()).sorted().collect(Collectors.joining("; "));
+        return buildResponse(HttpStatus.BAD_REQUEST, "Bad Request", message, request.getRequestURI());
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ErrorResponse> handleMethodValidation(HandlerMethodValidationException ex, HttpServletRequest request) {
+        if (ex.isForReturnValue()) { return erroInterno(ex, request); }
+        return buildResponse(HttpStatus.BAD_REQUEST, "Bad Request", "Parâmetros da requisição inválidos.", request.getRequestURI());
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGeneric(Exception ex, HttpServletRequest request) {
+        return erroInterno(ex, request);
+    }
+
+    private ResponseEntity<ErrorResponse> erroInterno(Exception ex, HttpServletRequest request) {
+        String errorId = UUID.randomUUID().toString();
+        log.error("Erro interno [{}] em {}", errorId, request.getRequestURI(), ex);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error",
+                "Ocorreu um erro interno. Código: " + errorId, request.getRequestURI());
+    }
+
+    private ResponseEntity<ErrorResponse> statusResponse(HttpStatusCode status, String message, HttpServletRequest request) {
+        HttpStatus conhecido = HttpStatus.resolve(status.value());
+        String error = conhecido != null ? conhecido.getReasonPhrase() : "HTTP " + status.value();
+        return buildResponse(status, error, message != null ? message : "Não foi possível atender à requisição.", request.getRequestURI());
+    }
+
+    private ResponseEntity<ErrorResponse> buildResponse(HttpStatusCode status, String error, String message, String path) {
         ErrorResponse body = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(status.value())

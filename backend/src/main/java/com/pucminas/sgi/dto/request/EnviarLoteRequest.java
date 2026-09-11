@@ -1,5 +1,7 @@
 package com.pucminas.sgi.dto.request;
 
+import jakarta.validation.constraints.NotNull;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,5 +18,5 @@ public class EnviarLoteRequest {
 
     private Boolean permitirReenvioDuplicado;
 
-    private List<UUID> itemIds;
+    private List<@NotNull(message = "ID do item não pode ser nulo") UUID> itemIds;
 }

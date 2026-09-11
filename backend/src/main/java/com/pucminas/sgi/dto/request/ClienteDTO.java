@@ -20,14 +20,19 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class ClienteDTO {
 
+    /** Cadastro/PUT exigem identificação; PATCH valida somente os campos enviados. */
+    public interface Completo extends jakarta.validation.groups.Default {}
+
     @Size(max = 50)
     private String codigo;
 
-    @NotBlank(message = "Nome é obrigatório")
+    @NotBlank(message = "Nome é obrigatório", groups = Completo.class)
+    @Pattern(regexp = "(?s).*\\S.*", message = "Nome não pode ser vazio")
     @Size(max = 255)
     private String nome;
 
-    @NotBlank(message = "CPF/CNPJ é obrigatório")
+    @NotBlank(message = "CPF/CNPJ é obrigatório", groups = Completo.class)
+    @Pattern(regexp = "(?s).*\\S.*", message = "CPF/CNPJ não pode ser vazio")
     @Size(max = 18)
     @JsonAlias("cpf")
     private String cpfCnpj;

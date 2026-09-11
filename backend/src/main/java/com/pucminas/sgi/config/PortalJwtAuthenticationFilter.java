@@ -1,5 +1,9 @@
 package com.pucminas.sgi.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pucminas.sgi.exception.ApiErrorWriter;
+import org.springframework.http.HttpStatus;
+
 import com.pucminas.sgi.entity.Cliente;
 import com.pucminas.sgi.enums.StatusCliente;
 import com.pucminas.sgi.enums.StatusPortalCredencial;
@@ -31,13 +35,15 @@ public class PortalJwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
 
+    private final ObjectMapper objectMapper;
     private final JwtTokenProvider jwtTokenProvider;
     private final ClienteRepository clienteRepository;
     private final ClientePortalCredencialRepository credencialRepository;
 
     public PortalJwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider,
                                          ClienteRepository clienteRepository,
-                                         ClientePortalCredencialRepository credencialRepository) {
+                                         ClientePortalCredencialRepository credencialRepository, ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
         this.jwtTokenProvider = jwtTokenProvider;
         this.clienteRepository = clienteRepository;
         this.credencialRepository = credencialRepository;
@@ -55,24 +61,28 @@ public class PortalJwtAuthenticationFilter extends OncePerRequestFilter {
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
         String token = getTokenFromRequest(request);
         if (!StringUtils.hasText(token)) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            SecurityContextHolder.clearContext();
+                        ApiErrorWriter.write(objectMapper, request, response, HttpStatus.UNAUTHORIZED, "Autenticação inválida.");
             return;
         }
         JwtTokenProvider.PortalJwtClaims claims = jwtTokenProvider.getPortalClaims(token);
         if (claims == null) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            SecurityContextHolder.clearContext();
+                        ApiErrorWriter.write(objectMapper, request, response, HttpStatus.UNAUTHORIZED, "Autenticação inválida.");
             return;
         }
         Cliente cliente = clienteRepository.findById(claims.clienteId()).orElse(null);
         if (cliente == null
                 || cliente.getStatusCliente() != StatusCliente.ATIVO
                 || Boolean.FALSE.equals(cliente.getPortalHabilitado())) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            SecurityContextHolder.clearContext();
+                        ApiErrorWriter.write(objectMapper, request, response, HttpStatus.UNAUTHORIZED, "Autenticação inválida.");
             return;
         }
         var credencial = credencialRepository.findByCliente_ClienteId(claims.clienteId()).orElse(null);
         if (credencial == null || credencial.getStatus() != StatusPortalCredencial.ATIVO) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            SecurityContextHolder.clearContext();
+                        ApiErrorWriter.write(objectMapper, request, response, HttpStatus.UNAUTHORIZED, "Autenticação inválida.");
             return;
         }
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(

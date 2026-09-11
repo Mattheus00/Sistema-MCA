@@ -77,7 +77,110 @@ contas já existentes e manutenção dos dados originais nas contas novas.
 - CSVs ficam no disco local e fora do Git/JAR; o diretório de importação precisa
   ser explicitamente configurado para permitir leitura.
 
+## Fase 2 — Autenticação e tratamento de erros
+
+### Alterações
+
+- Novos endpoints públicos `POST /api/auth/recuperar-senha/solicitar` (`login`) e
+  `POST /api/auth/recuperar-senha/redefinir` (`token`, `novaSenha`, `confirmarSenha`).
+  A solicitação válida retorna HTTP 200 com mensagem neutra, independentemente
+  de login existente, e-mail ausente ou indisponibilidade do SMTP.
+- Tokens gerados com `SecureRandom` (32 bytes), codificados como Base64 URL-safe;
+  apenas SHA-256 é persistido em `token_recuperacao_senha`. Validade de 30 minutos.
+  Um UPDATE condicional faz o consumo único no banco, na mesma transação da
+  alteração da senha; token usado, expirado, inexistente ou consumido em corrida
+  devolve a mesma mensagem de erro. O link usa `sgi.frontend-url`.
+- `Usuario.email` é opcional. O campo `CadastroUsuarioDTO.email` já existia e
+  agora é persistido nos cadastros, inclusive no público. Nenhuma conta real
+  foi atualizada ou recebeu e-mail inventado.
+- Os dois endpoints legados continuam disponíveis somente com
+  `sgi.auth.password-recovery-enabled=true`. Default da base e de produção:
+  false; local: true. Marcados como deprecated no Java e no OpenAPI.
+- `GlobalExceptionHandler` traduz erros de status Spring, autenticação,
+  autorização, JSON inválido, parâmetros ausentes, recursos inexistentes,
+  métodos não suportados e Bean Validation para `ErrorResponse` com status
+  correto. Enums são descritos a partir do tipo real do parâmetro.
+- Falhas genéricas e de banco recebem UUID de erro na resposta; detalhes e stack
+  trace ficam no log ERROR. Removida a detecção por textos internos do Postgres.
+- `AccessDeniedBusinessException` substitui as exceções HTTP dos serviços de
+  acesso, usuário e tarefa. Os filtros JWT, rate limit e interceptor usam
+  `ObjectMapper` + `ErrorResponse`; Security também padroniza seu 401/403.
+- `@Valid` aplicado nos sete corpos indicados. Cadastro/PUT de cliente exigem
+  nome e CPF/CNPJ pelo grupo `Completo`; PATCH valida os campos enviados sem
+  exigir os ausentes. Taxas/desconto negativos, ano fora de faixa, itemId nulo
+  e webhook em branco são rejeitados. Corpos opcionais e taxas zero continuam
+  aceitos conforme o comportamento existente.
+
+### Arquivos principais
+
+- Autenticação: `AuthService`, `AuthController`, `Usuario`, `UsuarioService`,
+  `CadastroUsuarioDTO`, `TokenRecuperacaoSenha`, seu repository e os dois DTOs
+  novos de recuperação; `application.properties` e configuração local ignorada.
+- Erros/acesso: `GlobalExceptionHandler`, `AccessDeniedBusinessException`,
+  `ApiErrorWriter`, `SecurityConfig`, `WebMvcConfig`, os dois filtros JWT,
+  `RateLimitFilter`, `StaffAccessInterceptor`, `StaffAccessService`,
+  `EnvioBoletoAccessService` e `TarefaService`.
+- Validação: controllers `Cliente`, `JurosConfig`, `Inadimplencia`,
+  `CobrancaRecorrenteAdmin`, `LoteEnvioBoleto`, `SicoobWebhook` e DTOs associados.
+- Testes novos: `AuthServiceTest`, `AuthRecoveryMvcTest`,
+  `GlobalExceptionHandlerMvcTest`, `FilterErrorsTest`,
+  `ClienteValidationMvcTest`, `TokenRecuperacaoSenhaRepositoryTest`.
+  Testes de serviços existentes atualizados para a exceção de domínio;
+  `DataSeederTest` acompanha o novo campo opcional no construtor da entidade.
+
+### Validação
+
+- Resultado: `fixed` para o escopo solicitado nesta fase.
+- `mvn -q -DskipTests package -l target/phase2-package.log`: PASSOU. JAR
+  atualizado com a entidade de recuperação, mantendo as exclusões da Fase 1.
+- `mvn -q -DskipTests compile -l target/phase2-compile.log`: PASSOU.
+- `mvn -q test -l target/phase2-test.log`: PASSOU — 236 testes,
+  zero falhas, zero erros e zero ignorados.
+- `git diff --check`: PASSOU; frontend e configuração local fora do diff.
+- Regressões demonstradas: token inexistente/expirado/usado/concorrente não
+  altera a senha; confirmação inválida não consome token; respostas de recuperação
+  não distinguem login ausente, sem e-mail ou SMTP indisponível. Rota inexistente
+  retorna 404; erros internos não expõem detalhes e mantêm código rastreável.
+- Testes focados confirmaram consumo único/expiração no SQL real em SQLite
+  em memória, incluindo confirmação da URL JDBC e ausência de arquivo de banco.
+  O harness inicial falhou por incompatibilidade do post-processor legado com
+  `:memory:` no Windows; a configuração específica do Hikari resolveu o teste
+  sem alterar o código de produção ou acessar bancos reais.
+- Revisão de compatibilidade em passe separado: rotas públicas permanecem
+  utilizáveis com JWT inválido antigo no cabeçalho; rotas protegidas recebem
+  401 via entry point. PATCH parcial e campos/corpos opcionais preservados.
+- A delegação de revisão ficou indisponível por limite de uso da conta; o passe
+  de revisão foi executado localmente. Nenhuma revisão paralela é reivindicada.
+
+### Pendências de frontend
+
+- Migrar o fluxo legado para os dois endpoints novos e a página
+  `/redefinir-senha?token=...`; nenhum arquivo do frontend foi alterado.
+- O campo de cadastro `email` mantém seu nome. Usuários antigos sem e-mail
+  precisam cadastrar um endereço por processo administrativo autorizado antes
+  de receber links; a fase não inventa nem altera dados de contas existentes.
+- Nenhuma rota ou campo existente foi renomeado; os códigos de sucesso foram
+  preservados. O fluxo antigo fica limitado ao ambiente local durante a migração.
+
+### Pendências de infraestrutura
+
+- Configurar `SGI_FRONTEND_URL` para a URL real do frontend no Render e manter
+  SMTP configurado. O default local é `http://localhost:5173`.
+- Esta fase adiciona a coluna nullable `usuario.email` e a tabela de tokens
+  através do mapeamento JPA atual. Nenhuma migração ou SQL foi executado no
+  Render. A baseline Flyway dessas estruturas pertence à Fase 4.
+- PostgreSQL não foi exercitado nesta fase; a Fase 4 inclui seus testes dedicados.
+
+### Decisões
+
+- Reaproveitar o e-mail opcional já previsto no cadastro, sem exigir valor novo
+  para contas existentes nem expor o e-mail em respostas públicas de recuperação.
+- Manter as regras atuais de senha (4 a 255 caracteres) e mensagens em português.
+- Manter opcionais nos corpos que já tinham defaults de negócio; adicionar
+  validação não deve converter PATCH em substituição integral.
+- Não enviar mensagens reais durante a verificação: `EmailGateway` foi mockado.
+- Concluir somente a Fase 2 neste ciclo, conforme a solicitação mais recente.
+
 ## Próximas fases
 
-Fases 2 a 7 ainda não iniciadas; serão executadas em ordem após validação e commit
-da fase anterior.
+Fases 3 a 7 ainda não iniciadas.

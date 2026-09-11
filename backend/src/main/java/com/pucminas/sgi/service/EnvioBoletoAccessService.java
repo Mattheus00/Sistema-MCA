@@ -2,11 +2,10 @@ package com.pucminas.sgi.service;
 
 import com.pucminas.sgi.entity.Usuario;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
+import com.pucminas.sgi.exception.AccessDeniedBusinessException;
 
 import java.util.UUID;
 
-import static org.springframework.http.HttpStatus.FORBIDDEN;
 
 @Service
 public class EnvioBoletoAccessService {
@@ -20,11 +19,10 @@ public class EnvioBoletoAccessService {
     public Usuario assertPodeGerenciarBoletos(UUID usuarioId) {
         try {
             return staffAccessService.assertPodeAcessoFinanceiroCompleto(usuarioId);
-        } catch (ResponseStatusException ex) {
-            if (ex.getStatusCode().value() == FORBIDDEN.value()
-                    && ex.getReason() != null
-                    && ex.getReason().contains("esta área")) {
-                throw new ResponseStatusException(FORBIDDEN, "Perfil sem permissão para envio de boletos.");
+        } catch (AccessDeniedBusinessException ex) {
+            if (ex.getMessage() != null
+                    && ex.getMessage().contains("esta área")) {
+                throw new AccessDeniedBusinessException("Perfil sem permissão para envio de boletos.");
             }
             throw ex;
         }

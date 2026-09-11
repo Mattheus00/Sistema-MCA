@@ -1,5 +1,7 @@
 package com.pucminas.sgi.dto.request;
 
+import jakarta.validation.constraints.Email;
+
 import com.pucminas.sgi.enums.Perfil;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -20,6 +22,7 @@ public class CadastroUsuarioDTO {
     @Size(max = 255)
     private String nome;
     @Size(max = 255)
+    @Email(message = "E-mail inválido")
     private String email;
     private Boolean ativo;
     @Size(max = 20)

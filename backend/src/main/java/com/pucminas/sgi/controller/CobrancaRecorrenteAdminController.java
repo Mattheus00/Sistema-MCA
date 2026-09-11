@@ -1,5 +1,7 @@
 package com.pucminas.sgi.controller;
 
+import jakarta.validation.Valid;
+
 import com.pucminas.sgi.dto.request.GeracaoCobrancaRequestDTO;
 import com.pucminas.sgi.dto.response.GeracaoCobrancaResultadoDTO;
 import com.pucminas.sgi.service.AuditoriaService;
@@ -26,7 +28,7 @@ public class CobrancaRecorrenteAdminController {
 
     @PostMapping("/api/admin/cobrancas-recorrentes/gerar")
     @Operation(summary = "Executar geração mensal de cobranças recorrentes")
-    public ResponseEntity<GeracaoCobrancaResultadoDTO> gerarMensal(@RequestBody(required = false) GeracaoCobrancaRequestDTO dto) {
+    public ResponseEntity<GeracaoCobrancaResultadoDTO> gerarMensal(@Valid @RequestBody(required = false) GeracaoCobrancaRequestDTO dto) {
         YearMonth competencia = geracaoService.parseCompetencia(dto != null ? dto.getCompetencia() : null);
         GeracaoCobrancaResultadoDTO resultado = geracaoService.gerarHonorariosMensais(competencia, false);
         auditoriaService.registrar("EXECUCAO_MANUAL_COBRANCA_RECORRENTE", "Divida", null,
@@ -36,7 +38,7 @@ public class CobrancaRecorrenteAdminController {
 
     @PostMapping("/api/admin/taxas-balanco/gerar")
     @Operation(summary = "Executar geração manual da taxa de balanço")
-    public ResponseEntity<GeracaoCobrancaResultadoDTO> gerarTaxaBalanco(@RequestBody(required = false) GeracaoCobrancaRequestDTO dto) {
+    public ResponseEntity<GeracaoCobrancaResultadoDTO> gerarTaxaBalanco(@Valid @RequestBody(required = false) GeracaoCobrancaRequestDTO dto) {
         int ano = dto != null && dto.getAno() != null ? dto.getAno() : YearMonth.now().getYear();
         GeracaoCobrancaResultadoDTO resultado = geracaoService.gerarTaxasBalanco(ano, false);
         auditoriaService.registrar("EXECUCAO_MANUAL_TAXA_BALANCO", "Divida", null,

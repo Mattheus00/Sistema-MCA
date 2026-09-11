@@ -159,7 +159,7 @@ public class LoteEnvioBoletoController {
     public ResponseEntity<EnviarLoteResponse> enviarLote(
             Authentication authentication,
             @PathVariable UUID loteId,
-            @RequestBody(required = false) EnviarLoteRequest request) {
+            @Valid @RequestBody(required = false) EnviarLoteRequest request) {
         UUID usuarioId = (UUID) authentication.getPrincipal();
         return ResponseEntity.ok(loteService.enviarLote(usuarioId, loteId, request));
     }

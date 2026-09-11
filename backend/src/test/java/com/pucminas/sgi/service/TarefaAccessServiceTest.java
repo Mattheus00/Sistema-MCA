@@ -11,7 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.server.ResponseStatusException;
+import com.pucminas.sgi.exception.AccessDeniedBusinessException;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -74,9 +74,8 @@ class TarefaAccessServiceTest {
     @DisplayName("assertPodeAcessarRota: FUNCIONARIO em livro-caixa toma 403")
     void assertLivroCaixaAinda403() {
         when(usuarioRepository.findById(ID_FUNC)).thenReturn(Optional.of(usuario(ID_FUNC, Perfil.FUNCIONARIO)));
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        AccessDeniedBusinessException ex = assertThrows(AccessDeniedBusinessException.class,
                 () -> staffAccessService.assertPodeAcessarRota(ID_FUNC, "GET", "/api/livro-caixa/dashboard"));
-        assertEquals(403, ex.getStatusCode().value());
     }
 
     private static Usuario usuario(UUID id, Perfil perfil) {

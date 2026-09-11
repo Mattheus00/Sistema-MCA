@@ -1,5 +1,7 @@
 package com.pucminas.sgi.controller;
 
+import jakarta.validation.Valid;
+
 import com.pucminas.sgi.dto.response.JurosConfigDTO;
 import com.pucminas.sgi.entity.JurosConfig;
 import com.pucminas.sgi.service.JurosConfigService;
@@ -33,7 +35,7 @@ public class JurosConfigController {
 
     @PutMapping
     @Operation(summary = "Atualizar configuração de juros")
-    public ResponseEntity<JurosConfigDTO> atualizar(@RequestBody JurosConfigDTO body) {
+    public ResponseEntity<JurosConfigDTO> atualizar(@Valid @RequestBody JurosConfigDTO body) {
         JurosConfig cfg = jurosConfigService.atualizar(body);
         JurosConfigDTO dto = JurosConfigDTO.builder()
                 .multaDiaria(cfg.getMultaDiaria())

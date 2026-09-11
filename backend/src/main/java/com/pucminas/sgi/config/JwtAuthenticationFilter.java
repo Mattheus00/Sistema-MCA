@@ -1,5 +1,11 @@
 package com.pucminas.sgi.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pucminas.sgi.exception.ApiErrorWriter;
+import org.springframework.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.pucminas.sgi.entity.Usuario;
 import com.pucminas.sgi.enums.StatusUsuario;
 import com.pucminas.sgi.repository.UsuarioRepository;
@@ -24,14 +30,17 @@ import java.util.Collections;
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
 
+    private final ObjectMapper objectMapper;
     private final JwtTokenProvider jwtTokenProvider;
     private final UsuarioRepository usuarioRepository;
 
-    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, UsuarioRepository usuarioRepository) {
+    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, UsuarioRepository usuarioRepository, ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
         this.jwtTokenProvider = jwtTokenProvider;
         this.usuarioRepository = usuarioRepository;
     }
@@ -50,10 +59,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = getTokenFromRequest(request);
             if (StringUtils.hasText(token)) {
                 JwtTokenProvider.JwtClaims claims = jwtTokenProvider.getClaims(token);
-                if (claims != null) {
+                if (claims == null) {
+                    SecurityContextHolder.clearContext();
+                } else {
                     Usuario usuario = usuarioRepository.findById(claims.usuarioId()).orElse(null);
                     if (usuario == null || usuario.getStatusUsuario() != StatusUsuario.ATIVO) {
-                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        SecurityContextHolder.clearContext();
+                        ApiErrorWriter.write(objectMapper, request, response, HttpStatus.UNAUTHORIZED, "Autenticação inválida.");
                         return;
                     }
                     String role = "ROLE_" + claims.perfil().name();
@@ -67,7 +79,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            // Mantém o contexto vazio em caso de token inválido
+            SecurityContextHolder.clearContext();
+            log.warn("Falha na autenticação JWT: {}", e.getClass().getSimpleName());
         }
         filterChain.doFilter(request, response);
     }

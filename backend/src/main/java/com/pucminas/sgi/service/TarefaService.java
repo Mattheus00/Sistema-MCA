@@ -24,7 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
+import com.pucminas.sgi.exception.AccessDeniedBusinessException;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -34,7 +34,6 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.springframework.http.HttpStatus.FORBIDDEN;
 
 @Service
 public class TarefaService {
@@ -350,7 +349,7 @@ public class TarefaService {
     public List<TarefaResumoColaboradorDTO> resumoColaboradores(UUID usuarioId) {
         Usuario usuario = staffAccessService.assertPodeAcessarTarefas(usuarioId);
         if (!staffAccessService.podeGerenciarEquipeTarefas(usuario)) {
-            throw new ResponseStatusException(FORBIDDEN, "Sem permissão para visualizar resumo da equipe.");
+            throw new AccessDeniedBusinessException("Sem permissão para visualizar resumo da equipe.");
         }
         LocalDate hoje = LocalDate.now();
         return usuarioRepository.findByStatusUsuarioOrderByNomeAsc(StatusUsuario.ATIVO).stream()
@@ -434,7 +433,7 @@ public class TarefaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tarefa", tarefaId));
         if (!staffAccessService.podeGerenciarEquipeTarefas(usuario)
                 && !usuario.getUsuarioId().equals(tarefa.getResponsavelId())) {
-            throw new ResponseStatusException(FORBIDDEN, "Sem permissão para acessar esta tarefa.");
+            throw new AccessDeniedBusinessException("Sem permissão para acessar esta tarefa.");
         }
         return tarefa;
     }

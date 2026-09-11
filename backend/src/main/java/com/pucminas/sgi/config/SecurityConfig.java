@@ -1,5 +1,9 @@
 package com.pucminas.sgi.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pucminas.sgi.exception.ApiErrorWriter;
+import org.springframework.http.HttpStatus;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -28,8 +32,13 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, ObjectMapper objectMapper) throws Exception {
         http
+                .exceptionHandling(errors -> errors
+                        .authenticationEntryPoint((request, response, ex) -> ApiErrorWriter.write(objectMapper,
+                                request, response, HttpStatus.UNAUTHORIZED, "Autenticação necessária."))
+                        .accessDeniedHandler((request, response, ex) -> ApiErrorWriter.write(objectMapper,
+                                request, response, HttpStatus.FORBIDDEN, "Acesso negado.")))
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> {})
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -38,7 +47,9 @@ public class SecurityConfig {
                             "/api/auth/login",
                             "/api/auth/register",
                             "/api/auth/validar-login-recuperacao",
-                            "/api/auth/redefinir-senha"
+                            "/api/auth/redefinir-senha",
+                            "/api/auth/recuperar-senha/solicitar",
+                            "/api/auth/recuperar-senha/redefinir"
                     ).permitAll();
                     auth.requestMatchers(
                             "/api/portal/auth/login",

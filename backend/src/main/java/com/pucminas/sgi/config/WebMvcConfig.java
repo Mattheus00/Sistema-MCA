@@ -23,6 +23,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/auth/register",
                         "/api/auth/validar-login-recuperacao",
                         "/api/auth/redefinir-senha",
+                            "/api/auth/recuperar-senha/solicitar",
+                            "/api/auth/recuperar-senha/redefinir",
                         "/api/sicoob/webhook/**"
                 );
     }

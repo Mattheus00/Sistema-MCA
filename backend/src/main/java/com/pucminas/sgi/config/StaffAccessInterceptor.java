@@ -1,5 +1,9 @@
 package com.pucminas.sgi.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pucminas.sgi.exception.ApiErrorWriter;
+import org.springframework.http.HttpStatus;
+
 import com.pucminas.sgi.service.StaffAccessService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -7,7 +11,8 @@ import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.ResponseStatusException;
+import com.pucminas.sgi.exception.AccessDeniedBusinessException;
+import java.io.IOException;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.util.UUID;
@@ -19,15 +24,17 @@ import java.util.UUID;
 public class StaffAccessInterceptor implements HandlerInterceptor {
 
     private final StaffAccessService staffAccessService;
+    private final ObjectMapper objectMapper;
 
-    public StaffAccessInterceptor(StaffAccessService staffAccessService) {
+    public StaffAccessInterceptor(StaffAccessService staffAccessService, ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
         this.staffAccessService = staffAccessService;
     }
 
     @Override
     public boolean preHandle(@NonNull HttpServletRequest request,
                              @NonNull HttpServletResponse response,
-                             @NonNull Object handler) {
+                             @NonNull Object handler) throws IOException {
         String path = request.getRequestURI();
         if (path == null || !path.startsWith("/api/") || path.startsWith("/api/portal/")) {
             return true;
@@ -44,15 +51,8 @@ public class StaffAccessInterceptor implements HandlerInterceptor {
         try {
             staffAccessService.assertPodeAcessarRota(usuarioId, request.getMethod(), path);
             return true;
-        } catch (ResponseStatusException ex) {
-            response.setStatus(ex.getStatusCode().value());
-            response.setContentType("application/json;charset=UTF-8");
-            try {
-                String msg = ex.getReason() != null ? ex.getReason() : "Acesso negado.";
-                response.getWriter().write("{\"message\":\"" + msg.replace("\"", "'") + "\"}");
-            } catch (Exception ignored) {
-                // status já definido
-            }
+        } catch (AccessDeniedBusinessException ex) {
+            ApiErrorWriter.write(objectMapper, request, response, HttpStatus.FORBIDDEN, ex.getMessage());
             return false;
         }
     }

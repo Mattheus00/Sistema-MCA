@@ -14,7 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.server.ResponseStatusException;
+import com.pucminas.sgi.exception.AccessDeniedBusinessException;
 
 import java.util.List;
 import java.util.Optional;
@@ -50,9 +50,8 @@ class UsuarioServiceTest {
         Usuario resp = usuarioBase(ID_RESP, Perfil.RESPONSAVEL_FINANCEIRO, StatusUsuario.ATIVO);
         when(usuarioRepository.findById(ID_RESP)).thenReturn(Optional.of(resp));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        AccessDeniedBusinessException ex = assertThrows(AccessDeniedBusinessException.class,
                 () -> usuarioService.listarAtivos(ID_RESP));
-        assertEquals(403, ex.getStatusCode().value());
     }
 
     @Test
@@ -79,9 +78,8 @@ class UsuarioServiceTest {
         Usuario resp = usuarioBase(ID_RESP, Perfil.RESPONSAVEL_FINANCEIRO, StatusUsuario.ATIVO);
         when(usuarioRepository.findById(ID_RESP)).thenReturn(Optional.of(resp));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        AccessDeniedBusinessException ex = assertThrows(AccessDeniedBusinessException.class,
                 () -> usuarioService.revogarAcesso(ID_PROP, ID_RESP));
-        assertEquals(403, ex.getStatusCode().value());
     }
 
     @Test
@@ -90,9 +88,8 @@ class UsuarioServiceTest {
         Usuario prop = usuarioBase(ID_PROP, Perfil.PROPRIETARIA, StatusUsuario.ATIVO);
         when(usuarioRepository.findById(ID_PROP)).thenReturn(Optional.of(prop));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        AccessDeniedBusinessException ex = assertThrows(AccessDeniedBusinessException.class,
                 () -> usuarioService.revogarAcesso(ID_PROP, ID_PROP));
-        assertEquals(403, ex.getStatusCode().value());
     }
 
     @Test
@@ -103,9 +100,8 @@ class UsuarioServiceTest {
         when(usuarioRepository.findById(ID_PROP)).thenReturn(Optional.of(prop));
         when(usuarioRepository.findById(ID_OUTRA_PROP)).thenReturn(Optional.of(outra));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        AccessDeniedBusinessException ex = assertThrows(AccessDeniedBusinessException.class,
                 () -> usuarioService.revogarAcesso(ID_OUTRA_PROP, ID_PROP));
-        assertEquals(403, ex.getStatusCode().value());
     }
 
     @Test
@@ -167,9 +163,8 @@ class UsuarioServiceTest {
                 .senha("senha123")
                 .build();
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        AccessDeniedBusinessException ex = assertThrows(AccessDeniedBusinessException.class,
                 () -> usuarioService.cadastrarPorProprietaria(dto, ID_RESP));
-        assertEquals(403, ex.getStatusCode().value());
         verify(usuarioRepository, never()).save(any());
     }
 
@@ -195,6 +190,15 @@ class UsuarioServiceTest {
                 u.getPerfil() == Perfil.FUNCIONARIO
                         && u.getStatusUsuario() == StatusUsuario.ATIVO
                         && "Funcionario Teste".equals(u.getNome())));
+    }
+
+    @Test
+    void cadastroPublicoPersisteEmailOpcionalJaPrevistoNoDto() {
+        when(passwordEncoder.encode("senha-teste")).thenReturn("hash");
+        usuarioService.cadastrarPublico(CadastroUsuarioDTO.builder().login("novo")
+                .nome("Teste").email("teste@example.com").senha("senha-teste").build());
+        verify(usuarioRepository).save(org.mockito.ArgumentMatchers.argThat(u ->
+                "teste@example.com".equals(u.getEmail()) && u.getStatusUsuario() == StatusUsuario.PENDENTE_APROVACAO));
     }
 
     private static Usuario usuarioBase(UUID id, Perfil perfil, StatusUsuario status) {

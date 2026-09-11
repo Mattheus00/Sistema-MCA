@@ -3,6 +3,8 @@ package com.pucminas.sgi.controller;
 import com.pucminas.sgi.config.JwtTokenProvider;
 import com.pucminas.sgi.dto.request.CadastroUsuarioDTO;
 import com.pucminas.sgi.dto.request.LoginDTO;
+import com.pucminas.sgi.dto.request.SolicitarRecuperacaoSenhaDTO;
+import com.pucminas.sgi.dto.request.RedefinirSenhaTokenDTO;
 import com.pucminas.sgi.dto.request.RedefinirSenhaRequestDTO;
 import com.pucminas.sgi.dto.request.ValidarLoginRequestDTO;
 import com.pucminas.sgi.dto.response.LoginResponseDTO;
@@ -50,6 +52,7 @@ public class AuthController {
     public ResponseEntity<Void> register(@Valid @RequestBody CadastroUsuarioDTO dto) {
         CadastroUsuarioDTO payload = CadastroUsuarioDTO.builder()
                 .nome(dto.getNome())
+                .email(dto.getEmail())
                 .login(dto.getLogin())
                 .telefone1(dto.getLogin())
                 .senha(dto.getSenha())
@@ -58,19 +61,36 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    /** @deprecated Migrar para /recuperar-senha/solicitar. */
+    @Deprecated
     @PostMapping("/validar-login-recuperacao")
-    @Operation(summary = "Validar login para recuperação de senha", description = "Primeiro passo do fluxo de esqueci a senha")
+    @Operation(deprecated = true, summary = "Validar login para recuperação de senha", description = "Primeiro passo do fluxo de esqueci a senha")
     public ResponseEntity<ValidarLoginResponseDTO> validarLoginRecuperacao(@Valid @RequestBody ValidarLoginRequestDTO dto) {
         return ResponseEntity.ok(authService.validarLoginRecuperacao(dto));
     }
 
+    /** @deprecated Migrar para /recuperar-senha/redefinir. */
+    @Deprecated
     @PostMapping("/redefinir-senha")
-    @Operation(summary = "Redefinir senha sem token", description = "Segundo passo: após validar login, permite definir nova senha")
+    @Operation(deprecated = true, summary = "Redefinir senha sem token", description = "Segundo passo: após validar login, permite definir nova senha")
     public ResponseEntity<MensagemResponseDTO> redefinirSenha(@Valid @RequestBody RedefinirSenhaRequestDTO dto) {
         authService.redefinirSenhaSemToken(dto);
         return ResponseEntity.ok(MensagemResponseDTO.builder()
                 .mensagem("Senha alterada com sucesso.")
                 .build());
+    }
+
+    @PostMapping("/recuperar-senha/solicitar")
+    public ResponseEntity<MensagemResponseDTO> solicitarRecuperacao(
+            @Valid @RequestBody SolicitarRecuperacaoSenhaDTO dto) {
+        return ResponseEntity.ok(authService.solicitarRecuperacaoSenha(dto));
+    }
+
+    @PostMapping("/recuperar-senha/redefinir")
+    public ResponseEntity<MensagemResponseDTO> redefinirComToken(
+            @Valid @RequestBody RedefinirSenhaTokenDTO dto) {
+        authService.redefinirSenhaComToken(dto);
+        return ResponseEntity.ok(MensagemResponseDTO.builder().mensagem("Senha alterada com sucesso.").build());
     }
 
     @PostMapping("/logout")

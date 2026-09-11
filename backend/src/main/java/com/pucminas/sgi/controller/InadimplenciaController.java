@@ -56,7 +56,7 @@ public class InadimplenciaController {
     @PatchMapping("/{id}")
     @Operation(summary = "Confirmar pagamento (status: Pago) ou retornar inadimplência")
     public ResponseEntity<InadimplenciaResponseDTO> atualizarStatus(@PathVariable UUID id,
-                                                                     @RequestBody(required = false) InadimplenciaStatusDTO body) {
+                                                                     @Valid @RequestBody(required = false) InadimplenciaStatusDTO body) {
         if (body != null && "Pago".equalsIgnoreCase(body.getStatus())) {
             InadimplenciaResponseDTO response = inadimplenciaService.confirmarPagamento(id, body);
             return ResponseEntity.ok(response);
