@@ -27,6 +27,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import com.pucminas.sgi.security.StaffAuth;
+import lombok.RequiredArgsConstructor;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -37,16 +38,12 @@ import java.util.UUID;
 @RequestMapping("/api/lotes-envio-boletos")
 @PreAuthorize(StaffAuth.FINANCEIRO)
 @Tag(name = "Envio de boletos", description = "Upload, conferência e envio de boletos PDF por e-mail")
+@RequiredArgsConstructor
 public class LoteEnvioBoletoController {
 
     private final LoteEnvioBoletoService loteService;
     private final BoletoArquivoStorageService storageService;
 
-    public LoteEnvioBoletoController(LoteEnvioBoletoService loteService,
-                                     BoletoArquivoStorageService storageService) {
-        this.loteService = loteService;
-        this.storageService = storageService;
-    }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Criar lote e analisar PDFs")

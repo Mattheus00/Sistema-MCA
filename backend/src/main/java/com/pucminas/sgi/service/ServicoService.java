@@ -8,19 +8,18 @@ import com.pucminas.sgi.repository.ServicoRepository;
 import com.pucminas.sgi.util.MoneyUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ServicoService {
 
     private final ServicoRepository servicoRepository;
 
-    public ServicoService(ServicoRepository servicoRepository) {
-        this.servicoRepository = servicoRepository;
-    }
 
     @Transactional(readOnly = true)
     public List<ServicoResponseDTO> listarAtivos() {

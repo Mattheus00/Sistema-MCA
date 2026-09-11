@@ -57,17 +57,24 @@ public final class LivroCaixaSupport {
     }
 
     public static boolean isVencido(LivroCaixaMovimentacao mov) {
+        return isVencido(mov, LocalDate.now());
+    }
+
+    public static boolean isVencido(LivroCaixaMovimentacao mov, LocalDate hoje) {
         if (mov.getStatus() != LivroCaixaStatusMovimentacao.PREVISTO || mov.getDataVencimento() == null) {
             return false;
         }
-        return mov.getDataVencimento().isBefore(LocalDate.now());
+        return mov.getDataVencimento().isBefore(hoje);
     }
 
     public static boolean isProximoVencimento(LivroCaixaMovimentacao mov) {
+        return isProximoVencimento(mov, LocalDate.now());
+    }
+
+    public static boolean isProximoVencimento(LivroCaixaMovimentacao mov, LocalDate hoje) {
         if (mov.getStatus() != LivroCaixaStatusMovimentacao.PREVISTO || mov.getDataVencimento() == null) {
             return false;
         }
-        LocalDate hoje = LocalDate.now();
         return !mov.getDataVencimento().isBefore(hoje)
                 && !mov.getDataVencimento().isAfter(hoje.plusDays(7));
     }

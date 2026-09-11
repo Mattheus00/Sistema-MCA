@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.pucminas.sgi.security.StaffAuth;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Calculos da Reforma Tributaria (CBS/IBS) e consulta a IA (Gemini).
@@ -34,19 +35,13 @@ import com.pucminas.sgi.security.StaffAuth;
 @RequestMapping("/api/tributos")
 @PreAuthorize(StaffAuth.FINANCEIRO)
 @Tag(name = "Tributos (Reforma Tributaria)", description = "Calculos CBS/IBS e consulta IA")
+@RequiredArgsConstructor
 public class TributoController {
 
     private final TributoService tributoService;
     private final GeminiService geminiService;
     private final CnpjConsultaService cnpjConsultaService;
 
-    public TributoController(TributoService tributoService,
-                             GeminiService geminiService,
-                             CnpjConsultaService cnpjConsultaService) {
-        this.tributoService = tributoService;
-        this.geminiService = geminiService;
-        this.cnpjConsultaService = cnpjConsultaService;
-    }
 
     @PostMapping("/calcular")
     @Operation(summary = "Calcular tributo", description = "Tipos: POR_DENTRO, POR_FORA, SEPARAR_CBS_IBS, MARGEM_LUCRO. Categoria: PLENO, REDUZIDO, ZERO.")

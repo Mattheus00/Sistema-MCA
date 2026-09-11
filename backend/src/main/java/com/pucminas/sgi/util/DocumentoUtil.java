@@ -23,6 +23,17 @@ public final class DocumentoUtil {
         return digits.isEmpty() ? null : digits;
     }
 
+    public static String normalizarCpfCnpjImportacao(String raw) {
+        String digits = apenasDigitos(raw);
+        if (digits == null) {
+            return null;
+        }
+        if (digits.length() == 11 || digits.length() == 14) {
+            return digits;
+        }
+        return null;
+    }
+
     public static String normalizarDocumento(String valor) {
         return apenasDigitos(valor);
     }

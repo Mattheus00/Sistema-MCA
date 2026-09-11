@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.pucminas.sgi.security.StaffAuth;
+import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -25,13 +26,11 @@ import java.util.UUID;
 @RequestMapping("/api/dividas")
 @PreAuthorize(StaffAuth.STAFF)
 @Tag(name = "Dívidas", description = "Registro e consulta de dívidas")
+@RequiredArgsConstructor
 public class DividaController {
 
     private final DividaService dividaService;
 
-    public DividaController(DividaService dividaService) {
-        this.dividaService = dividaService;
-    }
 
     @PostMapping
     @Operation(summary = "Registrar nova dívida")

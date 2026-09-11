@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import lombok.RequiredArgsConstructor;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -14,13 +15,11 @@ import java.util.Map;
  * Health check para load balancers e Render (inclui checagem básica do banco).
  */
 @RestController
+@RequiredArgsConstructor
 public class HealthController {
 
     private final DataSource dataSource;
 
-    public HealthController(DataSource dataSource) {
-        this.dataSource = dataSource;
-    }
 
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {

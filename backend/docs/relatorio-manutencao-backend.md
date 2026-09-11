@@ -316,6 +316,66 @@ Esperado: `1` / `<< Flyway Baseline >>` / `BASELINE`; `2` / `token revogado` /
   `data/sgi.db`.
 - Testcontainers opt-in para não quebrar `mvn test` sem Docker.
 
+## Fase 5 — Estrutura e duplicação
+
+### Pacotes
+
+- `config/` ficou com `*Properties`, `ClockConfig`, `CorsConfig`, `WebMvcConfig` e os
+  dois `*EnvironmentPostProcessor` (referenciados em `META-INF/spring.factories`).
+  Não há `OpenApiConfig`: o Springdoc continua na auto-configuração.
+- `security/`: `SecurityConfig`, JWT, rate limit, interceptor, `StaffAccessService`,
+  `EnvioBoletoAccessService`, `PortalAccessGuard`, `PublicRoutes`.
+- `bootstrap/`: seeder, import runners, migrações SQLite, `ProdStartupValidator`,
+  WAL/schema SQLite, SMTP bootstrap.
+- `listener/`: `ClienteStatusUpdateListener`, `LivroCaixaPagamentoListener`.
+- `service/email/`: os três builders de e-mail. `BoletoArquivoValidator` foi para
+  `service/`. `mapper/` ganhou `ClienteMapper`, `DividaMapper`, `TarefaMapper`,
+  `LivroCaixaMovimentacaoMapper` e `JurosConfigMapper` (sem MapStruct).
+
+### Duplicação e mortos
+
+- `PublicRoutes.PATTERNS` alimenta `SecurityConfig` e as exclusões do interceptor.
+  O rate limit continua só nos endpoints de auth (`isRateLimitedAuth`), para não
+  limitar `/health`, Swagger nem o webhook.
+- `JwtTokenProvider.parseClaims` + `extractBearerToken` unificam parse e Bearer.
+  Removidos `isPortalToken`, `validateToken` e `AuthService.validarToken`.
+- `LoteEnvioBoletoService`: ramos idênticos de `CONCLUIDO_COM_ERROS` viraram um `if`.
+- `CsvLinhaParser` nos quatro runners. Celular/CPF do relatório usam
+  `TelefoneClienteUtil` e `DocumentoUtil`.
+
+### Lombok, Clock e limpeza
+
+- `@RequiredArgsConstructor` / `@Slf4j` nos services e controllers, com exceção de
+  construtores que têm lógica (`RateLimitFilter`, `NotificationService` com `@Value`
+  e `Math.max`). FQCN de upload no `GlobalExceptionHandler` viraram imports.
+- `Clock` injetado em `TarefaService`, `LivroCaixaMovimentacaoService`,
+  `InadimplenciaService`, `GeracaoCobrancaRecorrenteService.gerarProtocolo`,
+  `DividaMapper`/`TarefaMapper`/`LivroCaixaMovimentacaoMapper`, `JurosConfigService`.
+  `MultaJurosUtil` ganhou sobrecargas com `Clock`. Testes de tarefa/dívida usam
+  `Clock.fixed`.
+- Apagados `backend/package-lock.json` e `backend/system.properties` (Heroku).
+  `Dockerfile` não define mais `SPRING_DATASOURCE_URL` SQLite; prod usa `DATABASE_URL`.
+
+### Validação
+
+- `mvn -q clean test`: PASSOU — **251 testes**, zero falhas, zero erros, zero
+  ignorados (mesma contagem da Fase 4). ITs Postgres continuam opt-in
+  (`-Dsgi.testcontainers=true`).
+- Nenhuma alteração em `frontend/`. Nenhum SQL de produção. Seeder inalterado
+  quanto a logins/senhas existentes.
+
+### Decisões
+
+- `CorsConfig` e os post-processors ficam em `config/` (CORS não é `*Properties`;
+  factories não podem mudar de pacote sem risco de boot).
+- Rate limit não foi estendido a todas as rotas públicas.
+- Demais `toDto` privados (fora dos quatro módulos) ficam para uma fase seguinte.
+
+### Pendências de frontend
+
+- Nenhuma. Contratos JSON preservados (`JurosConfigDTO` igual; controller agora
+  recebe o DTO já montado no service).
+
 ## Próximas fases
 
-Fases 5 a 7 ainda não iniciadas.
+Fases 6 e 7 ainda não iniciadas.

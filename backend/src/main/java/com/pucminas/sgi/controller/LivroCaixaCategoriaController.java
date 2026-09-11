@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import lombok.RequiredArgsConstructor;
 
 import com.pucminas.sgi.security.StaffAuth;
 
@@ -21,13 +22,11 @@ import java.util.UUID;
 @RequestMapping("/api/livro-caixa/categorias")
 @PreAuthorize(StaffAuth.FINANCEIRO)
 @Tag(name = "Livro Caixa - Categorias")
+@RequiredArgsConstructor
 public class LivroCaixaCategoriaController {
 
     private final LivroCaixaCategoriaService categoriaService;
 
-    public LivroCaixaCategoriaController(LivroCaixaCategoriaService categoriaService) {
-        this.categoriaService = categoriaService;
-    }
 
     @GetMapping
     @Operation(summary = "Listar categorias")

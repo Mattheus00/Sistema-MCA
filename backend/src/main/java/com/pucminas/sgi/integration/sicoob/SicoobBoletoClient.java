@@ -8,6 +8,7 @@ import com.pucminas.sgi.entity.Divida;
 import com.pucminas.sgi.exception.BusinessRuleException;
 import com.pucminas.sgi.util.MoneyUtil;
 import org.springframework.stereotype.Component;
+import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
@@ -17,17 +18,13 @@ import java.util.Map;
  * Cobrança Bancária v3 — emissão e consulta de boletos.
  */
 @Component
+@RequiredArgsConstructor
 public class SicoobBoletoClient {
 
     private final SicoobProperties properties;
     private final SicoobHttpClient httpClient;
     private final ObjectMapper objectMapper;
 
-    public SicoobBoletoClient(SicoobProperties properties, SicoobHttpClient httpClient, ObjectMapper objectMapper) {
-        this.properties = properties;
-        this.httpClient = httpClient;
-        this.objectMapper = objectMapper;
-    }
 
     public JsonNode incluirBoleto(Divida divida) {
         Cliente cliente = divida.getCliente();

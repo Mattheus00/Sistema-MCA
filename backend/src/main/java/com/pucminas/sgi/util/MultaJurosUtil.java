@@ -2,6 +2,7 @@ package com.pucminas.sgi.util;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
@@ -76,5 +77,17 @@ public final class MultaJurosUtil {
         BigDecimal multa = calcularMulta(valorPrincipal, vencimento, dataReferencia);
         BigDecimal juros = calcularJuros(valorPrincipal, multa, vencimento, dataReferencia);
         return valorPrincipal.add(multa).add(juros);
+    }
+
+    public static BigDecimal calcularMulta(BigDecimal valorPrincipal, LocalDate vencimento, Clock clock) {
+        return calcularMulta(valorPrincipal, vencimento, LocalDate.now(clock));
+    }
+
+    public static BigDecimal calcularJuros(BigDecimal valorPrincipal, BigDecimal multa, LocalDate vencimento, Clock clock) {
+        return calcularJuros(valorPrincipal, multa, vencimento, LocalDate.now(clock));
+    }
+
+    public static BigDecimal valorTotalComMultaEJuros(BigDecimal valorPrincipal, LocalDate vencimento, Clock clock) {
+        return valorTotalComMultaEJuros(valorPrincipal, vencimento, LocalDate.now(clock));
     }
 }

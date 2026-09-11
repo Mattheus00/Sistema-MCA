@@ -2,25 +2,23 @@ package com.pucminas.sgi.service;
 
 import com.pucminas.sgi.entity.AuditoriaOperacao;
 import com.pucminas.sgi.repository.AuditoriaOperacaoRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class AuditoriaService {
 
     public static final String USUARIO_SISTEMA = "SISTEMA";
-    private static final Logger log = LoggerFactory.getLogger(AuditoriaService.class);
 
     private final AuditoriaOperacaoRepository auditoriaRepository;
 
-    public AuditoriaService(AuditoriaOperacaoRepository auditoriaRepository) {
-        this.auditoriaRepository = auditoriaRepository;
-    }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void registrar(String acao, String entidade, Object entidadeId, String detalhes) {

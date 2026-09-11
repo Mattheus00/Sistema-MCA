@@ -6,6 +6,7 @@ import com.pucminas.sgi.entity.Divida;
 import com.pucminas.sgi.enums.StatusCliente;
 import com.pucminas.sgi.enums.StatusDivida;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
+import com.pucminas.sgi.mapper.ClienteMapper;
 import com.pucminas.sgi.repository.ClienteRepository;
 import com.pucminas.sgi.repository.DividaRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -39,6 +41,8 @@ class ClienteServiceTest {
     private DividaRepository dividaRepository;
     @Mock
     private DividaService dividaService;
+    @Spy
+    private ClienteMapper clienteMapper = new ClienteMapper();
 
     @InjectMocks
     private ClienteService clienteService;

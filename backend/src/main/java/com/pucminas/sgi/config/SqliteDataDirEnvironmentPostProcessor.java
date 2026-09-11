@@ -1,10 +1,9 @@
 package com.pucminas.sgi.config;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.env.EnvironmentPostProcessor;
 import org.springframework.core.env.ConfigurableEnvironment;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,9 +13,8 @@ import java.nio.file.Paths;
 /**
  * Garante que o diretório pai do arquivo SQLite exista antes do DataSource conectar.
  */
+@Slf4j
 public class SqliteDataDirEnvironmentPostProcessor implements EnvironmentPostProcessor {
-
-    private static final Logger log = LoggerFactory.getLogger(SqliteDataDirEnvironmentPostProcessor.class);
     private static final String SQLITE_PREFIX = "jdbc:sqlite:";
 
     @Override

@@ -7,7 +7,10 @@ import com.pucminas.sgi.entity.*;
 import com.pucminas.sgi.enums.*;
 import com.pucminas.sgi.exception.BusinessRuleException;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
+import com.pucminas.sgi.mapper.LivroCaixaMovimentacaoMapper;
 import com.pucminas.sgi.repository.*;
+import com.pucminas.sgi.security.StaffAccessService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -15,13 +18,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class LivroCaixaMovimentacaoService {
 
     private static final List<LivroCaixaStatusMovimentacao> STATUS_ENTRADA_REALIZADO =
@@ -42,31 +48,13 @@ public class LivroCaixaMovimentacaoService {
     private final UsuarioRepository usuarioRepository;
     private final StaffAccessService staffAccessService;
     private final AuditoriaService auditoriaService;
-
-    public LivroCaixaMovimentacaoService(LivroCaixaMovimentacaoRepository movimentacaoRepository,
-                                         LivroCaixaHistoricoRepository historicoRepository,
-                                         LivroCaixaAnexoRepository anexoRepository,
-                                         LivroCaixaCategoriaService categoriaService,
-                                         ContaFinanceiraService contaService,
-                                         ClienteRepository clienteRepository,
-                                         UsuarioRepository usuarioRepository,
-                                         StaffAccessService staffAccessService,
-                                         AuditoriaService auditoriaService) {
-        this.movimentacaoRepository = movimentacaoRepository;
-        this.historicoRepository = historicoRepository;
-        this.anexoRepository = anexoRepository;
-        this.categoriaService = categoriaService;
-        this.contaService = contaService;
-        this.clienteRepository = clienteRepository;
-        this.usuarioRepository = usuarioRepository;
-        this.staffAccessService = staffAccessService;
-        this.auditoriaService = auditoriaService;
-    }
+    private final LivroCaixaMovimentacaoMapper movimentacaoMapper;
+    private final Clock clock;
 
     @Transactional(readOnly = true)
     public LivroCaixaDashboardDTO dashboard(UUID usuarioId) {
         staffAccessService.assertPodeAcessarLivroCaixa(usuarioId);
-        LocalDate hoje = LocalDate.now();
+        LocalDate hoje = LocalDate.now(clock);
         YearMonth mesAtual = YearMonth.from(hoje);
         LocalDate inicioMes = mesAtual.atDay(1);
         LocalDate fimMes = mesAtual.atEndOfMonth();
@@ -120,7 +108,7 @@ public class LivroCaixaMovimentacaoService {
                         valorMax != null ? LivroCaixaSupport.reaisParaCentavos(valorMax) : null,
                         blankToNull(busca)),
                 pageable);
-        return page.map(this::toDto);
+        return page.map(movimentacaoMapper::toDto);
     }
 
     @Transactional(readOnly = true)
@@ -129,7 +117,7 @@ public class LivroCaixaMovimentacaoService {
         LivroCaixaMovimentacao mov = movimentacaoRepository.findByIdDetalhado(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Movimentação Livro Caixa", id));
         return LivroCaixaMovimentacaoDetalheDTO.builder()
-                .movimentacao(toDto(mov))
+                .movimentacao(movimentacaoMapper.toDto(mov))
                 .anexos(anexoRepository.findByMovimentacaoIdOrderByCriadoEmDesc(id).stream()
                         .map(a -> LivroCaixaAnexoResponseDTO.builder()
                                 .id(a.getId())
@@ -168,7 +156,7 @@ public class LivroCaixaMovimentacaoService {
         mov = movimentacaoRepository.save(mov);
         auditoriaService.registrarNaTransacaoAtual("CRIAR", "LIVRO_CAIXA_MOVIMENTACAO", mov.getId(),
                 "Movimentação manual criada: " + mov.getDescricao());
-        return toDto(mov);
+        return movimentacaoMapper.toDto(mov);
     }
 
     @Transactional
@@ -197,7 +185,7 @@ public class LivroCaixaMovimentacaoService {
         mov = movimentacaoRepository.save(mov);
         auditoriaService.registrarNaTransacaoAtual("ATUALIZAR", "LIVRO_CAIXA_MOVIMENTACAO", mov.getId(),
                 "Movimentação atualizada.");
-        return toDto(mov);
+        return movimentacaoMapper.toDto(mov);
     }
 
     @Transactional
@@ -226,7 +214,7 @@ public class LivroCaixaMovimentacaoService {
         mov = movimentacaoRepository.save(mov);
         auditoriaService.registrarNaTransacaoAtual("RECEBER", "LIVRO_CAIXA_MOVIMENTACAO", mov.getId(),
                 "Entrada marcada como recebida em " + dto.getDataPagamento());
-        return toDto(mov);
+        return movimentacaoMapper.toDto(mov);
     }
 
     @Transactional
@@ -255,7 +243,7 @@ public class LivroCaixaMovimentacaoService {
         mov = movimentacaoRepository.save(mov);
         auditoriaService.registrarNaTransacaoAtual("PAGAR", "LIVRO_CAIXA_MOVIMENTACAO", mov.getId(),
                 "Saída marcada como paga em " + dto.getDataPagamento());
-        return toDto(mov);
+        return movimentacaoMapper.toDto(mov);
     }
 
     @Transactional
@@ -270,19 +258,19 @@ public class LivroCaixaMovimentacaoService {
         registrarHistoricoSeMudou(mov, "status", mov.getStatus().name(),
                 LivroCaixaStatusMovimentacao.CANCELADO.name(), usuarioLogin);
         mov.setStatus(LivroCaixaStatusMovimentacao.CANCELADO);
-        mov.setCanceladoEm(java.time.LocalDateTime.now());
+        mov.setCanceladoEm(LocalDateTime.now(clock));
         mov.setAtualizadoPor(usuarioLogin);
         mov = movimentacaoRepository.save(mov);
         auditoriaService.registrarNaTransacaoAtual("CANCELAR", "LIVRO_CAIXA_MOVIMENTACAO", mov.getId(),
                 "Movimentação cancelada.");
-        return toDto(mov);
+        return movimentacaoMapper.toDto(mov);
     }
 
     @Transactional(readOnly = true)
     public LivroCaixaAnaliseDTO analise(UUID usuarioId, LocalDate dataInicio, LocalDate dataFim) {
         staffAccessService.assertPodeAcessarLivroCaixa(usuarioId);
-        LocalDate inicio = dataInicio != null ? dataInicio : LocalDate.now().minusMonths(5).withDayOfMonth(1);
-        LocalDate fim = dataFim != null ? dataFim : LocalDate.now();
+        LocalDate inicio = dataInicio != null ? dataInicio : LocalDate.now(clock).minusMonths(5).withDayOfMonth(1);
+        LocalDate fim = dataFim != null ? dataFim : LocalDate.now(clock);
 
         List<LivroCaixaMovimentacao> realizadas = movimentacaoRepository.listarRealizadasNoPeriodo(
                 List.of(LivroCaixaStatusMovimentacao.RECEBIDO, LivroCaixaStatusMovimentacao.PAGO),
@@ -372,7 +360,7 @@ public class LivroCaixaMovimentacaoService {
                                             UUID contaId) {
         staffAccessService.assertPodeAcessarLivroCaixa(usuarioId);
         LocalDate inicio = dataInicio != null ? dataInicio : YearMonth.now().atDay(1);
-        LocalDate fim = dataFim != null ? dataFim : LocalDate.now();
+        LocalDate fim = dataFim != null ? dataFim : LocalDate.now(clock);
 
         Page<LivroCaixaMovimentacao> page = movimentacaoRepository.findAll(
                 LivroCaixaMovimentacaoSpecs.filtrar(
@@ -391,7 +379,7 @@ public class LivroCaixaMovimentacaoService {
                     saidas = saidas.add(mov.getValorCentavos());
                 }
             }
-            itens.add(toDto(mov));
+            itens.add(movimentacaoMapper.toDto(mov));
         }
 
         BigDecimal saldoFinal = entradas.subtract(saidas);
@@ -442,7 +430,7 @@ public class LivroCaixaMovimentacaoService {
         if ((dto.getStatus() == LivroCaixaStatusMovimentacao.RECEBIDO
                 || dto.getStatus() == LivroCaixaStatusMovimentacao.PAGO)
                 && mov.getDataPagamento() == null) {
-            mov.setDataPagamento(dto.getDataMovimentacao() != null ? dto.getDataMovimentacao() : LocalDate.now());
+            mov.setDataPagamento(dto.getDataMovimentacao() != null ? dto.getDataMovimentacao() : LocalDate.now(clock));
         }
         mov.setFormaPagamento(dto.getFormaPagamento());
         mov.setObservacao(dto.getObservacao());
@@ -482,38 +470,6 @@ public class LivroCaixaMovimentacaoService {
         return usuarioRepository.findById(usuarioId)
                 .map(Usuario::getTelefone)
                 .orElse(usuarioId.toString());
-    }
-
-    private LivroCaixaMovimentacaoResponseDTO toDto(LivroCaixaMovimentacao mov) {
-        return LivroCaixaMovimentacaoResponseDTO.builder()
-                .id(mov.getId())
-                .tipo(mov.getTipo())
-                .descricao(mov.getDescricao())
-                .valor(LivroCaixaSupport.centavosParaReais(mov.getValorCentavos()))
-                .categoriaId(mov.getCategoriaId())
-                .categoriaNome(mov.getCategoria() != null ? mov.getCategoria().getNome() : null)
-                .clienteId(mov.getClienteId())
-                .clienteNome(mov.getCliente() != null ? mov.getCliente().getNome() : null)
-                .dataMovimentacao(mov.getDataMovimentacao())
-                .dataVencimento(mov.getDataVencimento())
-                .dataPagamento(mov.getDataPagamento())
-                .status(mov.getStatus())
-                .formaPagamento(mov.getFormaPagamento())
-                .contaId(mov.getContaId())
-                .contaNome(mov.getConta() != null ? mov.getConta().getNome() : null)
-                .observacao(mov.getObservacao())
-                .fornecedor(mov.getFornecedor())
-                .origem(mov.getOrigem())
-                .origemId(mov.getOrigemId())
-                .editavel(LivroCaixaSupport.isEditavel(mov))
-                .vencido(LivroCaixaSupport.isVencido(mov))
-                .proximoVencimento(LivroCaixaSupport.isProximoVencimento(mov))
-                .criadoPor(mov.getCriadoPor())
-                .atualizadoPor(mov.getAtualizadoPor())
-                .criadoEm(mov.getCriadoEm())
-                .atualizadoEm(mov.getAtualizadoEm())
-                .canceladoEm(mov.getCanceladoEm())
-                .build();
     }
 
     private static String blankToNull(String value) {

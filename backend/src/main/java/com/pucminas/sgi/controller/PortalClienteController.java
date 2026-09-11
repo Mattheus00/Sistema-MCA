@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.UUID;
@@ -17,13 +18,11 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/portal")
 @Tag(name = "Portal — Cliente", description = "Dívidas e resumo financeiro do cliente logado")
+@RequiredArgsConstructor
 public class PortalClienteController {
 
     private final PortalClienteService portalClienteService;
 
-    public PortalClienteController(PortalClienteService portalClienteService) {
-        this.portalClienteService = portalClienteService;
-    }
 
     @GetMapping("/me")
     @Operation(summary = "Perfil do cliente logado")

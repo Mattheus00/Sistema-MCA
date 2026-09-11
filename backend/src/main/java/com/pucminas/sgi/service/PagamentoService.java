@@ -13,11 +13,11 @@ import com.pucminas.sgi.event.PagamentoRegistradoEvent;
 import com.pucminas.sgi.repository.DividaRepository;
 import com.pucminas.sgi.repository.PagamentoRepository;
 import com.pucminas.sgi.util.MoneyUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -29,24 +29,15 @@ import java.util.stream.Collectors;
  * Serviço de pagamentos: registro, recálculo de dívida e saldo do cliente.
  */
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class PagamentoService {
-
-    private static final Logger log = LoggerFactory.getLogger(PagamentoService.class);
 
     private final PagamentoRepository pagamentoRepository;
     private final DividaRepository dividaRepository;
     private final DividaService dividaService;
     private final ApplicationEventPublisher eventPublisher;
 
-    public PagamentoService(PagamentoRepository pagamentoRepository,
-                            DividaRepository dividaRepository,
-                            DividaService dividaService,
-                            ApplicationEventPublisher eventPublisher) {
-        this.pagamentoRepository = pagamentoRepository;
-        this.dividaRepository = dividaRepository;
-        this.dividaService = dividaService;
-        this.eventPublisher = eventPublisher;
-    }
 
     @Transactional
     public ReciboDTO registrarPagamento(PagamentoDTO dto) {

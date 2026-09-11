@@ -1,6 +1,6 @@
 package com.pucminas.sgi.controller;
 
-import com.pucminas.sgi.config.JwtTokenProvider;
+import com.pucminas.sgi.security.JwtTokenProvider;
 import com.pucminas.sgi.dto.request.CadastroUsuarioDTO;
 import com.pucminas.sgi.dto.request.LoginDTO;
 import com.pucminas.sgi.dto.request.SolicitarRecuperacaoSenhaDTO;
@@ -24,25 +24,20 @@ import org.springframework.security.core.Authentication;
 import org.springframework.util.StringUtils;
 import com.pucminas.sgi.security.StaffAuth;
 import org.springframework.web.bind.annotation.*;
+import lombok.RequiredArgsConstructor;
 
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
 @Tag(name = "Autenticação", description = "Login e dados do usuário autenticado")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
     private final JwtTokenProvider jwtTokenProvider;
     private final UsuarioService usuarioService;
 
-    public AuthController(AuthService authService,
-                          JwtTokenProvider jwtTokenProvider,
-                          UsuarioService usuarioService) {
-        this.authService = authService;
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.usuarioService = usuarioService;
-    }
 
     @PostMapping("/login")
     @Operation(summary = "Login", description = "Autentica por login (telefone ou usuário) e senha, retorna token JWT")

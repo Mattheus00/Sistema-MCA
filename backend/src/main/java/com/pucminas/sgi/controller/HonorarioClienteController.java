@@ -14,22 +14,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.pucminas.sgi.security.StaffAuth;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @Tag(name = "Honorários", description = "Histórico de honorários e reajustes em lote")
+@RequiredArgsConstructor
 public class HonorarioClienteController {
 
     private final HonorarioClienteService honorarioService;
     private final ReajusteHonorarioService reajusteService;
 
-    public HonorarioClienteController(HonorarioClienteService honorarioService,
-                                      ReajusteHonorarioService reajusteService) {
-        this.honorarioService = honorarioService;
-        this.reajusteService = reajusteService;
-    }
 
     @GetMapping("/api/clientes/{clienteId}/honorarios")
     @PreAuthorize(StaffAuth.STAFF)

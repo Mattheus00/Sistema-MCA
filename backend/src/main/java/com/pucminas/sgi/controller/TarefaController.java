@@ -21,6 +21,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import com.pucminas.sgi.security.StaffAuth;
+import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -30,13 +31,11 @@ import java.util.UUID;
 @RequestMapping("/api/tarefas")
 @PreAuthorize(StaffAuth.STAFF)
 @Tag(name = "Gestão de Tarefas", description = "Kanban, lista e calendário de tarefas do escritório")
+@RequiredArgsConstructor
 public class TarefaController {
 
     private final TarefaService tarefaService;
 
-    public TarefaController(TarefaService tarefaService) {
-        this.tarefaService = tarefaService;
-    }
 
     @GetMapping
     @Operation(summary = "Listar tarefas (paginado, com filtros)")

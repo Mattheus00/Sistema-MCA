@@ -4,14 +4,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pucminas.sgi.config.SicoobProperties;
 import com.pucminas.sgi.exception.SicoobApiException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 
 import javax.net.ssl.SSLContext;
 import java.net.http.HttpClient;
@@ -22,19 +22,15 @@ import java.util.concurrent.atomic.AtomicReference;
  * OAuth2 client_credentials com mTLS (token Sicoob).
  */
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class SicoobTokenService {
-
-    private static final Logger log = LoggerFactory.getLogger(SicoobTokenService.class);
 
     private final SicoobProperties properties;
     private final ObjectMapper objectMapper;
     private final AtomicReference<CachedToken> cache = new AtomicReference<>();
     private volatile SSLContext sslContext;
 
-    public SicoobTokenService(SicoobProperties properties, ObjectMapper objectMapper) {
-        this.properties = properties;
-        this.objectMapper = objectMapper;
-    }
 
     public String getAccessToken() {
         if (properties.isMock()) {

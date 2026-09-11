@@ -1,11 +1,10 @@
 package com.pucminas.sgi.config;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.env.EnvironmentPostProcessor;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
+import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
 import java.net.URLDecoder;
@@ -16,9 +15,8 @@ import java.util.Map;
 /**
  * Converte DATABASE_URL do Render (postgres://) em propriedades JDBC do Spring Boot.
  */
+@Slf4j
 public class PostgresDataSourceEnvironmentPostProcessor implements EnvironmentPostProcessor {
-
-    private static final Logger log = LoggerFactory.getLogger(PostgresDataSourceEnvironmentPostProcessor.class);
 
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {

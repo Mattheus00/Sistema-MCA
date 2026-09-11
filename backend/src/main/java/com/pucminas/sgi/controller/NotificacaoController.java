@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import com.pucminas.sgi.security.StaffAuth;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.Map;
@@ -21,13 +22,11 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/notificacoes")
 @Tag(name = "Notificações", description = "Envio de cobrança por email")
+@RequiredArgsConstructor
 public class NotificacaoController {
 
     private final NotificationService notificationService;
 
-    public NotificacaoController(NotificationService notificationService) {
-        this.notificationService = notificationService;
-    }
 
     @PostMapping("/enviar-cobranca")
     @PreAuthorize(StaffAuth.FINANCEIRO)

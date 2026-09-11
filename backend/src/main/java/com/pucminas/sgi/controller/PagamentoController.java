@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.pucminas.sgi.security.StaffAuth;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,13 +21,11 @@ import java.util.UUID;
 @RequestMapping("/api/pagamentos")
 @PreAuthorize(StaffAuth.STAFF)
 @Tag(name = "Pagamentos")
+@RequiredArgsConstructor
 public class PagamentoController {
 
     private final PagamentoService pagamentoService;
 
-    public PagamentoController(PagamentoService pagamentoService) {
-        this.pagamentoService = pagamentoService;
-    }
 
     @PostMapping
     @Operation(summary = "Registrar pagamento")

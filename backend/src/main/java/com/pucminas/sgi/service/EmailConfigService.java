@@ -5,27 +5,23 @@ import com.pucminas.sgi.dto.response.EmailConfigResponseDTO;
 import com.pucminas.sgi.entity.EmailConfig;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
 import com.pucminas.sgi.repository.EmailConfigRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class EmailConfigService {
-
-    private static final Logger log = LoggerFactory.getLogger(EmailConfigService.class);
 
     private final EmailConfigRepository emailConfigRepository;
     private final EmailGateway emailGateway;
 
-    public EmailConfigService(EmailConfigRepository emailConfigRepository, EmailGateway emailGateway) {
-        this.emailConfigRepository = emailConfigRepository;
-        this.emailGateway = emailGateway;
-    }
 
     @Transactional
     public EmailConfigResponseDTO salvarConfig(EmailConfigDTO dto) {

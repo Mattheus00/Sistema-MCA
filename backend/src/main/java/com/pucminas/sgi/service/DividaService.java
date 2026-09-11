@@ -3,26 +3,22 @@ package com.pucminas.sgi.service;
 import com.pucminas.sgi.dto.request.DividaDTO;
 import com.pucminas.sgi.dto.request.ItemServicoDTO;
 import com.pucminas.sgi.dto.response.DividaResponseDTO;
-import com.pucminas.sgi.dto.response.ItemServicoResponseDTO;
-import com.pucminas.sgi.dto.response.PagamentoResponseDTO;
 import com.pucminas.sgi.entity.Cliente;
 import com.pucminas.sgi.entity.Divida;
 import com.pucminas.sgi.entity.DividaServico;
-import com.pucminas.sgi.entity.Pagamento;
 import com.pucminas.sgi.entity.Servico;
 import com.pucminas.sgi.enums.StatusDivida;
 import com.pucminas.sgi.enums.TipoCobranca;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
+import com.pucminas.sgi.mapper.DividaMapper;
 import com.pucminas.sgi.repository.ClienteRepository;
 import com.pucminas.sgi.repository.DividaRepository;
 import com.pucminas.sgi.repository.PagamentoRepository;
 import com.pucminas.sgi.repository.ServicoRepository;
-import com.pucminas.sgi.util.MoneyUtil;
-import com.pucminas.sgi.util.MultaJurosUtil;
 import com.pucminas.sgi.util.VencimentoUtil;
 import com.pucminas.sgi.event.ClienteStatusUpdateEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,28 +36,18 @@ import java.util.stream.Collectors;
 /**
  * Serviço de dívidas: registro, consulta, listagem e atualização de status.
  */
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class DividaService {
-
-    private static final Logger log = LoggerFactory.getLogger(DividaService.class);
 
     private final DividaRepository dividaRepository;
     private final ClienteRepository clienteRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final PagamentoRepository pagamentoRepository;
     private final ServicoRepository servicoRepository;
-
-    public DividaService(DividaRepository dividaRepository,
-                         ClienteRepository clienteRepository,
-                         ApplicationEventPublisher eventPublisher,
-                         PagamentoRepository pagamentoRepository,
-                         ServicoRepository servicoRepository) {
-        this.dividaRepository = dividaRepository;
-        this.clienteRepository = clienteRepository;
-        this.eventPublisher = eventPublisher;
-        this.pagamentoRepository = pagamentoRepository;
-        this.servicoRepository = servicoRepository;
-    }
+    private final DividaMapper dividaMapper;
+    private final Clock clock;
 
     @Transactional
     public DividaResponseDTO registrarDivida(DividaDTO dto) {
@@ -79,7 +66,7 @@ public class DividaService {
                 .geradaAutomaticamente(Boolean.TRUE.equals(dto.getGeradaAutomaticamente()))
                 .origemCobranca(dto.getOrigemCobranca())
                 .anoTaxaBalanco(dto.getAnoTaxaBalanco())
-                .statusDivida(LocalDate.now().isAfter(vencimento) ? StatusDivida.VENCIDA : StatusDivida.EM_ABERTO)
+                .statusDivida(LocalDate.now(clock).isAfter(vencimento) ? StatusDivida.VENCIDA : StatusDivida.EM_ABERTO)
                 .protocolo(protocolo)
                 .criadoEm(LocalDateTime.now())
                 .atualizadoEm(LocalDateTime.now())
@@ -99,11 +86,11 @@ public class DividaService {
         d = dividaRepository.save(d);
         eventPublisher.publishEvent(new ClienteStatusUpdateEvent(cliente.getClienteId()));
         log.info("Dívida registrada: {} - {}", d.getDividaId(), protocolo);
-        return toResponse(d);
+        return dividaMapper.toResponse(d);
     }
 
     private String gerarProtocolo() {
-        String data = LocalDate.now().format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
+        String data = LocalDate.now(clock).format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
         String uuidCurto = UUID.randomUUID().toString().substring(0, 8).toUpperCase().replace("-", "");
         return "DIV-" + data + "-" + uuidCurto;
     }
@@ -112,13 +99,13 @@ public class DividaService {
     public DividaResponseDTO consultarDivida(UUID dividaId) {
         Divida d = dividaRepository.findById(dividaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Dívida", dividaId));
-        return toResponse(d);
+        return dividaMapper.toResponse(d);
     }
 
     @Transactional(readOnly = true)
     public List<DividaResponseDTO> listarDividasPorCliente(UUID clienteId) {
         return dividaRepository.findByCliente_ClienteIdOrderByVencimentoAsc(clienteId).stream()
-                .map(this::toResponse)
+                .map(dividaMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -138,18 +125,18 @@ public class DividaService {
             int start = (int) pageable.getOffset();
             int end = Math.min(start + pageable.getPageSize(), list.size());
             return new org.springframework.data.domain.PageImpl<>(
-                    list.subList(start, end).stream().map(this::toResponse).collect(Collectors.toList()),
+                    list.subList(start, end).stream().map(dividaMapper::toResponse).collect(Collectors.toList()),
                     pageable,
                     list.size()
             );
         }
         if (inicio != null && fim != null) {
-            return dividaRepository.findByVencimentoBetween(inicio, fim, pageable).map(this::toResponse);
+            return dividaRepository.findByVencimentoBetween(inicio, fim, pageable).map(dividaMapper::toResponse);
         }
         if (status != null && !status.isEmpty()) {
-            return dividaRepository.findByStatusDividaIn(status, pageable).map(this::toResponse);
+            return dividaRepository.findByStatusDividaIn(status, pageable).map(dividaMapper::toResponse);
         }
-        return dividaRepository.findAll(pageable).map(this::toResponse);
+        return dividaRepository.findAll(pageable).map(dividaMapper::toResponse);
     }
 
     @Transactional
@@ -158,8 +145,8 @@ public class DividaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Dívida", dividaId));
         BigDecimal totalPago = pagamentoRepository.sumValorPagoByDividaId(dividaId);
         if (totalPago == null) totalPago = BigDecimal.ZERO;
-        LocalDate hoje = LocalDate.now();
-        BigDecimal valorDevedor = calcularSaldoDevedorCentavos(d, totalPago, hoje);
+        LocalDate hoje = LocalDate.now(clock);
+        BigDecimal valorDevedor = DividaMapper.calcularSaldoDevedorCentavos(d, totalPago, hoje);
         d.setValorDevedor(valorDevedor);
         if (valorDevedor.compareTo(BigDecimal.ZERO) <= 0) {
             d.setStatusDivida(StatusDivida.QUITADA);
@@ -180,13 +167,13 @@ public class DividaService {
      */
     @Transactional
     public void atualizarValorComMultaJuros() {
-        LocalDate hoje = LocalDate.now();
+        LocalDate hoje = LocalDate.now(clock);
         List<Divida> emAberto = dividaRepository.findByStatusDividaIn(StatusDivida.emAberto());
         for (Divida d : emAberto) {
             if (!hoje.isAfter(d.getVencimento())) continue;
             BigDecimal totalPago = pagamentoRepository.sumValorPagoByDividaId(d.getDividaId());
             if (totalPago == null) totalPago = BigDecimal.ZERO;
-            BigDecimal valorAtualizado = calcularSaldoDevedorCentavos(d, totalPago, hoje);
+            BigDecimal valorAtualizado = DividaMapper.calcularSaldoDevedorCentavos(d, totalPago, hoje);
             d.setValorDevedor(valorAtualizado);
             if (valorAtualizado.compareTo(BigDecimal.ZERO) <= 0) {
                 d.setStatusDivida(StatusDivida.QUITADA);
@@ -202,7 +189,7 @@ public class DividaService {
     @Transactional
     public void verificarDividasVencidas() {
         List<Divida> emAberto = dividaRepository.findByStatusDividaIn(List.of(StatusDivida.EM_ABERTO));
-        LocalDate hoje = LocalDate.now();
+        LocalDate hoje = LocalDate.now(clock);
         for (Divida d : emAberto) {
             if (hoje.isAfter(d.getVencimento())) {
                 d.setStatusDivida(StatusDivida.VENCIDA);
@@ -212,109 +199,13 @@ public class DividaService {
         log.info("Verificação de dívidas vencidas concluída");
     }
 
-    private DividaResponseDTO toResponse(Divida d) {
-        Cliente c = d.getCliente();
-        List<ItemServicoResponseDTO> itensDto = d.getItensServicos().stream()
-                .map(item -> ItemServicoResponseDTO.builder()
-                        .servicoId(item.getServico().getServicoId())
-                        .nomeServico(item.getServico().getNome())
-                        .valor(MoneyUtil.centavosParaReais(item.getValor()))
-                        .build())
-                .collect(Collectors.toList());
-        BigDecimal[] valorEJuros = computarValorEJurosEmTempoReal(d);
-        BigDecimal vOrig = MoneyUtil.centavosParaReais(d.getValorOriginal());
-        BigDecimal vDev = valorEJuros[0];
-        BigDecimal juros = valorEJuros[1];
-        List<PagamentoResponseDTO> pagamentosDto = pagamentoRepository.findByDivida_DividaIdOrderByDataPagamentoDesc(d.getDividaId())
-                .stream()
-                .map(this::pagamentoParaDto)
-                .collect(Collectors.toList());
-        return DividaResponseDTO.builder()
-                .dividaId(d.getDividaId())
-                .clienteId(c.getClienteId())
-                .nomeCliente(c.getNome())
-                .valorOriginal(vOrig)
-                .valorDevedor(vDev)
-                .juros(juros)
-                .vencimento(d.getVencimento())
-                .descricao(d.getDescricao())
-                .tipoCobranca(d.getTipoCobranca())
-                .competencia(d.getCompetencia())
-                .geradaAutomaticamente(d.getGeradaAutomaticamente())
-                .origemCobranca(d.getOrigemCobranca())
-                .anoTaxaBalanco(d.getAnoTaxaBalanco())
-                .statusDivida(d.getStatusDivida())
-                .protocolo(d.getProtocolo())
-                .criadoEm(d.getCriadoEm())
-                .atualizadoEm(d.getAtualizadoEm())
-                .itensServicos(itensDto)
-                .pagamentos(pagamentosDto)
-                .build();
-    }
-
-    private PagamentoResponseDTO pagamentoParaDto(Pagamento p) {
-        return PagamentoResponseDTO.builder()
-                .pagamentoId(p.getPagamentoId())
-                .dividaId(p.getDivida().getDividaId())
-                .protocoloDivida(p.getDivida().getProtocolo())
-                .valorPago(MoneyUtil.centavosParaReais(p.getValorPago()))
-                .dataPagamento(p.getDataPagamento())
-                .metodoPagamento(p.getMetodoPagamento())
-                .comprovante(p.getComprovante())
-                .criadoEm(p.getCriadoEm())
-                .build();
-    }
-
-    /**
-     * Saldo em centavos: bruta (principal + multa/juros se vencida) − total pago.
-     * Não usar {@code valorOriginal - totalPago} como principal quando o pagamento já inclui juros —
-     * isso zera o saldo indevidamente e a tela mostra R$ 0,00 / "dívida já quitada".
-     */
-    private static BigDecimal calcularSaldoDevedorCentavos(Divida d, BigDecimal totalPago, LocalDate hoje) {
-        BigDecimal pago = totalPago != null ? totalPago : BigDecimal.ZERO;
-        BigDecimal bruto;
-        if (hoje.isAfter(d.getVencimento()) && StatusDivida.emAberto().contains(d.getStatusDivida())) {
-            bruto = MultaJurosUtil.valorTotalComMultaEJuros(d.getValorOriginal(), d.getVencimento(), hoje);
-        } else {
-            bruto = d.getValorOriginal();
-        }
-        BigDecimal saldo = bruto.subtract(pago);
-        return saldo.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : saldo;
-    }
-
-    /**
-     * Calcula valor devedor e juros em tempo real. Para dívidas vencidas (EM_ABERTO, VENCIDA, PARCIAL)
-     * usa MultaJurosUtil; caso contrário usa o valor armazenado.
-     * Retorna [valorDevedorReais, jurosReais].
-     */
-    private BigDecimal[] computarValorEJurosEmTempoReal(Divida d) {
-        LocalDate hoje = LocalDate.now();
-        boolean vencida = hoje.isAfter(d.getVencimento());
-        boolean statusAberto = StatusDivida.emAberto().contains(d.getStatusDivida());
-        if (!vencida || !statusAberto) {
-            BigDecimal vOrig = MoneyUtil.centavosParaReais(d.getValorOriginal());
-            BigDecimal vDev = MoneyUtil.centavosParaReais(d.getValorDevedor());
-            BigDecimal juros = vDev.subtract(vOrig).max(BigDecimal.ZERO);
-            return new BigDecimal[]{vDev, juros};
-        }
-        BigDecimal totalPago = pagamentoRepository.sumValorPagoByDividaId(d.getDividaId());
-        if (totalPago == null) totalPago = BigDecimal.ZERO;
-        BigDecimal saldoCentavos = calcularSaldoDevedorCentavos(d, totalPago, hoje);
-        BigDecimal principalRestante = d.getValorOriginal().subtract(totalPago.min(d.getValorOriginal())).max(BigDecimal.ZERO);
-        BigDecimal jurosCentavos = saldoCentavos.subtract(principalRestante).max(BigDecimal.ZERO);
-        return new BigDecimal[]{
-                MoneyUtil.centavosParaReais(saldoCentavos),
-                MoneyUtil.centavosParaReais(jurosCentavos)
-        };
-    }
-
     /** Exposto para ClienteService e InadimplenciaService. */
     public DividaResponseDTO toResponseDTO(Divida d) {
-        return toResponse(d);
+        return dividaMapper.toResponse(d);
     }
 
     /** Retorna [valorDevedorReais, jurosReais] calculados em tempo real. Para InadimplenciaService. */
     public BigDecimal[] getValorEJurosReais(Divida d) {
-        return computarValorEJurosEmTempoReal(d);
+        return dividaMapper.computarValorEJurosEmTempoReal(d);
     }
 }

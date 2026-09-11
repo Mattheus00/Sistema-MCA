@@ -13,13 +13,13 @@ import com.pucminas.sgi.event.ClienteStatusUpdateEvent;
 import com.pucminas.sgi.exception.BusinessRuleException;
 import com.pucminas.sgi.repository.ConfiguracaoCobrancaRepository;
 import com.pucminas.sgi.repository.DividaRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -31,9 +31,9 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class GeracaoCobrancaRecorrenteService {
-
-    private static final Logger log = LoggerFactory.getLogger(GeracaoCobrancaRecorrenteService.class);
     private static final DateTimeFormatter COMPETENCIA_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM");
 
     private final ConfiguracaoCobrancaRepository configuracaoRepository;
@@ -43,19 +43,6 @@ public class GeracaoCobrancaRecorrenteService {
     private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
 
-    public GeracaoCobrancaRecorrenteService(ConfiguracaoCobrancaRepository configuracaoRepository,
-                                            DividaRepository dividaRepository,
-                                            HonorarioClienteService honorarioService,
-                                            AuditoriaService auditoriaService,
-                                            ApplicationEventPublisher eventPublisher,
-                                            Clock clock) {
-        this.configuracaoRepository = configuracaoRepository;
-        this.dividaRepository = dividaRepository;
-        this.honorarioService = honorarioService;
-        this.auditoriaService = auditoriaService;
-        this.eventPublisher = eventPublisher;
-        this.clock = clock;
-    }
 
     @Transactional
     public GeracaoCobrancaResultadoDTO gerarMensalComTaxaSeDezembro(YearMonth competencia, boolean automatico) {
@@ -180,8 +167,8 @@ public class GeracaoCobrancaRecorrenteService {
         return tipo == TipoCobranca.TAXA_BALANCO ? "TAXA_BALANCO_GERADA" : "COBRANCA_MENSAL_GERADA";
     }
 
-    private static String gerarProtocolo() {
-        String data = LocalDate.now().format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
+    private String gerarProtocolo() {
+        String data = LocalDate.now(clock).format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
         String uuidCurto = UUID.randomUUID().toString().substring(0, 8).toUpperCase().replace("-", "");
         return "DIV-" + data + "-" + uuidCurto;
     }

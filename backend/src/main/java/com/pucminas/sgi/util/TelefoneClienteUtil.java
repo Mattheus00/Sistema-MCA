@@ -71,4 +71,25 @@ public final class TelefoneClienteUtil {
         validarTelefoneFixo(telefone);
         validarCelular(celular);
     }
+
+    /** Celular de planilha: DDD 31 implícito em 8/9 dígitos; ignora placeholder "( )". */
+    public static String normalizarCelularImportacao(String raw) {
+        if (raw == null || raw.isBlank() || raw.contains("( )")) {
+            return null;
+        }
+        String digits = apenasDigitos(raw);
+        if (digits == null) {
+            return null;
+        }
+        if (digits.length() == 8 || digits.length() == 9) {
+            return "31" + digits;
+        }
+        if (digits.length() == 10 || digits.length() == 11) {
+            return digits;
+        }
+        if (digits.length() > 11) {
+            return digits.substring(digits.length() - 11);
+        }
+        return null;
+    }
 }

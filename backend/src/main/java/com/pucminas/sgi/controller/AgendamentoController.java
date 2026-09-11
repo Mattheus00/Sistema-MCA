@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.pucminas.sgi.security.StaffAuth;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,13 +20,11 @@ import java.util.UUID;
 @RequestMapping("/api/agendamentos")
 @PreAuthorize(StaffAuth.FINANCEIRO)
 @Tag(name = "Agendamentos", description = "Agendamento de lembretes por email")
+@RequiredArgsConstructor
 public class AgendamentoController {
 
     private final AgendamentoService agendamentoService;
 
-    public AgendamentoController(AgendamentoService agendamentoService) {
-        this.agendamentoService = agendamentoService;
-    }
 
     @PostMapping
     @Operation(summary = "Criar agendamento")

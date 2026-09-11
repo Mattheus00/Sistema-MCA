@@ -6,10 +6,10 @@ import com.pucminas.sgi.entity.AgendamentoNotificacao;
 import com.pucminas.sgi.enums.Periodicidade;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
 import com.pucminas.sgi.repository.AgendamentoNotificacaoRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,15 +17,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class AgendamentoService {
-
-    private static final Logger log = LoggerFactory.getLogger(AgendamentoService.class);
 
     private final AgendamentoNotificacaoRepository agendamentoRepository;
 
-    public AgendamentoService(AgendamentoNotificacaoRepository agendamentoRepository) {
-        this.agendamentoRepository = agendamentoRepository;
-    }
 
     @Transactional
     public AgendamentoResponseDTO criarAgendamento(AgendamentoDTO dto) {

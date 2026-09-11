@@ -1,7 +1,13 @@
 package com.pucminas.sgi.controller;
 
-import com.pucminas.sgi.config.*;
+import com.pucminas.sgi.config.WebMvcConfig;
 import com.pucminas.sgi.repository.*;
+import com.pucminas.sgi.security.JwtAuthenticationFilter;
+import com.pucminas.sgi.security.JwtTokenProvider;
+import com.pucminas.sgi.security.PortalJwtAuthenticationFilter;
+import com.pucminas.sgi.security.SecurityConfig;
+import com.pucminas.sgi.security.StaffAccessInterceptor;
+import com.pucminas.sgi.security.StaffAccessService;
 import com.pucminas.sgi.service.*;
 import com.pucminas.sgi.dto.response.MensagemResponseDTO;
 import org.junit.jupiter.api.Test;

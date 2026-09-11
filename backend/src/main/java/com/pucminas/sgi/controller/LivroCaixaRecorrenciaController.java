@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import lombok.RequiredArgsConstructor;
 
 import com.pucminas.sgi.security.StaffAuth;
 
@@ -21,13 +22,11 @@ import java.util.UUID;
 @RequestMapping("/api/livro-caixa/recorrencias")
 @PreAuthorize(StaffAuth.FINANCEIRO)
 @Tag(name = "Livro Caixa - Recorrências")
+@RequiredArgsConstructor
 public class LivroCaixaRecorrenciaController {
 
     private final LivroCaixaRecorrenciaService recorrenciaService;
 
-    public LivroCaixaRecorrenciaController(LivroCaixaRecorrenciaService recorrenciaService) {
-        this.recorrenciaService = recorrenciaService;
-    }
 
     @GetMapping
     @Operation(summary = "Listar lançamentos recorrentes")

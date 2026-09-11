@@ -15,10 +15,10 @@ import com.pucminas.sgi.integration.sicoob.SicoobBoletoClient;
 import com.pucminas.sgi.integration.sicoob.SicoobPixClient;
 import com.pucminas.sgi.repository.CobrancaSicoobRepository;
 import com.pucminas.sgi.repository.DividaRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -27,9 +27,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class SicoobCobrancaService {
-
-    private static final Logger log = LoggerFactory.getLogger(SicoobCobrancaService.class);
 
     private final SicoobProperties properties;
     private final DividaRepository dividaRepository;
@@ -37,17 +37,6 @@ public class SicoobCobrancaService {
     private final SicoobPixClient pixClient;
     private final SicoobBoletoClient boletoClient;
 
-    public SicoobCobrancaService(SicoobProperties properties,
-                                 DividaRepository dividaRepository,
-                                 CobrancaSicoobRepository cobrancaRepository,
-                                 SicoobPixClient pixClient,
-                                 SicoobBoletoClient boletoClient) {
-        this.properties = properties;
-        this.dividaRepository = dividaRepository;
-        this.cobrancaRepository = cobrancaRepository;
-        this.pixClient = pixClient;
-        this.boletoClient = boletoClient;
-    }
 
     public SicoobStatusResponseDTO status() {
         return SicoobStatusResponseDTO.builder()

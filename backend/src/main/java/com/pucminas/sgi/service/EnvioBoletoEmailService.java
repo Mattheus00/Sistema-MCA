@@ -3,16 +3,14 @@ package com.pucminas.sgi.service;
 import com.pucminas.sgi.config.BoletoEnvioProperties;
 import com.pucminas.sgi.entity.EnvioBoleto;
 import com.pucminas.sgi.exception.EmailSendException;
-import com.pucminas.sgi.util.BoletoEmailTemplateBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.pucminas.sgi.service.email.BoletoEmailTemplateBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 public class EnvioBoletoEmailService {
-
-    private static final Logger log = LoggerFactory.getLogger(EnvioBoletoEmailService.class);
 
     private final EmailGateway emailGateway;
     private final BoletoEnvioProperties boletoProperties;

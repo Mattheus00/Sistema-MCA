@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import lombok.RequiredArgsConstructor;
 
 import java.net.http.HttpClient;
 import java.util.Map;
@@ -17,19 +18,13 @@ import java.util.Map;
  * Cliente HTTP comum (mTLS + Bearer + client_id) para APIs Sicoob.
  */
 @Component
+@RequiredArgsConstructor
 public class SicoobHttpClient {
 
     private final SicoobProperties properties;
     private final SicoobTokenService tokenService;
     private final ObjectMapper objectMapper;
 
-    public SicoobHttpClient(SicoobProperties properties,
-                            SicoobTokenService tokenService,
-                            ObjectMapper objectMapper) {
-        this.properties = properties;
-        this.tokenService = tokenService;
-        this.objectMapper = objectMapper;
-    }
 
     public JsonNode get(String baseUrl, String path, Map<String, String> query) {
         return exchange(baseUrl, path, "GET", null, query);

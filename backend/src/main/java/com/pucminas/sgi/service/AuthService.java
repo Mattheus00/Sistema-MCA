@@ -1,6 +1,6 @@
 package com.pucminas.sgi.service;
 
-import com.pucminas.sgi.config.JwtTokenProvider;
+import com.pucminas.sgi.security.JwtTokenProvider;
 import com.pucminas.sgi.dto.request.LoginDTO;
 import com.pucminas.sgi.dto.request.RedefinirSenhaRequestDTO;
 import com.pucminas.sgi.dto.request.ValidarLoginRequestDTO;
@@ -27,12 +27,12 @@ import com.pucminas.sgi.enums.StatusUsuario;
 import com.pucminas.sgi.exception.BusinessRuleException;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
 import com.pucminas.sgi.repository.UsuarioRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -41,9 +41,9 @@ import java.util.UUID;
  * Serviço de autenticação: login JWT e validação de token.
  */
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class AuthService {
-
-    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UsuarioRepository usuarioRepository;
     private final JwtTokenProvider jwtTokenProvider;
@@ -63,19 +63,6 @@ public class AuthService {
     @Value("${sgi.auth.password-recovery-enabled:false}")
     private boolean passwordRecoveryEnabled;
 
-    public AuthService(UsuarioRepository usuarioRepository,
-                       JwtTokenProvider jwtTokenProvider,
-                       PasswordEncoder passwordEncoder, TokenRecuperacaoSenhaRepository tokenRepository,
-                       TokenRevogadoRepository tokenRevogadoRepository,
-                       EmailGateway emailGateway, Clock clock) {
-        this.usuarioRepository = usuarioRepository;
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.passwordEncoder = passwordEncoder;
-        this.tokenRepository = tokenRepository;
-        this.tokenRevogadoRepository = tokenRevogadoRepository;
-        this.emailGateway = emailGateway;
-        this.clock = clock;
-    }
 
     private void ensurePasswordRecoveryEnabled() {
         if (!passwordRecoveryEnabled) {
@@ -139,18 +126,10 @@ public class AuthService {
         log.info("Token revogado no logout.");
     }
 
-    public JwtTokenProvider.JwtClaims validarToken(String token) {
-        JwtTokenProvider.JwtClaims claims = jwtTokenProvider.getClaims(token);
-        if (claims == null) {
-            throw new ResourceNotFoundException("Token inválido ou expirado");
-        }
-        return claims;
-    }
-
     @Transactional
     public void registrarAcesso(UUID usuarioId) {
         usuarioRepository.findById(usuarioId).ifPresent(u -> {
-            u.setUltimoAcesso(LocalDateTime.now());
+            u.setUltimoAcesso(LocalDateTime.now(clock));
             usuarioRepository.save(u);
         });
     }

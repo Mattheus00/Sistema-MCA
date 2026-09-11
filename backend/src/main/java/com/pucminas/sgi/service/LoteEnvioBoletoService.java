@@ -6,6 +6,7 @@ import com.pucminas.sgi.dto.request.EnviarLoteRequest;
 import com.pucminas.sgi.dto.response.CriarLoteEnvioResponse;
 import com.pucminas.sgi.dto.response.EnviarLoteResponse;
 import com.pucminas.sgi.dto.response.HistoricoLoteResponse;
+import com.pucminas.sgi.dto.response.ItemEnvioBoletoResponse;
 import com.pucminas.sgi.dto.response.LoteEnvioBoletoResponse;
 import com.pucminas.sgi.dto.response.ResultadoEnvioLoteResponse;
 import com.pucminas.sgi.dto.response.ResultadoEnvioItemResponse;
@@ -26,12 +27,12 @@ import com.pucminas.sgi.mapper.LoteEnvioBoletoMapper;
 import com.pucminas.sgi.repository.ClienteRepository;
 import com.pucminas.sgi.repository.EnvioBoletoRepository;
 import com.pucminas.sgi.repository.LoteEnvioBoletoRepository;
+import com.pucminas.sgi.security.EnvioBoletoAccessService;
 import com.pucminas.sgi.util.EnvioBoletoUtil;
 import com.pucminas.sgi.util.NomeArquivoUtil;
 import com.pucminas.sgi.util.TelefoneClienteUtil;
-import com.pucminas.sgi.validator.BoletoArquivoValidator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -49,9 +50,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class LoteEnvioBoletoService {
-
-    private static final Logger log = LoggerFactory.getLogger(LoteEnvioBoletoService.class);
 
     private final LoteEnvioBoletoRepository loteRepository;
     private final EnvioBoletoRepository envioBoletoRepository;
@@ -66,30 +67,6 @@ public class LoteEnvioBoletoService {
     private final BoletoEnvioProperties properties;
 
     private final Map<UUID, Object> locksPorLote = new ConcurrentHashMap<>();
-
-    public LoteEnvioBoletoService(LoteEnvioBoletoRepository loteRepository,
-                                  EnvioBoletoRepository envioBoletoRepository,
-                                  ClienteRepository clienteRepository,
-                                  EnvioBoletoAccessService accessService,
-                                  ClienteIdentificacaoBoletoService identificacaoService,
-                                  BoletoArquivoStorageService storageService,
-                                  BoletoArquivoValidator arquivoValidator,
-                                  EnvioBoletoEmailService emailService,
-                                  AuditoriaService auditoriaService,
-                                  LoteEnvioBoletoMapper mapper,
-                                  BoletoEnvioProperties properties) {
-        this.loteRepository = loteRepository;
-        this.envioBoletoRepository = envioBoletoRepository;
-        this.clienteRepository = clienteRepository;
-        this.accessService = accessService;
-        this.identificacaoService = identificacaoService;
-        this.storageService = storageService;
-        this.arquivoValidator = arquivoValidator;
-        this.emailService = emailService;
-        this.auditoriaService = auditoriaService;
-        this.mapper = mapper;
-        this.properties = properties;
-    }
 
     @Transactional
     public CriarLoteEnvioResponse criarLote(UUID usuarioId, List<MultipartFile> arquivos) {
@@ -295,7 +272,7 @@ public class LoteEnvioBoletoService {
             bloqueiosGerais.add("Lote cancelado.");
             podeEnviar = false;
         }
-        List<com.pucminas.sgi.dto.response.ItemEnvioBoletoResponse> itensResp = new ArrayList<>();
+        List<ItemEnvioBoletoResponse> itensResp = new ArrayList<>();
         for (int i = 0; i < lote.getItens().size(); i++) {
             itensResp.add(mapper.toItemResponse(lote.getItens().get(i), parseBloqueios(bloqueiosItens.get(i))));
         }
@@ -404,9 +381,7 @@ public class LoteEnvioBoletoService {
 
             recalcularContadoresLote(lote);
             lote.setDataFinalizacao(LocalDateTime.now());
-            if (erros > 0 && enviados > 0) {
-                lote.setStatus(StatusLoteEnvioBoleto.CONCLUIDO_COM_ERROS);
-            } else if (erros > 0) {
+            if (erros > 0) {
                 lote.setStatus(StatusLoteEnvioBoleto.CONCLUIDO_COM_ERROS);
             } else {
                 lote.setStatus(StatusLoteEnvioBoleto.CONCLUIDO);

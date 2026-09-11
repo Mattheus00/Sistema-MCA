@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.pucminas.sgi.security.StaffAuth;
+import lombok.RequiredArgsConstructor;
 
 import java.util.UUID;
 import java.time.LocalDate;
@@ -28,13 +29,11 @@ import java.util.List;
 @RequestMapping("/api/relatorios")
 @PreAuthorize(StaffAuth.FINANCEIRO)
 @Tag(name = "Relatórios")
+@RequiredArgsConstructor
 public class RelatorioController {
 
     private final RelatorioService relatorioService;
 
-    public RelatorioController(RelatorioService relatorioService) {
-        this.relatorioService = relatorioService;
-    }
 
     @GetMapping("/resumo")
     @Operation(summary = "Resumo para dashboard (totalClientes, totalDividas, totalEmAberto, totalPago)")

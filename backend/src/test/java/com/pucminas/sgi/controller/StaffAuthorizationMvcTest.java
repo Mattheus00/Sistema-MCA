@@ -1,6 +1,6 @@
 package com.pucminas.sgi.controller;
 
-import com.pucminas.sgi.entity.JurosConfig;
+import com.pucminas.sgi.dto.response.JurosConfigDTO;
 import com.pucminas.sgi.service.JurosConfigService;
 import com.pucminas.sgi.support.ControllerMvcTestSupport;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,7 +43,7 @@ class StaffAuthorizationMvcTest extends ControllerMvcTestSupport {
 
     @BeforeEach
     void stubJuros() {
-        when(jurosConfigService.getAtual()).thenReturn(JurosConfig.builder()
+        when(jurosConfigService.obter()).thenReturn(JurosConfigDTO.builder()
                 .multaDiaria(BigDecimal.ZERO)
                 .capMultaPercentual(BigDecimal.ZERO)
                 .jurosMensal(BigDecimal.ZERO)
@@ -54,7 +54,7 @@ class StaffAuthorizationMvcTest extends ControllerMvcTestSupport {
     @WithMockUser(roles = "FUNCIONARIO")
     void funcionarioPodeConsultarJuros() throws Exception {
         mvc.perform(get("/api/config/juros")).andExpect(status().isOk());
-        verify(jurosConfigService).getAtual();
+        verify(jurosConfigService).obter();
     }
 
     @Test
@@ -71,7 +71,7 @@ class StaffAuthorizationMvcTest extends ControllerMvcTestSupport {
     @WithMockUser(roles = "PROPRIETARIA")
     void proprietariaPodeAlterarJuros() throws Exception {
         when(jurosConfigService.atualizar(org.mockito.ArgumentMatchers.any()))
-                .thenReturn(JurosConfig.builder()
+                .thenReturn(JurosConfigDTO.builder()
                         .multaDiaria(BigDecimal.ZERO)
                         .capMultaPercentual(BigDecimal.ZERO)
                         .jurosMensal(BigDecimal.ZERO)

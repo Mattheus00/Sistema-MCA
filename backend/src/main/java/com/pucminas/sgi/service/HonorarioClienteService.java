@@ -12,6 +12,7 @@ import com.pucminas.sgi.repository.HonorarioClienteRepository;
 import com.pucminas.sgi.util.MoneyUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -21,19 +22,13 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class HonorarioClienteService {
 
     private final HonorarioClienteRepository honorarioRepository;
     private final ClienteRepository clienteRepository;
     private final AuditoriaService auditoriaService;
 
-    public HonorarioClienteService(HonorarioClienteRepository honorarioRepository,
-                                   ClienteRepository clienteRepository,
-                                   AuditoriaService auditoriaService) {
-        this.honorarioRepository = honorarioRepository;
-        this.clienteRepository = clienteRepository;
-        this.auditoriaService = auditoriaService;
-    }
 
     @Transactional(readOnly = true)
     public List<HonorarioClienteResponseDTO> listarHistorico(UUID clienteId) {

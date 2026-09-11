@@ -9,6 +9,7 @@ import com.pucminas.sgi.util.DocumentoUtil;
 import com.pucminas.sgi.util.NomeArquivoUtil;
 import com.pucminas.sgi.util.TextoIdentificacaoUtil;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -18,6 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
+@RequiredArgsConstructor
 public class ClienteIdentificacaoBoletoService {
 
     private static final double LIMIAR_AMBIGUIDADE = 0.15;
@@ -27,9 +29,6 @@ public class ClienteIdentificacaoBoletoService {
 
     private final ClienteRepository clienteRepository;
 
-    public ClienteIdentificacaoBoletoService(ClienteRepository clienteRepository) {
-        this.clienteRepository = clienteRepository;
-    }
 
     public record ResultadoIdentificacao(
             Cliente cliente,

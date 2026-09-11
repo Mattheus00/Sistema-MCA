@@ -1,11 +1,11 @@
 package com.pucminas.sgi.support;
 
-import com.pucminas.sgi.config.JwtAuthenticationFilter;
-import com.pucminas.sgi.config.JwtTokenProvider;
-import com.pucminas.sgi.config.PortalJwtAuthenticationFilter;
+import com.pucminas.sgi.security.JwtAuthenticationFilter;
+import com.pucminas.sgi.security.JwtTokenProvider;
+import com.pucminas.sgi.security.PortalJwtAuthenticationFilter;
 import com.pucminas.sgi.repository.TokenRevogadoRepository;
 import com.pucminas.sgi.repository.UsuarioRepository;
-import com.pucminas.sgi.service.StaffAccessService;
+import com.pucminas.sgi.security.StaffAccessService;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 /**

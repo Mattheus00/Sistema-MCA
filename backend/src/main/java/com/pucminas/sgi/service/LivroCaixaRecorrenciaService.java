@@ -10,8 +10,10 @@ import com.pucminas.sgi.repository.ClienteRepository;
 import com.pucminas.sgi.repository.LivroCaixaMovimentacaoRepository;
 import com.pucminas.sgi.repository.LivroCaixaRecorrenciaRepository;
 import com.pucminas.sgi.repository.UsuarioRepository;
+import com.pucminas.sgi.security.StaffAccessService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -19,6 +21,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class LivroCaixaRecorrenciaService {
 
     private final LivroCaixaRecorrenciaRepository recorrenciaRepository;
@@ -29,21 +32,6 @@ public class LivroCaixaRecorrenciaService {
     private final UsuarioRepository usuarioRepository;
     private final StaffAccessService staffAccessService;
 
-    public LivroCaixaRecorrenciaService(LivroCaixaRecorrenciaRepository recorrenciaRepository,
-                                        LivroCaixaCategoriaService categoriaService,
-                                        ContaFinanceiraService contaService,
-                                        LivroCaixaMovimentacaoRepository movimentacaoRepository,
-                                        ClienteRepository clienteRepository,
-                                        UsuarioRepository usuarioRepository,
-                                        StaffAccessService staffAccessService) {
-        this.recorrenciaRepository = recorrenciaRepository;
-        this.categoriaService = categoriaService;
-        this.contaService = contaService;
-        this.movimentacaoRepository = movimentacaoRepository;
-        this.clienteRepository = clienteRepository;
-        this.usuarioRepository = usuarioRepository;
-        this.staffAccessService = staffAccessService;
-    }
 
     @Transactional(readOnly = true)
     public List<LivroCaixaRecorrenciaResponseDTO> listar(UUID usuarioId) {

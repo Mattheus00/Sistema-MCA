@@ -12,16 +12,15 @@ import com.pucminas.sgi.exception.ResourceNotFoundException;
 import com.pucminas.sgi.repository.ClienteRepository;
 import com.pucminas.sgi.repository.DividaRepository;
 import com.pucminas.sgi.repository.NotificacaoEmailRepository;
-import com.pucminas.sgi.util.AvisoPendenciaEmailTemplateBuilder;
-import com.pucminas.sgi.util.CobrancaEmailHtmlBuilder;
+import com.pucminas.sgi.service.email.AvisoPendenciaEmailTemplateBuilder;
+import com.pucminas.sgi.service.email.CobrancaEmailHtmlBuilder;
 import com.pucminas.sgi.util.MoneyUtil;
-import com.pucminas.sgi.validator.BoletoArquivoValidator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.pucminas.sgi.service.BoletoArquivoValidator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -31,9 +30,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class NotificationService {
-
-    private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
 
     private final NotificacaoEmailRepository notificacaoRepository;
     private final ClienteRepository clienteRepository;

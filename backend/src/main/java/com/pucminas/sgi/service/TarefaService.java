@@ -14,11 +14,14 @@ import com.pucminas.sgi.enums.StatusTarefa;
 import com.pucminas.sgi.enums.StatusUsuario;
 import com.pucminas.sgi.exception.BusinessRuleException;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
+import com.pucminas.sgi.mapper.TarefaMapper;
 import com.pucminas.sgi.repository.TarefaChecklistRepository;
 import com.pucminas.sgi.repository.TarefaHistoricoRepository;
 import com.pucminas.sgi.repository.TarefaRepository;
 import com.pucminas.sgi.repository.TarefaSpecs;
 import com.pucminas.sgi.repository.UsuarioRepository;
+import com.pucminas.sgi.security.StaffAccessService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -26,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.pucminas.sgi.exception.AccessDeniedBusinessException;
 
+import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -36,6 +40,7 @@ import java.util.stream.Collectors;
 
 
 @Service
+@RequiredArgsConstructor
 public class TarefaService {
 
     private static final List<StatusTarefa> STATUS_ABERTOS = List.of(
@@ -50,18 +55,8 @@ public class TarefaService {
     private final TarefaHistoricoRepository historicoRepository;
     private final UsuarioRepository usuarioRepository;
     private final StaffAccessService staffAccessService;
-
-    public TarefaService(TarefaRepository tarefaRepository,
-                         TarefaChecklistRepository checklistRepository,
-                         TarefaHistoricoRepository historicoRepository,
-                         UsuarioRepository usuarioRepository,
-                         StaffAccessService staffAccessService) {
-        this.tarefaRepository = tarefaRepository;
-        this.checklistRepository = checklistRepository;
-        this.historicoRepository = historicoRepository;
-        this.usuarioRepository = usuarioRepository;
-        this.staffAccessService = staffAccessService;
-    }
+    private final TarefaMapper tarefaMapper;
+    private final Clock clock;
 
     @Transactional(readOnly = true)
     public Page<TarefaResponseDTO> listar(UUID usuarioId,
@@ -81,7 +76,7 @@ public class TarefaService {
                 TarefaSpecs.filtrar(responsavelEfetivo, status, prioridade, categoria, busca,
                         dataInicio, dataFim, apenasAtrasadas),
                 pageable
-        ).map(t -> toDto(t, false));
+        ).map(t -> tarefaMapper.toDto(t, false));
     }
 
     @Transactional(readOnly = true)
@@ -97,14 +92,14 @@ public class TarefaService {
         return tarefaRepository.findAll(
                 TarefaSpecs.filtrar(responsavelEfetivo, status, prioridade, categoria, busca, null, null, null),
                 Sort.by(Sort.Order.asc("status"), Sort.Order.asc("ordemKanban"), Sort.Order.desc("criadoEm"))
-        ).stream().map(t -> toDto(t, false)).collect(Collectors.toList());
+        ).stream().map(t -> tarefaMapper.toDto(t, false)).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public TarefaResponseDTO detalhar(UUID usuarioId, UUID tarefaId) {
         Usuario usuario = staffAccessService.assertPodeAcessarTarefas(usuarioId);
         Tarefa tarefa = carregarComAcesso(usuario, tarefaId);
-        return toDto(tarefa, true);
+        return tarefaMapper.toDto(tarefa, true);
     }
 
     @Transactional
@@ -130,7 +125,7 @@ public class TarefaService {
                 .build();
 
         if (status == StatusTarefa.CONCLUIDO) {
-            tarefa.setConcluidoEm(LocalDateTime.now());
+            tarefa.setConcluidoEm(LocalDateTime.now(clock));
         }
 
         tarefa = tarefaRepository.save(tarefa);
@@ -154,7 +149,7 @@ public class TarefaService {
 
         registrarHistorico(tarefa, usuario, "CRIAR",
                 "Tarefa criada por " + usuario.getNome());
-        return toDto(tarefaRepository.findByIdDetalhado(tarefa.getId()).orElse(tarefa), true);
+        return tarefaMapper.toDto(tarefaRepository.findByIdDetalhado(tarefa.getId()).orElse(tarefa), true);
     }
 
     @Transactional
@@ -195,7 +190,7 @@ public class TarefaService {
             StatusTarefa anterior = tarefa.getStatus();
             tarefa.setStatus(dto.getStatus());
             if (dto.getStatus() == StatusTarefa.CONCLUIDO) {
-                tarefa.setConcluidoEm(LocalDateTime.now());
+                tarefa.setConcluidoEm(LocalDateTime.now(clock));
             } else if (anterior == StatusTarefa.CONCLUIDO) {
                 tarefa.setConcluidoEm(null);
             }
@@ -212,7 +207,7 @@ public class TarefaService {
         }
 
         tarefa = tarefaRepository.save(tarefa);
-        return toDto(tarefaRepository.findByIdDetalhado(tarefa.getId()).orElse(tarefa), true);
+        return tarefaMapper.toDto(tarefaRepository.findByIdDetalhado(tarefa.getId()).orElse(tarefa), true);
     }
 
     @Transactional
@@ -240,7 +235,7 @@ public class TarefaService {
         if (statusAnterior != novoStatus) {
             tarefa.setStatus(novoStatus);
             if (novoStatus == StatusTarefa.CONCLUIDO) {
-                tarefa.setConcluidoEm(LocalDateTime.now());
+                tarefa.setConcluidoEm(LocalDateTime.now(clock));
             } else if (statusAnterior == StatusTarefa.CONCLUIDO) {
                 tarefa.setConcluidoEm(null);
             }
@@ -252,7 +247,7 @@ public class TarefaService {
             colunaDestino.get(i).setOrdemKanban(i);
         }
         tarefaRepository.saveAll(colunaDestino);
-        return toDto(tarefaRepository.findByIdDetalhado(tarefaId).orElse(tarefa), false);
+        return tarefaMapper.toDto(tarefaRepository.findByIdDetalhado(tarefaId).orElse(tarefa), false);
     }
 
     @Transactional
@@ -276,7 +271,7 @@ public class TarefaService {
                 .build());
         registrarHistorico(tarefa, usuario, "CHECKLIST",
                 usuario.getNome() + " adicionou item do checklist: " + item.getDescricao());
-        return toChecklistDto(item);
+        return tarefaMapper.toChecklistDto(item);
     }
 
     @Transactional
@@ -293,7 +288,7 @@ public class TarefaService {
         registrarHistorico(tarefa, usuario, "CHECKLIST",
                 usuario.getNome() + (item.isConcluido() ? " concluiu" : " reabriu")
                         + " item do checklist: " + item.getDescricao());
-        return toChecklistDto(item);
+        return tarefaMapper.toChecklistDto(item);
     }
 
     @Transactional
@@ -314,7 +309,7 @@ public class TarefaService {
     public TarefaIndicadoresDTO indicadores(UUID usuarioId, UUID responsavelIdFiltro, boolean visaoEquipe) {
         Usuario usuario = staffAccessService.assertPodeAcessarTarefas(usuarioId);
         UUID responsavelEfetivo = resolverFiltroResponsavel(usuario, responsavelIdFiltro, visaoEquipe);
-        LocalDate hoje = LocalDate.now();
+        LocalDate hoje = LocalDate.now(clock);
         LocalDateTime inicioSemana = hoje.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).atStartOfDay();
         LocalDateTime fimSemana = hoje.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).atTime(LocalTime.MAX);
 
@@ -351,7 +346,7 @@ public class TarefaService {
         if (!staffAccessService.podeGerenciarEquipeTarefas(usuario)) {
             throw new AccessDeniedBusinessException("Sem permissão para visualizar resumo da equipe.");
         }
-        LocalDate hoje = LocalDate.now();
+        LocalDate hoje = LocalDate.now(clock);
         return usuarioRepository.findByStatusUsuarioOrderByNomeAsc(StatusUsuario.ATIVO).stream()
                 .map(u -> {
                     long total = tarefaRepository.countByResponsavel_UsuarioIdAndStatusIn(u.getUsuarioId(),
@@ -461,82 +456,6 @@ public class TarefaService {
                 .acao(acao)
                 .descricao(descricao)
                 .build());
-    }
-
-    private TarefaResponseDTO toDto(Tarefa tarefa, boolean detalhe) {
-        List<TarefaChecklistItem> items = detalhe
-                ? checklistRepository.findByTarefaIdOrderByOrdemAsc(tarefa.getId())
-                : tarefa.getChecklist() != null ? tarefa.getChecklist() : List.of();
-        if (!detalhe && (items == null || items.isEmpty())) {
-            long total = checklistRepository.countByTarefaId(tarefa.getId());
-            long concluidos = checklistRepository.countByTarefaIdAndConcluidoTrue(tarefa.getId());
-            return baseDto(tarefa)
-                    .checklistTotal((int) total)
-                    .checklistConcluidos((int) concluidos)
-                    .build();
-        }
-        int concluidos = (int) items.stream().filter(TarefaChecklistItem::isConcluido).count();
-        TarefaResponseDTO.TarefaResponseDTOBuilder builder = baseDto(tarefa)
-                .checklistTotal(items.size())
-                .checklistConcluidos(concluidos)
-                .checklist(items.stream().map(this::toChecklistDto).collect(Collectors.toList()));
-        if (detalhe) {
-            builder.historico(historicoRepository.findByTarefaIdOrderByCriadoEmDesc(tarefa.getId()).stream()
-                    .map(this::toHistoricoDto)
-                    .collect(Collectors.toList()));
-        }
-        return builder.build();
-    }
-
-    private TarefaResponseDTO.TarefaResponseDTOBuilder baseDto(Tarefa tarefa) {
-        boolean atrasada = tarefa.getDataVencimento() != null
-                && tarefa.getDataVencimento().isBefore(LocalDate.now())
-                && tarefa.getStatus() != StatusTarefa.CONCLUIDO;
-        return TarefaResponseDTO.builder()
-                .id(tarefa.getId())
-                .titulo(tarefa.getTitulo())
-                .descricao(tarefa.getDescricao())
-                .status(tarefa.getStatus())
-                .prioridade(tarefa.getPrioridade())
-                .responsavelId(tarefa.getResponsavel() != null
-                        ? tarefa.getResponsavel().getUsuarioId()
-                        : tarefa.getResponsavelId())
-                .responsavelNome(tarefa.getResponsavel() != null ? tarefa.getResponsavel().getNome() : null)
-                .criadoPorId(tarefa.getCriadoPor() != null
-                        ? tarefa.getCriadoPor().getUsuarioId()
-                        : tarefa.getCriadoPorId())
-                .criadoPorNome(tarefa.getCriadoPor() != null ? tarefa.getCriadoPor().getNome() : null)
-                .dataInicio(tarefa.getDataInicio())
-                .dataVencimento(tarefa.getDataVencimento())
-                .categoria(tarefa.getCategoria())
-                .ordemKanban(tarefa.getOrdemKanban())
-                .observacoes(tarefa.getObservacoes())
-                .concluidoEm(tarefa.getConcluidoEm())
-                .criadoEm(tarefa.getCriadoEm())
-                .atualizadoEm(tarefa.getAtualizadoEm())
-                .atrasada(atrasada);
-    }
-
-    private TarefaChecklistItemResponseDTO toChecklistDto(TarefaChecklistItem item) {
-        return TarefaChecklistItemResponseDTO.builder()
-                .id(item.getId())
-                .descricao(item.getDescricao())
-                .concluido(item.isConcluido())
-                .ordem(item.getOrdem())
-                .criadoEm(item.getCriadoEm())
-                .atualizadoEm(item.getAtualizadoEm())
-                .build();
-    }
-
-    private TarefaHistoricoResponseDTO toHistoricoDto(TarefaHistorico h) {
-        return TarefaHistoricoResponseDTO.builder()
-                .id(h.getId())
-                .usuarioId(h.getUsuario() != null ? h.getUsuario().getUsuarioId() : h.getUsuarioId())
-                .usuarioNome(h.getUsuario() != null ? h.getUsuario().getNome() : null)
-                .acao(h.getAcao())
-                .descricao(h.getDescricao())
-                .criadoEm(h.getCriadoEm())
-                .build();
     }
 
     private static String labelStatus(StatusTarefa status) {

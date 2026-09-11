@@ -24,6 +24,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import com.pucminas.sgi.security.StaffAuth;
+import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -33,16 +34,12 @@ import java.util.UUID;
 @RequestMapping("/api/livro-caixa")
 @PreAuthorize(StaffAuth.FINANCEIRO)
 @Tag(name = "Livro Caixa", description = "Controle financeiro do escritório")
+@RequiredArgsConstructor
 public class LivroCaixaController {
 
     private final LivroCaixaMovimentacaoService movimentacaoService;
     private final LivroCaixaAnexoService anexoService;
 
-    public LivroCaixaController(LivroCaixaMovimentacaoService movimentacaoService,
-                                LivroCaixaAnexoService anexoService) {
-        this.movimentacaoService = movimentacaoService;
-        this.anexoService = anexoService;
-    }
 
     @GetMapping("/dashboard")
     @Operation(summary = "Dashboard com saldos e totais do mês")

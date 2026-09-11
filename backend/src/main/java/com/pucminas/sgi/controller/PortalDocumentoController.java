@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import lombok.RequiredArgsConstructor;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -22,13 +23,11 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/portal/documentos")
 @Tag(name = "Portal — Documentos", description = "Envio de documentos pelo cliente")
+@RequiredArgsConstructor
 public class PortalDocumentoController {
 
     private final DocumentoClienteService documentoClienteService;
 
-    public PortalDocumentoController(DocumentoClienteService documentoClienteService) {
-        this.documentoClienteService = documentoClienteService;
-    }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Enviar documento")

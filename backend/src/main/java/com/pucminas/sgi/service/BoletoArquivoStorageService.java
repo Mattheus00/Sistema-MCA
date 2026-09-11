@@ -2,10 +2,10 @@ package com.pucminas.sgi.service;
 
 import com.pucminas.sgi.config.BoletoEnvioProperties;
 import com.pucminas.sgi.exception.BusinessRuleException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,15 +18,12 @@ import java.util.HexFormat;
 import java.util.UUID;
 
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class BoletoArquivoStorageService {
-
-    private static final Logger log = LoggerFactory.getLogger(BoletoArquivoStorageService.class);
 
     private final BoletoEnvioProperties properties;
 
-    public BoletoArquivoStorageService(BoletoEnvioProperties properties) {
-        this.properties = properties;
-    }
 
     public record ArquivoSalvo(String nomeArmazenado, String hashSha256, long tamanho) {
     }

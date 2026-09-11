@@ -7,13 +7,16 @@ import com.pucminas.sgi.exception.ResourceNotFoundException;
 import com.pucminas.sgi.repository.LivroCaixaAnexoRepository;
 import com.pucminas.sgi.repository.LivroCaixaMovimentacaoRepository;
 import com.pucminas.sgi.repository.UsuarioRepository;
+import com.pucminas.sgi.security.StaffAccessService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import lombok.RequiredArgsConstructor;
 
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class LivroCaixaAnexoService {
 
     private final LivroCaixaAnexoRepository anexoRepository;
@@ -22,17 +25,6 @@ public class LivroCaixaAnexoService {
     private final StaffAccessService staffAccessService;
     private final UsuarioRepository usuarioRepository;
 
-    public LivroCaixaAnexoService(LivroCaixaAnexoRepository anexoRepository,
-                                  LivroCaixaMovimentacaoRepository movimentacaoRepository,
-                                  LivroCaixaAnexoStorageService storageService,
-                                  StaffAccessService staffAccessService,
-                                  UsuarioRepository usuarioRepository) {
-        this.anexoRepository = anexoRepository;
-        this.movimentacaoRepository = movimentacaoRepository;
-        this.storageService = storageService;
-        this.staffAccessService = staffAccessService;
-        this.usuarioRepository = usuarioRepository;
-    }
 
     @Transactional
     public LivroCaixaAnexoResponseDTO anexar(UUID usuarioId, UUID movimentacaoId, MultipartFile arquivo) {

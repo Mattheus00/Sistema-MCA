@@ -1,6 +1,7 @@
 package com.pucminas.sgi.controller;
 
 import org.springframework.validation.annotation.Validated;
+import lombok.RequiredArgsConstructor;
 
 import com.pucminas.sgi.dto.request.ClienteDTO;
 import com.pucminas.sgi.dto.response.ClienteResponseDTO;
@@ -26,13 +27,11 @@ import java.util.UUID;
 @RequestMapping("/api/clientes")
 @PreAuthorize(StaffAuth.STAFF)
 @Tag(name = "Clientes", description = "CRUD e listagem de clientes")
+@RequiredArgsConstructor
 public class ClienteController {
 
     private final ClienteService clienteService;
 
-    public ClienteController(ClienteService clienteService) {
-        this.clienteService = clienteService;
-    }
 
     @PostMapping
     @Operation(summary = "Cadastrar cliente")

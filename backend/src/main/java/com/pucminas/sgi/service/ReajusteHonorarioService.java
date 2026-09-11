@@ -11,6 +11,7 @@ import com.pucminas.sgi.repository.ClienteRepository;
 import com.pucminas.sgi.repository.HonorarioClienteRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class ReajusteHonorarioService {
 
     private static final BigDecimal PERCENTUAL_MAXIMO = new BigDecimal("100.00");
@@ -29,15 +31,6 @@ public class ReajusteHonorarioService {
     private final HonorarioClienteService honorarioService;
     private final AuditoriaService auditoriaService;
 
-    public ReajusteHonorarioService(ClienteRepository clienteRepository,
-                                    HonorarioClienteRepository honorarioRepository,
-                                    HonorarioClienteService honorarioService,
-                                    AuditoriaService auditoriaService) {
-        this.clienteRepository = clienteRepository;
-        this.honorarioRepository = honorarioRepository;
-        this.honorarioService = honorarioService;
-        this.auditoriaService = auditoriaService;
-    }
 
     @Transactional(readOnly = true)
     public ReajusteHonorarioResumoDTO simular(ReajusteHonorarioRequestDTO request) {

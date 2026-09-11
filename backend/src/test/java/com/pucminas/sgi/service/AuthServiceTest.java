@@ -1,6 +1,6 @@
 package com.pucminas.sgi.service;
 
-import com.pucminas.sgi.config.JwtTokenProvider;
+import com.pucminas.sgi.security.JwtTokenProvider;
 import com.pucminas.sgi.dto.request.*;
 import com.pucminas.sgi.entity.*;
 import com.pucminas.sgi.exception.BusinessRuleException;

@@ -8,11 +8,11 @@ import com.pucminas.sgi.entity.CobrancaSicoob;
 import com.pucminas.sgi.enums.StatusCobrancaSicoob;
 import com.pucminas.sgi.exception.BusinessRuleException;
 import com.pucminas.sgi.repository.CobrancaSicoobRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -24,24 +24,15 @@ import java.util.Iterator;
  * Processa notificações Pix do Sicoob (webhook) e baixa a dívida automaticamente.
  */
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class SicoobWebhookService {
-
-    private static final Logger log = LoggerFactory.getLogger(SicoobWebhookService.class);
 
     private final SicoobProperties properties;
     private final CobrancaSicoobRepository cobrancaRepository;
     private final PagamentoService pagamentoService;
     private final ObjectMapper objectMapper;
 
-    public SicoobWebhookService(SicoobProperties properties,
-                                CobrancaSicoobRepository cobrancaRepository,
-                                PagamentoService pagamentoService,
-                                ObjectMapper objectMapper) {
-        this.properties = properties;
-        this.cobrancaRepository = cobrancaRepository;
-        this.pagamentoService = pagamentoService;
-        this.objectMapper = objectMapper;
-    }
 
     public void validarSegredo(String secretHeader) {
         String esperado = properties.getWebhookSecret();

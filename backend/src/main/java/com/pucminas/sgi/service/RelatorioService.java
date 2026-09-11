@@ -19,12 +19,12 @@ import com.pucminas.sgi.repository.DividaRepository;
 import com.pucminas.sgi.repository.NotificacaoEmailRepository;
 import com.pucminas.sgi.repository.PagamentoRepository;
 import com.pucminas.sgi.util.MoneyUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -44,9 +44,9 @@ import java.util.stream.Collectors;
  * Serviço de relatórios: inadimplentes, ranking, resumo e exportação PDF/Excel.
  */
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class RelatorioService {
-
-    private static final Logger log = LoggerFactory.getLogger(RelatorioService.class);
 
     private final ClienteRepository clienteRepository;
     private final DividaRepository dividaRepository;
@@ -54,17 +54,6 @@ public class RelatorioService {
     private final NotificacaoEmailRepository notificacaoEmailRepository;
     private final DividaService dividaService;
 
-    public RelatorioService(ClienteRepository clienteRepository,
-                            DividaRepository dividaRepository,
-                            PagamentoRepository pagamentoRepository,
-                            NotificacaoEmailRepository notificacaoEmailRepository,
-                            DividaService dividaService) {
-        this.clienteRepository = clienteRepository;
-        this.dividaRepository = dividaRepository;
-        this.pagamentoRepository = pagamentoRepository;
-        this.notificacaoEmailRepository = notificacaoEmailRepository;
-        this.dividaService = dividaService;
-    }
 
     @Transactional(readOnly = true)
     public RelatorioInadimplentesDTO gerarRelatorioInadimplentes(LocalDate periodoInicio, LocalDate periodoFim, List<StatusDivida> filtros) {

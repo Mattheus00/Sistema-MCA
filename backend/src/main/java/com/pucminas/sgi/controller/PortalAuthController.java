@@ -11,17 +11,16 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/portal/auth")
 @Tag(name = "Portal — Autenticação", description = "Login e primeiro acesso do cliente")
+@RequiredArgsConstructor
 public class PortalAuthController {
 
     private final PortalAuthService portalAuthService;
 
-    public PortalAuthController(PortalAuthService portalAuthService) {
-        this.portalAuthService = portalAuthService;
-    }
 
     @PostMapping("/ativar")
     @Operation(summary = "Primeiro acesso — ativar portal com CPF/CNPJ, e-mail e senha")

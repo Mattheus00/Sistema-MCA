@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pucminas.sgi.dto.response.RegimeCnpjResponseDTO;
 import com.pucminas.sgi.exception.BusinessRuleException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -16,11 +14,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 public class CnpjConsultaService {
-
-    private static final Logger log = LoggerFactory.getLogger(CnpjConsultaService.class);
 
     private static final String REGIME_MEI = "MEI";
     private static final String REGIME_SIMPLES_NACIONAL = "SIMPLES_NACIONAL";

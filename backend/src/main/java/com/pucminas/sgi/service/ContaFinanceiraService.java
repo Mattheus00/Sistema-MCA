@@ -6,8 +6,10 @@ import com.pucminas.sgi.entity.ContaFinanceira;
 import com.pucminas.sgi.exception.BusinessRuleException;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
 import com.pucminas.sgi.repository.ContaFinanceiraRepository;
+import com.pucminas.sgi.security.StaffAccessService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -15,16 +17,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ContaFinanceiraService {
 
     private final ContaFinanceiraRepository contaRepository;
     private final StaffAccessService staffAccessService;
 
-    public ContaFinanceiraService(ContaFinanceiraRepository contaRepository,
-                                  StaffAccessService staffAccessService) {
-        this.contaRepository = contaRepository;
-        this.staffAccessService = staffAccessService;
-    }
 
     @Transactional(readOnly = true)
     public List<ContaFinanceiraResponseDTO> listar(UUID usuarioId, boolean incluirInativas) {

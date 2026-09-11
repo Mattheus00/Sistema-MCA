@@ -9,13 +9,14 @@ import com.pucminas.sgi.enums.StatusCliente;
 import com.pucminas.sgi.enums.StatusDivida;
 import com.pucminas.sgi.exception.DuplicateResourceException;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
+import com.pucminas.sgi.mapper.ClienteMapper;
 import com.pucminas.sgi.repository.ClienteRepository;
 import com.pucminas.sgi.repository.ClienteSpecs;
 import com.pucminas.sgi.repository.DividaRepository;
 import com.pucminas.sgi.util.MoneyUtil;
 import com.pucminas.sgi.util.TelefoneClienteUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -31,21 +32,15 @@ import java.util.stream.Collectors;
 /**
  * Serviço de clientes: CRUD, saldo devedor e status.
  */
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class ClienteService {
-
-    private static final Logger log = LoggerFactory.getLogger(ClienteService.class);
 
     private final ClienteRepository clienteRepository;
     private final DividaRepository dividaRepository;
     private final DividaService dividaService;
-
-    public ClienteService(ClienteRepository clienteRepository, DividaRepository dividaRepository,
-                          DividaService dividaService) {
-        this.clienteRepository = clienteRepository;
-        this.dividaRepository = dividaRepository;
-        this.dividaService = dividaService;
-    }
+    private final ClienteMapper clienteMapper;
 
     @Transactional
     public ClienteResponseDTO cadastrarCliente(ClienteDTO dto) {
@@ -247,20 +242,7 @@ public class ClienteService {
     }
 
     private ClienteResponseDTO toResponse(Cliente c) {
-        return ClienteResponseDTO.builder()
-                .clienteId(c.getClienteId())
-                .codigo(c.getCodigo())
-                .nome(c.getNome())
-                .cpfCnpj(c.getCpfCnpj())
-                .email(c.getEmail())
-                .telefone(c.getTelefone())
-                .celular(c.getCelular())
-                .endereco(c.getEndereco())
-                .statusCliente(c.getStatusCliente())
-                .saldoDevedor(MoneyUtil.centavosParaReais(calcularSaldoDevedor(c.getClienteId())))
-                .criadoEm(c.getCriadoEm())
-                .atualizadoEm(c.getAtualizadoEm())
-                .build();
+        return clienteMapper.toResponse(c, MoneyUtil.centavosParaReais(calcularSaldoDevedor(c.getClienteId())));
     }
 
     private static BigDecimal reaisParaCentavos(BigDecimal reais) {

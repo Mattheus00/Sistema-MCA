@@ -6,7 +6,7 @@ import com.pucminas.sgi.entity.Usuario;
 import com.pucminas.sgi.enums.StatusDocumentoCliente;
 import com.pucminas.sgi.enums.TipoDocumentoCliente;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
-import com.pucminas.sgi.portal.PortalAccessGuard;
+import com.pucminas.sgi.security.PortalAccessGuard;
 import com.pucminas.sgi.repository.ClienteRepository;
 import com.pucminas.sgi.repository.DocumentoClienteRepository;
 import com.pucminas.sgi.repository.UsuarioRepository;

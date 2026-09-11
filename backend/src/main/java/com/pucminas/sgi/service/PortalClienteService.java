@@ -9,13 +9,14 @@ import com.pucminas.sgi.entity.Divida;
 import com.pucminas.sgi.entity.Pagamento;
 import com.pucminas.sgi.enums.StatusDivida;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
-import com.pucminas.sgi.portal.PortalAccessGuard;
+import com.pucminas.sgi.security.PortalAccessGuard;
 import com.pucminas.sgi.repository.ClienteRepository;
 import com.pucminas.sgi.repository.DividaRepository;
 import com.pucminas.sgi.repository.PagamentoRepository;
 import com.pucminas.sgi.util.MoneyUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -27,6 +28,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class PortalClienteService {
 
     private final ClienteRepository clienteRepository;
@@ -37,21 +39,6 @@ public class PortalClienteService {
     private final PortalAccessGuard portalAccessGuard;
     private final ClienteService clienteService;
 
-    public PortalClienteService(ClienteRepository clienteRepository,
-                                DividaRepository dividaRepository,
-                                PagamentoRepository pagamentoRepository,
-                                DividaService dividaService,
-                                PortalAuthService portalAuthService,
-                                PortalAccessGuard portalAccessGuard,
-                                ClienteService clienteService) {
-        this.clienteRepository = clienteRepository;
-        this.dividaRepository = dividaRepository;
-        this.pagamentoRepository = pagamentoRepository;
-        this.dividaService = dividaService;
-        this.portalAuthService = portalAuthService;
-        this.portalAccessGuard = portalAccessGuard;
-        this.clienteService = clienteService;
-    }
 
     @Transactional(readOnly = true)
     public PortalMeResponseDTO me(UUID clienteId) {

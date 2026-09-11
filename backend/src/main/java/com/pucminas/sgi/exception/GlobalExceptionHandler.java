@@ -1,8 +1,6 @@
 package com.pucminas.sgi.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatusCode;
@@ -15,6 +13,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Arrays;
 import org.springframework.http.HttpStatus;
@@ -24,7 +23,9 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -34,9 +35,8 @@ import java.util.stream.Collectors;
  * Tratamento global de exceções da API REST.
  */
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
-
-    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
@@ -112,17 +112,17 @@ public class GlobalExceptionHandler {
         return erroInterno(ex, request);
     }
 
-    @ExceptionHandler(org.springframework.web.multipart.support.MissingServletRequestPartException.class)
+    @ExceptionHandler(MissingServletRequestPartException.class)
     public ResponseEntity<ErrorResponse> handleMissingPart(
-            org.springframework.web.multipart.support.MissingServletRequestPartException ex,
+            MissingServletRequestPartException ex,
             HttpServletRequest request) {
         return buildResponse(HttpStatus.BAD_REQUEST, "Bad Request",
                 "Arquivo PDF obrigatório (campo 'arquivo').", request.getRequestURI());
     }
 
-    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleMaxUpload(
-            org.springframework.web.multipart.MaxUploadSizeExceededException ex,
+            MaxUploadSizeExceededException ex,
             HttpServletRequest request) {
         return buildResponse(HttpStatus.BAD_REQUEST, "Bad Request",
                 "Arquivo PDF excede o tamanho máximo permitido.", request.getRequestURI());

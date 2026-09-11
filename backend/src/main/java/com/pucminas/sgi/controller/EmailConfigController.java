@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.pucminas.sgi.security.StaffAuth;
+import lombok.RequiredArgsConstructor;
 
 import java.util.Map;
 
@@ -19,13 +20,11 @@ import java.util.Map;
 @RequestMapping("/api/email-config")
 @PreAuthorize(StaffAuth.FINANCEIRO)
 @Tag(name = "Configuração de Email", description = "Configuração SMTP e teste de envio")
+@RequiredArgsConstructor
 public class EmailConfigController {
 
     private final EmailConfigService emailConfigService;
 
-    public EmailConfigController(EmailConfigService emailConfigService) {
-        this.emailConfigService = emailConfigService;
-    }
 
     @PostMapping
     @Operation(summary = "Criar ou atualizar configuração SMTP")

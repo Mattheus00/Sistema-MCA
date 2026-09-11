@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.pucminas.sgi.security.StaffAuth;
+import lombok.RequiredArgsConstructor;
 
 import java.util.UUID;
 
@@ -18,13 +19,11 @@ import java.util.UUID;
 @RequestMapping("/api/clientes/{clienteId}/configuracao-cobranca")
 @PreAuthorize(StaffAuth.STAFF)
 @Tag(name = "Configuração de cobrança", description = "Configuração de cobrança recorrente por cliente")
+@RequiredArgsConstructor
 public class ConfiguracaoCobrancaController {
 
     private final ConfiguracaoCobrancaService configuracaoService;
 
-    public ConfiguracaoCobrancaController(ConfiguracaoCobrancaService configuracaoService) {
-        this.configuracaoService = configuracaoService;
-    }
 
     @GetMapping
     @Operation(summary = "Consultar configuração de cobrança do cliente")

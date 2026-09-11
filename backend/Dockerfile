@@ -17,7 +17,6 @@ USER appuser
 COPY --from=build /app/target/sgi-1.0.0.jar app.jar
 
 ENV SPRING_PROFILES_ACTIVE=prod
-ENV SPRING_DATASOURCE_URL=jdbc:sqlite:/var/data/sgi.db
 
 EXPOSE 8080
 

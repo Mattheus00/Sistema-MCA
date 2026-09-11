@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.pucminas.sgi.security.StaffAuth;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.UUID;
@@ -18,13 +19,11 @@ import java.util.UUID;
 @RequestMapping("/api/sicoob")
 @PreAuthorize(StaffAuth.FINANCEIRO)
 @Tag(name = "Sicoob", description = "Cobrança Pix e boleto via API Sicoob")
+@RequiredArgsConstructor
 public class SicoobController {
 
     private final SicoobCobrancaService sicoobCobrancaService;
 
-    public SicoobController(SicoobCobrancaService sicoobCobrancaService) {
-        this.sicoobCobrancaService = sicoobCobrancaService;
-    }
 
     @GetMapping("/status")
     @Operation(summary = "Status da integração Sicoob")

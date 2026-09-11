@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import com.pucminas.sgi.security.StaffAuth;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,13 +22,11 @@ import java.util.UUID;
 @RequestMapping("/api/usuarios")
 @PreAuthorize(StaffAuth.FINANCEIRO)
 @Tag(name = "Usuários", description = "Cadastro de usuários")
+@RequiredArgsConstructor
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
 
-    public UsuarioController(UsuarioService usuarioService) {
-        this.usuarioService = usuarioService;
-    }
 
     @PostMapping
     @Operation(summary = "Cadastrar usuário (somente proprietária; permite perfil FUNCIONARIO)")

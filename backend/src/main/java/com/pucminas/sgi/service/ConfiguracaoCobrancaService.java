@@ -10,23 +10,18 @@ import com.pucminas.sgi.repository.ClienteRepository;
 import com.pucminas.sgi.repository.ConfiguracaoCobrancaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
 
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class ConfiguracaoCobrancaService {
 
     private final ConfiguracaoCobrancaRepository configuracaoRepository;
     private final ClienteRepository clienteRepository;
     private final AuditoriaService auditoriaService;
 
-    public ConfiguracaoCobrancaService(ConfiguracaoCobrancaRepository configuracaoRepository,
-                                       ClienteRepository clienteRepository,
-                                       AuditoriaService auditoriaService) {
-        this.configuracaoRepository = configuracaoRepository;
-        this.clienteRepository = clienteRepository;
-        this.auditoriaService = auditoriaService;
-    }
 
     @Transactional(readOnly = true)
     public ConfiguracaoCobrancaResponseDTO consultar(UUID clienteId) {

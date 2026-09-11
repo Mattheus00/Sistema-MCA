@@ -4,20 +4,24 @@ import com.pucminas.sgi.entity.Cliente;
 import com.pucminas.sgi.entity.Divida;
 import com.pucminas.sgi.enums.StatusDivida;
 import com.pucminas.sgi.exception.ResourceNotFoundException;
+import com.pucminas.sgi.mapper.DividaMapper;
 import com.pucminas.sgi.repository.ClienteRepository;
 import com.pucminas.sgi.repository.DividaRepository;
 import com.pucminas.sgi.repository.PagamentoRepository;
 import com.pucminas.sgi.repository.ServicoRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,9 +45,23 @@ class DividaServiceTest {
     private PagamentoRepository pagamentoRepository;
     @Mock
     private ServicoRepository servicoRepository;
+    @Mock
+    private DividaMapper dividaMapper;
 
-    @InjectMocks
+    private final Clock clock = Clock.fixed(Instant.parse("2026-09-10T15:00:00Z"), ZoneId.of("America/Sao_Paulo"));
     private DividaService dividaService;
+
+    @BeforeEach
+    void setUp() {
+        dividaService = new DividaService(
+                dividaRepository,
+                clienteRepository,
+                eventPublisher,
+                pagamentoRepository,
+                servicoRepository,
+                dividaMapper,
+                clock);
+    }
 
     private static final UUID DIVIDA_ID = UUID.fromString("cccccccc-cccc-cccc-cccc-cccccccccccc");
 

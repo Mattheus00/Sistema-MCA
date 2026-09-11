@@ -1,6 +1,6 @@
 package com.pucminas.sgi.service;
 
-import com.pucminas.sgi.config.JwtTokenProvider;
+import com.pucminas.sgi.security.JwtTokenProvider;
 import com.pucminas.sgi.dto.request.PortalAtivarRequestDTO;
 import com.pucminas.sgi.dto.request.PortalLoginRequestDTO;
 import com.pucminas.sgi.dto.request.PortalRecuperarSenhaRequestDTO;
@@ -15,19 +15,19 @@ import com.pucminas.sgi.repository.ClientePortalCredencialRepository;
 import com.pucminas.sgi.repository.ClienteRepository;
 import com.pucminas.sgi.util.DocumentoUtil;
 import com.pucminas.sgi.util.MoneyUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class PortalAuthService {
-
-    private static final Logger log = LoggerFactory.getLogger(PortalAuthService.class);
 
     private final ClienteRepository clienteRepository;
     private final ClientePortalCredencialRepository credencialRepository;
@@ -35,17 +35,6 @@ public class PortalAuthService {
     private final PasswordEncoder passwordEncoder;
     private final ClienteService clienteService;
 
-    public PortalAuthService(ClienteRepository clienteRepository,
-                             ClientePortalCredencialRepository credencialRepository,
-                             JwtTokenProvider jwtTokenProvider,
-                             PasswordEncoder passwordEncoder,
-                             ClienteService clienteService) {
-        this.clienteRepository = clienteRepository;
-        this.credencialRepository = credencialRepository;
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.passwordEncoder = passwordEncoder;
-        this.clienteService = clienteService;
-    }
 
     @Transactional
     public PortalLoginResponseDTO ativar(PortalAtivarRequestDTO dto) {

@@ -15,8 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.pucminas.sgi.security.StaffAuth;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,14 +28,11 @@ import java.util.UUID;
 @RequestMapping("/api/inadimplentes")
 @PreAuthorize(StaffAuth.STAFF)
 @Tag(name = "Inadimplentes", description = "Listagem e registro de inadimplências (dívidas)")
+@Slf4j
+@RequiredArgsConstructor
 public class InadimplenciaController {
-
-    private static final Logger log = LoggerFactory.getLogger(InadimplenciaController.class);
     private final InadimplenciaService inadimplenciaService;
 
-    public InadimplenciaController(InadimplenciaService inadimplenciaService) {
-        this.inadimplenciaService = inadimplenciaService;
-    }
 
     @GetMapping
     @Operation(summary = "Listar inadimplências")

@@ -33,7 +33,7 @@ class PortalAuthServiceTest {
     @Mock
     private ClientePortalCredencialRepository credencialRepository;
     @Mock
-    private com.pucminas.sgi.config.JwtTokenProvider jwtTokenProvider;
+    private com.pucminas.sgi.security.JwtTokenProvider jwtTokenProvider;
     @Mock
     private PasswordEncoder passwordEncoder;
     @Mock

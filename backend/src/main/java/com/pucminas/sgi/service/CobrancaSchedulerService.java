@@ -1,18 +1,18 @@
 package com.pucminas.sgi.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 
 import java.time.Clock;
 import java.time.YearMonth;
 
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class CobrancaSchedulerService {
-
-    private static final Logger log = LoggerFactory.getLogger(CobrancaSchedulerService.class);
 
     @Value("${scheduler.enabled:true}")
     private boolean schedulerEnabled;
@@ -20,10 +20,6 @@ public class CobrancaSchedulerService {
     private final GeracaoCobrancaRecorrenteService geracaoService;
     private final Clock clock;
 
-    public CobrancaSchedulerService(GeracaoCobrancaRecorrenteService geracaoService, Clock clock) {
-        this.geracaoService = geracaoService;
-        this.clock = clock;
-    }
 
     @Scheduled(cron = "${scheduler.cobrancas-recorrentes.cron:0 0 6 1 * *}", zone = "America/Sao_Paulo")
     public void gerarCobrancasRecorrentes() {

@@ -3,8 +3,6 @@ package com.pucminas.sgi.service;
 import com.pucminas.sgi.entity.EmailConfig;
 import com.pucminas.sgi.exception.EmailSendException;
 import com.pucminas.sgi.repository.EmailConfigRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.AddressException;
 import jakarta.mail.internet.InternetAddress;
@@ -17,6 +15,8 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
@@ -27,9 +27,9 @@ import java.util.Properties;
  * Configura a sessão a partir do EmailConfig do banco quando disponível.
  */
 @Component
+@Slf4j
+@RequiredArgsConstructor
 public class EmailGateway {
-
-    private static final Logger log = LoggerFactory.getLogger(EmailGateway.class);
 
     private final EmailConfigRepository emailConfigRepository;
     private final JavaMailSender defaultMailSender;
@@ -42,11 +42,6 @@ public class EmailGateway {
     private String defaultNomeRemetente;
 
     @Autowired(required = false)
-    public EmailGateway(EmailConfigRepository emailConfigRepository,
-                        JavaMailSender defaultMailSender) {
-        this.emailConfigRepository = emailConfigRepository;
-        this.defaultMailSender = defaultMailSender;
-    }
 
     /**
      * Configura a sessão de email a partir da configuração ativa no banco.

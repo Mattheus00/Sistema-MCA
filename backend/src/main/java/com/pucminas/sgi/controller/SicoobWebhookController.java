@@ -1,6 +1,7 @@
 package com.pucminas.sgi.controller;
 
 import jakarta.validation.constraints.NotBlank;
+import lombok.RequiredArgsConstructor;
 
 import jakarta.validation.Valid;
 
@@ -17,13 +18,11 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/sicoob/webhook")
 @Tag(name = "Sicoob Webhook", description = "Notificações Pix do Sicoob")
+@RequiredArgsConstructor
 public class SicoobWebhookController {
 
     private final SicoobWebhookService webhookService;
 
-    public SicoobWebhookController(SicoobWebhookService webhookService) {
-        this.webhookService = webhookService;
-    }
 
     @PostMapping({"/pix", "/pix/pix"})
     @Operation(summary = "Receber notificação de Pix recebido")

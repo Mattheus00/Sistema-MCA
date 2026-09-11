@@ -5,16 +5,21 @@ import com.pucminas.sgi.entity.Tarefa;
 import com.pucminas.sgi.entity.Usuario;
 import com.pucminas.sgi.enums.Perfil;
 import com.pucminas.sgi.enums.StatusUsuario;
+import com.pucminas.sgi.mapper.TarefaMapper;
 import com.pucminas.sgi.repository.TarefaChecklistRepository;
 import com.pucminas.sgi.repository.TarefaHistoricoRepository;
 import com.pucminas.sgi.repository.TarefaRepository;
 import com.pucminas.sgi.repository.UsuarioRepository;
+import com.pucminas.sgi.security.StaffAccessService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,7 +39,20 @@ class TarefaServiceTest {
     @Mock UsuarioRepository usuarioRepository;
     @Mock StaffAccessService staffAccessService;
 
-    @InjectMocks TarefaService tarefaService;
+    private final Clock clock = Clock.fixed(Instant.parse("2026-09-10T15:00:00Z"), ZoneId.of("America/Sao_Paulo"));
+    private TarefaService tarefaService;
+
+    @BeforeEach
+    void setUp() {
+        tarefaService = new TarefaService(
+                tarefaRepository,
+                checklistRepository,
+                historicoRepository,
+                usuarioRepository,
+                staffAccessService,
+                new TarefaMapper(checklistRepository, historicoRepository, clock),
+                clock);
+    }
 
     @Test
     void gestorSemResponsavelAssumeOProprioSolicitante() {

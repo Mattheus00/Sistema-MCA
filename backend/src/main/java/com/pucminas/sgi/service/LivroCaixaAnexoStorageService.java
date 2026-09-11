@@ -2,10 +2,10 @@ package com.pucminas.sgi.service;
 
 import com.pucminas.sgi.config.LivroCaixaProperties;
 import com.pucminas.sgi.exception.BusinessRuleException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,15 +20,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class LivroCaixaAnexoStorageService {
-
-    private static final Logger log = LoggerFactory.getLogger(LivroCaixaAnexoStorageService.class);
 
     private final LivroCaixaProperties properties;
 
-    public LivroCaixaAnexoStorageService(LivroCaixaProperties properties) {
-        this.properties = properties;
-    }
 
     public record ArquivoSalvo(String nomeArmazenado, String hashSha256, long tamanho, String contentType) {
     }

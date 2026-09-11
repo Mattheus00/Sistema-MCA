@@ -9,6 +9,7 @@ import com.pucminas.sgi.entity.Divida;
 import com.pucminas.sgi.exception.BusinessRuleException;
 import com.pucminas.sgi.util.MoneyUtil;
 import org.springframework.stereotype.Component;
+import lombok.RequiredArgsConstructor;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -17,17 +18,13 @@ import java.util.Map;
  * Pix recebimentos — cobrança imediata (padrão Bacen / API Pix Sicoob).
  */
 @Component
+@RequiredArgsConstructor
 public class SicoobPixClient {
 
     private final SicoobProperties properties;
     private final SicoobHttpClient httpClient;
     private final ObjectMapper objectMapper;
 
-    public SicoobPixClient(SicoobProperties properties, SicoobHttpClient httpClient, ObjectMapper objectMapper) {
-        this.properties = properties;
-        this.httpClient = httpClient;
-        this.objectMapper = objectMapper;
-    }
 
     public JsonNode criarCobrancaImediata(Divida divida, String txid) {
         Cliente cliente = divida.getCliente();

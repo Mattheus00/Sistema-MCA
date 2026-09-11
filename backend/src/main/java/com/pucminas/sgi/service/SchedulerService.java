@@ -7,12 +7,12 @@ import com.pucminas.sgi.enums.StatusDivida;
 import com.pucminas.sgi.repository.AgendamentoNotificacaoRepository;
 import com.pucminas.sgi.repository.ClienteRepository;
 import com.pucminas.sgi.repository.DividaRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -25,9 +25,9 @@ import java.util.stream.Collectors;
  * Serviço agendado: execução de lembretes e marcação de dívidas vencidas.
  */
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class SchedulerService {
-
-    private static final Logger log = LoggerFactory.getLogger(SchedulerService.class);
 
     @Value("${scheduler.enabled:true}")
     private boolean schedulerEnabled;
@@ -39,19 +39,6 @@ public class SchedulerService {
     private final NotificationService notificationService;
     private final LivroCaixaRecorrenciaService livroCaixaRecorrenciaService;
 
-    public SchedulerService(AgendamentoNotificacaoRepository agendamentoRepository,
-                            DividaRepository dividaRepository,
-                            ClienteRepository clienteRepository,
-                            DividaService dividaService,
-                            NotificationService notificationService,
-                            LivroCaixaRecorrenciaService livroCaixaRecorrenciaService) {
-        this.agendamentoRepository = agendamentoRepository;
-        this.dividaRepository = dividaRepository;
-        this.clienteRepository = clienteRepository;
-        this.dividaService = dividaService;
-        this.notificationService = notificationService;
-        this.livroCaixaRecorrenciaService = livroCaixaRecorrenciaService;
-    }
 
     /**
      * Executa agendamentos cuja próxima execução já passou; envia lembretes para inadimplentes.

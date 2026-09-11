@@ -21,6 +21,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import com.pucminas.sgi.security.StaffAuth;
+import lombok.RequiredArgsConstructor;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -29,13 +30,11 @@ import java.util.UUID;
 @RestController
 @PreAuthorize(StaffAuth.FINANCEIRO)
 @Tag(name = "Documentos do cliente", description = "Visualização de documentos enviados pelo portal (escritório)")
+@RequiredArgsConstructor
 public class DocumentoClienteController {
 
     private final DocumentoClienteService documentoClienteService;
 
-    public DocumentoClienteController(DocumentoClienteService documentoClienteService) {
-        this.documentoClienteService = documentoClienteService;
-    }
 
     @GetMapping("/api/clientes/{clienteId}/documentos")
     @Operation(summary = "Listar documentos enviados por um cliente")

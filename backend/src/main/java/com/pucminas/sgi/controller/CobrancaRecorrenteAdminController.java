@@ -1,6 +1,7 @@
 package com.pucminas.sgi.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 import com.pucminas.sgi.dto.request.GeracaoCobrancaRequestDTO;
 import com.pucminas.sgi.dto.response.GeracaoCobrancaResultadoDTO;
@@ -18,16 +19,12 @@ import java.time.YearMonth;
 @RestController
 @PreAuthorize(StaffAuth.FINANCEIRO)
 @Tag(name = "Admin - cobranças recorrentes", description = "Execução manual de rotinas de cobrança")
+@RequiredArgsConstructor
 public class CobrancaRecorrenteAdminController {
 
     private final GeracaoCobrancaRecorrenteService geracaoService;
     private final AuditoriaService auditoriaService;
 
-    public CobrancaRecorrenteAdminController(GeracaoCobrancaRecorrenteService geracaoService,
-                                             AuditoriaService auditoriaService) {
-        this.geracaoService = geracaoService;
-        this.auditoriaService = auditoriaService;
-    }
 
     @PostMapping("/api/admin/cobrancas-recorrentes/gerar")
     @Operation(summary = "Executar geração mensal de cobranças recorrentes")

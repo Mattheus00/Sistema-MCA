@@ -4,6 +4,7 @@ import com.pucminas.sgi.entity.Usuario;
 import com.pucminas.sgi.enums.Perfil;
 import com.pucminas.sgi.enums.StatusUsuario;
 import com.pucminas.sgi.repository.UsuarioRepository;
+import com.pucminas.sgi.security.StaffAccessService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
