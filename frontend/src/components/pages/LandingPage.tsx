@@ -485,27 +485,22 @@ export default function LandingPage() {
                 </div>
                 <div className="landing-about__story">
                   <p data-reveal>
-                    A Contabilidade São Judas Tadeu nasceu como um pequeno escritório de Lúcio dos
-                    Santos, com a missão de oferecer suporte financeiro e contábil a pequenos
-                    empresários e profissionais autônomos de Conceição do Mato Dentro.
+                    A Contabilidade São Judas Tadeu nasceu com a missão de oferecer suporte
+                    financeiro e contábil a pequenos empresários e profissionais autônomos de
+                    Conceição do Mato Dentro.
                   </p>
                   <p data-reveal>
-                    Em 2003, Cláudia Pereira e Silva enxergou o potencial do escritório e iniciou as
-                    negociações para sua aquisição. Itabirana e vinda de uma família ligada à
-                    contabilidade, Cláudia acumula quase 30 anos de atuação na área e está à frente
-                    do escritório há mais de duas décadas.
-                  </p>
-                  <p data-reveal>
-                    Com dedicação e uma visão voltada à solução de problemas, o escritório ampliou
-                    sua estrutura e sua atuação na cidade e na região. Hoje, conta com 10
-                    colaboradores que compartilham o compromisso de facilitar a vida financeira dos
-                    clientes, com organização, ética e seriedade.
+                    Ao longo de mais de duas décadas, o escritório consolidou sua atuação com
+                    dedicação, experiência e uma visão voltada à solução de problemas. Com o
+                    crescimento da estrutura e da presença na cidade e região, hoje conta com uma
+                    equipe de 10 colaboradores comprometidos em tornar a vida financeira dos
+                    clientes mais organizada, segura e eficiente.
                   </p>
                 </div>
                 <p className="landing-about__commitment" data-reveal>
-                  O aprendizado contínuo e a busca por melhorias fazem parte dessa trajetória,
-                  acompanhando a evolução da contabilidade para ajudar empresas e profissionais a
-                  alcançarem seus objetivos.
+                  A ética, a seriedade e o aprendizado contínuo fazem parte dessa trajetória.
+                  Acompanhamos a evolução da contabilidade para oferecer orientações claras e apoiar
+                  empresas e profissionais na conquista de seus objetivos.
                 </p>
               </div>
             </div>
