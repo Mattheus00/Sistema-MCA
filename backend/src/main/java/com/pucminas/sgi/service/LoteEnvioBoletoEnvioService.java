@@ -190,7 +190,8 @@ public class LoteEnvioBoletoEnvioService {
     private List<ResultadoEnvioInterno> enviarEmailsForaDaTransacao(PreparacaoEnvio prep) {
         List<ResultadoEnvioInterno> resultados = new ArrayList<>();
         for (ItemEnvioSnapshot snap : prep.itens()) {
-            EnvioBoleto item = envioBoletoRepository.findById(snap.itemId())
+            // JOIN FETCH do cliente: o SMTP roda fora da TX e open-in-view=false.
+            EnvioBoleto item = envioBoletoRepository.findComCliente(snap.itemId())
                     .orElseThrow(() -> new ResourceNotFoundException("EnvioBoleto", snap.itemId()));
             try {
                 byte[] pdf = storageService.ler(prep.loteId(), snap.nomeArquivoArmazenado());
@@ -204,8 +205,11 @@ public class LoteEnvioBoletoEnvioService {
                         snap.itemId(), false, e.getMessage(), false, snap.eraErro(), snap.reenvioAnterior()));
             } catch (Exception e) {
                 log.error("Erro inesperado ao enviar boleto {}", snap.itemId(), e);
+                String detalhe = e.getMessage() != null && !e.getMessage().isBlank()
+                        ? e.getClass().getSimpleName() + ": " + e.getMessage()
+                        : e.getClass().getSimpleName();
                 resultados.add(new ResultadoEnvioInterno(
-                        snap.itemId(), false, "Falha inesperada no envio.", false,
+                        snap.itemId(), false, "Falha inesperada no envio (" + detalhe + ").", false,
                         snap.eraErro(), snap.reenvioAnterior()));
             }
         }

@@ -113,7 +113,7 @@ class LoteEnvioBoletoEnvioServiceTest {
         when(loteRepository.findById(loteId)).thenReturn(Optional.of(lote));
         when(loteRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(envioBoletoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(envioBoletoRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(envioBoletoRepository.findComCliente(itemId)).thenReturn(Optional.of(item));
         when(storageService.ler(loteId, "stored.pdf")).thenReturn("%PDF".getBytes());
         when(accessService.assertPodeGerenciarBoletos(usuarioId)).thenReturn(usuario);
 
@@ -164,7 +164,7 @@ class LoteEnvioBoletoEnvioServiceTest {
         when(loteRepository.findById(loteId)).thenReturn(Optional.of(lote));
         when(loteRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(envioBoletoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(envioBoletoRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(envioBoletoRepository.findComCliente(itemId)).thenReturn(Optional.of(item));
         when(storageService.ler(loteId, "stored.pdf")).thenReturn("%PDF".getBytes());
         when(accessService.assertPodeGerenciarBoletos(usuarioId)).thenReturn(usuario);
         org.mockito.Mockito.doThrow(new EmailSendException("SMTP indisponível"))
