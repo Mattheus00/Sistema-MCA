@@ -40,6 +40,7 @@ export function useEnvioBoletosLote({
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [dragAtivo, setDragAtivo] = useState(false);
   const [modalConfirmarEnvio, setModalConfirmarEnvio] = useState(false);
+  const [modalSucessoEnvio, setModalSucessoEnvio] = useState(false);
   const [permitirReenvioDuplicado, setPermitirReenvioDuplicado] = useState(false);
   const [itemCorrigir, setItemCorrigir] = useState<ItemEnvioBoleto | null>(null);
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -81,6 +82,8 @@ export function useEnvioBoletosLote({
     setLote(null);
     setSelecionados(new Set());
     setPermitirReenvioDuplicado(false);
+    setModalConfirmarEnvio(false);
+    setModalSucessoEnvio(false);
     setErro(null);
     setMensagemSucesso(null);
   };
@@ -141,7 +144,8 @@ export function useEnvioBoletosLote({
       setLote(atualizado);
       setEtapa("resultado");
       setModalConfirmarEnvio(false);
-      setMensagemSucesso("Envio processado. Confira o resultado abaixo.");
+      setModalSucessoEnvio(true);
+      setMensagemSucesso(null);
     } catch (e: unknown) {
       setErro(getApiErrorMessage(e, "Falha ao enviar os boletos."));
     } finally {
@@ -259,6 +263,8 @@ export function useEnvioBoletosLote({
     setDragAtivo,
     modalConfirmarEnvio,
     setModalConfirmarEnvio,
+    modalSucessoEnvio,
+    setModalSucessoEnvio,
     permitirReenvioDuplicado,
     setPermitirReenvioDuplicado,
     itemCorrigir,

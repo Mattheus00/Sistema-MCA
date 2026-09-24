@@ -207,4 +207,54 @@ describe("WebEnvioBoletos", () => {
     expect(screen.getByText(/atenção:/i)).toBeInTheDocument();
     expect(screen.getByText(/resumo do envio/i)).toBeInTheDocument();
   });
+
+  it("após envio com sucesso abre modal visível e vai para o resultado", async () => {
+    const loteLiberado = {
+      ...loteMock,
+      quantidadePendente: 0,
+      itens: [loteMock.itens![0]],
+      resumo: { semEmail: 0, prontosParaEnvio: 1, ignorados: 0, enviados: 0, erros: 0 },
+      validacao: { podeEnviar: true, bloqueios: [] },
+    };
+    const loteEnviado: LoteEnvioBoleto = {
+      ...loteLiberado,
+      status: "ENVIADO",
+      itens: [{ ...loteMock.itens![0], status: "ENVIADO" }],
+      resumo: { semEmail: 0, prontosParaEnvio: 0, ignorados: 0, enviados: 1, erros: 0 },
+    };
+    vi.mocked(envioBoletosApi.criarLoteEnvioBoletos).mockResolvedValueOnce(loteLiberado);
+    vi.mocked(envioBoletosApi.validarLoteEnvioBoletos).mockResolvedValueOnce(loteLiberado);
+    vi.mocked(envioBoletosApi.enviarLoteEnvioBoletos).mockResolvedValueOnce(loteEnviado);
+
+    renderPage();
+
+    const input = document.querySelector(
+      'input[type="file"]:not([webkitdirectory])',
+    ) as HTMLInputElement;
+    const file = new File(["pdf"], "boleto-ok.pdf", { type: "application/pdf" });
+    fireEvent.change(input, { target: { files: [file] } });
+    fireEvent.click(screen.getByRole("button", { name: /analisar arquivos/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /enviar e-mails/i })).toBeEnabled();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /enviar e-mails/i }));
+    fireEvent.click(screen.getByRole("button", { name: /confirmar envio/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: /boletos enviados com sucesso/i }),
+      ).toBeInTheDocument();
+    });
+    expect(screen.getByText("1 e-mail enviado.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /ver detalhes do envio/i }));
+
+    expect(
+      screen.queryByRole("heading", { name: /boletos enviados com sucesso/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /e-mails enviados/i })).toBeInTheDocument();
+    expect(screen.getByText("1 e-mail enviado")).toBeInTheDocument();
+  });
 });

@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import CampoSenha from "@/components/auth/CampoSenha";
 import { LoginArtwork, LogoIcon, SecureIcon } from "@/components/auth/LoginIcons";
 import { getMensagemErroRecuperacao, MSG_SENHA_ALTERADA } from "@/components/auth/loginAuth";
-import { confirmarRedefinicao } from "@/lib/authApi";
+import { redefinirSenhaComToken } from "@/lib/authApi";
 import "@/styles/login.css";
 
 export default function RedefinirSenha() {
@@ -29,16 +29,20 @@ export default function RedefinirSenha() {
       setErro("Nova senha e confirmação são obrigatórias.");
       return;
     }
+    if (novaSenha.length < 4 || novaSenha.length > 255) {
+      setErro("A senha deve ter entre 4 e 255 caracteres.");
+      return;
+    }
     if (novaSenha !== confirmarSenha) {
       setErro("A confirmação da senha não confere.");
       return;
     }
     setLoading(true);
     try {
-      const data = await confirmarRedefinicao({ token, novaSenha, confirmarSenha });
+      const data = await redefinirSenhaComToken({ token, novaSenha, confirmarSenha });
       setSucesso(data.mensagem?.trim() || MSG_SENHA_ALTERADA);
     } catch (err: unknown) {
-      setErro(getMensagemErroRecuperacao(err, "Não foi possível alterar senha"));
+      setErro(getMensagemErroRecuperacao(err, "Não foi possível alterar a senha."));
     } finally {
       setLoading(false);
     }
@@ -78,8 +82,12 @@ export default function RedefinirSenha() {
           </header>
 
           <p className="page-login__eyebrow">Área do funcionário</p>
-          <h1 className="page-login__welcome">Redefinir senha</h1>
-          <p className="page-login__subtitle">Informe a nova senha para concluir a recuperação</p>
+          <h1 className="page-login__welcome">{sucesso ? "Senha alterada" : "Redefinir senha"}</h1>
+          <p className="page-login__subtitle">
+            {sucesso
+              ? "Você já pode entrar com a nova senha."
+              : "Informe a nova senha para concluir a recuperação"}
+          </p>
 
           {erro && (
             <p className="page-login__erro" role="alert">
@@ -93,11 +101,13 @@ export default function RedefinirSenha() {
           )}
 
           {sucesso ? (
-            <p className="page-login__footer">
-              <Link to="/login" className="page-login__footer-link">
-                Voltar para o login
-              </Link>
-            </p>
+            <Link to="/login" className="page-login__btn">
+              Ir para o login
+            </Link>
+          ) : !token ? (
+            <Link to="/login" className="page-login__btn">
+              Ir para o login
+            </Link>
           ) : (
             <form onSubmit={(ev) => void handleSubmit(ev)} className="page-login__form">
               <CampoSenha
@@ -106,7 +116,7 @@ export default function RedefinirSenha() {
                 onChange={setNovaSenha}
                 placeholder="Nova senha"
                 autoComplete="new-password"
-                disabled={loading || !token}
+                disabled={loading}
                 ariaLabel="Nova senha"
                 visivel={mostrarNova}
                 onToggleVisivel={() => setMostrarNova((v) => !v)}
@@ -117,12 +127,12 @@ export default function RedefinirSenha() {
                 onChange={setConfirmarSenha}
                 placeholder="Confirmar nova senha"
                 autoComplete="new-password"
-                disabled={loading || !token}
+                disabled={loading}
                 ariaLabel="Confirmar nova senha"
                 visivel={mostrarConfirmar}
                 onToggleVisivel={() => setMostrarConfirmar((v) => !v)}
               />
-              <button type="submit" className="page-login__btn" disabled={loading || !token}>
+              <button type="submit" className="page-login__btn" disabled={loading}>
                 {loading ? "Alterando…" : "Salvar nova senha"}
               </button>
               <p className="page-login__footer">

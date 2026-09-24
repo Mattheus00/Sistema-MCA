@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import ConferenciaTabela from "@/components/envio-boletos/ConferenciaTabela";
 import ConfirmarEnvioModal from "@/components/envio-boletos/ConfirmarEnvioModal";
 import CorrigirItemModal from "@/components/envio-boletos/CorrigirItemModal";
+import EnvioSucessoModal from "@/components/envio-boletos/EnvioSucessoModal";
 import HistoricoLotes from "@/components/envio-boletos/HistoricoLotes";
 import ResultadoEnvioModal from "@/components/envio-boletos/ResultadoEnvioModal";
 import ResultadoStep from "@/components/envio-boletos/ResultadoStep";
@@ -28,6 +29,8 @@ export default function WebEnvioBoletos() {
     setDragAtivo,
     modalConfirmarEnvio,
     setModalConfirmarEnvio,
+    modalSucessoEnvio,
+    setModalSucessoEnvio,
     permitirReenvioDuplicado,
     setPermitirReenvioDuplicado,
     itemCorrigir,
@@ -229,6 +232,10 @@ export default function WebEnvioBoletos() {
           setModalConfirmarEnvio={setModalConfirmarEnvio}
           executarEnvio={executarEnvio}
         />
+      )}
+
+      {modalSucessoEnvio && (
+        <EnvioSucessoModal cards={cards} onFechar={() => setModalSucessoEnvio(false)} />
       )}
 
       {itemCorrigir && (

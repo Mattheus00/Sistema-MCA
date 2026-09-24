@@ -109,6 +109,10 @@ export function useClientes() {
       cpf: formatCpf(c.cpf) === "—" ? "" : formatCpf(c.cpf),
       celular: formatCelular(c.celular) === "—" ? "" : formatCelular(c.celular),
       endereco: c.endereco ?? "",
+      bairro: c.bairro ?? "",
+      cidade: c.cidade ?? "",
+      cep: c.cep ?? "",
+      uf: c.uf ?? "",
       situacao: c.situacao ?? "Ativo",
     });
     setModalAberto(true);

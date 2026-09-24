@@ -30,11 +30,9 @@ export default function Login() {
     setModalRecuperacaoAberto(true);
   }
 
-  function concluirSolicitacaoRecuperacao() {
+  function concluirSolicitacaoRecuperacao(mensagem: string) {
     setModalRecuperacaoAberto(false);
-    setMensagemSucesso(
-      "Se a conta tiver e-mail cadastrado, você receberá um link para redefinir a senha.",
-    );
+    setMensagemSucesso(mensagem);
     setModo("login");
   }
 

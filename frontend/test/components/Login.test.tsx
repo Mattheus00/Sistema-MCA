@@ -6,10 +6,8 @@ import Login from "@/components/pages/Login";
 vi.mock("@/lib/authApi", () => ({
   login: vi.fn(),
   registrar: vi.fn(),
-  validarLoginRecuperacao: vi.fn(),
-  redefinirSenha: vi.fn(),
-  solicitarRedefinicao: vi.fn(),
-  confirmarRedefinicao: vi.fn(),
+  solicitarRecuperacaoSenha: vi.fn(),
+  redefinirSenhaComToken: vi.fn(),
 }));
 
 describe("Login", () => {

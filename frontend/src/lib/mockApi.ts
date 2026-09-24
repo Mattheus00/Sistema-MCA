@@ -1423,15 +1423,15 @@ export function createMockClient() {
         });
         return Promise.resolve({ data: { ok: true } } as { data: T });
       }
-      if (url === "/api/auth/solicitar-redefinicao") {
+      if (url === "/api/auth/recuperar-senha/solicitar") {
         return Promise.resolve({
           data: {
             mensagem:
-              "Se a conta tiver e-mail cadastrado, você receberá um link para redefinir a senha.",
+              "Se o login existir e tiver e-mail cadastrado, você receberá as instruções.",
           },
         } as { data: T });
       }
-      if (url === "/api/auth/confirmar-redefinicao") {
+      if (url === "/api/auth/recuperar-senha/redefinir") {
         const payload = (body ?? {}) as {
           token?: string;
           novaSenha?: string;
@@ -1444,6 +1444,9 @@ export function createMockClient() {
         if (!novaSenha || !confirmarSenha) {
           return Promise.reject(new Error("Nova senha e confirmação são obrigatórias."));
         }
+        if (novaSenha.length < 4 || novaSenha.length > 255) {
+          return Promise.reject(new Error("A senha deve ter entre 4 e 255 caracteres."));
+        }
         if (novaSenha !== confirmarSenha) {
           return Promise.reject(new Error("Confirmação de senha não confere."));
         }
@@ -1453,39 +1456,6 @@ export function createMockClient() {
         const login = token.slice("mock-reset-".length);
         const user = store.usuarios.find((u) => u.login === login);
         if (!user) return Promise.reject(new Error("Link inválido ou expirado."));
-        user.senha = novaSenha;
-        return Promise.resolve({
-          data: { mensagem: "Senha alterada com sucesso." },
-        } as { data: T });
-      }
-      if (url === "/api/auth/validar-login-recuperacao") {
-        const payload = (body ?? {}) as { login?: string };
-        const login = String(payload.login ?? "").trim();
-        const user = store.usuarios.find((u) => u.login === login);
-        if (!user) return Promise.reject(new Error("Usuário não encontrado"));
-        return Promise.resolve({
-          data: {
-            encontrado: true,
-            login: user.login,
-            nome: user.nome,
-            mensagem: "Login encontrado. Você já pode definir uma nova senha.",
-          },
-        } as { data: T });
-      }
-      if (url === "/api/auth/redefinir-senha") {
-        const payload = (body ?? {}) as {
-          login?: string;
-          novaSenha?: string;
-          confirmarSenha?: string;
-        };
-        const login = String(payload.login ?? "").trim();
-        const novaSenha = String(payload.novaSenha ?? "");
-        const confirmarSenha = String(payload.confirmarSenha ?? "");
-        if (novaSenha !== confirmarSenha) {
-          return Promise.reject(new Error("Confirmação de senha não confere."));
-        }
-        const user = store.usuarios.find((u) => u.login === login);
-        if (!user) return Promise.reject(new Error("Usuário não encontrado"));
         user.senha = novaSenha;
         return Promise.resolve({
           data: { mensagem: "Senha alterada com sucesso." },

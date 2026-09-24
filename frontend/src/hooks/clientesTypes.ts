@@ -14,6 +14,10 @@ export const FORM_VAZIO: Cliente = {
   cpf: "",
   celular: "",
   endereco: "",
+  bairro: "",
+  cidade: "",
+  cep: "",
+  uf: "",
   situacao: "Ativo",
 };
 

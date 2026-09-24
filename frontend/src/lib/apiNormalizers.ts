@@ -73,6 +73,10 @@ export function normalizeClienteFromApi(raw: Record<string, unknown>): Cliente {
     telefone: str(raw.telefone),
     celular: str(raw.celular),
     endereco: str(raw.endereco),
+    bairro: str(raw.bairro),
+    cidade: str(raw.cidade),
+    cep: str(raw.cep),
+    uf: str(raw.uf),
     situacao: situacao as Cliente["situacao"],
     saldoDevedorTotal: num(raw.saldoDevedorTotal ?? raw.saldoDevedor),
     createdAt: str(raw.createdAt ?? raw.criadoEm),
@@ -104,6 +108,10 @@ export function normalizeClienteToApi(c: Partial<Cliente>): Record<string, unkno
     telefone: c.telefone?.replace(/\D/g, "") || undefined,
     celular: c.celular?.replace(/\D/g, "") || undefined,
     endereco: c.endereco,
+    bairro: c.bairro,
+    cidade: c.cidade,
+    cep: c.cep?.replace(/\D/g, "") || undefined,
+    uf: c.uf?.trim().toUpperCase() || undefined,
     statusCliente,
   };
   if (c.codigo?.trim()) payload.codigo = c.codigo.trim().toUpperCase();

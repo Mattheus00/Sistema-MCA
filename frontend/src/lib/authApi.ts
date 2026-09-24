@@ -15,7 +15,7 @@ export type RegistrarUsuarioPayload = {
   nome: string;
   login: string;
   senha: string;
-  email: string;
+  email?: string;
 };
 
 /** GET /api/auth/me → UsuarioResponseDTO (inclui usuarioId). */
@@ -29,55 +29,26 @@ export async function registrar(payload: RegistrarUsuarioPayload): Promise<void>
   await api.post("/api/auth/register", payload);
 }
 
-/** Espelha ValidarLoginResponseDTO (encontrado, login, nome, mensagem). */
-export type ValidarLoginRecuperacaoResponse = {
-  encontrado?: boolean;
-  login?: string;
-  nome?: string;
-  mensagem?: string;
-};
-
-/** POST /api/auth/validar-login-recuperacao — fluxo legado, só ambiente local. */
-export async function validarLoginRecuperacao(
-  login: string,
-): Promise<ValidarLoginRecuperacaoResponse> {
-  const r = await api.post<ValidarLoginRecuperacaoResponse>("/api/auth/validar-login-recuperacao", {
-    login,
-  });
-  return r.data;
-}
-
-export type RedefinirSenhaPayload = {
-  login: string;
-  novaSenha: string;
-  confirmarSenha: string;
-};
-
-/** POST /api/auth/redefinir-senha — fluxo legado sem token, só ambiente local. */
-export async function redefinirSenha(payload: RedefinirSenhaPayload): Promise<void> {
-  await api.post("/api/auth/redefinir-senha", payload);
-}
-
 export type MensagemAuthResponse = {
   mensagem?: string;
 };
 
-/** POST /api/auth/solicitar-redefinicao — envia link por e-mail cadastrado. */
-export async function solicitarRedefinicao(login: string): Promise<MensagemAuthResponse> {
-  const r = await api.post<MensagemAuthResponse>("/api/auth/solicitar-redefinicao", { login });
+/** POST /api/auth/recuperar-senha/solicitar — sempre 200 com mensagem neutra. */
+export async function solicitarRecuperacaoSenha(login: string): Promise<MensagemAuthResponse> {
+  const r = await api.post<MensagemAuthResponse>("/api/auth/recuperar-senha/solicitar", { login });
   return r.data ?? {};
 }
 
-export type ConfirmarRedefinicaoPayload = {
+export type RedefinirSenhaComTokenPayload = {
   token: string;
   novaSenha: string;
   confirmarSenha: string;
 };
 
-/** POST /api/auth/confirmar-redefinicao — redefine senha com token do e-mail. */
-export async function confirmarRedefinicao(
-  payload: ConfirmarRedefinicaoPayload,
+/** POST /api/auth/recuperar-senha/redefinir — redefine senha com token do e-mail. */
+export async function redefinirSenhaComToken(
+  payload: RedefinirSenhaComTokenPayload,
 ): Promise<MensagemAuthResponse> {
-  const r = await api.post<MensagemAuthResponse>("/api/auth/confirmar-redefinicao", payload);
+  const r = await api.post<MensagemAuthResponse>("/api/auth/recuperar-senha/redefinir", payload);
   return r.data ?? {};
 }

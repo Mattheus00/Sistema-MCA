@@ -145,13 +145,45 @@ export default function ClienteFormModal({
             <div className="modal-cliente__control">
               <input
                 id="cliente-endereco"
-                placeholder="Rua, número, bairro, cidade - UF"
+                placeholder="Rua e número"
                 value={form.endereco ?? ""}
                 onChange={(e) => setForm({ ...form, endereco: e.target.value })}
                 className="modal-cliente__input"
               />
+              <p className="modal-cliente__hint">Para emitir boleto, informe também bairro, cidade, CEP e UF.</p>
             </div>
           </div>
+
+          {([
+            { field: "bairro", label: "Bairro", maxLength: 30 },
+            { field: "cidade", label: "Cidade", maxLength: 40 },
+            { field: "cep", label: "CEP", maxLength: 8 },
+            { field: "uf", label: "UF", maxLength: 2 },
+          ] as const).map(({ field, label, maxLength }) => (
+            <div className="modal-cliente__row" key={field}>
+              <label className="modal-cliente__label" htmlFor={`cliente-${field}`}>
+                {label}
+              </label>
+              <div className="modal-cliente__control">
+                <input
+                  id={`cliente-${field}`}
+                  value={form[field] ?? ""}
+                  onChange={(e) => {
+                    const value = field === "cep"
+                      ? e.target.value.replace(/\D/g, "").slice(0, 8)
+                      : field === "uf"
+                        ? e.target.value.replace(/[^A-Za-z]/g, "").toUpperCase().slice(0, 2)
+                        : e.target.value;
+                    setForm({ ...form, [field]: value });
+                  }}
+                  className="modal-cliente__input"
+                  maxLength={maxLength}
+                  inputMode={field === "cep" ? "numeric" : undefined}
+                  autoComplete={field === "cep" ? "postal-code" : "off"}
+                />
+              </div>
+            </div>
+          ))}
 
           <div className="modal-cliente__row">
             <label className="modal-cliente__label" htmlFor="cliente-celular">

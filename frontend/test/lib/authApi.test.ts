@@ -20,10 +20,8 @@ import {
   login,
   obterUsuarioLogado,
   registrar,
-  validarLoginRecuperacao,
-  redefinirSenha,
-  solicitarRedefinicao,
-  confirmarRedefinicao,
+  solicitarRecuperacaoSenha,
+  redefinirSenhaComToken,
 } from "@/lib/authApi";
 
 function ok<T>(data: T): AxiosResponse<T> {
@@ -50,23 +48,23 @@ describe("authApi", () => {
     await registrar({ nome: "Ana", login: "ana", email: "ana@sgi.local", senha: "123456" });
     expect(vi.mocked(api.post).mock.calls[1][0]).toBe("/api/auth/register");
 
-    vi.mocked(api.post).mockResolvedValueOnce(ok({ encontrado: true, login: "ana" }));
-    expect(await validarLoginRecuperacao("ana")).toMatchObject({ encontrado: true });
-
-    vi.mocked(api.post).mockResolvedValueOnce(ok(undefined));
-    await redefinirSenha({ login: "ana", novaSenha: "n", confirmarSenha: "n" });
-    expect(vi.mocked(api.post).mock.calls[3][0]).toBe("/api/auth/redefinir-senha");
-
     vi.mocked(api.post).mockResolvedValueOnce(
-      ok({ mensagem: "Se a conta tiver e-mail cadastrado." }),
+      ok({
+        mensagem: "Se o login existir e tiver e-mail cadastrado, você receberá as instruções.",
+      }),
     );
-    await solicitarRedefinicao("ana");
-    expect(vi.mocked(api.post).mock.calls[4][0]).toBe("/api/auth/solicitar-redefinicao");
-    expect(vi.mocked(api.post).mock.calls[4][1]).toEqual({ login: "ana" });
+    await solicitarRecuperacaoSenha("ana");
+    expect(vi.mocked(api.post).mock.calls[2][0]).toBe("/api/auth/recuperar-senha/solicitar");
+    expect(vi.mocked(api.post).mock.calls[2][1]).toEqual({ login: "ana" });
 
     vi.mocked(api.post).mockResolvedValueOnce(ok({ mensagem: "Senha alterada com sucesso." }));
-    await confirmarRedefinicao({ token: "abc", novaSenha: "n", confirmarSenha: "n" });
-    expect(vi.mocked(api.post).mock.calls[5][0]).toBe("/api/auth/confirmar-redefinicao");
+    await redefinirSenhaComToken({ token: "abc", novaSenha: "n", confirmarSenha: "n" });
+    expect(vi.mocked(api.post).mock.calls[3][0]).toBe("/api/auth/recuperar-senha/redefinir");
+    expect(vi.mocked(api.post).mock.calls[3][1]).toEqual({
+      token: "abc",
+      novaSenha: "n",
+      confirmarSenha: "n",
+    });
 
     vi.mocked(api.get).mockResolvedValueOnce(
       ok({ usuarioId: "u-1", login: "ana", nome: "Ana", perfil: "PROPRIETARIA" }),

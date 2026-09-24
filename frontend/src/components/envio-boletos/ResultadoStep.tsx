@@ -1,6 +1,12 @@
 import AdminItemCard from "@/components/ui/AdminItemCard";
 import ResumoCard from "@/components/envio-boletos/ResumoCard";
-import { AlertIcon, EyeOffIcon, SendIcon } from "@/components/envio-boletos/EnvioBoletosIcons";
+import {
+  AlertIcon,
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  EyeOffIcon,
+  SendIcon,
+} from "@/components/envio-boletos/EnvioBoletosIcons";
 import ResponsiveList from "@/components/ui/ResponsiveList";
 import { getApiErrorMessage } from "@/lib/api";
 import { baixarRelatorioCsv } from "@/lib/envioBoletosApi";
@@ -36,6 +42,21 @@ export default function ResultadoStep({
 }: ResultadoStepProps) {
   return (
     <section className="page-envio-boletos__resultado">
+      <div
+        className={`page-envio-boletos__resultado-hero${cards.erros > 0 ? " page-envio-boletos__resultado-hero--avisos" : ""}`}
+      >
+        <span className="page-envio-boletos__resultado-hero-icon" aria-hidden="true">
+          {cards.erros > 0 ? <AlertTriangleIcon /> : <CheckCircleIcon />}
+        </span>
+        <div>
+          <h2 className="page-envio-boletos__resultado-hero-title">E-mails enviados</h2>
+          <p className="page-envio-boletos__resultado-hero-contagem">
+            {cards.enviados === 1 ? "1 e-mail enviado" : `${cards.enviados} e-mails enviados`}
+            {cards.erros > 0 ? ` · ${cards.erros} com erro` : ""}
+          </p>
+        </div>
+      </div>
+
       <div className="page-envio-boletos__stats page-envio-boletos__stats--compacto">
         <ResumoCard
           label="Enviados"
